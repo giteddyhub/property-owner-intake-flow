@@ -2,6 +2,7 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -14,6 +15,11 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  // Custom formatter for month labels to use abbreviated month names
+  const formatMonthCaption = (date: Date) => {
+    return format(date, "MMM"); // This will return abbreviated month names like "Jan", "Feb", etc.
+  };
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -61,6 +67,7 @@ function Calendar({
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
       }}
       captionLayout="dropdown-buttons"
+      formatters={{ formatMonthCaption }}
       fromYear={1900}
       toYear={2025}
       {...props}
