@@ -25,9 +25,9 @@ function Calendar({
         caption_label: "text-sm font-medium hidden", // Hide default label when using dropdowns
         caption_dropdowns: "flex gap-3 items-center justify-center w-full",
         dropdown: "p-1.5 text-sm rounded-md bg-background border border-input shadow-sm focus:ring-1 focus:ring-ring cursor-pointer",
-        dropdown_month: "mr-1",
+        dropdown_month: "mr-1 font-semibold", // Added font-semibold to make Month selector bold
         dropdown_year: "font-semibold",
-        nav: "space-x-1 flex items-center absolute top-1",
+        nav: "hidden", // Hide navigation arrows completely
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
