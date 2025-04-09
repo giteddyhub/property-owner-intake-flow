@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -72,13 +71,36 @@ const OwnerStep: React.FC = () => {
     if (name.includes('.')) {
       // Handle nested objects (like address.street)
       const [parent, child] = name.split('.');
-      setCurrentOwner(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof Owner],
-          [child]: value
+      setCurrentOwner(prev => {
+        if (parent === 'address') {
+          return {
+            ...prev,
+            address: {
+              ...prev.address,
+              [child]: value
+            }
+          };
+        } else if (parent === 'italianResidenceDetails' && prev.italianResidenceDetails) {
+          return {
+            ...prev,
+            italianResidenceDetails: {
+              ...prev.italianResidenceDetails,
+              [child]: value
+            }
+          };
+        } else if (parent === 'italianResidenceDetails') {
+          // Create the object if it doesn't exist
+          return {
+            ...prev,
+            italianResidenceDetails: {
+              comuneName: '',
+              fullYear: true,
+              [child]: value
+            }
+          };
         }
-      }));
+        return prev;
+      });
     } else {
       setCurrentOwner(prev => ({ ...prev, [name]: value }));
     }
@@ -88,13 +110,35 @@ const OwnerStep: React.FC = () => {
     if (name.includes('.')) {
       // Handle nested objects
       const [parent, child] = name.split('.');
-      setCurrentOwner(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof Owner],
-          [child]: value
+      setCurrentOwner(prev => {
+        if (parent === 'address') {
+          return {
+            ...prev,
+            address: {
+              ...prev.address,
+              [child]: value
+            }
+          };
+        } else if (parent === 'italianResidenceDetails' && prev.italianResidenceDetails) {
+          return {
+            ...prev,
+            italianResidenceDetails: {
+              ...prev.italianResidenceDetails,
+              [child]: value
+            }
+          };
+        } else if (parent === 'italianResidenceDetails') {
+          return {
+            ...prev,
+            italianResidenceDetails: {
+              comuneName: '',
+              fullYear: true,
+              [child]: value
+            }
+          };
         }
-      }));
+        return prev;
+      });
     } else {
       setCurrentOwner(prev => ({ ...prev, [name]: value }));
     }

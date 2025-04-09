@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -85,13 +84,18 @@ const PropertyStep: React.FC = () => {
     if (name.includes('.')) {
       // Handle nested objects (like address.comune)
       const [parent, child] = name.split('.');
-      setCurrentProperty(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof Property],
-          [child]: value
+      setCurrentProperty(prev => {
+        if (parent === 'address') {
+          return {
+            ...prev,
+            address: {
+              ...prev.address,
+              [child]: value
+            }
+          };
         }
-      }));
+        return prev;
+      });
     } else if (name === 'purchasePrice' || name === 'salePrice' || name === 'monthsOccupied') {
       // Handle numeric fields
       const numValue = value === '' ? undefined : Number(value);
@@ -105,13 +109,18 @@ const PropertyStep: React.FC = () => {
     if (name.includes('.')) {
       // Handle nested objects
       const [parent, child] = name.split('.');
-      setCurrentProperty(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof Property],
-          [child]: value
+      setCurrentProperty(prev => {
+        if (parent === 'address') {
+          return {
+            ...prev,
+            address: {
+              ...prev.address,
+              [child]: value
+            }
+          };
         }
-      }));
+        return prev;
+      });
     } else {
       setCurrentProperty(prev => ({ ...prev, [name]: value }));
     }
