@@ -21,10 +21,13 @@ function Calendar({
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium flex items-center gap-1",
-        caption_dropdowns: "flex gap-1",
-        nav: "space-x-1 flex items-center",
+        caption: "flex justify-center pt-1 relative items-center mb-4",
+        caption_label: "text-sm font-medium hidden", // Hide default label when using dropdowns
+        caption_dropdowns: "flex gap-3 items-center justify-center w-full",
+        dropdown: "p-1.5 text-sm rounded-md bg-background border border-input shadow-sm focus:ring-1 focus:ring-ring cursor-pointer",
+        dropdown_month: "mr-1",
+        dropdown_year: "font-semibold",
+        nav: "space-x-1 flex items-center absolute top-1",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
