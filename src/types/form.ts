@@ -43,7 +43,7 @@ export interface PropertyAddress {
 
 export interface Property {
   id: string;
-  label: string; // Changed from label?: string to make it required
+  label: string;
   address: PropertyAddress;
   activity2024: ActivityType;
   purchaseDate?: Date | null;
@@ -52,7 +52,7 @@ export interface Property {
   salePrice?: number;
   propertyType: PropertyType;
   remodeling: boolean;
-  occupancyStatus: OccupancyStatus;
+  occupancyStatuses: OccupancyStatus[]; // Changed from single status to array
   monthsOccupied?: number;
 }
 
