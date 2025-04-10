@@ -2,6 +2,7 @@
 import React from 'react';
 import { Combobox } from "@/components/ui/select";
 import { COUNTRIES } from '@/lib/countries';
+import { cn } from "@/lib/utils"; // Import properly from utils
 
 interface CountryComboboxProps {
   value: string;
@@ -36,10 +37,9 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     );
   }, [countriesArray, excludeCountries]);
 
-  // Add additional safeguard
-  if (filteredCountries.length === 0) {
+  // Always provide a standard input as fallback if no countries are available
+  if (!filteredCountries || filteredCountries.length === 0) {
     console.warn("No countries available after filtering");
-    // Return a simpler input if no countries are available
     return (
       <input
         type="text"
@@ -64,8 +64,5 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     />
   );
 };
-
-// Add missing import
-const cn = (...classes: any[]) => classes.filter(Boolean).join(" ");
 
 export default CountryCombobox;

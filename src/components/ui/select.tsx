@@ -170,23 +170,42 @@ const Combobox = ({
   const [open, setOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
 
-  // Ensure options is always a valid array
-  const safeOptions = Array.isArray(options) ? options : [];
+  // Ensure options is always a valid array - add extra checks
+  const safeOptions = React.useMemo(() => {
+    if (!options) return [];
+    if (!Array.isArray(options)) return [];
+    return options;
+  }, [options]);
 
-  // Initialize filteredOptions with an empty array to handle undefined options
+  // Initialize filteredOptions with a safe default 
   const filteredOptions = React.useMemo(() => {
-    if (safeOptions.length === 0) return [];
+    if (!safeOptions || safeOptions.length === 0) return [];
     
-    return searchQuery === ""
-      ? safeOptions
-      : safeOptions.filter((option) =>
-          option.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+    if (searchQuery === "") return safeOptions;
+    
+    return safeOptions.filter((option) => 
+      option.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   }, [safeOptions, searchQuery]);
 
-  // Don't render popup content if there are no options
-  // This prevents the error by avoiding command rendering with empty/undefined data
-  const hasOptions = safeOptions.length > 0;
+  // Don't render popup or create unnecessary Command components if there are no options
+  const hasOptions = Array.isArray(safeOptions) && safeOptions.length > 0;
+
+  // Return a simplified input if no options are available
+  if (!hasOptions) {
+    return (
+      <input
+        type="text"
+        value={value || ""}
+        onChange={(e) => onValueChange(e.target.value)}
+        placeholder={placeholder}
+        className={cn(
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+      />
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -203,40 +222,38 @@ const Combobox = ({
           <ChevronDown className="h-4 w-4 opacity-50" />
         </button>
       </PopoverTrigger>
-      {hasOptions && (
-        <PopoverContent className={cn("p-0", className)} align="start" side="bottom">
-          <Command className="w-full">
-            <CommandInput
-              placeholder="Search..."
-              value={searchQuery}
-              onValueChange={setSearchQuery}
-              className="h-9"
-            />
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
-            <CommandGroup className="max-h-[200px] overflow-y-auto">
-              {filteredOptions.map((option) => (
-                <CommandItem
-                  key={option}
-                  value={option}
-                  onSelect={() => {
-                    onValueChange(option)
-                    setSearchQuery("")
-                    setOpen(false)
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === option ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
-        </PopoverContent>
-      )}
+      <PopoverContent className={cn("p-0", className)} align="start" side="bottom">
+        <Command className="w-full">
+          <CommandInput
+            placeholder="Search..."
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            className="h-9"
+          />
+          <CommandEmpty>{emptyMessage}</CommandEmpty>
+          <CommandGroup className="max-h-[200px] overflow-y-auto">
+            {filteredOptions.map((option) => (
+              <CommandItem
+                key={option}
+                value={option}
+                onSelect={() => {
+                  onValueChange(option)
+                  setSearchQuery("")
+                  setOpen(false)
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === option ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {option}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
     </Popover>
   )
 }
