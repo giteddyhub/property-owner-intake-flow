@@ -9,7 +9,8 @@ import {
   type DayPickerDefaultProps,
   type DayPickerSingleProps,
   type DayPickerMultipleProps,
-  type DayPickerRangeProps
+  type DayPickerRangeProps,
+  type CaptionLayout
 } from "react-day-picker";
 import { format } from "date-fns";
 
@@ -69,7 +70,7 @@ function Calendar({
     [onDayClick, mode, props.selected]
   );
 
-  // Create common props for all modes
+  // Common props without mode-specific properties
   const commonProps = {
     showOutsideDays,
     className: cn("p-3 pointer-events-auto", className),
@@ -115,47 +116,67 @@ function Calendar({
       IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
       IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
     },
-    captionLayout: "dropdown-buttons",
+    captionLayout: "dropdown-buttons" as CaptionLayout,
     formatters: { formatMonthCaption },
     fromYear: 1900,
     toYear: 2025,
     onDayClick: handleDayClick,
-    ...props
   };
 
-  // Render the appropriate DayPicker based on mode
+  // Create type-safe props objects for each mode
   if (mode === "range") {
-    // Range mode requires specific typing
+    // Extract only the props that are valid for range mode
+    const { selected, ...otherProps } = props;
+    
+    // Ensure selected is treated as DateRange if present
     const rangeProps: DayPickerRangeProps = {
       ...commonProps,
-      mode: "range"
+      ...otherProps,
+      mode: "range",
+      selected: selected as DateRange | undefined
     };
+    
     return <DayPicker {...rangeProps} />;
   } 
   
   if (mode === "single") {
-    // Single mode requires specific typing
+    // Extract only the props that are valid for single mode
+    const { selected, ...otherProps } = props;
+    
+    // Ensure selected is treated as Date if present
     const singleProps: DayPickerSingleProps = {
       ...commonProps,
-      mode: "single"
+      ...otherProps,
+      mode: "single",
+      selected: selected as Date | undefined
     };
+    
     return <DayPicker {...singleProps} />;
   } 
   
   if (mode === "multiple") {
-    // Multiple mode requires specific typing
+    // Extract only the props that are valid for multiple mode
+    const { selected, ...otherProps } = props;
+    
+    // Ensure selected is treated as Date[] if present
     const multipleProps: DayPickerMultipleProps = {
       ...commonProps,
-      mode: "multiple"
+      ...otherProps,
+      mode: "multiple",
+      selected: selected as Date[] | undefined
     };
+    
     return <DayPicker {...multipleProps} />;
   }
   
   // Default mode - no selection
+  // Explicitly fix the captionLayout type
   const defaultProps: DayPickerDefaultProps = {
     ...commonProps,
+    ...props,
     mode: "default"
   };
+  
   return <DayPicker {...defaultProps} />;
 }
 Calendar.displayName = "Calendar";
