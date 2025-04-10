@@ -1,5 +1,6 @@
 
 import * as React from "react"
+import { useState } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -21,20 +22,47 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       }
     };
 
-    // Handle value changes without losing focus
+    // We only want to track focus changes, not run on every render
+    const [isFocused, setIsFocused] = useState(false);
+    
+    // Handle focus tracking
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(true);
+      // Call the original onFocus if provided
+      if (props.onFocus) props.onFocus(e);
+    };
+    
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(false);
+      // Call the original onBlur if provided
+      if (props.onBlur) props.onBlur(e);
+    };
+    
+    // Fix focus issues by ensuring the input regains focus if it was focused before
+    // This effect only runs when value changes and the input was already focused
+    const value = props.value;
     React.useEffect(() => {
-      // If the input is the active element and gets blurred during re-renders,
-      // we want to refocus it
-      const activeElement = document.activeElement;
-      const isInputFocused = activeElement === inputRef.current;
-      
-      if (isInputFocused && inputRef.current) {
-        // Restore focus and position cursor at the end
-        const length = inputRef.current.value.length;
+      if (isFocused && inputRef.current && document.activeElement !== inputRef.current) {
+        // Restore focus and position cursor at the end of the input
         inputRef.current.focus();
-        inputRef.current.setSelectionRange(length, length);
+        
+        // For text/number inputs, set cursor position at the end
+        if (inputRef.current.setSelectionRange && (
+          type === 'text' || type === 'number' || type === undefined
+        )) {
+          const length = String(inputRef.current.value).length;
+          // Small timeout to ensure the cursor is placed after the value is updated
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.setSelectionRange(length, length);
+            }
+          }, 0);
+        }
       }
-    });
+    }, [value, isFocused, type]);
+
+    // Extract original event handlers to avoid duplicate calls
+    const { onFocus, onBlur, ...restProps } = props;
 
     return (
       <input
@@ -44,7 +72,9 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={mergedRef}
-        {...props}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        {...restProps}
       />
     )
   }
