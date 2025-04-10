@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { Database } from '@/integrations/supabase/types';
+import { format } from 'date-fns';
 
 // Owner functions
 export const saveOwner = async (owner: Owner): Promise<string> => {
@@ -14,11 +15,12 @@ export const saveOwner = async (owner: Owner): Promise<string> => {
   
   const { italianResidenceDetails, address, ...restOwner } = owner;
   
+  // Convert Date objects to ISO strings for Supabase
   const ownerData = {
     user_id: userId,
     first_name: restOwner.firstName,
     last_name: restOwner.lastName,
-    date_of_birth: restOwner.dateOfBirth,
+    date_of_birth: restOwner.dateOfBirth ? restOwner.dateOfBirth.toISOString() : null,
     country_of_birth: restOwner.countryOfBirth,
     citizenship: restOwner.citizenship,
     street: address.street,
@@ -29,7 +31,9 @@ export const saveOwner = async (owner: Owner): Promise<string> => {
     marital_status: restOwner.maritalStatus,
     is_resident_in_italy: restOwner.isResidentInItaly,
     comune_name: italianResidenceDetails?.comuneName,
-    residence_start_date: italianResidenceDetails?.startDate,
+    residence_start_date: italianResidenceDetails?.startDate 
+      ? italianResidenceDetails.startDate.toISOString() 
+      : null,
     full_year: italianResidenceDetails?.fullYear
   };
   
@@ -92,6 +96,7 @@ export const saveProperty = async (property: Property): Promise<string> => {
   
   const { address, occupancyStatuses, ...restProperty } = property;
   
+  // Convert Date objects to ISO strings for Supabase
   const propertyData = {
     user_id: userId,
     label: restProperty.label,
@@ -100,9 +105,9 @@ export const saveProperty = async (property: Property): Promise<string> => {
     street: address.street,
     zip: address.zip,
     activity_2024: restProperty.activity2024,
-    purchase_date: restProperty.purchaseDate,
+    purchase_date: restProperty.purchaseDate ? restProperty.purchaseDate.toISOString() : null,
     purchase_price: restProperty.purchasePrice,
-    sale_date: restProperty.saleDate,
+    sale_date: restProperty.saleDate ? restProperty.saleDate.toISOString() : null,
     sale_price: restProperty.salePrice,
     property_type: restProperty.propertyType,
     remodeling: restProperty.remodeling,
@@ -200,14 +205,15 @@ export const saveAssignment = async (assignment: OwnerPropertyAssignment): Promi
   
   const { residentDateRange, ...restAssignment } = assignment;
   
+  // Convert Date objects to ISO strings for Supabase
   const assignmentData = {
     user_id: userId,
     property_id: restAssignment.propertyId,
     owner_id: restAssignment.ownerId,
     ownership_percentage: restAssignment.ownershipPercentage,
     resident_at_property: restAssignment.residentAtProperty,
-    resident_from: residentDateRange?.from,
-    resident_to: residentDateRange?.to,
+    resident_from: residentDateRange?.from ? residentDateRange.from.toISOString() : null,
+    resident_to: residentDateRange?.to ? residentDateRange.to.toISOString() : null,
     tax_credits: restAssignment.taxCredits
   };
   
