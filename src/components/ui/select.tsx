@@ -166,21 +166,24 @@ const Combobox = ({
   className,
   triggerClassName,
 }: ComboboxProps) => {
+  // Initialize with empty state to prevent undefined-related errors
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  // Ensure options is always a valid array
+  // Convert options to a safe array, with defensive programming
   const safeOptions = React.useMemo(() => {
+    // If options is undefined, null, or not an array, return an empty array
     if (!options || !Array.isArray(options)) {
       console.warn("Combobox received invalid options:", options);
       return [] as readonly string[];
     }
-    return options;
+    // Filter out any non-string values to ensure we only have strings
+    return options.filter(option => typeof option === 'string') as readonly string[];
   }, [options]);
 
   // Filter options based on search query with safety checks
   const filteredOptions = React.useMemo(() => {
-    if (!safeOptions || safeOptions.length === 0) {
+    if (!Array.isArray(safeOptions) || safeOptions.length === 0) {
       return [] as readonly string[];
     }
     
@@ -188,13 +191,14 @@ const Combobox = ({
       return safeOptions;
     }
     
+    // Extra safety to ensure we only include string values
     return safeOptions.filter((option) => 
       typeof option === 'string' && option.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [safeOptions, searchQuery]);
 
   // If there are no valid options, render a simple input field
-  if (!safeOptions || safeOptions.length === 0) {
+  if (!Array.isArray(safeOptions) || safeOptions.length === 0) {
     return (
       <input
         type="text"
@@ -234,27 +238,25 @@ const Combobox = ({
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup className="max-h-[200px] overflow-y-auto">
-            {filteredOptions && filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
-                <CommandItem
-                  key={option}
-                  value={option}
-                  onSelect={() => {
-                    onValueChange(option);
-                    setSearchQuery("");
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === option ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option}
-                </CommandItem>
-              ))
-            ) : null}
+            {filteredOptions.length > 0 && filteredOptions.map((option) => (
+              <CommandItem
+                key={option}
+                value={option}
+                onSelect={() => {
+                  onValueChange(option);
+                  setSearchQuery("");
+                  setOpen(false);
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === option ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {option}
+              </CommandItem>
+            ))}
           </CommandGroup>
         </Command>
       </PopoverContent>

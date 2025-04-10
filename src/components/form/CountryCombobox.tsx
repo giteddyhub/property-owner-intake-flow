@@ -19,33 +19,42 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   className,
   excludeCountries = []
 }) => {
-  // Get countries using the getCountries function with safety checks
+  // Get countries with robust error handling
   const countriesArray = React.useMemo(() => {
     try {
       const countries = getCountries();
-      return Array.isArray(countries) && countries.length > 0 ? countries : [];
+      // Ensure we have a valid array of strings
+      if (!Array.isArray(countries)) {
+        console.error("Countries is not an array:", countries);
+        return [];
+      }
+      // Filter out any non-string values
+      return countries.filter(country => typeof country === 'string');
     } catch (error) {
       console.error("Error fetching countries:", error);
       return [];
     }
   }, []);
   
+  // Apply exclusion filter with safety checks
   const filteredCountries = React.useMemo(() => {
+    // Make sure countriesArray is a valid array
     if (!Array.isArray(countriesArray) || countriesArray.length === 0) {
       return [];
     }
     
-    // Apply exclusion filter if needed
-    if (!Array.isArray(excludeCountries) || excludeCountries.length === 0) {
+    // Make sure excludeCountries is a valid array, if not just return all countries
+    if (!Array.isArray(excludeCountries)) {
       return countriesArray;
     }
     
+    // Filter out excluded countries
     return countriesArray.filter(country => 
       !excludeCountries.includes(country)
     );
   }, [countriesArray, excludeCountries]);
 
-  // Always render a standard input if there are no countries available
+  // Fallback to a simple input if no countries are available
   if (!Array.isArray(filteredCountries) || filteredCountries.length === 0) {
     return (
       <input
@@ -61,9 +70,10 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     );
   }
 
+  // Use the Combobox component with explicit array check
   return (
     <Combobox
-      options={filteredCountries}
+      options={Array.isArray(filteredCountries) ? filteredCountries : []}
       value={value || ""}
       onValueChange={onChange}
       placeholder={placeholder}

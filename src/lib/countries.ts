@@ -27,16 +27,29 @@ export const COUNTRIES = [
   "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
 ];
 
-// Ensure we always return a valid array with robust error handling
+// Get countries with maximum safety guarantees
 export const getCountries = (): string[] => {
   try {
-    if (!COUNTRIES || !Array.isArray(COUNTRIES) || COUNTRIES.length === 0) {
-      console.warn("countries.ts: COUNTRIES is not a valid array or is empty");
+    // First check if COUNTRIES exists and is an array
+    if (typeof COUNTRIES === 'undefined') {
+      console.error("countries.ts: COUNTRIES is undefined");
       return [];
     }
-    return [...COUNTRIES];
+    
+    if (!Array.isArray(COUNTRIES)) {
+      console.error("countries.ts: COUNTRIES is not an array");
+      return [];
+    }
+    
+    if (COUNTRIES.length === 0) {
+      console.warn("countries.ts: COUNTRIES array is empty");
+      return [];
+    }
+    
+    // Filter out any non-string values to ensure we only have strings
+    return COUNTRIES.filter(country => typeof country === 'string');
   } catch (error) {
-    console.error("Error in getCountries():", error);
+    console.error("Fatal error in getCountries():", error);
     return [];
   }
 };
