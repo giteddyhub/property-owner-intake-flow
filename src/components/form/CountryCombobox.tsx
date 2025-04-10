@@ -2,7 +2,7 @@
 import React from 'react';
 import { Combobox } from "@/components/ui/select";
 import { COUNTRIES } from '@/lib/countries';
-import { cn } from "@/lib/utils"; // Import properly from utils
+import { cn } from "@/lib/utils";
 
 interface CountryComboboxProps {
   value: string;
@@ -19,12 +19,11 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   className,
   excludeCountries = []
 }) => {
-  // Ensure COUNTRIES is defined and is an array before using it
+  // Make sure we have a valid array to work with
   const countriesArray = Array.isArray(COUNTRIES) ? COUNTRIES : [];
   
   const filteredCountries = React.useMemo(() => {
-    if (countriesArray.length === 0) {
-      console.warn("No countries available in the COUNTRIES array");
+    if (!countriesArray || countriesArray.length === 0) {
       return [];
     }
     
@@ -37,9 +36,8 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     );
   }, [countriesArray, excludeCountries]);
 
-  // Always provide a standard input as fallback if no countries are available
+  // Always render a standard input if there are no countries available
   if (!filteredCountries || filteredCountries.length === 0) {
-    console.warn("No countries available after filtering");
     return (
       <input
         type="text"
@@ -54,10 +52,11 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     );
   }
 
+  // Use the safer implementation of Combobox
   return (
     <Combobox
       options={filteredCountries}
-      value={value}
+      value={value || ""}
       onValueChange={onChange}
       placeholder={placeholder}
       className={className}

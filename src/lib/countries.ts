@@ -26,3 +26,6 @@ export const COUNTRIES = [
   "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", 
   "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
 ];
+
+// Provide a fallback empty array for safety
+export const getCountries = () => COUNTRIES || [];

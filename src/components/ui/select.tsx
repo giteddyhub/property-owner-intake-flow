@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
@@ -149,13 +148,13 @@ SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 
 // Combobox component for searchable select
 interface ComboboxProps {
-  options: readonly string[]
-  value?: string
-  onValueChange: (value: string) => void
-  placeholder?: string
-  emptyMessage?: string
-  className?: string
-  triggerClassName?: string
+  options: readonly string[];
+  value?: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  emptyMessage?: string;
+  className?: string;
+  triggerClassName?: string;
 }
 
 const Combobox = ({
@@ -167,17 +166,17 @@ const Combobox = ({
   className,
   triggerClassName,
 }: ComboboxProps) => {
-  const [open, setOpen] = React.useState(false)
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const [open, setOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
-  // Ensure options is always a valid array - add extra checks
+  // Ensure options is always a valid array
   const safeOptions = React.useMemo(() => {
     if (!options) return [];
     if (!Array.isArray(options)) return [];
     return options;
   }, [options]);
 
-  // Initialize filteredOptions with a safe default 
+  // Filter options based on search query
   const filteredOptions = React.useMemo(() => {
     if (!safeOptions || safeOptions.length === 0) return [];
     
@@ -188,11 +187,8 @@ const Combobox = ({
     );
   }, [safeOptions, searchQuery]);
 
-  // Don't render popup or create unnecessary Command components if there are no options
-  const hasOptions = Array.isArray(safeOptions) && safeOptions.length > 0;
-
-  // Return a simplified input if no options are available
-  if (!hasOptions) {
+  // Don't render dropdown if no options are available
+  if (!safeOptions || safeOptions.length === 0) {
     return (
       <input
         type="text"
