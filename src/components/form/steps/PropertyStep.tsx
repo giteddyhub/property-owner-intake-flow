@@ -796,7 +796,7 @@ const PropertyStep: React.FC = () => {
                 checked={currentProperty.remodeling}
                 onCheckedChange={handleRemodelingChange}
               />
-              <Label htmlFor="remodeling">Property underwent remodeling/improvements in 2024</Label>
+              <Label htmlFor="remodeling">Did you do any remodeling or improvements for which a building permit was filed in the past 10 years?</Label>
             </div>
           </div>
           
