@@ -20,13 +20,17 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   excludeCountries = []
 }) => {
   // Make sure we have a valid array to work with
-  const countriesArray = Array.isArray(COUNTRIES) ? COUNTRIES : [];
+  const countriesArray = React.useMemo(() => 
+    Array.isArray(COUNTRIES) ? COUNTRIES : []
+  , []);
   
   const filteredCountries = React.useMemo(() => {
+    // Defensive check for empty countries
     if (!countriesArray || countriesArray.length === 0) {
       return [];
     }
     
+    // Apply exclusion filter if needed
     if (!excludeCountries || excludeCountries.length === 0) {
       return countriesArray;
     }
@@ -41,7 +45,7 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     return (
       <input
         type="text"
-        value={value}
+        value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(

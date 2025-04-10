@@ -169,25 +169,31 @@ const Combobox = ({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  // Ensure options is always a valid array
+  // Defensive coding: ensure options is ALWAYS a valid array
   const safeOptions = React.useMemo(() => {
+    // If options is undefined or null, return an empty array
     if (!options) return [];
+    // If options is not an array, return an empty array
     if (!Array.isArray(options)) return [];
+    // Otherwise, return the options
     return options;
   }, [options]);
 
   // Filter options based on search query
   const filteredOptions = React.useMemo(() => {
+    // Return empty array for empty options
     if (!safeOptions || safeOptions.length === 0) return [];
     
+    // Return all options if no search query
     if (searchQuery === "") return safeOptions;
     
+    // Filter options that include the search query
     return safeOptions.filter((option) => 
       option.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [safeOptions, searchQuery]);
 
-  // Don't render dropdown if no options are available
+  // If there are no options available, render a simple input instead
   if (!safeOptions || safeOptions.length === 0) {
     return (
       <input

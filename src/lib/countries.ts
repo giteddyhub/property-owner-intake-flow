@@ -27,5 +27,5 @@ export const COUNTRIES = [
   "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
 ];
 
-// Provide a fallback empty array for safety
+// Provide a safe way to access countries that guarantees an array
 export const getCountries = () => COUNTRIES || [];
