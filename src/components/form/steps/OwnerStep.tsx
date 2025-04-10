@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -630,7 +629,7 @@ const OwnerStep: React.FC = () => {
                 </div>
                 
                 <div className="mt-6">
-                  <Label className="font-medium mb-2 block">Time spent in Italy during 2024*</Label>
+                  <h4 className="font-medium mb-3">Time spent in Italy during 2024*</h4>
                   <div className="mt-2">
                     <RadioGroup 
                       value={currentOwner.italianResidenceDetails?.spentOver182Days !== undefined 
