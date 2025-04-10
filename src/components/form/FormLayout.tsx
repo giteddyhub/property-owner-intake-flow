@@ -71,17 +71,22 @@ const FormLayout = () => {
   };
 
   const renderStep = () => {
+    // Create props object for each step component
+    const commonProps = {
+      onSave: saveCurrentStepData
+    };
+    
     switch (currentStep) {
       case 0:
         return <WelcomeStep onSave={saveCurrentStepData} />;
       case 1:
-        return <OwnerStep onSave={saveCurrentStepData} />;
+        return <OwnerStep />;
       case 2:
-        return <PropertyStep onSave={saveCurrentStepData} />;
+        return <PropertyStep />;
       case 3:
-        return <AssignmentStep onSave={saveCurrentStepData} />;
+        return <AssignmentStep />;
       case 4:
-        return <ReviewStep onSave={saveCurrentStepData} />;
+        return <ReviewStep />;
       default:
         return <WelcomeStep onSave={saveCurrentStepData} />;
     }
