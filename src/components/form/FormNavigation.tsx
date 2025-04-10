@@ -15,8 +15,6 @@ interface FormNavigationProps {
   submitButtonText?: string; // Added for custom submit button text
   isFormMode?: boolean; // Added to determine if we're in a form editing mode
   hideCancel?: boolean; // Added to hide cancel button in specific cases
-  onSubmitAttempt?: (formData: any) => void; // Updated to accept formData parameter
-  isUserSignedUp?: boolean; // Added to check if user has signed up
 }
 
 const FormNavigation: React.FC<FormNavigationProps> = ({
@@ -30,8 +28,6 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   submitButtonText = 'Save',
   isFormMode = false,
   hideCancel = false,
-  onSubmitAttempt,
-  isUserSignedUp = false,
 }) => {
   const { state, nextStep, prevStep } = useFormContext();
   const { currentStep } = state;
@@ -43,26 +39,6 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
       if (!canProceed) return;
     }
     nextStep();
-  };
-
-  const handleSubmit = () => {
-    // If it's the last step and we need signup, trigger signup flow
-    if (isLastStep && onSubmitAttempt && !isUserSignedUp) {
-      // Get the form state from context to pass to the submit attempt handler
-      const { state } = useFormContext();
-      onSubmitAttempt(state);
-      return;
-    }
-    
-    // Normal submission if user is signed up or no signup required
-    if (onSubmit) {
-      onSubmit();
-    } else if (isLastStep) {
-      // Here we would typically process the final submission
-      console.log('Form submitted!');
-    } else {
-      handleNext();
-    }
   };
 
   // If we're in form mode, render a cancel and submit button pair
@@ -115,10 +91,10 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
       {showNext && (
         <Button 
           type="button" 
-          onClick={isLastStep ? handleSubmit : handleNext}
+          onClick={handleNext}
           className="bg-form-300 hover:bg-form-400 text-white flex items-center gap-2"
         >
-          {isLastStep ? (isUserSignedUp ? submitText : "Sign up & Submit") : (
+          {isLastStep ? submitText : (
             <>
               Next
               <ArrowRight className="h-4 w-4" />
