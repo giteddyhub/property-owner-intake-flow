@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LogOut, User } from 'lucide-react';
 import { saveOwner, saveProperty, saveAssignment } from '@/services/formDataService';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const FormLayout = () => {
   const { state } = useFormContext();
@@ -28,8 +28,7 @@ const FormLayout = () => {
             for (const owner of owners) {
               await saveOwner(owner);
             }
-            toast({
-              title: "Owner information saved",
+            toast.success("Owner information saved", {
               description: "Your owner data has been saved successfully.",
               duration: 3000,
             });
@@ -41,8 +40,7 @@ const FormLayout = () => {
             for (const property of properties) {
               await saveProperty(property);
             }
-            toast({
-              title: "Property information saved",
+            toast.success("Property information saved", {
               description: "Your property data has been saved successfully.",
               duration: 3000,
             });
@@ -54,8 +52,7 @@ const FormLayout = () => {
             for (const assignment of assignments) {
               await saveAssignment(assignment);
             }
-            toast({
-              title: "Assignment information saved",
+            toast.success("Assignment information saved", {
               description: "Your assignment data has been saved successfully.",
               duration: 3000,
             });
@@ -66,10 +63,8 @@ const FormLayout = () => {
       }
     } catch (error) {
       console.error("Error saving data:", error);
-      toast({
-        title: "Error saving data",
+      toast.error("Error saving data", {
         description: "There was an error saving your data. Please try again.",
-        variant: "destructive",
         duration: 3000,
       });
     }
