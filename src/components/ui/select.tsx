@@ -146,7 +146,6 @@ const SelectSeparator = React.forwardRef<
 ))
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 
-// Combobox component for searchable select
 interface ComboboxProps {
   options: readonly string[];
   value?: string;
@@ -169,7 +168,6 @@ const Combobox = ({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  // Enhanced safety checks for options
   const safeOptions = React.useMemo(() => {
     if (!options || !Array.isArray(options)) {
       console.warn("Combobox received invalid options:", options);
@@ -178,9 +176,8 @@ const Combobox = ({
     return options;
   }, [options]);
 
-  // Filter options based on search query
   const filteredOptions = React.useMemo(() => {
-    if (safeOptions.length === 0) {
+    if (!safeOptions || safeOptions.length === 0) {
       return [] as readonly string[];
     }
     
@@ -193,8 +190,7 @@ const Combobox = ({
     );
   }, [safeOptions, searchQuery]);
 
-  // Render a simple input field if there are no options
-  if (safeOptions.length === 0) {
+  if (!safeOptions || safeOptions.length === 0) {
     return (
       <input
         type="text"
@@ -208,33 +204,6 @@ const Combobox = ({
       />
     );
   }
-
-  // Create a reliable array of CommandItem elements
-  const commandItems = React.useMemo(() => {
-    if (filteredOptions.length === 0) {
-      return null; // Let CommandEmpty handle this case
-    }
-    
-    return filteredOptions.map((option) => (
-      <CommandItem
-        key={option}
-        value={option}
-        onSelect={() => {
-          onValueChange(option);
-          setSearchQuery("");
-          setOpen(false);
-        }}
-      >
-        <Check
-          className={cn(
-            "mr-2 h-4 w-4",
-            value === option ? "opacity-100" : "opacity-0"
-          )}
-        />
-        {option}
-      </CommandItem>
-    ));
-  }, [filteredOptions, value, onValueChange]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -261,7 +230,25 @@ const Combobox = ({
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup className="max-h-[200px] overflow-y-auto">
-            {commandItems}
+            {filteredOptions.map((option) => (
+              <CommandItem
+                key={option}
+                value={option}
+                onSelect={() => {
+                  onValueChange(option);
+                  setSearchQuery("");
+                  setOpen(false);
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === option ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {option}
+              </CommandItem>
+            ))}
           </CommandGroup>
         </Command>
       </PopoverContent>

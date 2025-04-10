@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Combobox } from "@/components/ui/select";
-import { COUNTRIES, getCountries } from '@/lib/countries';
+import { getCountries } from '@/lib/countries';
 import { cn } from "@/lib/utils";
 
 interface CountryComboboxProps {
@@ -19,12 +19,17 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   className,
   excludeCountries = []
 }) => {
-  // Get countries using the safer getCountries function
+  // Get countries using the getCountries function
   const countriesArray = React.useMemo(() => {
-    return getCountries();
+    const countries = getCountries();
+    return countries.length > 0 ? countries : [];
   }, []);
   
   const filteredCountries = React.useMemo(() => {
+    if (!countriesArray || countriesArray.length === 0) {
+      return [];
+    }
+    
     // Apply exclusion filter if needed
     if (!Array.isArray(excludeCountries) || excludeCountries.length === 0) {
       return countriesArray;
@@ -51,7 +56,6 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     );
   }
 
-  // Use the safer implementation of Combobox
   return (
     <Combobox
       options={filteredCountries}

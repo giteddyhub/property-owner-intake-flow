@@ -29,5 +29,9 @@ export const COUNTRIES = [
 
 // Ensure we always return a valid array
 export const getCountries = (): string[] => {
-  return Array.isArray(COUNTRIES) ? [...COUNTRIES] : [];
+  if (!COUNTRIES || !Array.isArray(COUNTRIES)) {
+    console.warn("countries.ts: COUNTRIES is not a valid array");
+    return [];
+  }
+  return [...COUNTRIES];
 };
