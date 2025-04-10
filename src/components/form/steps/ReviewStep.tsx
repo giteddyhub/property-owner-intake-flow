@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -123,6 +124,13 @@ const ReviewStep: React.FC = () => {
     URL.revokeObjectURL(url);
     
     toast.success('Summary downloaded successfully');
+  };
+
+  // Helper function to determine if we should show rental income
+  const hasRentalStatus = (property: Property) => {
+    return property.occupancyStatuses.some(
+      status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
+    );
   };
 
   return (
@@ -274,6 +282,16 @@ const ReviewStep: React.FC = () => {
                       <p>{property.remodeling ? 'Yes' : 'No'}</p>
                     </div>
                   </div>
+
+                  {/* Add rental income section */}
+                  {hasRentalStatus(property) && property.rentalIncome !== undefined && (
+                    <div className="border-t pt-2 mt-2">
+                      <p className="font-medium">Rental Income for 2024</p>
+                      <p className="text-lg font-semibold text-form-400">
+                        €{property.rentalIncome.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -327,6 +345,12 @@ const ReviewStep: React.FC = () => {
                   </div>
                   <CardDescription>
                     {property.address.street}, {property.address.comune}, {property.address.province}
+                    {/* Add rental income if applicable */}
+                    {hasRentalStatus(property) && property.rentalIncome !== undefined && (
+                      <span className="font-medium ml-2">
+                        • Rental Income: €{property.rentalIncome.toLocaleString()}
+                      </span>
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
