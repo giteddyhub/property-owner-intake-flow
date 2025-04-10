@@ -76,7 +76,16 @@ label[for]:has(+ input[type="radio"]),
 [role="radio"],
 [role="radio"] + *,
 input[type="checkbox"],
-label[for]:has(+ input[type="checkbox"]) {
+label[for]:has(+ input[type="checkbox"]),
+/* Target text labels next to radio buttons */
+.radio-label,
+input[type="radio"] ~ *,
+input[type="radio"] + *,
+[role="radio"] ~ *,
+/* Add more specific selectors for radio button labels */
+span:has(+ input[type="radio"]),
+span:has(~ input[type="radio"]),
+div:has(> input[type="radio"]) {
   cursor: pointer !important;
 }
 
@@ -88,4 +97,3 @@ label[for]:has(+ input[type="checkbox"]) {
 .radio-animate:active {
   transform: scale(0.95);
 }
-
