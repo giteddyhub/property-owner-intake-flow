@@ -30,13 +30,19 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ActivityType, OccupancyStatus, Owner, Property } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
+import ContactInfoDialog from '../ContactInfoDialog';
 
 const ReviewStep: React.FC = () => {
   const { state, goToStep, prevStep } = useFormContext();
   const { owners, properties, assignments } = state;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showContactDialog, setShowContactDialog] = useState(false);
   
-  const handleSubmit = async () => {
+  const handleSubmitButtonClick = () => {
+    setShowContactDialog(true);
+  };
+  
+  const handleSubmit = async (contactInfo: { fullName: string, email: string }) => {
     try {
       setIsSubmitting(true);
       
@@ -46,8 +52,30 @@ const ReviewStep: React.FC = () => {
       console.log("Starting submission process with:", {
         ownersCount: owners.length,
         propertiesCount: properties.length,
-        assignmentsCount: assignments.length
+        assignmentsCount: assignments.length,
+        contactInfo
       });
+      
+      // Save contact information first
+      const { data: contactData, error: contactError } = await supabase
+        .from('contacts')
+        .insert({
+          full_name: contactInfo.fullName,
+          email: contactInfo.email,
+          submitted_at: new Date().toISOString()
+        })
+        .select();
+        
+      if (contactError) {
+        console.error("Error saving contact:", contactError);
+        throw new Error(`Error saving contact: ${contactError.message}`);
+      }
+      
+      const contactId = contactData?.[0]?.id;
+      if (!contactId) {
+        console.error("Contact was saved but no ID was returned");
+        throw new Error("Failed to get database ID for contact");
+      }
       
       for (const owner of owners) {
         console.log("Saving owner:", owner.firstName, owner.lastName);
@@ -71,7 +99,8 @@ const ReviewStep: React.FC = () => {
             italian_residence_comune_name: owner.italianResidenceDetails?.comuneName,
             italian_residence_street: owner.italianResidenceDetails?.street,
             italian_residence_city: owner.italianResidenceDetails?.city,
-            italian_residence_zip: owner.italianResidenceDetails?.zip
+            italian_residence_zip: owner.italianResidenceDetails?.zip,
+            contact_id: contactId
           })
           .select();
           
@@ -109,7 +138,8 @@ const ReviewStep: React.FC = () => {
             remodeling: property.remodeling,
             occupancy_statuses: property.occupancyStatuses,
             months_occupied: property.monthsOccupied,
-            rental_income: property.rentalIncome
+            rental_income: property.rentalIncome,
+            contact_id: contactId
           })
           .select();
           
@@ -168,7 +198,8 @@ const ReviewStep: React.FC = () => {
           resident_to_date: assignment.residentDateRange?.to
             ? assignment.residentDateRange.to.toISOString().split('T')[0]
             : null,
-          tax_credits: assignment.taxCredits
+          tax_credits: assignment.taxCredits,
+          contact_id: contactId
         };
         
         console.log("Assignment data to insert:", insertData);
@@ -189,15 +220,9 @@ const ReviewStep: React.FC = () => {
         duration: 5000,
       });
       
-      setTimeout(() => {
-        toast("Your submission has been received", {
-          description: "A confirmation email has been sent with a summary of your submission.",
-          action: {
-            label: "Download Summary",
-            onClick: () => handleDownloadSummary(),
-          },
-        });
-      }, 1000);
+      // Redirect to Italian Taxes website after successful submission
+      window.location.href = 'https://www.italiantaxes.com/';
+      
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('Error submitting form', {
@@ -205,6 +230,7 @@ const ReviewStep: React.FC = () => {
       });
     } finally {
       setIsSubmitting(false);
+      setShowContactDialog(false);
     }
   };
   
@@ -633,7 +659,7 @@ const ReviewStep: React.FC = () => {
             Download Summary
           </Button>
           <Button 
-            onClick={handleSubmit}
+            onClick={handleSubmitButtonClick}
             disabled={isSubmitting}
             className="bg-form-300 hover:bg-form-400 text-white w-full sm:w-auto"
           >
@@ -641,6 +667,13 @@ const ReviewStep: React.FC = () => {
           </Button>
         </div>
       </div>
+      
+      <ContactInfoDialog 
+        open={showContactDialog} 
+        onClose={() => setShowContactDialog(false)}
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 };
