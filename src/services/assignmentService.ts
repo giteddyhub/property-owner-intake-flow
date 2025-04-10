@@ -56,6 +56,11 @@ export const assignmentService = {
       return null;
     }
 
+    if (!existingAssignment) {
+      console.error('Assignment not found');
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('owner_property_assignments')
       .update({

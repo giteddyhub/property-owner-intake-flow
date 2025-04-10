@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import FormNavigation from '@/components/form/FormNavigation';
@@ -8,6 +9,7 @@ const ReviewStep: React.FC = () => {
 
   const handleNext = () => {
     nextStep();
+    return true; // Adding return true to satisfy the boolean return type
   };
 
   return (
@@ -35,7 +37,7 @@ const ReviewStep: React.FC = () => {
           <ul className="list-disc pl-5">
             {properties.map((property) => (
               <li key={property.id} className="mb-2">
-                {property.label} - {property.address.street}, {property.address.city}
+                {property.label} - {property.address.street}, {property.address.comune}
               </li>
             ))}
           </ul>
@@ -70,4 +72,3 @@ const ReviewStep: React.FC = () => {
 };
 
 export default ReviewStep;
-
