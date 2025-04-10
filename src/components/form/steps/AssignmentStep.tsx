@@ -42,6 +42,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  StandardTooltipContent
 } from "@/components/ui/tooltip";
 
 const AssignmentStep: React.FC = () => {
@@ -252,11 +253,11 @@ const AssignmentStep: React.FC = () => {
                                   Ownership %
                                   <Info className="h-3.5 w-3.5 opacity-70" />
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="w-[200px] text-xs">
+                                <StandardTooltipContent>
+                                  <p className="text-xs">
                                     Enter the percentage of ownership for each owner. The total should be 100%.
                                   </p>
-                                </TooltipContent>
+                                </StandardTooltipContent>
                               </Tooltip>
                             </TooltipProvider>
                           </TableHead>
@@ -267,11 +268,11 @@ const AssignmentStep: React.FC = () => {
                                   Resident
                                   <Info className="h-3.5 w-3.5 opacity-70" />
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="w-[200px] text-xs">
+                                <StandardTooltipContent>
+                                  <p className="text-xs">
                                     Check if the owner uses this property as a residence.
                                   </p>
-                                </TooltipContent>
+                                </StandardTooltipContent>
                               </Tooltip>
                             </TooltipProvider>
                           </TableHead>
@@ -282,11 +283,11 @@ const AssignmentStep: React.FC = () => {
                                   Residence Period
                                   <Info className="h-3.5 w-3.5 opacity-70" />
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="w-[200px] text-xs">
+                                <StandardTooltipContent>
+                                  <p className="text-xs">
                                     If the owner is a resident, specify the period of residence in 2024.
                                   </p>
-                                </TooltipContent>
+                                </StandardTooltipContent>
                               </Tooltip>
                             </TooltipProvider>
                           </TableHead>
@@ -297,11 +298,11 @@ const AssignmentStep: React.FC = () => {
                                   Tax Credits (€)
                                   <Info className="h-3.5 w-3.5 opacity-70" />
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="w-[200px] text-xs">
+                                <StandardTooltipContent>
+                                  <p className="text-xs">
                                     Enter any tax credits claimed for this property by this owner.
                                   </p>
-                                </TooltipContent>
+                                </StandardTooltipContent>
                               </Tooltip>
                             </TooltipProvider>
                           </TableHead>
