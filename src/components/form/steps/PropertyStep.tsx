@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -150,13 +150,18 @@ const PropertyStep: React.FC = () => {
           }
         }));
       }
-    } else if (name === 'purchasePrice' || name === 'salePrice' || name === 'monthsOccupied') {
+    } else if (name === 'monthsOccupied') {
       const numValue = value === '' ? undefined : Number(value);
       setCurrentProperty(prev => ({ ...prev, [name]: numValue }));
     } else {
       setCurrentProperty(prev => ({ ...prev, [name]: value }));
     }
   };
+
+  const handlePriceChange = useCallback((name: string, value: string) => {
+    const numValue = value === '' ? undefined : Number(value);
+    setCurrentProperty(prev => ({ ...prev, [name]: numValue }));
+  }, []);
 
   const handleSelectChange = (name: string, value: string) => {
     if (name.includes('.')) {
@@ -468,12 +473,11 @@ const PropertyStep: React.FC = () => {
         <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input 
           id="purchasePrice" 
-          name="purchasePrice" 
           type="number"
           min="0"
           placeholder="Enter purchase price"
           value={currentProperty.purchasePrice || ''}
-          onChange={handleInputChange}
+          onChange={(e) => handlePriceChange('purchasePrice', e.target.value)}
           className="pl-10"
         />
       </div>
@@ -519,12 +523,11 @@ const PropertyStep: React.FC = () => {
         <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input 
           id="salePrice" 
-          name="salePrice" 
           type="number"
           min="0"
           placeholder="Enter sale price"
           value={currentProperty.salePrice || ''}
-          onChange={handleInputChange}
+          onChange={(e) => handlePriceChange('salePrice', e.target.value)}
           className="pl-10"
         />
       </div>
