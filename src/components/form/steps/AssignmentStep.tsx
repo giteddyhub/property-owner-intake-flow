@@ -262,10 +262,7 @@ const AssignmentStep: React.FC = () => {
                         <TableRow>
                           <TableHead className="w-[180px]">Owner</TableHead>
                           <TableHead className="w-[130px]">
-                            <div className="flex items-center justify-center gap-2">
-                              <span>Ownership %</span>
-                              <InfoTooltip content="Enter the percentage of ownership for each owner. The total should be 100%." />
-                            </div>
+                            <span>Ownership %</span>
                           </TableHead>
                           <TableHead className="w-[130px]">
                             <div className="flex items-center justify-center gap-2">
@@ -280,10 +277,7 @@ const AssignmentStep: React.FC = () => {
                             </div>
                           </TableHead>
                           <TableHead className="w-[150px]">
-                            <div className="flex items-center justify-center gap-2">
-                              <span>Tax Credits (€)</span>
-                              <InfoTooltip content="Enter any tax credits claimed for this property by this owner." />
-                            </div>
+                            <span>Tax Credits (€)</span>
                           </TableHead>
                         </TableRow>
                       </TableHeader>
