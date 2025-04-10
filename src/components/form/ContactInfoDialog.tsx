@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ExternalLink } from 'lucide-react';
 
+// Define the schema with proper types
 const contactFormSchema = z.object({
   fullName: z.string().min(2, {
     message: "Name must be at least 2 characters.",
@@ -31,11 +32,11 @@ const contactFormSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  termsAccepted: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the terms and conditions." }),
+  termsAccepted: z.boolean().refine(val => val === true, {
+    message: "You must accept the terms and conditions.",
   }),
-  privacyAccepted: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the privacy policy." }),
+  privacyAccepted: z.boolean().refine(val => val === true, {
+    message: "You must accept the privacy policy.",
   }),
 });
 
