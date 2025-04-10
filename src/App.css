@@ -112,3 +112,24 @@ input[type="radio"] ~ * *,
 .radio-animate:active {
   transform: scale(0.95);
 }
+
+/* Radio explanation styling */
+.radio-explanation {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out, opacity 0.2s ease-out, margin 0.2s ease-out;
+  opacity: 0;
+}
+
+.radio-explanation.show {
+  max-height: 200px;
+  opacity: 1;
+  margin-top: 0.5rem;
+}
+
+/* Add a smooth transition when explanation appears */
+[data-state="checked"] .radio-explanation {
+  max-height: 200px;
+  opacity: 1;
+  margin-top: 0.5rem;
+}

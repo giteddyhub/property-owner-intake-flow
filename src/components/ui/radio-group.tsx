@@ -46,8 +46,9 @@ const CardRadioGroupItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item> & {
     title?: string;
     description?: string;
+    explanation?: string;
   }
->(({ className, title, description, children, ...props }, ref) => {
+>(({ className, title, description, explanation, children, ...props }, ref) => {
   // Generate an ID for connecting the label to the radio
   const id = React.useId();
   
@@ -55,6 +56,7 @@ const CardRadioGroupItem = React.forwardRef<
     <div className={cn(
       "relative rounded-lg border border-gray-200 p-4 transition-all hover:border-gray-300 cursor-pointer",
       "data-[state=checked]:border-purple-500 data-[state=checked]:ring-1 data-[state=checked]:ring-purple-500",
+      props.checked ? "bg-purple-50" : "bg-white",
       className
     )}>
       <RadioGroupPrimitive.Item
@@ -69,10 +71,15 @@ const CardRadioGroupItem = React.forwardRef<
           <Circle className="h-3 w-3 fill-purple-600 text-purple-600" />
         </RadioGroupPrimitive.Indicator>
       </RadioGroupPrimitive.Item>
-      {(title || description || children) && (
+      {(title || description || explanation || children) && (
         <label htmlFor={id} className="radio-group-item-label pl-8 block cursor-pointer">
           {title && <h3 className="font-medium text-gray-900 cursor-pointer">{title}</h3>}
           {description && <p className="text-sm text-gray-500 mt-1 cursor-pointer">{description}</p>}
+          {explanation && props.checked && (
+            <p className="text-sm text-gray-600 mt-2 border-t border-gray-100 pt-2 cursor-pointer">
+              {explanation}
+            </p>
+          )}
           {children}
         </label>
       )}

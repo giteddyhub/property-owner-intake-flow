@@ -33,7 +33,7 @@ import {
   PropertyAddress, 
   PropertyType 
 } from '@/types/form';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { RadioGroup, CardRadioGroupItem } from '@/components/ui/radio-group';
 
 // Italian provinces for dropdown
 const PROVINCES = [
@@ -78,26 +78,36 @@ const PropertyStep: React.FC = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(properties.length === 0);
 
+  const activityExplanations = {
+    purchased: "Select this if you purchased the property during 2024 but did not sell it. You'll need to provide the purchase date and price.",
+    sold: "Select this if you sold the property during 2024 but did not purchase it in the same year. You'll need to provide the sale date and price.",
+    both: "Select this if you both purchased and sold this property during 2024. You'll need to provide details for both transactions.",
+    neither: "Select this if you owned the property throughout 2024 without purchasing or selling it."
+  };
+
+  const occupancyExplanations = {
+    PERSONAL_USE: "Select this if the property was used personally by you or your family, or if it was vacant during the period.",
+    LONG_TERM_RENT: "Select this if the property was rented out with a long-term lease agreement (typically more than 30 days).",
+    SHORT_TERM_RENT: "Select this if the property was rented out for short periods (less than 30 days), such as vacation rentals or Airbnb."
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
     if (name.includes('.')) {
-      // Handle nested objects (like address.comune)
-      const [parent, child] = name.split('.');
       setCurrentProperty(prev => {
-        if (parent === 'address') {
+        if (name === 'address.comune') {
           return {
             ...prev,
             address: {
               ...prev.address,
-              [child]: value
+              comune: value
             }
           };
         }
         return prev;
       });
     } else if (name === 'purchasePrice' || name === 'salePrice' || name === 'monthsOccupied') {
-      // Handle numeric fields
       const numValue = value === '' ? undefined : Number(value);
       setCurrentProperty(prev => ({ ...prev, [name]: numValue }));
     } else {
@@ -107,15 +117,13 @@ const PropertyStep: React.FC = () => {
 
   const handleSelectChange = (name: string, value: string) => {
     if (name.includes('.')) {
-      // Handle nested objects
-      const [parent, child] = name.split('.');
       setCurrentProperty(prev => {
-        if (parent === 'address') {
+        if (name === 'address.province') {
           return {
             ...prev,
             address: {
               ...prev.address,
-              [child]: value
+              province: value
             }
           };
         }
@@ -127,7 +135,6 @@ const PropertyStep: React.FC = () => {
   };
 
   const handleActivityChange = (value: ActivityType) => {
-    // Reset purchase/sale fields based on selection
     let updatedProperty = { ...currentProperty, activity2024: value };
     
     if (value === 'neither' || value === 'sold') {
@@ -159,13 +166,11 @@ const PropertyStep: React.FC = () => {
     setCurrentProperty(prev => ({ 
       ...prev, 
       occupancyStatus: value,
-      // Reset months occupied to default value
       monthsOccupied: 12
     }));
   };
 
   const handleSubmit = () => {
-    // Basic validation
     if (!currentProperty.label?.trim()) {
       toast.error('Please enter a property name');
       return;
@@ -196,7 +201,6 @@ const PropertyStep: React.FC = () => {
       return;
     }
     
-    // Validate activity specific fields
     if (currentProperty.activity2024 === 'purchased' || currentProperty.activity2024 === 'both') {
       if (!currentProperty.purchaseDate) {
         toast.error('Please select a purchase date');
@@ -221,7 +225,6 @@ const PropertyStep: React.FC = () => {
       }
     }
     
-    // Validate months occupied (should be 1-12)
     if (currentProperty.monthsOccupied !== undefined && 
         (currentProperty.monthsOccupied < 1 || currentProperty.monthsOccupied > 12)) {
       toast.error('Months occupied must be between 1 and 12');
@@ -236,7 +239,6 @@ const PropertyStep: React.FC = () => {
       toast.success('Property added successfully');
     }
     
-    // Reset form
     setCurrentProperty(createEmptyProperty());
     setEditingIndex(null);
     setShowForm(false);
@@ -265,7 +267,6 @@ const PropertyStep: React.FC = () => {
     <div>
       <h2 className="text-2xl font-bold mb-6 text-form-400">Property Information</h2>
       
-      {/* Show list of added properties if any */}
       {properties.length > 0 && !showForm && (
         <div className="mb-6">
           <div className="flex justify-between mb-4">
@@ -335,7 +336,6 @@ const PropertyStep: React.FC = () => {
         </div>
       )}
       
-      {/* Property form */}
       {showForm && (
         <div className="border rounded-lg p-6 bg-gray-50">
           <h3 className="text-lg font-semibold mb-4">
@@ -357,7 +357,6 @@ const PropertyStep: React.FC = () => {
             </div>
           </div>
           
-          {/* Address */}
           <div className="mt-6">
             <h4 className="text-md font-medium mb-3">Property Address*</h4>
             <div className="grid gap-4 md:grid-cols-2">
@@ -413,7 +412,6 @@ const PropertyStep: React.FC = () => {
             </div>
           </div>
           
-          {/* Property Type */}
           <div className="mt-6">
             <Label htmlFor="propertyType">Property Type*</Label>
             <Select 
@@ -433,7 +431,6 @@ const PropertyStep: React.FC = () => {
             </Select>
           </div>
           
-          {/* Activity in 2024 */}
           <div className="mt-6">
             <h4 className="text-md font-medium mb-3">Activity in 2024*</h4>
             <RadioGroup 
@@ -441,25 +438,36 @@ const PropertyStep: React.FC = () => {
               onValueChange={(value) => handleActivityChange(value as ActivityType)}
               className="flex flex-col space-y-3"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="purchased" id="purchased" />
-                <Label htmlFor="purchased">Purchased Only</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="sold" id="sold" />
-                <Label htmlFor="sold">Sold Only</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="both" id="both" />
-                <Label htmlFor="both">Both Purchased & Sold</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="neither" id="neither" />
-                <Label htmlFor="neither">Owned All Year</Label>
-              </div>
+              <CardRadioGroupItem 
+                value="purchased" 
+                id="purchased" 
+                checked={currentProperty.activity2024 === 'purchased'}
+                title="Purchased Only"
+                explanation={activityExplanations.purchased}
+              />
+              <CardRadioGroupItem 
+                value="sold" 
+                id="sold" 
+                checked={currentProperty.activity2024 === 'sold'}
+                title="Sold Only"
+                explanation={activityExplanations.sold}
+              />
+              <CardRadioGroupItem 
+                value="both" 
+                id="both" 
+                checked={currentProperty.activity2024 === 'both'}
+                title="Both Purchased & Sold"
+                explanation={activityExplanations.both}
+              />
+              <CardRadioGroupItem 
+                value="neither" 
+                id="neither" 
+                checked={currentProperty.activity2024 === 'neither'}
+                title="Owned All Year"
+                explanation={activityExplanations.neither}
+              />
             </RadioGroup>
             
-            {/* Purchase Details */}
             {(currentProperty.activity2024 === 'purchased' || currentProperty.activity2024 === 'both') && (
               <div className="mt-4 pl-6 border-l-2 border-blue-200">
                 <h5 className="text-sm font-medium mb-2">Purchase Details</h5>
@@ -513,7 +521,6 @@ const PropertyStep: React.FC = () => {
               </div>
             )}
             
-            {/* Sale Details */}
             {(currentProperty.activity2024 === 'sold' || currentProperty.activity2024 === 'both') && (
               <div className="mt-4 pl-6 border-l-2 border-blue-200">
                 <h5 className="text-sm font-medium mb-2">Sale Details</h5>
@@ -568,7 +575,6 @@ const PropertyStep: React.FC = () => {
             )}
           </div>
           
-          {/* Renovations */}
           <div className="mt-6">
             <div className="flex items-center space-x-2">
               <Switch 
@@ -580,7 +586,6 @@ const PropertyStep: React.FC = () => {
             </div>
           </div>
           
-          {/* Occupancy Status */}
           <div className="mt-6">
             <h4 className="text-md font-medium mb-3">Occupancy Status*</h4>
             <RadioGroup 
@@ -588,18 +593,27 @@ const PropertyStep: React.FC = () => {
               onValueChange={(value) => handleOccupancyStatusChange(value as OccupancyStatus)}
               className="flex flex-col space-y-3 mb-4"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="PERSONAL_USE" id="personal" />
-                <Label htmlFor="personal">Personal Use / Vacant</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="LONG_TERM_RENT" id="longTerm" />
-                <Label htmlFor="longTerm">Long-Term Rental</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="SHORT_TERM_RENT" id="shortTerm" />
-                <Label htmlFor="shortTerm">Short-Term Rental</Label>
-              </div>
+              <CardRadioGroupItem 
+                value="PERSONAL_USE" 
+                id="personal" 
+                checked={currentProperty.occupancyStatus === 'PERSONAL_USE'}
+                title="Personal Use / Vacant"
+                explanation={occupancyExplanations.PERSONAL_USE}
+              />
+              <CardRadioGroupItem 
+                value="LONG_TERM_RENT" 
+                id="longTerm" 
+                checked={currentProperty.occupancyStatus === 'LONG_TERM_RENT'}
+                title="Long-Term Rental"
+                explanation={occupancyExplanations.LONG_TERM_RENT}
+              />
+              <CardRadioGroupItem 
+                value="SHORT_TERM_RENT" 
+                id="shortTerm" 
+                checked={currentProperty.occupancyStatus === 'SHORT_TERM_RENT'}
+                title="Short-Term Rental"
+                explanation={occupancyExplanations.SHORT_TERM_RENT}
+              />
             </RadioGroup>
             
             <div>
