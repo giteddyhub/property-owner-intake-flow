@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -133,7 +134,13 @@ const OwnerStep: React.FC = () => {
       ...prev, 
       isResidentInItaly: checked,
       italianResidenceDetails: checked 
-        ? (prev.italianResidenceDetails || { comuneName: '', fullYear: true })
+        ? (prev.italianResidenceDetails || { 
+            comuneName: '', 
+            fullYear: true,
+            street: '',
+            city: '',
+            zip: ''
+          })
         : undefined
     }));
   };
@@ -143,7 +150,13 @@ const OwnerStep: React.FC = () => {
     setCurrentOwner(prev => ({
       ...prev,
       italianResidenceDetails: {
-        ...(prev.italianResidenceDetails || { comuneName: '', fullYear: true }),
+        ...(prev.italianResidenceDetails || { 
+          comuneName: '', 
+          fullYear: true,
+          street: '',
+          city: '',
+          zip: ''
+        }),
         [name]: value
       }
     }));
@@ -219,10 +232,19 @@ const OwnerStep: React.FC = () => {
       return;
     }
     
-    if (currentOwner.isResidentInItaly && 
-        (!currentOwner.italianResidenceDetails?.comuneName)) {
-      toast.error('Please enter comune name for Italian residence');
-      return;
+    if (currentOwner.isResidentInItaly) {
+      if (!currentOwner.italianResidenceDetails?.comuneName) {
+        toast.error('Please enter comune name for Italian residence');
+        return;
+      }
+      
+      // Validate Italian address fields
+      if (!currentOwner.italianResidenceDetails?.street || 
+          !currentOwner.italianResidenceDetails?.city || 
+          !currentOwner.italianResidenceDetails?.zip) {
+        toast.error('Please complete the Italian address fields');
+        return;
+      }
     }
 
     if (editingIndex !== null) {
@@ -323,14 +345,19 @@ const OwnerStep: React.FC = () => {
                     <strong>Address:</strong> {owner.address.street}, {owner.address.city}, {owner.address.zip}, {owner.address.country}
                   </p>
                   {owner.isResidentInItaly && owner.italianResidenceDetails && (
-                    <p className="text-sm text-gray-600">
-                      <strong>Italian Residence:</strong> {owner.italianResidenceDetails.comuneName}
-                      {owner.italianResidenceDetails.fullYear 
-                        ? ' (Full Year)' 
-                        : owner.italianResidenceDetails.startDate 
-                          ? ` (From: ${format(new Date(owner.italianResidenceDetails.startDate), 'PPP')})` 
-                          : ' (Partial Year)'}
-                    </p>
+                    <>
+                      <p className="text-sm text-gray-600">
+                        <strong>Italian Residence:</strong> {owner.italianResidenceDetails.comuneName}
+                        {owner.italianResidenceDetails.fullYear 
+                          ? ' (Full Year)' 
+                          : owner.italianResidenceDetails.startDate 
+                            ? ` (From: ${format(new Date(owner.italianResidenceDetails.startDate), 'PPP')})` 
+                            : ' (Partial Year)'}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Italian Address:</strong> {owner.italianResidenceDetails.street}, {owner.italianResidenceDetails.city}, {owner.italianResidenceDetails.zip}
+                      </p>
+                    </>
                   )}
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
@@ -618,6 +645,48 @@ const OwnerStep: React.FC = () => {
                       </Popover>
                     </div>
                   )}
+                  
+                  {/* Add Italian Address Fields */}
+                  <div className="col-span-2 mt-4">
+                    <h4 className="font-medium mb-3">Italian Address*</h4>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="street">Street Address*</Label>
+                        <Input 
+                          id="street" 
+                          name="street" 
+                          placeholder="Enter street address in Italy"
+                          value={currentOwner.italianResidenceDetails?.street || ''} 
+                          onChange={handleResidencyDetailChange}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="city">City*</Label>
+                        <Input 
+                          id="city" 
+                          name="city" 
+                          placeholder="Enter city name in Italy"
+                          value={currentOwner.italianResidenceDetails?.city || ''} 
+                          onChange={handleResidencyDetailChange}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="zip">ZIP/Postal Code*</Label>
+                        <Input 
+                          id="zip" 
+                          name="zip" 
+                          placeholder="Enter ZIP/postal code in Italy"
+                          value={currentOwner.italianResidenceDetails?.zip || ''} 
+                          onChange={handleResidencyDetailChange}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
