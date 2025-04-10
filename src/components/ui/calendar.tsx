@@ -69,7 +69,7 @@ function Calendar({
       captionLayout="dropdown-buttons"
       formatters={{ formatMonthCaption }}
       fromYear={1900}
-      toYear={2025}
+      toYear={2010}
       {...props}
     />
   );
