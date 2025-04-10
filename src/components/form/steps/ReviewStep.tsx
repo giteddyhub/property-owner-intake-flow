@@ -143,6 +143,14 @@ const ReviewStep: React.FC = () => {
         A confirmation email will be sent to you with a summary of your submitted information.
       </p>
       
+      {/* Add disclaimer */}
+      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded text-amber-800 text-sm">
+        <p className="font-medium mb-1">Disclaimer:</p>
+        <p>By submitting this form, you acknowledge that you take full responsibility for the accuracy of all information provided. 
+        We are not liable for any errors, omissions, or inaccuracies in the submitted data. Please ensure all information is 
+        complete and correct before proceeding with submission.</p>
+      </div>
+      
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8 mt-6">
         <div className="w-full md:w-auto">
           <div className="text-center md:text-left">
