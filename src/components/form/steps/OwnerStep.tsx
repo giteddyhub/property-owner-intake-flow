@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 import { Owner, MaritalStatus, Address, ItalianResidenceDetails } from '@/types/form';
 import CountryCombobox from '@/components/form/CountryCombobox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { RadioGroup, RadioGroupItem, ModernRadioGroupItem } from '@/components/ui/radio-group';
 
 const COUNTRIES = [
   "Italy", "United States", "United Kingdom", "France", "Germany", 
@@ -186,17 +185,6 @@ const OwnerStep: React.FC = () => {
         }
       }));
     }
-  };
-
-  const handleRadioChange = (value: string) => {
-    const fullYear = value === "fullYear";
-    setCurrentOwner(prev => ({
-      ...prev,
-      italianResidenceDetails: {
-        ...(prev.italianResidenceDetails || { comuneName: '', fullYear: true }),
-        fullYear
-      }
-    }));
   };
 
   const handleSubmit = () => {
@@ -515,15 +503,13 @@ const OwnerStep: React.FC = () => {
           </div>
           
           <div className="mt-6">
-            <div className="flex items-center space-x-3 border-b pb-4 mb-4">
-              <Label htmlFor="isResidentInItaly" className="mr-3 text-base">Resident in Italy?</Label>
-              <div className="residency-toggle">
-                <ModernRadioGroupItem
-                  id="isResidentInItaly"
-                  checked={currentOwner.isResidentInItaly}
-                  onClick={() => handleSwitchChange(!currentOwner.isResidentInItaly)}
-                />
-              </div>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="isResidentInItaly" 
+                checked={currentOwner.isResidentInItaly}
+                onCheckedChange={handleSwitchChange}
+              />
+              <Label htmlFor="isResidentInItaly">Resident in Italy?</Label>
             </div>
             
             {currentOwner.isResidentInItaly && (
@@ -533,8 +519,7 @@ const OwnerStep: React.FC = () => {
                     <Label htmlFor="comuneName">Comune Name*</Label>
                     <Input 
                       id="comuneName" 
-                      name="comuneName"
-                      placeholder="e.g. Roma, Milano, Firenze" 
+                      name="comuneName" 
                       value={currentOwner.italianResidenceDetails?.comuneName || ''} 
                       onChange={handleResidencyDetailChange}
                       className="mt-1"
@@ -543,25 +528,28 @@ const OwnerStep: React.FC = () => {
                   
                   <div>
                     <Label>Residency Period</Label>
-                    <RadioGroup 
-                      value={currentOwner.italianResidenceDetails?.fullYear ? "fullYear" : "partialYear"}
-                      onValueChange={handleRadioChange}
-                      className="residency-period-group"
-                    >
-                      <div className="residency-period-radio">
-                        <RadioGroupItem value="fullYear" id="fullYear" className="sr-only" />
-                        <Label htmlFor="fullYear" className="cursor-pointer flex items-center">
-                          <span className="ml-2">Full Year</span>
-                        </Label>
+                    <div className="flex space-x-4 mt-2">
+                      <div className="flex items-center">
+                        <input 
+                          type="radio" 
+                          id="fullYear" 
+                          checked={currentOwner.italianResidenceDetails?.fullYear ?? true}
+                          onChange={() => handleResidencyTypeChange(true)}
+                          className="mr-2"
+                        />
+                        <Label htmlFor="fullYear" className="cursor-pointer">Full Year</Label>
                       </div>
-                      
-                      <div className="residency-period-radio">
-                        <RadioGroupItem value="partialYear" id="partialYear" className="sr-only" />
-                        <Label htmlFor="partialYear" className="cursor-pointer flex items-center">
-                          <span className="ml-2">Partial Year</span>
-                        </Label>
+                      <div className="flex items-center">
+                        <input 
+                          type="radio" 
+                          id="partialYear" 
+                          checked={!(currentOwner.italianResidenceDetails?.fullYear ?? true)}
+                          onChange={() => handleResidencyTypeChange(false)}
+                          className="mr-2"
+                        />
+                        <Label htmlFor="partialYear" className="cursor-pointer">Partial Year</Label>
                       </div>
-                    </RadioGroup>
+                    </div>
                   </div>
                   
                   {currentOwner.italianResidenceDetails && !currentOwner.italianResidenceDetails.fullYear && (
