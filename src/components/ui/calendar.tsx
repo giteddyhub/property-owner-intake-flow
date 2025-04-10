@@ -5,7 +5,11 @@ import {
   DayPicker, 
   type DayClickEventHandler, 
   type ActiveModifiers, 
-  type DateRange 
+  type DateRange,
+  type DayPickerDefaultProps,
+  type DayPickerSingleProps,
+  type DayPickerMultipleProps,
+  type DayPickerRangeProps
 } from "react-day-picker";
 import { format } from "date-fns";
 
@@ -65,8 +69,8 @@ function Calendar({
     [onDayClick, mode, props.selected]
   );
 
-  // Create base DayPicker props with the common properties
-  const baseProps = {
+  // Create common props for all modes
+  const commonProps = {
     showOutsideDays,
     className: cn("p-3 pointer-events-auto", className),
     classNames: {
@@ -115,40 +119,44 @@ function Calendar({
     formatters: { formatMonthCaption },
     fromYear: 1900,
     toYear: 2025,
+    onDayClick: handleDayClick,
     ...props
   };
 
-  // Define final props based on mode
-  let finalProps;
-  
+  // Render the appropriate DayPicker based on mode
   if (mode === "range") {
-    finalProps = {
-      ...baseProps,
-      mode: "range" as const,
-      onDayClick: handleDayClick
+    // Range mode requires specific typing
+    const rangeProps: DayPickerRangeProps = {
+      ...commonProps,
+      mode: "range"
     };
-  } else if (mode === "single") {
-    finalProps = {
-      ...baseProps,
-      mode: "single" as const,
-      onDayClick: handleDayClick
+    return <DayPicker {...rangeProps} />;
+  } 
+  
+  if (mode === "single") {
+    // Single mode requires specific typing
+    const singleProps: DayPickerSingleProps = {
+      ...commonProps,
+      mode: "single"
     };
-  } else if (mode === "multiple") {
-    finalProps = {
-      ...baseProps,
-      mode: "multiple" as const,
-      onDayClick: handleDayClick
+    return <DayPicker {...singleProps} />;
+  } 
+  
+  if (mode === "multiple") {
+    // Multiple mode requires specific typing
+    const multipleProps: DayPickerMultipleProps = {
+      ...commonProps,
+      mode: "multiple"
     };
-  } else {
-    // Default mode
-    finalProps = {
-      ...baseProps,
-      mode: "default" as const,
-      onDayClick: handleDayClick
-    };
+    return <DayPicker {...multipleProps} />;
   }
-
-  return <DayPicker {...finalProps} />;
+  
+  // Default mode - no selection
+  const defaultProps: DayPickerDefaultProps = {
+    ...commonProps,
+    mode: "default"
+  };
+  return <DayPicker {...defaultProps} />;
 }
 Calendar.displayName = "Calendar";
 
