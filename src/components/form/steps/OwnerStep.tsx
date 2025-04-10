@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -339,6 +340,7 @@ const OwnerStep: React.FC = () => {
               <Input 
                 id="firstName" 
                 name="firstName" 
+                placeholder="Enter first name"
                 value={currentOwner.firstName} 
                 onChange={handleInputChange} 
                 className="mt-1"
@@ -350,6 +352,7 @@ const OwnerStep: React.FC = () => {
               <Input 
                 id="lastName" 
                 name="lastName" 
+                placeholder="Enter last name"
                 value={currentOwner.lastName} 
                 onChange={handleInputChange} 
                 className="mt-1"
@@ -446,6 +449,7 @@ const OwnerStep: React.FC = () => {
                 name="italianTaxCode" 
                 value={currentOwner.italianTaxCode || ''} 
                 onChange={handleInputChange}
+                placeholder="e.g. RSSMRA80A01H501W"
                 className="mt-1"
                 required
               />
@@ -460,6 +464,7 @@ const OwnerStep: React.FC = () => {
                 <Input 
                   id="address.street" 
                   name="address.street" 
+                  placeholder="Enter street address"
                   value={currentOwner.address.street} 
                   onChange={handleInputChange}
                   className="mt-1"
@@ -471,6 +476,7 @@ const OwnerStep: React.FC = () => {
                 <Input 
                   id="address.city" 
                   name="address.city" 
+                  placeholder="Enter city name"
                   value={currentOwner.address.city} 
                   onChange={handleInputChange}
                   className="mt-1"
@@ -482,6 +488,7 @@ const OwnerStep: React.FC = () => {
                 <Input 
                   id="address.zip" 
                   name="address.zip" 
+                  placeholder="Enter ZIP/postal code"
                   value={currentOwner.address.zip} 
                   onChange={handleInputChange}
                   className="mt-1"
@@ -520,6 +527,7 @@ const OwnerStep: React.FC = () => {
                     <Input 
                       id="comuneName" 
                       name="comuneName" 
+                      placeholder="Enter Italian comune name"
                       value={currentOwner.italianResidenceDetails?.comuneName || ''} 
                       onChange={handleResidencyDetailChange}
                       className="mt-1"
