@@ -819,7 +819,7 @@ const PropertyStep: React.FC = () => {
           </div>
           
           <div className="mt-6">
-            <h4 className="text-md font-medium mb-3">Rental Status*</h4>
+            <h4 className="text-md font-medium mb-3">Rental Status in 2024*</h4>
             
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
