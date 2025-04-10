@@ -10,7 +10,10 @@ import {
   type DayPickerSingleProps,
   type DayPickerMultipleProps,
   type DayPickerRangeProps,
-  type CaptionLayout
+  type CaptionLayout,
+  type SelectSingleEventHandler,
+  type SelectRangeEventHandler,
+  type SelectMultipleEventHandler
 } from "react-day-picker";
 import { format } from "date-fns";
 
@@ -125,55 +128,63 @@ function Calendar({
 
   // Create type-safe props objects for each mode
   if (mode === "range") {
-    // Extract only the props that are valid for range mode
-    const { selected, ...otherProps } = props;
+    // Extract selected, onSelect, and other range-specific props
+    const { selected, onSelect, ...otherProps } = props;
     
-    // Ensure selected is treated as DateRange if present
+    // Create a properly typed range props object
     const rangeProps: DayPickerRangeProps = {
       ...commonProps,
       ...otherProps,
       mode: "range",
-      selected: selected as DateRange | undefined
+      selected: selected as DateRange | undefined,
+      // Only include onSelect if it's a range select handler
+      ...(onSelect ? { onSelect: onSelect as SelectRangeEventHandler } : {})
     };
     
     return <DayPicker {...rangeProps} />;
   } 
   
   if (mode === "single") {
-    // Extract only the props that are valid for single mode
-    const { selected, ...otherProps } = props;
+    // Extract selected, onSelect, and other single-specific props
+    const { selected, onSelect, ...otherProps } = props;
     
-    // Ensure selected is treated as Date if present
+    // Create a properly typed single props object
     const singleProps: DayPickerSingleProps = {
       ...commonProps,
       ...otherProps,
       mode: "single",
-      selected: selected as Date | undefined
+      selected: selected as Date | undefined,
+      // Only include onSelect if it's a single select handler
+      ...(onSelect ? { onSelect: onSelect as SelectSingleEventHandler } : {})
     };
     
     return <DayPicker {...singleProps} />;
   } 
   
   if (mode === "multiple") {
-    // Extract only the props that are valid for multiple mode
-    const { selected, ...otherProps } = props;
+    // Extract selected, onSelect, and other multiple-specific props
+    const { selected, onSelect, ...otherProps } = props;
     
-    // Ensure selected is treated as Date[] if present
+    // Create a properly typed multiple props object
     const multipleProps: DayPickerMultipleProps = {
       ...commonProps,
       ...otherProps,
       mode: "multiple",
-      selected: selected as Date[] | undefined
+      selected: selected as Date[] | undefined,
+      // Only include onSelect if it's a multiple select handler
+      ...(onSelect ? { onSelect: onSelect as SelectMultipleEventHandler } : {})
     };
     
     return <DayPicker {...multipleProps} />;
   }
   
   // Default mode - no selection
-  // Explicitly fix the captionLayout type
+  // Remove any mode-specific props that don't apply to default mode
+  const { selected, onSelect, ...otherProps } = props;
+  
   const defaultProps: DayPickerDefaultProps = {
     ...commonProps,
-    ...props,
+    ...otherProps,
     mode: "default"
   };
   
