@@ -20,15 +20,9 @@ function Calendar({
     return format(date, "MMM"); // This will return abbreviated month names like "Jan", "Feb", etc.
   };
 
-  // Fix TypeScript errors by conditionally casting the onSelect handler based on mode
-  const getSelectHandler = () => {
-    if (props.mode === 'range') {
-      return props.onSelect as SelectRangeEventHandler;
-    } else if (props.mode === 'multiple') {
-      return props.onSelect as SelectMultipleEventHandler;
-    }
-    return props.onSelect as SelectSingleEventHandler;
-  };
+  // We'll remove the type assertion and simply pass props directly
+  // This way we don't need to worry about handling specific types
+  // DayPicker will handle the correct typing based on the mode
 
   return (
     <DayPicker
@@ -80,7 +74,6 @@ function Calendar({
       formatters={{ formatMonthCaption }}
       fromYear={1900}
       toYear={2025}
-      onSelect={getSelectHandler()}
       {...props}
     />
   );
