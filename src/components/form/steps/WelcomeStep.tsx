@@ -9,7 +9,8 @@ const WelcomeStep: React.FC = () => {
 
   return (
     <div className="text-center max-w-2xl mx-auto py-6">
-      <h1 className="text-3xl font-bold text-form-400 mb-6">Italian 🇮🇹 Tax Profile</h1>
+      <h1 className="text-3xl font-bold text-form-400 mb-2">Italian 🇮🇹 Tax Profile</h1>
+      <h2 className="text-xl text-form-300 mb-6">for property owners</h2>
       
       <div className="mb-10 text-left bg-form-200 p-6 rounded-lg">
         <h2 className="text-xl font-semibold mb-4 text-center">Welcome to the Intake Process</h2>
