@@ -1,7 +1,7 @@
 
 import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
-import { Circle } from "lucide-react"
+import { Check } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -27,13 +27,13 @@ const RadioGroupItem = React.forwardRef<
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "aspect-square h-5 w-5 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-purple-500 data-[state=checked]:bg-purple-100/40 cursor-pointer",
+        "aspect-square h-5 w-5 rounded border border-gray-300 text-white ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 cursor-pointer",
         className
       )}
       {...props}
     >
       <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <Circle className="h-3 w-3 fill-purple-600 text-purple-600" />
+        <Check className="h-3.5 w-3.5" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )
@@ -69,37 +69,36 @@ const CardRadioGroupItem = React.forwardRef<
       }
     }}>
       {!hideRadio && (
-        <RadioGroupPrimitive.Item
-          ref={ref}
-          id={id}
-          className={cn(
-            "absolute left-4 top-4 aspect-square h-5 w-5 rounded-full border border-gray-300 text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-purple-500 data-[state=checked]:bg-purple-100/40 cursor-pointer",
-          )}
-          {...props}
-        >
-          <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-            <Circle className="h-3 w-3 fill-purple-600 text-purple-600" />
-          </RadioGroupPrimitive.Indicator>
-        </RadioGroupPrimitive.Item>
-      )}
-      <div className={cn("radio-group-item-label", !hideRadio && "pl-8")} 
-        /* Removed duplicate className attribute here */
-      >
-        {title && <h3 className="font-medium text-gray-900 cursor-pointer">{title}</h3>}
-        {description && <p className="text-sm text-gray-500 mt-1 cursor-pointer">{description}</p>}
-        
-        {/* This is the container that will expand when checked to show the explanation and form fields */}
-        <div className={cn(
-          "radio-explanation",
-          props.checked ? "show" : ""
-        )}>
-          {explanation && (
-            <p className="text-sm text-gray-600 mb-3 cursor-pointer">
-              {explanation}
-            </p>
-          )}
-          {props.checked && children}
+        <div className="flex items-center gap-2.5">
+          <RadioGroupPrimitive.Item
+            ref={ref}
+            id={id}
+            className={cn(
+              "aspect-square h-5 w-5 rounded border border-gray-300 text-white ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 cursor-pointer",
+            )}
+            {...props}
+          >
+            <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+              <Check className="h-3.5 w-3.5" />
+            </RadioGroupPrimitive.Indicator>
+          </RadioGroupPrimitive.Item>
+          {title && <span className="font-medium text-gray-900 cursor-pointer">{title}</span>}
         </div>
+      )}
+      {description && <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">{description}</p>}
+      
+      {/* This is the container that will expand when checked to show the explanation and form fields */}
+      <div className={cn(
+        "radio-explanation mt-2",
+        !title && !description ? "" : "ml-7.5",
+        props.checked ? "show" : ""
+      )}>
+        {explanation && (
+          <p className="text-sm text-gray-600 mb-3 cursor-pointer">
+            {explanation}
+          </p>
+        )}
+        {props.checked && children}
       </div>
     </div>
   )
