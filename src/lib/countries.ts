@@ -25,13 +25,9 @@ export const COUNTRIES = [
   "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", 
   "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", 
   "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
-] as const;
+];
 
 // Ensure we always return a valid array
 export const getCountries = (): string[] => {
-  if (!COUNTRIES || !Array.isArray(COUNTRIES)) {
-    console.warn("countries.ts: COUNTRIES is not a valid array");
-    return [];
-  }
-  return [...COUNTRIES];
+  return Array.isArray(COUNTRIES) ? [...COUNTRIES] : [];
 };

@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
@@ -181,7 +180,7 @@ const Combobox = ({
 
   // Filter options based on search query
   const filteredOptions = React.useMemo(() => {
-    if (!safeOptions || safeOptions.length === 0) {
+    if (safeOptions.length === 0) {
       return [] as readonly string[];
     }
     
@@ -195,7 +194,7 @@ const Combobox = ({
   }, [safeOptions, searchQuery]);
 
   // Render a simple input field if there are no options
-  if (!safeOptions || safeOptions.length === 0) {
+  if (safeOptions.length === 0) {
     return (
       <input
         type="text"
@@ -212,12 +211,8 @@ const Combobox = ({
 
   // Create a reliable array of CommandItem elements
   const commandItems = React.useMemo(() => {
-    if (!filteredOptions || filteredOptions.length === 0) {
-      return [
-        <CommandItem key="empty-placeholder" value="" disabled>
-          No options available
-        </CommandItem>
-      ];
+    if (filteredOptions.length === 0) {
+      return null; // Let CommandEmpty handle this case
     }
     
     return filteredOptions.map((option) => (

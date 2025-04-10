@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Combobox } from "@/components/ui/select";
-import { COUNTRIES } from '@/lib/countries';
+import { COUNTRIES, getCountries } from '@/lib/countries';
 import { cn } from "@/lib/utils";
 
 interface CountryComboboxProps {
@@ -19,35 +19,24 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   className,
   excludeCountries = []
 }) => {
-  // Make sure we have a valid array to work with
+  // Get countries using the safer getCountries function
   const countriesArray = React.useMemo(() => {
-    // Defensive check to ensure COUNTRIES is an array
-    if (!COUNTRIES || !Array.isArray(COUNTRIES)) {
-      console.warn("CountryCombobox: COUNTRIES is not a valid array", COUNTRIES);
-      return [] as string[];
-    }
-    return [...COUNTRIES];
+    return getCountries();
   }, []);
   
   const filteredCountries = React.useMemo(() => {
-    // Defensive check for empty countries
-    if (!countriesArray || countriesArray.length === 0) {
-      return [] as string[];
-    }
-    
     // Apply exclusion filter if needed
-    if (!excludeCountries || !Array.isArray(excludeCountries) || excludeCountries.length === 0) {
+    if (!Array.isArray(excludeCountries) || excludeCountries.length === 0) {
       return countriesArray;
     }
     
     return countriesArray.filter(country => 
-      typeof country === 'string' && !excludeCountries.includes(country)
+      !excludeCountries.includes(country)
     );
   }, [countriesArray, excludeCountries]);
 
   // Always render a standard input if there are no countries available
   if (!filteredCountries || filteredCountries.length === 0) {
-    console.warn("CountryCombobox: No filtered countries available");
     return (
       <input
         type="text"
