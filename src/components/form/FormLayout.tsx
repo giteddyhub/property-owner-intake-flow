@@ -6,7 +6,6 @@ import OwnerStep from './steps/OwnerStep';
 import PropertyStep from './steps/PropertyStep';
 import AssignmentStep from './steps/AssignmentStep';
 import ReviewStep from './steps/ReviewStep';
-import SubmitStep from './steps/SubmitStep';
 import { cn } from '@/lib/utils';
 
 const STEPS = [
@@ -14,8 +13,7 @@ const STEPS = [
   { id: 1, name: 'Owners' },
   { id: 2, name: 'Properties' },
   { id: 3, name: 'Assignments' },
-  { id: 4, name: 'Review' },
-  { id: 5, name: 'Submit' }
+  { id: 4, name: 'Review' }
 ];
 
 const FormLayout: React.FC = () => {
@@ -34,8 +32,6 @@ const FormLayout: React.FC = () => {
         return <AssignmentStep />;
       case 4:
         return <ReviewStep />;
-      case 5:
-        return <SubmitStep />;
       default:
         return <WelcomeStep />;
     }
@@ -78,7 +74,7 @@ const FormLayout: React.FC = () => {
                 <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2"></div>
                 <div 
                   className="absolute top-1/2 left-0 h-0.5 bg-form-300 -translate-y-1/2 transition-all" 
-                  style={{ width: `${(currentStep) * 20}%` }}
+                  style={{ width: `${(currentStep) * 25}%` }}
                 ></div>
               </div>
             </div>
