@@ -1,8 +1,11 @@
+
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const Select = SelectPrimitive.Root
 
@@ -144,6 +147,86 @@ const SelectSeparator = React.forwardRef<
 ))
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 
+// Combobox component for searchable select
+interface ComboboxProps {
+  options: readonly string[]
+  value?: string
+  onValueChange: (value: string) => void
+  placeholder?: string
+  emptyMessage?: string
+  className?: string
+  triggerClassName?: string
+}
+
+const Combobox = ({
+  options,
+  value,
+  onValueChange,
+  placeholder = "Select option",
+  emptyMessage = "No results found.",
+  className,
+  triggerClassName,
+}: ComboboxProps) => {
+  const [open, setOpen] = React.useState(false)
+  const [searchQuery, setSearchQuery] = React.useState("")
+
+  const filteredOptions = searchQuery === ""
+    ? options
+    : options.filter((option) =>
+        option.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          role="combobox"
+          aria-expanded={open}
+          className={cn(
+            "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            triggerClassName
+          )}
+        >
+          {value || <span className="text-muted-foreground">{placeholder}</span>}
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className={cn("p-0", className)}>
+        <Command className="w-full">
+          <CommandInput
+            placeholder="Search..."
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            className="h-9"
+          />
+          <CommandEmpty>{emptyMessage}</CommandEmpty>
+          <CommandGroup className="max-h-[200px] overflow-y-auto">
+            {filteredOptions.map((option) => (
+              <CommandItem
+                key={option}
+                value={option}
+                onSelect={() => {
+                  onValueChange(option)
+                  setSearchQuery("")
+                  setOpen(false)
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === option ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {option}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 export {
   Select,
   SelectGroup,
@@ -155,4 +238,5 @@ export {
   SelectSeparator,
   SelectScrollUpButton,
   SelectScrollDownButton,
+  Combobox,
 }

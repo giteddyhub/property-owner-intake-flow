@@ -3,13 +3,7 @@ import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import FormNavigation from '@/components/form/FormNavigation';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -17,21 +11,10 @@ import { format } from 'date-fns';
 import { CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { 
-  Owner, 
-  MaritalStatus, 
-  Address, 
-  ItalianResidenceDetails 
-} from '@/types/form';
+import { Owner, MaritalStatus, Address, ItalianResidenceDetails } from '@/types/form';
+import CountryCombobox from '@/components/form/CountryCombobox';
 
 // List of countries for dropdowns
 const COUNTRIES = [
@@ -189,6 +172,22 @@ const OwnerStep: React.FC = () => {
         startDate: date || undefined
       }
     }));
+  };
+
+  const handleCountryChange = (field: string, value: string) => {
+    if (field === 'countryOfBirth') {
+      setCurrentOwner(prev => ({ ...prev, countryOfBirth: value }));
+    } else if (field === 'citizenship') {
+      setCurrentOwner(prev => ({ ...prev, citizenship: value }));
+    } else if (field === 'address.country') {
+      setCurrentOwner(prev => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          country: value
+        }
+      }));
+    }
   };
 
   const handleSubmit = () => {
@@ -392,36 +391,24 @@ const OwnerStep: React.FC = () => {
             
             <div>
               <Label htmlFor="countryOfBirth">Country of Birth*</Label>
-              <Select 
-                value={currentOwner.countryOfBirth} 
-                onValueChange={(value) => handleSelectChange('countryOfBirth', value)}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select country" />
-                </SelectTrigger>
-                <SelectContent>
-                  {COUNTRIES.map(country => (
-                    <SelectItem key={country} value={country}>{country}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-1">
+                <CountryCombobox
+                  value={currentOwner.countryOfBirth}
+                  onChange={(value) => handleCountryChange('countryOfBirth', value)}
+                  placeholder="Select country of birth"
+                />
+              </div>
             </div>
             
             <div>
               <Label htmlFor="citizenship">Citizenship*</Label>
-              <Select 
-                value={currentOwner.citizenship} 
-                onValueChange={(value) => handleSelectChange('citizenship', value)}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select citizenship" />
-                </SelectTrigger>
-                <SelectContent>
-                  {COUNTRIES.map(country => (
-                    <SelectItem key={country} value={country}>{country}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-1">
+                <CountryCombobox
+                  value={currentOwner.citizenship}
+                  onChange={(value) => handleCountryChange('citizenship', value)}
+                  placeholder="Select citizenship"
+                />
+              </div>
             </div>
             
             <div>
@@ -493,19 +480,14 @@ const OwnerStep: React.FC = () => {
               
               <div>
                 <Label htmlFor="address.country">Country*</Label>
-                <Select 
-                  value={currentOwner.address.country} 
-                  onValueChange={(value) => handleSelectChange('address.country', value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.filter(c => c !== 'Italy').map(country => (
-                      <SelectItem key={country} value={country}>{country}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="mt-1">
+                  <CountryCombobox
+                    value={currentOwner.address.country}
+                    onChange={(value) => handleCountryChange('address.country', value)}
+                    placeholder="Select country"
+                    excludeCountries={['Italy']}
+                  />
+                </div>
               </div>
             </div>
           </div>
