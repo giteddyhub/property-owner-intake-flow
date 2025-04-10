@@ -67,6 +67,19 @@ label:has(input[type="radio"]),
   cursor: pointer;
 }
 
+/* Ensure the pointer hand cursor appears on all radio-related elements */
+.radio-card,
+.radio-card *,
+input[type="radio"],
+label[for]:has(+ input[type="radio"]),
+[role="radiogroup"] label,
+[role="radio"],
+[role="radio"] + *,
+input[type="checkbox"],
+label[for]:has(+ input[type="checkbox"]) {
+  cursor: pointer !important;
+}
+
 /* Custom animation for radio selection */
 .radio-animate {
   transition: all 0.2s ease-in-out;
