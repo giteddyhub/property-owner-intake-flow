@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -95,6 +94,9 @@ const PropertyStep: React.FC = () => {
     SHORT_TERM_RENT: [],
   });
 
+  const purchasePriceRef = useRef<HTMLInputElement>(null);
+  const salePriceRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const totalMonthsUsed = Object.values(occupancyMonths).reduce((sum, months) => sum + months, 0);
     const remainingMonths = 12 - totalMonthsUsed;
@@ -159,9 +161,19 @@ const PropertyStep: React.FC = () => {
     }
   };
 
-  const handlePriceChange = useCallback((name: string, value: string) => {
+  const handlePriceChange = useCallback((name: string, value: string, inputRef: React.RefObject<HTMLInputElement>) => {
     const numValue = value === '' ? undefined : Number(value);
     setCurrentProperty(prev => ({ ...prev, [name]: numValue }));
+    
+    setTimeout(() => {
+      if (inputRef.current) {
+        const cursorPosition = inputRef.current.selectionStart;
+        inputRef.current.focus();
+        if (cursorPosition !== null) {
+          inputRef.current.setSelectionRange(cursorPosition, cursorPosition);
+        }
+      }
+    }, 0);
   }, []);
 
   const handleSelectChange = (name: string, value: string) => {
@@ -478,8 +490,9 @@ const PropertyStep: React.FC = () => {
           min="0"
           placeholder="Enter purchase price"
           value={currentProperty.purchasePrice || ''}
-          onChange={(e) => handlePriceChange('purchasePrice', e.target.value)}
+          onChange={(e) => handlePriceChange('purchasePrice', e.target.value, purchasePriceRef)}
           className="pl-10"
+          ref={purchasePriceRef}
         />
       </div>
     </div>
@@ -528,8 +541,9 @@ const PropertyStep: React.FC = () => {
           min="0"
           placeholder="Enter sale price"
           value={currentProperty.salePrice || ''}
-          onChange={(e) => handlePriceChange('salePrice', e.target.value)}
+          onChange={(e) => handlePriceChange('salePrice', e.target.value, salePriceRef)}
           className="pl-10"
+          ref={salePriceRef}
         />
       </div>
     </div>

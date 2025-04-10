@@ -7,7 +7,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
     
-    // Combine refs using useEffect to ensure our input ref is always updated
+    // Properly combine refs to ensure focus is maintained
     React.useEffect(() => {
       if (ref) {
         if (typeof ref === 'function') {
