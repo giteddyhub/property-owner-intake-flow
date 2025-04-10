@@ -9,12 +9,13 @@ interface FormNavigationProps {
   submitText?: string;
   showBack?: boolean;
   showNext?: boolean;
-  onCancel?: () => void; // Added for form cancellation
-  cancelText?: string; // Added for custom cancel text
-  onSubmit?: () => void; // Added for form submission
-  submitButtonText?: string; // Added for custom submit button text
-  isFormMode?: boolean; // Added to determine if we're in a form editing mode
-  hideCancel?: boolean; // Added to hide cancel button in specific cases
+  hideNextButton?: boolean; // Added this prop
+  onCancel?: () => void;
+  cancelText?: string;
+  onSubmit?: () => void;
+  submitButtonText?: string;
+  isFormMode?: boolean;
+  hideCancel?: boolean;
 }
 
 const FormNavigation: React.FC<FormNavigationProps> = ({
@@ -22,6 +23,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   submitText = 'Submit',
   showBack = true,
   showNext = true,
+  hideNextButton = false, // Added default value
   onCancel,
   cancelText = 'Cancel',
   onSubmit,
@@ -88,7 +90,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
         <div></div>
       )}
       
-      {showNext && (
+      {showNext && !hideNextButton && (
         <Button 
           type="button" 
           onClick={handleNext}

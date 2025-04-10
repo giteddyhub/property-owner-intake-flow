@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
+import { Database } from '@/integrations/supabase/types';
 
 // Owner functions
 export const saveOwner = async (owner: Owner): Promise<string> => {
@@ -42,7 +43,7 @@ export const saveOwner = async (owner: Owner): Promise<string> => {
     throw new Error(`Error saving owner: ${error.message}`);
   }
   
-  return data.id;
+  return data?.id || '';
 };
 
 export const getOwners = async (): Promise<Owner[]> => {
@@ -53,6 +54,8 @@ export const getOwners = async (): Promise<Owner[]> => {
   if (error) {
     throw new Error(`Error fetching owners: ${error.message}`);
   }
+  
+  if (!data) return [];
   
   return data.map(owner => ({
     id: owner.id,
@@ -120,7 +123,7 @@ export const saveProperty = async (property: Property): Promise<string> => {
   // Save occupancy statuses
   if (occupancyStatuses && occupancyStatuses.length > 0) {
     const statusData = occupancyStatuses.map(status => ({
-      property_id: data.id,
+      property_id: data?.id,
       occupancy_status: status
     }));
     
@@ -133,7 +136,7 @@ export const saveProperty = async (property: Property): Promise<string> => {
     }
   }
   
-  return data.id;
+  return data?.id || '';
 };
 
 export const getProperties = async (): Promise<Property[]> => {
@@ -145,6 +148,8 @@ export const getProperties = async (): Promise<Property[]> => {
   if (error) {
     throw new Error(`Error fetching properties: ${error.message}`);
   }
+  
+  if (!properties) return [];
   
   // Fetch occupancy statuses for each property
   const propertiesWithStatuses = await Promise.all(
@@ -174,7 +179,7 @@ export const getProperties = async (): Promise<Property[]> => {
         salePrice: property.sale_price,
         propertyType: property.property_type as any,
         remodeling: property.remodeling,
-        occupancyStatuses: statuses.map(s => s.occupancy_status) as any[],
+        occupancyStatuses: statuses ? statuses.map(s => s.occupancy_status) as any[] : [],
         monthsOccupied: property.months_occupied,
         rentalIncome: property.rental_income
       };
@@ -216,7 +221,7 @@ export const saveAssignment = async (assignment: OwnerPropertyAssignment): Promi
     throw new Error(`Error saving assignment: ${error.message}`);
   }
   
-  return data.id;
+  return data?.id || '';
 };
 
 export const getAssignments = async (): Promise<OwnerPropertyAssignment[]> => {
@@ -228,16 +233,18 @@ export const getAssignments = async (): Promise<OwnerPropertyAssignment[]> => {
     throw new Error(`Error fetching assignments: ${error.message}`);
   }
   
+  if (!data) return [];
+  
   return data.map(assignment => ({
-    propertyId: assignment.property_id,
-    ownerId: assignment.owner_id,
-    ownershipPercentage: assignment.ownership_percentage,
-    residentAtProperty: assignment.resident_at_property,
+    propertyId: assignment.property_id || '',
+    ownerId: assignment.owner_id || '',
+    ownershipPercentage: assignment.ownership_percentage || 0,
+    residentAtProperty: assignment.resident_at_property || false,
     residentDateRange: (assignment.resident_from || assignment.resident_to) ? {
       from: assignment.resident_from ? new Date(assignment.resident_from) : null,
       to: assignment.resident_to ? new Date(assignment.resident_to) : null
     } : undefined,
-    taxCredits: assignment.tax_credits
+    taxCredits: assignment.tax_credits || 0
   }));
 };
 
