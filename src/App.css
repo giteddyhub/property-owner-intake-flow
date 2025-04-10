@@ -103,6 +103,46 @@ input[type="radio"] ~ * *,
   cursor: pointer !important;
 }
 
+/* Modern toggle-style radio button */
+.modern-radio {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.modern-radio-input {
+  appearance: none;
+  width: 3rem;
+  height: 1.5rem;
+  background-color: #e9e9e9;
+  border-radius: 1.5rem;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.modern-radio-input:checked {
+  background-color: #8B5CF6;
+}
+
+.modern-radio-input::after {
+  content: "";
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.modern-radio-input:checked::after {
+  left: calc(100% - 1.35rem);
+}
+
 /* Custom animation for radio selection */
 .radio-animate {
   transition: all 0.2s ease-in-out;
@@ -131,4 +171,49 @@ input[type="radio"] ~ * *,
   max-height: 400px; /* Increased to accommodate form fields */
   opacity: 1;
   margin-top: 1rem;
+}
+
+/* Modern radio button styles to match the screenshot */
+.residency-toggle [data-state="checked"] {
+  background-color: #8B5CF6 !important;
+  border-color: #8B5CF6 !important;
+}
+
+.residency-toggle [data-state="checked"] div {
+  transform: translateX(0.25rem) !important;
+}
+
+.residency-toggle [data-state="unchecked"] div {
+  transform: translateX(-1rem) !important;
+}
+
+/* Custom radio buttons for residency period */
+.residency-period-radio {
+  @apply flex items-center space-x-2;
+}
+
+.residency-period-radio input[type="radio"] {
+  @apply sr-only; /* Hide the default radio button */
+}
+
+.residency-period-radio label {
+  @apply flex items-center cursor-pointer;
+}
+
+.residency-period-radio label::before {
+  content: "";
+  @apply inline-block w-5 h-5 rounded-full border border-gray-300 mr-2 transition-colors;
+}
+
+.residency-period-radio input[type="radio"]:checked + label::before {
+  @apply border-4 border-purple-600 bg-white;
+}
+
+.residency-period-radio input[type="radio"]:focus + label::before {
+  @apply ring-2 ring-purple-400 ring-offset-2;
+}
+
+/* Residency period radio group */
+.residency-period-group {
+  @apply flex space-x-6 mt-2;
 }

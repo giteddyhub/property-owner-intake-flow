@@ -40,6 +40,30 @@ const RadioGroupItem = React.forwardRef<
 })
 RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
 
+// Create a modern styled radio item that matches the example image
+const ModernRadioGroupItem = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
+>(({ className, ...props }, ref) => {
+  return (
+    <div className="flex items-center">
+      <RadioGroupPrimitive.Item
+        ref={ref}
+        className={cn(
+          "peer relative h-6 w-12 cursor-pointer appearance-none rounded-full border-2 border-purple-300 bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-purple-600 data-[state=checked]:bg-purple-600",
+          className
+        )}
+        {...props}
+      >
+        <RadioGroupPrimitive.Indicator className="flex items-center justify-end">
+          <div className="h-4 w-4 rounded-full bg-white translate-x-[-6px]" />
+        </RadioGroupPrimitive.Indicator>
+      </RadioGroupPrimitive.Item>
+    </div>
+  )
+})
+ModernRadioGroupItem.displayName = "ModernRadioGroupItem"
+
 // Create a card-style radio item that matches the example image
 const CardRadioGroupItem = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Item>,
@@ -101,4 +125,4 @@ const CardRadioGroupItem = React.forwardRef<
 })
 CardRadioGroupItem.displayName = "CardRadioGroupItem"
 
-export { RadioGroup, RadioGroupItem, CardRadioGroupItem }
+export { RadioGroup, RadioGroupItem, CardRadioGroupItem, ModernRadioGroupItem }
