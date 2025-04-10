@@ -22,7 +22,10 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   const countriesArray = Array.isArray(COUNTRIES) ? COUNTRIES : [];
   
   const filteredCountries = React.useMemo(() => {
-    if (countriesArray.length === 0) return [];
+    if (countriesArray.length === 0) {
+      console.warn("No countries available in the COUNTRIES array");
+      return [];
+    }
     
     if (!excludeCountries || excludeCountries.length === 0) {
       return countriesArray;
@@ -32,6 +35,24 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
       !excludeCountries.includes(country)
     );
   }, [countriesArray, excludeCountries]);
+
+  // Add additional safeguard
+  if (filteredCountries.length === 0) {
+    console.warn("No countries available after filtering");
+    // Return a simpler input if no countries are available
+    return (
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={cn(
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
+          className
+        )}
+      />
+    );
+  }
 
   return (
     <Combobox
@@ -43,5 +64,8 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     />
   );
 };
+
+// Add missing import
+const cn = (...classes: any[]) => classes.filter(Boolean).join(" ");
 
 export default CountryCombobox;

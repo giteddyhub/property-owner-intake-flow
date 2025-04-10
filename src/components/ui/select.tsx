@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
@@ -183,6 +184,10 @@ const Combobox = ({
         );
   }, [safeOptions, searchQuery]);
 
+  // Don't render popup content if there are no options
+  // This prevents the error by avoiding command rendering with empty/undefined data
+  const hasOptions = safeOptions.length > 0;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -198,38 +203,40 @@ const Combobox = ({
           <ChevronDown className="h-4 w-4 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className={cn("p-0", className)} align="start" side="bottom">
-        <Command className="w-full">
-          <CommandInput
-            placeholder="Search..."
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-            className="h-9"
-          />
-          <CommandEmpty>{emptyMessage}</CommandEmpty>
-          <CommandGroup className="max-h-[200px] overflow-y-auto">
-            {filteredOptions.map((option) => (
-              <CommandItem
-                key={option}
-                value={option}
-                onSelect={() => {
-                  onValueChange(option)
-                  setSearchQuery("")
-                  setOpen(false)
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === option ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                {option}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
+      {hasOptions && (
+        <PopoverContent className={cn("p-0", className)} align="start" side="bottom">
+          <Command className="w-full">
+            <CommandInput
+              placeholder="Search..."
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              className="h-9"
+            />
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandGroup className="max-h-[200px] overflow-y-auto">
+              {filteredOptions.map((option) => (
+                <CommandItem
+                  key={option}
+                  value={option}
+                  onSelect={() => {
+                    onValueChange(option)
+                    setSearchQuery("")
+                    setOpen(false)
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      )}
     </Popover>
   )
 }
