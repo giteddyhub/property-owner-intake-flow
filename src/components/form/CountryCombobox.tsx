@@ -18,20 +18,24 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   className,
   excludeCountries = []
 }) => {
+  // Ensure COUNTRIES is defined and is an array before using it
+  const countriesArray = Array.isArray(COUNTRIES) ? COUNTRIES : [];
+  
   const filteredCountries = React.useMemo(() => {
-    // Make sure COUNTRIES is defined and is an array before filtering
-    if (!Array.isArray(COUNTRIES)) {
-      console.error("COUNTRIES is not an array:", COUNTRIES);
-      return [];
+    if (countriesArray.length === 0) return [];
+    
+    if (!excludeCountries || excludeCountries.length === 0) {
+      return countriesArray;
     }
     
-    if (excludeCountries.length === 0) return COUNTRIES;
-    return COUNTRIES.filter(country => !excludeCountries.includes(country));
-  }, [excludeCountries]);
+    return countriesArray.filter(country => 
+      !excludeCountries.includes(country)
+    );
+  }, [countriesArray, excludeCountries]);
 
   return (
     <Combobox
-      options={filteredCountries || []} // Ensure we always pass an array
+      options={filteredCountries}
       value={value}
       onValueChange={onChange}
       placeholder={placeholder}

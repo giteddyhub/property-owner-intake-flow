@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
@@ -170,20 +169,19 @@ const Combobox = ({
   const [open, setOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
 
-  // Ensure options is always an array
+  // Ensure options is always a valid array
   const safeOptions = Array.isArray(options) ? options : [];
 
   // Initialize filteredOptions with an empty array to handle undefined options
-  let filteredOptions: string[] = [];
-  
-  // Only filter if safeOptions has items
-  if (safeOptions.length > 0) {
-    filteredOptions = searchQuery === ""
+  const filteredOptions = React.useMemo(() => {
+    if (safeOptions.length === 0) return [];
+    
+    return searchQuery === ""
       ? safeOptions
       : safeOptions.filter((option) =>
           option.toLowerCase().includes(searchQuery.toLowerCase())
         );
-  }
+  }, [safeOptions, searchQuery]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -200,7 +198,7 @@ const Combobox = ({
           <ChevronDown className="h-4 w-4 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className={cn("p-0", className)} align="start">
+      <PopoverContent className={cn("p-0", className)} align="start" side="bottom">
         <Command className="w-full">
           <CommandInput
             placeholder="Search..."
