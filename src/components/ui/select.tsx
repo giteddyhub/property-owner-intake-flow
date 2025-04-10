@@ -173,11 +173,17 @@ const Combobox = ({
   // Ensure options is always an array
   const safeOptions = Array.isArray(options) ? options : [];
 
-  const filteredOptions = searchQuery === ""
-    ? safeOptions
-    : safeOptions.filter((option) =>
-        option.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+  // Initialize filteredOptions with an empty array to handle undefined options
+  let filteredOptions: string[] = [];
+  
+  // Only filter if safeOptions has items
+  if (safeOptions.length > 0) {
+    filteredOptions = searchQuery === ""
+      ? safeOptions
+      : safeOptions.filter((option) =>
+          option.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -194,7 +200,7 @@ const Combobox = ({
           <ChevronDown className="h-4 w-4 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className={cn("p-0", className)}>
+      <PopoverContent className={cn("p-0", className)} align="start">
         <Command className="w-full">
           <CommandInput
             placeholder="Search..."
