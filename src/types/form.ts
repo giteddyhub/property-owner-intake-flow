@@ -43,7 +43,7 @@ export interface PropertyAddress {
 
 export interface Property {
   id: string;
-  label?: string;
+  label: string; // Changed from label?: string to make it required
   address: PropertyAddress;
   activity2024: ActivityType;
   purchaseDate?: Date | null;

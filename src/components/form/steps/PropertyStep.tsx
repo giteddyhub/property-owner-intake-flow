@@ -166,6 +166,11 @@ const PropertyStep: React.FC = () => {
 
   const handleSubmit = () => {
     // Basic validation
+    if (!currentProperty.label?.trim()) {
+      toast.error('Please enter a property name');
+      return;
+    }
+    
     if (!currentProperty.address.comune.trim()) {
       toast.error('Please enter a comune name');
       return;
@@ -339,7 +344,7 @@ const PropertyStep: React.FC = () => {
           
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label htmlFor="label">Property Label (Optional)</Label>
+              <Label htmlFor="label">Property Name*</Label>
               <Input 
                 id="label" 
                 name="label" 
@@ -347,6 +352,7 @@ const PropertyStep: React.FC = () => {
                 value={currentProperty.label || ''} 
                 onChange={handleInputChange} 
                 className="mt-1"
+                required
               />
             </div>
           </div>
