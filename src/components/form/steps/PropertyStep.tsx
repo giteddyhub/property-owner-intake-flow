@@ -263,7 +263,7 @@ const PropertyStep: React.FC = () => {
       ...property,
       occupancyStatuses: Array.isArray(property.occupancyStatuses) 
         ? property.occupancyStatuses 
-        : [property.occupancyStatus || 'PERSONAL_USE']
+        : ['PERSONAL_USE']
     };
     
     setCurrentProperty(updatedProperty);
