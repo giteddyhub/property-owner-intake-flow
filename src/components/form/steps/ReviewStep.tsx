@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -299,7 +300,7 @@ const ReviewStep: React.FC = () => {
       </p>
       
       <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded text-amber-800 text-sm">
-        <p className="font-medium mb-1">Disclaimer:</p>
+        <p className="font-medium mb-1">🚨 Disclaimer:</p>
         <p>By submitting this form, you acknowledge that you take full responsibility for the accuracy of all information provided. 
         We are not liable for any errors, omissions, or inaccuracies in the submitted data. Please ensure all information is 
         complete and correct before proceeding with submission.</p>
