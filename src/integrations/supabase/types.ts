@@ -9,8 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      contacts: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       owner_property_assignments: {
         Row: {
+          contact_id: string | null
           created_at: string
           id: string
           owner_id: string
@@ -23,6 +51,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contact_id?: string | null
           created_at?: string
           id?: string
           owner_id: string
@@ -35,6 +64,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contact_id?: string | null
           created_at?: string
           id?: string
           owner_id?: string
@@ -47,6 +77,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "owner_property_assignments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "owner_property_assignments_owner_id_fkey"
             columns: ["owner_id"]
@@ -70,6 +107,7 @@ export type Database = {
           address_street: string
           address_zip: string
           citizenship: string
+          contact_id: string | null
           country_of_birth: string
           created_at: string
           date_of_birth: string | null
@@ -92,6 +130,7 @@ export type Database = {
           address_street: string
           address_zip: string
           citizenship: string
+          contact_id?: string | null
           country_of_birth: string
           created_at?: string
           date_of_birth?: string | null
@@ -114,6 +153,7 @@ export type Database = {
           address_street?: string
           address_zip?: string
           citizenship?: string
+          contact_id?: string | null
           country_of_birth?: string
           created_at?: string
           date_of_birth?: string | null
@@ -130,7 +170,15 @@ export type Database = {
           spent_over_182_days?: boolean | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "owners_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       properties: {
         Row: {
@@ -139,6 +187,7 @@ export type Database = {
           address_province: string
           address_street: string
           address_zip: string
+          contact_id: string | null
           created_at: string
           id: string
           label: string
@@ -159,6 +208,7 @@ export type Database = {
           address_province: string
           address_street: string
           address_zip: string
+          contact_id?: string | null
           created_at?: string
           id?: string
           label: string
@@ -179,6 +229,7 @@ export type Database = {
           address_province?: string
           address_street?: string
           address_zip?: string
+          contact_id?: string | null
           created_at?: string
           id?: string
           label?: string
@@ -193,7 +244,15 @@ export type Database = {
           sale_price?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "properties_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
