@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -325,10 +326,7 @@ const OwnerStep: React.FC = () => {
                   {owner.isResidentInItaly && owner.italianResidenceDetails && (
                     <>
                       <p className="text-sm text-gray-600">
-                        <strong>Italian Residence:</strong> {owner.italianResidenceDetails.comuneName}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <strong>Italian Address:</strong> {owner.italianResidenceDetails.street}, {owner.italianResidenceDetails.city}, {owner.italianResidenceDetails.zip}
+                        <strong>Italian Residence:</strong> {owner.italianResidenceDetails.comuneName}, {owner.italianResidenceDetails.street}, {owner.italianResidenceDetails.city}, {owner.italianResidenceDetails.zip}
                       </p>
                     </>
                   )}
@@ -548,6 +546,7 @@ const OwnerStep: React.FC = () => {
             
             {currentOwner.isResidentInItaly && (
               <div className="mt-4 border-t pt-4">
+                <h4 className="font-medium mb-3">Italian Address*</h4>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <Label htmlFor="comuneName">Comune Name*</Label>
@@ -561,45 +560,40 @@ const OwnerStep: React.FC = () => {
                     />
                   </div>
                   
-                  <div className="col-span-2 mt-4">
-                    <h4 className="font-medium mb-3">Italian Address*</h4>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <Label htmlFor="street">Street Address*</Label>
-                        <Input 
-                          id="street" 
-                          name="street" 
-                          placeholder="Enter street address in Italy"
-                          value={currentOwner.italianResidenceDetails?.street || ''} 
-                          onChange={handleResidencyDetailChange}
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="city">City*</Label>
-                        <Input 
-                          id="city" 
-                          name="city" 
-                          placeholder="Enter city name in Italy"
-                          value={currentOwner.italianResidenceDetails?.city || ''} 
-                          onChange={handleResidencyDetailChange}
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="zip">ZIP/Postal Code*</Label>
-                        <Input 
-                          id="zip" 
-                          name="zip" 
-                          placeholder="Enter ZIP/postal code in Italy"
-                          value={currentOwner.italianResidenceDetails?.zip || ''} 
-                          onChange={handleResidencyDetailChange}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
+                  <div>
+                    <Label htmlFor="street">Street Address*</Label>
+                    <Input 
+                      id="street" 
+                      name="street" 
+                      placeholder="Enter street address in Italy"
+                      value={currentOwner.italianResidenceDetails?.street || ''} 
+                      onChange={handleResidencyDetailChange}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="city">City*</Label>
+                    <Input 
+                      id="city" 
+                      name="city" 
+                      placeholder="Enter city name in Italy"
+                      value={currentOwner.italianResidenceDetails?.city || ''} 
+                      onChange={handleResidencyDetailChange}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="zip">ZIP/Postal Code*</Label>
+                    <Input 
+                      id="zip" 
+                      name="zip" 
+                      placeholder="Enter ZIP/postal code in Italy"
+                      value={currentOwner.italianResidenceDetails?.zip || ''} 
+                      onChange={handleResidencyDetailChange}
+                      className="mt-1"
+                    />
                   </div>
                 </div>
               </div>
