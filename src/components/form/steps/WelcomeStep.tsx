@@ -19,13 +19,31 @@ const WelcomeStep: React.FC = () => {
           for tax purposes in Italy. Please have the following information ready:
         </p>
         
-        <ul className="list-disc list-inside space-y-2 mb-6">
-          <li>Personal details for all property owners</li>
-          <li>Property addresses and details</li>
-          <li>Purchase/sale dates and prices (if applicable)</li>
-          <li>Rental income information (if applicable)</li>
-          <li>Ownership percentages for each property</li>
-          <li>Italian tax codes (mandatory)</li>
+        <ul className="space-y-2 mb-6 list-none">
+          <li className="flex items-start">
+            <span className="mr-2">✅</span>
+            <span>Personal details for all property owners</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">✅</span>
+            <span>Property addresses and details</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">✅</span>
+            <span>Purchase/sale dates and prices (if applicable)</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">✅</span>
+            <span>Rental income information (if applicable)</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">✅</span>
+            <span>Ownership percentages for each property</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">✅</span>
+            <span>Italian tax codes (mandatory)</span>
+          </li>
         </ul>
         
         <p className="mb-4">
