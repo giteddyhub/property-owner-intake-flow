@@ -65,8 +65,8 @@ function Calendar({
     [onDayClick, mode, props.selected]
   );
 
-  // Create DayPicker props based on the current mode
-  const dayPickerProps: Partial<CalendarProps> = {
+  // Create base DayPicker props with the common properties
+  const baseProps = {
     showOutsideDays,
     className: cn("p-3 pointer-events-auto", className),
     classNames: {
@@ -115,16 +115,40 @@ function Calendar({
     formatters: { formatMonthCaption },
     fromYear: 1900,
     toYear: 2025,
-    onDayClick: handleDayClick,
     ...props
   };
 
-  // Don't pass the mode via spread, but add it conditionally
-  if (mode) {
-    dayPickerProps.mode = mode;
+  // Define final props based on mode
+  let finalProps;
+  
+  if (mode === "range") {
+    finalProps = {
+      ...baseProps,
+      mode: "range" as const,
+      onDayClick: handleDayClick
+    };
+  } else if (mode === "single") {
+    finalProps = {
+      ...baseProps,
+      mode: "single" as const,
+      onDayClick: handleDayClick
+    };
+  } else if (mode === "multiple") {
+    finalProps = {
+      ...baseProps,
+      mode: "multiple" as const,
+      onDayClick: handleDayClick
+    };
+  } else {
+    // Default mode
+    finalProps = {
+      ...baseProps,
+      mode: "default" as const,
+      onDayClick: handleDayClick
+    };
   }
 
-  return <DayPicker {...dayPickerProps} />;
+  return <DayPicker {...finalProps} />;
 }
 Calendar.displayName = "Calendar";
 
