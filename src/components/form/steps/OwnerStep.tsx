@@ -8,7 +8,7 @@ import FormNavigation from '@/components/form/FormNavigation';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, Plus, Trash2, HelpCircle } from 'lucide-react';
+import { CalendarIcon, Plus, Trash2, HelpCircle, Flag, FlagOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -285,17 +285,45 @@ const OwnerStep: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="flex justify-between">
                     <span>{owner.firstName} {owner.lastName}</span>
+                    <div className="flex items-center">
+                      {owner.isResidentInItaly ? (
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Flag className="h-4 w-4 text-green-600 ml-2" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Italian Tax Resident</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <FlagOff className="h-4 w-4 text-gray-500 ml-2" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Not an Italian Tax Resident</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
                   </CardTitle>
                   <CardDescription>
                     {owner.dateOfBirth ? format(new Date(owner.dateOfBirth), 'PPP') : 'No DOB'} • {owner.citizenship}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    <strong>Tax Code:</strong> {owner.italianTaxCode || 'N/A'}
+                  </p>
                   <p className="text-sm text-gray-600">
                     <strong>Address:</strong> {owner.address.street}, {owner.address.city}, {owner.address.zip}, {owner.address.country}
                   </p>
                   {owner.isResidentInItaly && owner.italianResidenceDetails && (
-                    <p className="text-sm text-gray-600 mt-2">
+                    <p className="text-sm text-gray-600">
                       <strong>Italian Residence:</strong> {owner.italianResidenceDetails.comuneName}
                       {owner.italianResidenceDetails.fullYear 
                         ? ' (Full Year)' 
