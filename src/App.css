@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +40,30 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Custom radio styles */
+.radio-card {
+  @apply relative rounded-lg border border-gray-200 p-4 transition-all;
+}
+
+.radio-card:hover {
+  @apply border-gray-300;
+}
+
+.radio-card[data-state="checked"] {
+  @apply border-purple-500 ring-1 ring-purple-500;
+}
+
+.radio-card-selected {
+  @apply bg-purple-50;
+}
+
+/* Custom animation for radio selection */
+.radio-animate {
+  transition: all 0.2s ease-in-out;
+}
+
+.radio-animate:active {
+  transform: scale(0.95);
 }
