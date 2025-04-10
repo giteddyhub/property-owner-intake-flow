@@ -303,6 +303,7 @@ const PropertyStep: React.FC = () => {
           name="purchasePrice" 
           type="number"
           min="0"
+          placeholder="Enter purchase price"
           value={currentProperty.purchasePrice || ''}
           onChange={handleInputChange}
           className="pl-10"
@@ -353,6 +354,7 @@ const PropertyStep: React.FC = () => {
           name="salePrice" 
           type="number"
           min="0"
+          placeholder="Enter sale price"
           value={currentProperty.salePrice || ''}
           onChange={handleInputChange}
           className="pl-10"
@@ -463,6 +465,7 @@ const PropertyStep: React.FC = () => {
                 <Input 
                   id="address.comune" 
                   name="address.comune" 
+                  placeholder="e.g. Roma, Milano, Firenze"
                   value={currentProperty.address.comune} 
                   onChange={handleInputChange}
                   className="mt-1"
@@ -491,6 +494,7 @@ const PropertyStep: React.FC = () => {
                 <Input 
                   id="address.street" 
                   name="address.street" 
+                  placeholder="e.g. Via Roma 123"
                   value={currentProperty.address.street} 
                   onChange={handleInputChange}
                   className="mt-1"
@@ -502,6 +506,7 @@ const PropertyStep: React.FC = () => {
                 <Input 
                   id="address.zip" 
                   name="address.zip" 
+                  placeholder="e.g. 00100"
                   value={currentProperty.address.zip} 
                   onChange={handleInputChange}
                   className="mt-1"
@@ -629,6 +634,7 @@ const PropertyStep: React.FC = () => {
                     type="number"
                     min="1"
                     max="12"
+                    placeholder="e.g. 12"
                     value={currentProperty.monthsOccupied || ''}
                     onChange={handleInputChange}
                     className="mt-1 w-20"
@@ -651,6 +657,7 @@ const PropertyStep: React.FC = () => {
                     type="number"
                     min="1"
                     max="12"
+                    placeholder="e.g. 6"
                     value={currentProperty.monthsOccupied || ''}
                     onChange={handleInputChange}
                     className="mt-1 w-20"
@@ -673,6 +680,7 @@ const PropertyStep: React.FC = () => {
                     type="number"
                     min="1"
                     max="12"
+                    placeholder="e.g. 3"
                     value={currentProperty.monthsOccupied || ''}
                     onChange={handleInputChange}
                     className="mt-1 w-20"
