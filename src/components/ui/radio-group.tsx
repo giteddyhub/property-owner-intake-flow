@@ -82,7 +82,9 @@ const CardRadioGroupItem = React.forwardRef<
           </RadioGroupPrimitive.Indicator>
         </RadioGroupPrimitive.Item>
       )}
-      <div className={cn("radio-group-item-label", !hideRadio && "pl-8")} className="block cursor-pointer">
+      <div className={cn("radio-group-item-label", !hideRadio && "pl-8")} 
+        /* Removed duplicate className attribute here */
+      >
         {title && <h3 className="font-medium text-gray-900 cursor-pointer">{title}</h3>}
         {description && <p className="text-sm text-gray-500 mt-1 cursor-pointer">{description}</p>}
         
