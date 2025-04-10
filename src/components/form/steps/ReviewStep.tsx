@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,6 @@ const ReviewStep: React.FC = () => {
     try {
       setIsSubmitting(true);
       
-      // Create a mapping from local IDs to database IDs
       const ownerIdMap = new Map<string, string>();
       const propertyIdMap = new Map<string, string>();
       
@@ -50,7 +48,6 @@ const ReviewStep: React.FC = () => {
         assignmentsCount: assignments.length
       });
       
-      // First, save all owners
       for (const owner of owners) {
         console.log("Saving owner:", owner.firstName, owner.lastName);
         
@@ -91,7 +88,6 @@ const ReviewStep: React.FC = () => {
         }
       }
       
-      // Then, save all properties
       for (const property of properties) {
         console.log("Saving property:", property.label);
         
@@ -135,7 +131,6 @@ const ReviewStep: React.FC = () => {
         properties: Array.from(propertyIdMap.entries())
       });
       
-      // Finally, save all assignments using the new database IDs
       for (const assignment of assignments) {
         const newPropertyId = propertyIdMap.get(assignment.propertyId);
         const newOwnerId = ownerIdMap.get(assignment.ownerId);
@@ -188,7 +183,6 @@ const ReviewStep: React.FC = () => {
         }
       }
       
-      // Show success toast
       toast.success('Form submitted successfully!', {
         description: 'Thank you for completing the property owner intake process.',
         duration: 5000,
@@ -277,14 +271,14 @@ const ReviewStep: React.FC = () => {
     }
   };
   
-  const formatOccupancyStatuses = (statuses: OccupancyStatus[]) => {
-    const statusMap = {
-      PERSONAL_USE: 'Personal Use',
-      LONG_TERM_RENT: 'Long-term Rental',
-      SHORT_TERM_RENT: 'Short-term Rental'
-    };
+  const formatOccupancyStatuses = (statuses: OccupancyStatus[], monthsOccupied?: number) => {
+    if (statuses.length === 1) {
+      return `${formatOccupancyStatus(statuses[0])} (${monthsOccupied || 0} months)`;
+    }
     
-    return statuses.map(status => statusMap[status]).join(', ');
+    return statuses.map(status => 
+      `${formatOccupancyStatus(status)}`
+    ).join(', ') + ` (${monthsOccupied || 0} months total)`;
   };
 
   const hasRentalStatus = (property: Property) => {
@@ -478,9 +472,9 @@ const ReviewStep: React.FC = () => {
                       <p className="font-medium">Rental Status</p>
                       <p>{
                         Array.isArray(property.occupancyStatuses) 
-                          ? formatOccupancyStatuses(property.occupancyStatuses) 
+                          ? formatOccupancyStatuses(property.occupancyStatuses, property.monthsOccupied) 
                           : 'Not specified'
-                      } ({property.monthsOccupied} months)</p>
+                      }</p>
                     </div>
                     <div>
                       <p className="font-medium">Remodeling in 2024</p>
