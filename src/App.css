@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -115,19 +116,19 @@ input[type="radio"] ~ * *,
 .radio-explanation {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.2s ease-out, opacity 0.2s ease-out, margin 0.2s ease-out;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin 0.3s ease-out;
   opacity: 0;
 }
 
 .radio-explanation.show {
-  max-height: 200px;
+  max-height: 400px; /* Increased to accommodate form fields */
   opacity: 1;
-  margin-top: 0.5rem;
+  margin-top: 1rem;
 }
 
 /* Add a smooth transition when explanation appears */
 [data-state="checked"] .radio-explanation {
-  max-height: 200px;
+  max-height: 400px; /* Increased to accommodate form fields */
   opacity: 1;
-  margin-top: 0.5rem;
+  margin-top: 1rem;
 }

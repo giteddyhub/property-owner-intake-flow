@@ -47,6 +47,7 @@ const CardRadioGroupItem = React.forwardRef<
     title?: string;
     description?: string;
     explanation?: string;
+    children?: React.ReactNode;
   }
 >(({ className, title, description, explanation, children, ...props }, ref) => {
   // Generate an ID for connecting the label to the radio
@@ -78,18 +79,23 @@ const CardRadioGroupItem = React.forwardRef<
           <Circle className="h-3 w-3 fill-purple-600 text-purple-600" />
         </RadioGroupPrimitive.Indicator>
       </RadioGroupPrimitive.Item>
-      {(title || description || explanation || children) && (
-        <label htmlFor={id} className="radio-group-item-label pl-8 block cursor-pointer">
-          {title && <h3 className="font-medium text-gray-900 cursor-pointer">{title}</h3>}
-          {description && <p className="text-sm text-gray-500 mt-1 cursor-pointer">{description}</p>}
-          {explanation && props.checked && (
-            <p className="text-sm text-gray-600 mt-2 border-t border-gray-100 pt-2 cursor-pointer">
+      <div className="radio-group-item-label pl-8 block cursor-pointer">
+        {title && <h3 className="font-medium text-gray-900 cursor-pointer">{title}</h3>}
+        {description && <p className="text-sm text-gray-500 mt-1 cursor-pointer">{description}</p>}
+        
+        {/* This is the container that will expand when checked to show the explanation and form fields */}
+        <div className={cn(
+          "radio-explanation",
+          props.checked ? "show" : ""
+        )}>
+          {explanation && (
+            <p className="text-sm text-gray-600 mb-3 cursor-pointer">
               {explanation}
             </p>
           )}
-          {children}
-        </label>
-      )}
+          {props.checked && children}
+        </div>
+      </div>
     </div>
   )
 })

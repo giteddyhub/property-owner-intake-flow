@@ -35,7 +35,6 @@ import {
 } from '@/types/form';
 import { RadioGroup, CardRadioGroupItem } from '@/components/ui/radio-group';
 
-// Italian provinces for dropdown
 const PROVINCES = [
   "Agrigento", "Alessandria", "Ancona", "Aosta", "Arezzo", "Ascoli Piceno", "Asti", "Avellino", 
   "Bari", "Barletta-Andria-Trani", "Belluno", "Benevento", "Bergamo", "Biella", "Bologna", 
@@ -53,7 +52,6 @@ const PROVINCES = [
   "Vicenza", "Viterbo"
 ];
 
-// Default empty property template
 const createEmptyProperty = (): Property => ({
   id: '',
   label: '',
@@ -263,6 +261,106 @@ const PropertyStep: React.FC = () => {
     return true;
   };
 
+  const PurchaseDateCalendar = () => (
+    <div>
+      <Label htmlFor="purchaseDate">Purchase Date*</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start text-left font-normal mt-1",
+              !currentProperty.purchaseDate && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {currentProperty.purchaseDate ? (
+              format(new Date(currentProperty.purchaseDate), "PPP")
+            ) : (
+              <span>Pick a date</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0 pointer-events-auto">
+          <Calendar
+            mode="single"
+            selected={currentProperty.purchaseDate || undefined}
+            onSelect={handlePurchaseDateChange}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+
+  const PurchasePriceInput = () => (
+    <div>
+      <Label htmlFor="purchasePrice">Purchase Price (€)*</Label>
+      <div className="relative mt-1">
+        <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input 
+          id="purchasePrice" 
+          name="purchasePrice" 
+          type="number"
+          min="0"
+          value={currentProperty.purchasePrice || ''}
+          onChange={handleInputChange}
+          className="pl-10"
+        />
+      </div>
+    </div>
+  );
+
+  const SaleDateCalendar = () => (
+    <div>
+      <Label htmlFor="saleDate">Sale Date*</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start text-left font-normal mt-1",
+              !currentProperty.saleDate && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {currentProperty.saleDate ? (
+              format(new Date(currentProperty.saleDate), "PPP")
+            ) : (
+              <span>Pick a date</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0 pointer-events-auto">
+          <Calendar
+            mode="single"
+            selected={currentProperty.saleDate || undefined}
+            onSelect={handleSaleDateChange}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+
+  const SalePriceInput = () => (
+    <div>
+      <Label htmlFor="salePrice">Sale Price (€)*</Label>
+      <div className="relative mt-1">
+        <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input 
+          id="salePrice" 
+          name="salePrice" 
+          type="number"
+          min="0"
+          value={currentProperty.salePrice || ''}
+          onChange={handleInputChange}
+          className="pl-10"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6 text-form-400">Property Information</h2>
@@ -444,135 +542,58 @@ const PropertyStep: React.FC = () => {
                 checked={currentProperty.activity2024 === 'purchased'}
                 title="Purchased Only"
                 explanation={activityExplanations.purchased}
-              />
+              >
+                <div className="grid gap-4 md:grid-cols-2 mt-2">
+                  <PurchaseDateCalendar />
+                  <PurchasePriceInput />
+                </div>
+              </CardRadioGroupItem>
+              
               <CardRadioGroupItem 
                 value="sold" 
                 id="sold" 
                 checked={currentProperty.activity2024 === 'sold'}
                 title="Sold Only"
                 explanation={activityExplanations.sold}
-              />
+              >
+                <div className="grid gap-4 md:grid-cols-2 mt-2">
+                  <SaleDateCalendar />
+                  <SalePriceInput />
+                </div>
+              </CardRadioGroupItem>
+              
               <CardRadioGroupItem 
                 value="both" 
                 id="both" 
                 checked={currentProperty.activity2024 === 'both'}
                 title="Both Purchased & Sold"
                 explanation={activityExplanations.both}
-              />
+              >
+                <div className="mt-2">
+                  <h5 className="text-sm font-medium mb-2">Purchase Details</h5>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <PurchaseDateCalendar />
+                    <PurchasePriceInput />
+                  </div>
+                  
+                  <h5 className="text-sm font-medium mb-2 mt-4">Sale Details</h5>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <SaleDateCalendar />
+                    <SalePriceInput />
+                  </div>
+                </div>
+              </CardRadioGroupItem>
+              
               <CardRadioGroupItem 
                 value="neither" 
                 id="neither" 
                 checked={currentProperty.activity2024 === 'neither'}
                 title="Owned All Year"
                 explanation={activityExplanations.neither}
-              />
+              >
+                <p className="text-sm text-gray-600 mt-2">No additional information needed.</p>
+              </CardRadioGroupItem>
             </RadioGroup>
-            
-            {(currentProperty.activity2024 === 'purchased' || currentProperty.activity2024 === 'both') && (
-              <div className="mt-4 pl-6 border-l-2 border-blue-200">
-                <h5 className="text-sm font-medium mb-2">Purchase Details</h5>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <Label htmlFor="purchaseDate">Purchase Date*</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal mt-1",
-                            !currentProperty.purchaseDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {currentProperty.purchaseDate ? (
-                            format(new Date(currentProperty.purchaseDate), "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 pointer-events-auto">
-                        <Calendar
-                          mode="single"
-                          selected={currentProperty.purchaseDate || undefined}
-                          onSelect={handlePurchaseDateChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="purchasePrice">Purchase Price (€)*</Label>
-                    <div className="relative mt-1">
-                      <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input 
-                        id="purchasePrice" 
-                        name="purchasePrice" 
-                        type="number"
-                        min="0"
-                        value={currentProperty.purchasePrice || ''}
-                        onChange={handleInputChange}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {(currentProperty.activity2024 === 'sold' || currentProperty.activity2024 === 'both') && (
-              <div className="mt-4 pl-6 border-l-2 border-blue-200">
-                <h5 className="text-sm font-medium mb-2">Sale Details</h5>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <Label htmlFor="saleDate">Sale Date*</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal mt-1",
-                            !currentProperty.saleDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {currentProperty.saleDate ? (
-                            format(new Date(currentProperty.saleDate), "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 pointer-events-auto">
-                        <Calendar
-                          mode="single"
-                          selected={currentProperty.saleDate || undefined}
-                          onSelect={handleSaleDateChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="salePrice">Sale Price (€)*</Label>
-                    <div className="relative mt-1">
-                      <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input 
-                        id="salePrice" 
-                        name="salePrice" 
-                        type="number"
-                        min="0"
-                        value={currentProperty.salePrice || ''}
-                        onChange={handleInputChange}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
           
           <div className="mt-6">
@@ -599,36 +620,66 @@ const PropertyStep: React.FC = () => {
                 checked={currentProperty.occupancyStatus === 'PERSONAL_USE'}
                 title="Personal Use / Vacant"
                 explanation={occupancyExplanations.PERSONAL_USE}
-              />
+              >
+                <div className="mt-2">
+                  <Label htmlFor="monthsOccupied">Number of Months*</Label>
+                  <Input 
+                    id="monthsOccupied" 
+                    name="monthsOccupied" 
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={currentProperty.monthsOccupied || ''}
+                    onChange={handleInputChange}
+                    className="mt-1 w-20"
+                  />
+                </div>
+              </CardRadioGroupItem>
+              
               <CardRadioGroupItem 
                 value="LONG_TERM_RENT" 
                 id="longTerm" 
                 checked={currentProperty.occupancyStatus === 'LONG_TERM_RENT'}
                 title="Long-Term Rental"
                 explanation={occupancyExplanations.LONG_TERM_RENT}
-              />
+              >
+                <div className="mt-2">
+                  <Label htmlFor="monthsOccupied">Number of Months*</Label>
+                  <Input 
+                    id="monthsOccupied" 
+                    name="monthsOccupied" 
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={currentProperty.monthsOccupied || ''}
+                    onChange={handleInputChange}
+                    className="mt-1 w-20"
+                  />
+                </div>
+              </CardRadioGroupItem>
+              
               <CardRadioGroupItem 
                 value="SHORT_TERM_RENT" 
                 id="shortTerm" 
                 checked={currentProperty.occupancyStatus === 'SHORT_TERM_RENT'}
                 title="Short-Term Rental"
                 explanation={occupancyExplanations.SHORT_TERM_RENT}
-              />
+              >
+                <div className="mt-2">
+                  <Label htmlFor="monthsOccupied">Number of Months*</Label>
+                  <Input 
+                    id="monthsOccupied" 
+                    name="monthsOccupied" 
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={currentProperty.monthsOccupied || ''}
+                    onChange={handleInputChange}
+                    className="mt-1 w-20"
+                  />
+                </div>
+              </CardRadioGroupItem>
             </RadioGroup>
-            
-            <div>
-              <Label htmlFor="monthsOccupied">Number of Months*</Label>
-              <Input 
-                id="monthsOccupied" 
-                name="monthsOccupied" 
-                type="number"
-                min="1"
-                max="12"
-                value={currentProperty.monthsOccupied || ''}
-                onChange={handleInputChange}
-                className="mt-1 w-20"
-              />
-            </div>
           </div>
           
           <div className="flex justify-end space-x-3 mt-6">
