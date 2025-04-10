@@ -20,14 +20,24 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+// Define a union type for the mode-specific props
+type CalendarModeProps = 
+  | { mode: "single"; selected?: Date; onSelect?: SelectSingleEventHandler }
+  | { mode: "range"; selected?: DateRange; onSelect?: SelectRangeEventHandler }
+  | { mode: "multiple"; selected?: Date[]; onSelect?: SelectMultipleEventHandler }
+  | { mode?: "default" };
+
+// Extend the DayPicker props with our mode-specific props
+export type CalendarProps = Omit<React.ComponentProps<typeof DayPicker>, "mode" | "selected" | "onSelect"> & CalendarModeProps;
 
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
   onDayClick,
-  mode,
+  mode = "default",
+  selected,
+  onSelect,
   ...props
 }: CalendarProps) {
   // Custom formatter for month labels to use abbreviated month names
@@ -47,16 +57,16 @@ function Calendar({
       }
       
       // Only close the calendar if it's in single mode or if a range has been completed
-      // Need to check if props.selected is a DateRange with from and to properties
-      const isDateRange = props.selected && 
-        typeof props.selected === "object" && 
-        'from' in props.selected;
+      // Need to check if selected is a DateRange with from and to properties
+      const isDateRange = selected && 
+        typeof selected === "object" && 
+        'from' in selected;
       
       // Only proceed with range checking if we have a DateRange object
       const isRangeComplete = mode === "range" && 
         isDateRange && 
-        (props.selected as DateRange).from && 
-        (props.selected as DateRange).to;
+        (selected as DateRange).from && 
+        (selected as DateRange).to;
       
       // Close in single mode or when range is complete
       if (mode !== "range" || isRangeComplete) {
@@ -70,7 +80,7 @@ function Calendar({
         document.dispatchEvent(event);
       }
     },
-    [onDayClick, mode, props.selected]
+    [onDayClick, mode, selected]
   );
 
   // Common props without mode-specific properties
@@ -124,72 +134,47 @@ function Calendar({
     fromYear: 1900,
     toYear: 2025,
     onDayClick: handleDayClick,
+    ...props
   };
 
-  // Create type-safe props objects for each mode
+  // Render based on mode
   if (mode === "range") {
-    // Extract selected, onSelect, and other range-specific props
-    const { selected, onSelect, ...otherProps } = props;
-    
-    // Create a properly typed range props object
-    const rangeProps: DayPickerRangeProps = {
-      ...commonProps,
-      ...otherProps,
-      mode: "range",
-      selected: selected as DateRange | undefined,
-      // Only include onSelect if it's a range select handler
-      ...(onSelect ? { onSelect: onSelect as SelectRangeEventHandler } : {})
-    };
-    
-    return <DayPicker {...rangeProps} />;
-  } 
-  
-  if (mode === "single") {
-    // Extract selected, onSelect, and other single-specific props
-    const { selected, onSelect, ...otherProps } = props;
-    
-    // Create a properly typed single props object
-    const singleProps: DayPickerSingleProps = {
-      ...commonProps,
-      ...otherProps,
-      mode: "single",
-      selected: selected as Date | undefined,
-      // Only include onSelect if it's a single select handler
-      ...(onSelect ? { onSelect: onSelect as SelectSingleEventHandler } : {})
-    };
-    
-    return <DayPicker {...singleProps} />;
-  } 
-  
-  if (mode === "multiple") {
-    // Extract selected, onSelect, and other multiple-specific props
-    const { selected, onSelect, ...otherProps } = props;
-    
-    // Create a properly typed multiple props object
-    const multipleProps: DayPickerMultipleProps = {
-      ...commonProps,
-      ...otherProps,
-      mode: "multiple",
-      selected: selected as Date[] | undefined,
-      // Only include onSelect if it's a multiple select handler
-      ...(onSelect ? { onSelect: onSelect as SelectMultipleEventHandler } : {})
-    };
-    
-    return <DayPicker {...multipleProps} />;
+    return (
+      <DayPicker
+        mode="range"
+        selected={selected as DateRange}
+        onSelect={onSelect as SelectRangeEventHandler}
+        {...commonProps}
+      />
+    );
   }
-  
-  // Default mode - no selection
-  // Remove any mode-specific props that don't apply to default mode
-  const { selected, onSelect, ...otherProps } = props;
-  
-  const defaultProps: DayPickerDefaultProps = {
-    ...commonProps,
-    ...otherProps,
-    mode: "default"
-  };
-  
-  return <DayPicker {...defaultProps} />;
+
+  if (mode === "single") {
+    return (
+      <DayPicker
+        mode="single"
+        selected={selected as Date}
+        onSelect={onSelect as SelectSingleEventHandler}
+        {...commonProps}
+      />
+    );
+  }
+
+  if (mode === "multiple") {
+    return (
+      <DayPicker
+        mode="multiple"
+        selected={selected as Date[]}
+        onSelect={onSelect as SelectMultipleEventHandler}
+        {...commonProps}
+      />
+    );
+  }
+
+  // Default mode
+  return <DayPicker mode="default" {...commonProps} />;
 }
+
 Calendar.displayName = "Calendar";
 
 export { Calendar };
