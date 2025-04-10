@@ -1,7 +1,7 @@
 
 import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
-import { Check } from "lucide-react"
+import { Check, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -27,13 +27,13 @@ const RadioGroupItem = React.forwardRef<
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "aspect-square h-5 w-5 rounded border border-gray-300 text-white ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 cursor-pointer",
+        "aspect-square h-5 w-5 rounded-full border border-gray-300 text-white ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 cursor-pointer",
         className
       )}
       {...props}
     >
       <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <Check className="h-3.5 w-3.5" />
+        <Circle className="h-2.5 w-2.5 fill-current text-white" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )
@@ -74,12 +74,12 @@ const CardRadioGroupItem = React.forwardRef<
             ref={ref}
             id={id}
             className={cn(
-              "aspect-square h-5 w-5 rounded border border-gray-300 text-white ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 cursor-pointer",
+              "aspect-square h-5 w-5 rounded-full border border-gray-300 text-white ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 cursor-pointer",
             )}
             {...props}
           >
             <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-              <Check className="h-3.5 w-3.5" />
+              <Circle className="h-2.5 w-2.5 fill-current text-white" />
             </RadioGroupPrimitive.Indicator>
           </RadioGroupPrimitive.Item>
           {title && <span className="font-medium text-gray-900 cursor-pointer">{title}</span>}
