@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ import { toast } from 'sonner';
 import { Owner, MaritalStatus, Address, ItalianResidenceDetails } from '@/types/form';
 import CountryCombobox from '@/components/form/CountryCombobox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { RadioGroup, RadioGroupItem, ModernRadioGroupItem } from '@/components/ui/radio-group';
 
 const COUNTRIES = [
   "Italy", "United States", "United Kingdom", "France", "Germany", 
@@ -519,10 +518,10 @@ const OwnerStep: React.FC = () => {
             <div className="flex items-center space-x-3 border-b pb-4 mb-4">
               <Label htmlFor="isResidentInItaly" className="mr-3 text-base">Resident in Italy?</Label>
               <div className="residency-toggle">
-                <Switch
+                <ModernRadioGroupItem
                   id="isResidentInItaly"
                   checked={currentOwner.isResidentInItaly}
-                  onCheckedChange={handleSwitchChange}
+                  onClick={() => handleSwitchChange(!currentOwner.isResidentInItaly)}
                 />
               </div>
             </div>
