@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ import {
   PropertyType 
 } from '@/types/form';
 import { RadioGroup, RadioGroupItem, CardRadioGroupItem } from '@/components/ui/radio-group';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const PROVINCES = [
   "Agrigento", "Alessandria", "Ancona", "Aosta", "Arezzo", "Ascoli Piceno", "Asti", "Avellino", 
@@ -78,7 +80,7 @@ const PropertyStep: React.FC = () => {
   const [currentProperty, setCurrentProperty] = useState<Property>(createEmptyProperty());
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(properties.length === 0);
-  const [selectedOccupancyStatus, setSelectedOccupancyStatus] = useState<OccupancyStatus>('PERSONAL_USE');
+  const [activeStatuses, setActiveStatuses] = useState<Set<OccupancyStatus>>(new Set(['PERSONAL_USE']));
   const [occupancyMonths, setOccupancyMonths] = useState<Record<OccupancyStatus, number>>({
     PERSONAL_USE: 12,
     LONG_TERM_RENT: 0,
@@ -203,7 +205,12 @@ const PropertyStep: React.FC = () => {
   };
 
   const handleOccupancyStatusChange = (status: OccupancyStatus) => {
-    setSelectedOccupancyStatus(status);
+    // Update activeStatuses to include this status
+    setActiveStatuses(prev => {
+      const newStatuses = new Set(prev);
+      newStatuses.add(status);
+      return newStatuses;
+    });
     
     if (!currentProperty.occupancyStatuses.includes(status)) {
       setCurrentProperty(prev => ({
@@ -219,11 +226,13 @@ const PropertyStep: React.FC = () => {
       [status]: months
     }));
     
-    if (status === selectedOccupancyStatus) {
-      setCurrentProperty(prev => ({
-        ...prev,
-        monthsOccupied: months
-      }));
+    // If months are added, make sure the status remains active
+    if (months > 0) {
+      setActiveStatuses(prev => {
+        const newStatuses = new Set(prev);
+        newStatuses.add(status);
+        return newStatuses;
+      });
     }
   };
 
@@ -238,14 +247,12 @@ const PropertyStep: React.FC = () => {
       [status]: 0
     }));
     
-    if (selectedOccupancyStatus === status) {
-      const remainingStatuses = currentProperty.occupancyStatuses.filter(s => s !== status);
-      if (remainingStatuses.length > 0) {
-        setSelectedOccupancyStatus(remainingStatuses[0]);
-      } else {
-        setSelectedOccupancyStatus('PERSONAL_USE');
-      }
-    }
+    // Remove from active statuses
+    setActiveStatuses(prev => {
+      const newStatuses = new Set(prev);
+      newStatuses.delete(status);
+      return newStatuses;
+    });
   };
 
   const handleSubmit = () => {
@@ -314,9 +321,18 @@ const PropertyStep: React.FC = () => {
       return;
     }
 
+    // Create an array of statuses with months > 0
+    const activeOccupancyStatuses = Object.entries(occupancyMonths)
+      .filter(([_, months]) => months > 0)
+      .map(([status]) => status as OccupancyStatus);
+
     const finalProperty = {
       ...currentProperty,
-      monthsOccupied: occupancyMonths[selectedOccupancyStatus]
+      occupancyStatuses: activeOccupancyStatuses,
+      // For backward compatibility, we still set monthsOccupied to the first status with months
+      monthsOccupied: activeOccupancyStatuses.length > 0 
+        ? occupancyMonths[activeOccupancyStatuses[0]] 
+        : 12
     };
 
     if (editingIndex !== null) {
@@ -335,6 +351,7 @@ const PropertyStep: React.FC = () => {
       LONG_TERM_RENT: 0,
       SHORT_TERM_RENT: 0,
     });
+    setActiveStatuses(new Set(['PERSONAL_USE']));
   };
 
   const handleEdit = (index: number) => {
@@ -356,13 +373,23 @@ const PropertyStep: React.FC = () => {
       SHORT_TERM_RENT: 0,
     };
     
+    const newActiveStatuses = new Set<OccupancyStatus>();
+    
     if (updatedProperty.occupancyStatuses.length > 0) {
-      const primaryStatus = updatedProperty.occupancyStatuses[0];
-      initialOccupancyMonths[primaryStatus] = updatedProperty.monthsOccupied || 12;
-      setSelectedOccupancyStatus(primaryStatus);
+      updatedProperty.occupancyStatuses.forEach((status, idx) => {
+        // For the first status, use the monthsOccupied value
+        // For others, just set to 1 by default (this is a limitation of the current data model)
+        initialOccupancyMonths[status] = idx === 0 ? (updatedProperty.monthsOccupied || 12) : 1;
+        newActiveStatuses.add(status);
+      });
+    } else {
+      // Default case
+      initialOccupancyMonths.PERSONAL_USE = 12;
+      newActiveStatuses.add('PERSONAL_USE');
     }
     
     setOccupancyMonths(initialOccupancyMonths);
+    setActiveStatuses(newActiveStatuses);
   };
 
   const handleDelete = (index: number) => {
@@ -742,178 +769,199 @@ const PropertyStep: React.FC = () => {
           <div className="mt-6">
             <h4 className="text-md font-medium mb-3">Rental Status*</h4>
             <div className="flex flex-col space-y-3">
+              {/* Personal Use / Vacant */}
               <div 
                 className={cn(
-                  "relative rounded-lg border border-gray-200 p-4 transition-all hover:border-gray-300 cursor-pointer",
-                  selectedOccupancyStatus === 'PERSONAL_USE' ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" : "bg-white"
+                  "relative rounded-lg border p-4 transition-all cursor-pointer",
+                  activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0 
+                    ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
+                    : "bg-white border-gray-200 hover:border-gray-300"
                 )}
                 onClick={() => handleOccupancyStatusChange('PERSONAL_USE')}
               >
                 <div className="flex items-center gap-2.5">
                   <Checkbox 
-                    checked={selectedOccupancyStatus === 'PERSONAL_USE'}
+                    checked={activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0}
                     className="cursor-pointer"
                   />
                   <span className="font-medium text-gray-900 cursor-pointer">Personal Use / Vacant</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">{occupancyExplanations.PERSONAL_USE}</p>
+                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">
+                  {occupancyExplanations.PERSONAL_USE}
+                </p>
                 
-                <div className={cn(
-                  "mt-2 ml-7.5",
-                  selectedOccupancyStatus === 'PERSONAL_USE' ? "block" : "hidden"
-                )}>
-                  <Label htmlFor="personal_use_months">Number of Months*</Label>
-                  <div className="flex items-center gap-2">
-                    <Select 
-                      value={occupancyMonths.PERSONAL_USE.toString()}
-                      onValueChange={(value) => handleOccupancyMonthsChange('PERSONAL_USE', parseInt(value))}
-                      disabled={availableMonths.PERSONAL_USE.length === 0}
-                    >
-                      <SelectTrigger className="mt-1 w-24">
-                        <SelectValue placeholder="Months" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableMonths.PERSONAL_USE.map(month => (
-                          <SelectItem key={`personal-${month}`} value={month.toString()}>
-                            {month}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {currentProperty.occupancyStatuses.includes('PERSONAL_USE') && 
-                    occupancyMonths.PERSONAL_USE > 0 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="ml-2 text-red-500 hover:text-red-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveOccupancyStatus('PERSONAL_USE');
-                        }}
+                <Collapsible 
+                  open={activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0}
+                  className="mt-2 ml-7.5"
+                >
+                  <CollapsibleContent>
+                    <Label htmlFor="personal_use_months">Number of Months*</Label>
+                    <div className="flex items-center gap-2">
+                      <Select 
+                        value={occupancyMonths.PERSONAL_USE.toString()}
+                        onValueChange={(value) => handleOccupancyMonthsChange('PERSONAL_USE', parseInt(value))}
+                        disabled={availableMonths.PERSONAL_USE.length === 0}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                        <SelectTrigger className="mt-1 w-24">
+                          <SelectValue placeholder="Months" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableMonths.PERSONAL_USE.map(month => (
+                            <SelectItem key={`personal-${month}`} value={month.toString()}>
+                              {month}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {currentProperty.occupancyStatuses.includes('PERSONAL_USE') && 
+                      occupancyMonths.PERSONAL_USE > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="ml-2 text-red-500 hover:text-red-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveOccupancyStatus('PERSONAL_USE');
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
               
+              {/* Long-Term Rental */}
               <div 
                 className={cn(
-                  "relative rounded-lg border border-gray-200 p-4 transition-all hover:border-gray-300 cursor-pointer",
-                  selectedOccupancyStatus === 'LONG_TERM_RENT' ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" : "bg-white"
+                  "relative rounded-lg border p-4 transition-all cursor-pointer",
+                  activeStatuses.has('LONG_TERM_RENT') || occupancyMonths.LONG_TERM_RENT > 0 
+                    ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
+                    : "bg-white border-gray-200 hover:border-gray-300"
                 )}
                 onClick={() => handleOccupancyStatusChange('LONG_TERM_RENT')}
               >
                 <div className="flex items-center gap-2.5">
                   <Checkbox 
-                    checked={selectedOccupancyStatus === 'LONG_TERM_RENT'}
+                    checked={activeStatuses.has('LONG_TERM_RENT') || occupancyMonths.LONG_TERM_RENT > 0}
                     className="cursor-pointer"
                   />
                   <span className="font-medium text-gray-900 cursor-pointer">Long-Term Rental</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">{occupancyExplanations.LONG_TERM_RENT}</p>
+                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">
+                  {occupancyExplanations.LONG_TERM_RENT}
+                </p>
                 
-                <div className={cn(
-                  "mt-2 ml-7.5",
-                  selectedOccupancyStatus === 'LONG_TERM_RENT' ? "block" : "hidden"
-                )}>
-                  <Label htmlFor="long_term_months">Number of Months*</Label>
-                  <div className="flex items-center gap-2">
-                    <Select 
-                      value={occupancyMonths.LONG_TERM_RENT.toString()}
-                      onValueChange={(value) => handleOccupancyMonthsChange('LONG_TERM_RENT', parseInt(value))}
-                      disabled={availableMonths.LONG_TERM_RENT.length === 0}
-                    >
-                      <SelectTrigger className="mt-1 w-24">
-                        <SelectValue placeholder="Months" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableMonths.LONG_TERM_RENT.map(month => (
-                          <SelectItem key={`longterm-${month}`} value={month.toString()}>
-                            {month}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {currentProperty.occupancyStatuses.includes('LONG_TERM_RENT') && 
-                    occupancyMonths.LONG_TERM_RENT > 0 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="ml-2 text-red-500 hover:text-red-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveOccupancyStatus('LONG_TERM_RENT');
-                        }}
+                <Collapsible 
+                  open={activeStatuses.has('LONG_TERM_RENT') || occupancyMonths.LONG_TERM_RENT > 0}
+                  className="mt-2 ml-7.5"
+                >
+                  <CollapsibleContent>
+                    <Label htmlFor="long_term_months">Number of Months*</Label>
+                    <div className="flex items-center gap-2">
+                      <Select 
+                        value={occupancyMonths.LONG_TERM_RENT.toString()}
+                        onValueChange={(value) => handleOccupancyMonthsChange('LONG_TERM_RENT', parseInt(value))}
+                        disabled={availableMonths.LONG_TERM_RENT.length === 0}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                        <SelectTrigger className="mt-1 w-24">
+                          <SelectValue placeholder="Months" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableMonths.LONG_TERM_RENT.map(month => (
+                            <SelectItem key={`longterm-${month}`} value={month.toString()}>
+                              {month}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {currentProperty.occupancyStatuses.includes('LONG_TERM_RENT') && 
+                      occupancyMonths.LONG_TERM_RENT > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="ml-2 text-red-500 hover:text-red-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveOccupancyStatus('LONG_TERM_RENT');
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
               
+              {/* Short-Term Rental */}
               <div 
                 className={cn(
-                  "relative rounded-lg border border-gray-200 p-4 transition-all hover:border-gray-300 cursor-pointer",
-                  selectedOccupancyStatus === 'SHORT_TERM_RENT' ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" : "bg-white"
+                  "relative rounded-lg border p-4 transition-all cursor-pointer",
+                  activeStatuses.has('SHORT_TERM_RENT') || occupancyMonths.SHORT_TERM_RENT > 0 
+                    ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
+                    : "bg-white border-gray-200 hover:border-gray-300"
                 )}
                 onClick={() => handleOccupancyStatusChange('SHORT_TERM_RENT')}
               >
                 <div className="flex items-center gap-2.5">
                   <Checkbox 
-                    checked={selectedOccupancyStatus === 'SHORT_TERM_RENT'}
+                    checked={activeStatuses.has('SHORT_TERM_RENT') || occupancyMonths.SHORT_TERM_RENT > 0}
                     className="cursor-pointer"
                   />
                   <span className="font-medium text-gray-900 cursor-pointer">Short-Term Rental</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">{occupancyExplanations.SHORT_TERM_RENT}</p>
+                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">
+                  {occupancyExplanations.SHORT_TERM_RENT}
+                </p>
                 
-                <div className={cn(
-                  "mt-2 ml-7.5", 
-                  selectedOccupancyStatus === 'SHORT_TERM_RENT' ? "block" : "hidden"
-                )}>
-                  <Label htmlFor="short_term_months">Number of Months*</Label>
-                  <div className="flex items-center gap-2">
-                    <Select 
-                      value={occupancyMonths.SHORT_TERM_RENT.toString()}
-                      onValueChange={(value) => handleOccupancyMonthsChange('SHORT_TERM_RENT', parseInt(value))}
-                      disabled={availableMonths.SHORT_TERM_RENT.length === 0}
-                    >
-                      <SelectTrigger className="mt-1 w-24">
-                        <SelectValue placeholder="Months" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableMonths.SHORT_TERM_RENT.map(month => (
-                          <SelectItem key={`shortterm-${month}`} value={month.toString()}>
-                            {month}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {currentProperty.occupancyStatuses.includes('SHORT_TERM_RENT') && 
-                    occupancyMonths.SHORT_TERM_RENT > 0 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="ml-2 text-red-500 hover:text-red-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveOccupancyStatus('SHORT_TERM_RENT');
-                        }}
+                <Collapsible 
+                  open={activeStatuses.has('SHORT_TERM_RENT') || occupancyMonths.SHORT_TERM_RENT > 0}
+                  className="mt-2 ml-7.5"
+                >
+                  <CollapsibleContent>
+                    <Label htmlFor="short_term_months">Number of Months*</Label>
+                    <div className="flex items-center gap-2">
+                      <Select 
+                        value={occupancyMonths.SHORT_TERM_RENT.toString()}
+                        onValueChange={(value) => handleOccupancyMonthsChange('SHORT_TERM_RENT', parseInt(value))}
+                        disabled={availableMonths.SHORT_TERM_RENT.length === 0}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                        <SelectTrigger className="mt-1 w-24">
+                          <SelectValue placeholder="Months" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableMonths.SHORT_TERM_RENT.map(month => (
+                            <SelectItem key={`shortterm-${month}`} value={month.toString()}>
+                              {month}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {currentProperty.occupancyStatuses.includes('SHORT_TERM_RENT') && 
+                      occupancyMonths.SHORT_TERM_RENT > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="ml-2 text-red-500 hover:text-red-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveOccupancyStatus('SHORT_TERM_RENT');
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             </div>
             
@@ -943,6 +991,7 @@ const PropertyStep: React.FC = () => {
                   LONG_TERM_RENT: 0,
                   SHORT_TERM_RENT: 0,
                 });
+                setActiveStatuses(new Set(['PERSONAL_USE']));
               }}
             >
               Cancel
@@ -970,6 +1019,7 @@ const PropertyStep: React.FC = () => {
                 LONG_TERM_RENT: 0,
                 SHORT_TERM_RENT: 0,
               });
+              setActiveStatuses(new Set(['PERSONAL_USE']));
             }}
             className="bg-form-300 hover:bg-form-400 text-white"
           >
