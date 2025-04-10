@@ -71,8 +71,8 @@ const CardRadioGroupItem = React.forwardRef<
       </RadioGroupPrimitive.Item>
       {(title || description || children) && (
         <label htmlFor={id} className="radio-group-item-label pl-8 block cursor-pointer">
-          {title && <h3 className="font-medium text-gray-900">{title}</h3>}
-          {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
+          {title && <h3 className="font-medium text-gray-900 cursor-pointer">{title}</h3>}
+          {description && <p className="text-sm text-gray-500 mt-1 cursor-pointer">{description}</p>}
           {children}
         </label>
       )}

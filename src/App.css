@@ -85,7 +85,22 @@ input[type="radio"] + *,
 /* Add more specific selectors for radio button labels */
 span:has(+ input[type="radio"]),
 span:has(~ input[type="radio"]),
-div:has(> input[type="radio"]) {
+div:has(> input[type="radio"]),
+/* Target the text within a radio group */
+[role="radiogroup"] *,
+/* Target the specific radio option text */
+[role="radio"] ~ span,
+[role="radio"] + span,
+[role="radio"] + div,
+[role="radio"] ~ div,
+/* Radix Radio Group specific selectors */
+[data-radix-collection-item] + *,
+[data-radix-collection-item] ~ *,
+/* Target text near toggle buttons that might be used as radio alternatives */
+.radio-group-item-label *,
+/* Target any text that is a sibling of a radio input */
+input[type="radio"] ~ * *,
+[role="radio"] ~ * * {
   cursor: pointer !important;
 }
 
