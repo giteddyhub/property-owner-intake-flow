@@ -44,7 +44,7 @@
 
 /* Custom radio styles */
 .radio-card {
-  @apply relative rounded-lg border border-gray-200 p-4 transition-all;
+  @apply relative rounded-lg border border-gray-200 p-4 transition-all cursor-pointer;
 }
 
 .radio-card:hover {
@@ -59,6 +59,14 @@
   @apply bg-purple-50;
 }
 
+/* Make labels and text near radio buttons show pointer cursor */
+.radio-group-item-label,
+label:has(+ input[type="radio"]),
+label:has(input[type="radio"]),
+*:has(> input[type="radio"]) {
+  cursor: pointer;
+}
+
 /* Custom animation for radio selection */
 .radio-animate {
   transition: all 0.2s ease-in-out;
@@ -67,3 +75,4 @@
 .radio-animate:active {
   transform: scale(0.95);
 }
+
