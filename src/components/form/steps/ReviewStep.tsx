@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -35,23 +34,19 @@ const ReviewStep: React.FC = () => {
   const { state, goToStep } = useFormContext();
   const { owners, properties, assignments } = state;
   
-  // Get assignments for a specific property
   const getPropertyAssignments = (propertyId: string) => {
     return assignments.filter(assignment => assignment.propertyId === propertyId);
   };
   
-  // Get owner by ID
   const getOwnerById = (ownerId: string) => {
     return owners.find(owner => owner.id === ownerId);
   };
   
-  // Get total ownership percentage for a property
   const getTotalPercentage = (propertyId: string) => {
     return getPropertyAssignments(propertyId)
       .reduce((sum, assignment) => sum + assignment.ownershipPercentage, 0);
   };
   
-  // Format property activity
   const formatActivity = (activity: ActivityType) => {
     switch (activity) {
       case 'purchased':
@@ -67,7 +62,6 @@ const ReviewStep: React.FC = () => {
     }
   };
   
-  // Format occupancy status
   const formatOccupancyStatus = (status: OccupancyStatus) => {
     switch (status) {
       case 'PERSONAL_USE':
@@ -81,14 +75,22 @@ const ReviewStep: React.FC = () => {
     }
   };
   
+  const formatOccupancyStatuses = (statuses: OccupancyStatus[]) => {
+    const statusMap = {
+      PERSONAL_USE: 'Personal Use',
+      LONG_TERM_RENT: 'Long-term Rental',
+      SHORT_TERM_RENT: 'Short-term Rental'
+    };
+    
+    return statuses.map(status => statusMap[status]).join(', ');
+  };
+  
   const handleSubmit = () => {
-    // Here we would normally send the data to the backend
     toast.success('Form submitted successfully!', {
       description: 'Thank you for completing the property owner intake process.',
       duration: 5000,
     });
     
-    // Display confirmation message
     setTimeout(() => {
       toast("Your submission has been received", {
         description: "A confirmation email has been sent with a summary of your submission.",
@@ -101,7 +103,6 @@ const ReviewStep: React.FC = () => {
   };
   
   const handleDownloadSummary = () => {
-    // Create a JSON string of the form data
     const formData = {
       owners,
       properties,
@@ -109,10 +110,8 @@ const ReviewStep: React.FC = () => {
       submittedAt: new Date().toISOString()
     };
     
-    // Convert to JSON string
     const jsonString = JSON.stringify(formData, null, 2);
     
-    // Create a blob and download link
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -134,7 +133,6 @@ const ReviewStep: React.FC = () => {
         Please review all the information below before submitting. You can go back to make changes if needed.
       </p>
       
-      {/* Owners Summary */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">Owners</h3>
@@ -190,7 +188,6 @@ const ReviewStep: React.FC = () => {
         </div>
       </div>
       
-      {/* Properties Summary */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">Properties</h3>
@@ -265,8 +262,12 @@ const ReviewStep: React.FC = () => {
                   
                   <div className="grid grid-cols-2 gap-4 mb-2">
                     <div>
-                      <p className="font-medium">Occupancy Status</p>
-                      <p>{formatOccupancyStatus(property.occupancyStatus)} ({property.monthsOccupied} months)</p>
+                      <p className="font-medium">Rental Status</p>
+                      <p>{
+                        Array.isArray(property.occupancyStatuses) 
+                          ? formatOccupancyStatuses(property.occupancyStatuses) 
+                          : 'Not specified'
+                      } ({property.monthsOccupied} months)</p>
                     </div>
                     <div>
                       <p className="font-medium">Remodeling in 2024</p>
@@ -280,7 +281,6 @@ const ReviewStep: React.FC = () => {
         </Accordion>
       </div>
       
-      {/* Assignments Summary */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">Owner-Property Assignments</h3>
@@ -392,7 +392,6 @@ const ReviewStep: React.FC = () => {
         </div>
       </div>
       
-      {/* Submit Button */}
       <div className="flex justify-between mt-8">
         <Button 
           variant="outline" 

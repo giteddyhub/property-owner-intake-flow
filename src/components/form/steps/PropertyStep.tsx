@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -162,17 +161,14 @@ const PropertyStep: React.FC = () => {
     setCurrentProperty(prev => ({ ...prev, remodeling: checked }));
   };
 
-  // New function to handle multiple occupancy status selection
   const handleOccupancyStatusChange = (status: OccupancyStatus, checked: boolean) => {
     setCurrentProperty(prev => {
       if (checked) {
-        // Add the status if it's not already in the array
         return {
           ...prev,
           occupancyStatuses: [...prev.occupancyStatuses.filter(s => s !== status), status]
         };
       } else {
-        // Remove the status but ensure at least one status remains selected
         const newStatuses = prev.occupancyStatuses.filter(s => s !== status);
         return {
           ...prev,
@@ -262,11 +258,9 @@ const PropertyStep: React.FC = () => {
   };
 
   const handleEdit = (index: number) => {
-    // Convert old property format if needed
     const property = properties[index];
     const updatedProperty = {
       ...property,
-      // If the property was created before the schema change, convert the single status to an array
       occupancyStatuses: Array.isArray(property.occupancyStatuses) 
         ? property.occupancyStatuses 
         : [property.occupancyStatus || 'PERSONAL_USE']
@@ -290,7 +284,6 @@ const PropertyStep: React.FC = () => {
     return true;
   };
 
-  // Helper to format occupancy statuses for display
   const formatOccupancyStatuses = (statuses: OccupancyStatus[]) => {
     const statusMap = {
       PERSONAL_USE: 'Personal Use',
@@ -450,11 +443,7 @@ const PropertyStep: React.FC = () => {
                     <strong>Rental Status:</strong> {
                       Array.isArray(property.occupancyStatuses) 
                         ? formatOccupancyStatuses(property.occupancyStatuses)
-                        : property.occupancyStatus === 'PERSONAL_USE' 
-                          ? 'Personal Use' 
-                          : property.occupancyStatus === 'LONG_TERM_RENT' 
-                            ? 'Long-term Rental' 
-                            : 'Short-term Rental'
+                        : 'Not specified'
                     } ({property.monthsOccupied} months)
                   </p>
                 </CardContent>
