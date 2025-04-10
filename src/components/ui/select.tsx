@@ -172,24 +172,30 @@ const Combobox = ({
 
   // Enhanced safety checks for options
   const safeOptions = React.useMemo(() => {
-    if (!options) return [] as string[];
-    if (!Array.isArray(options)) return [] as string[];
+    if (!options || !Array.isArray(options)) {
+      console.warn("Combobox received invalid options:", options);
+      return [] as readonly string[];
+    }
     return options;
   }, [options]);
 
   // Filter options based on search query
   const filteredOptions = React.useMemo(() => {
-    if (safeOptions.length === 0) return [] as string[];
+    if (!safeOptions || safeOptions.length === 0) {
+      return [] as readonly string[];
+    }
     
-    if (searchQuery === "") return safeOptions;
+    if (!searchQuery) {
+      return safeOptions;
+    }
     
     return safeOptions.filter((option) => 
-      option.toLowerCase().includes(searchQuery.toLowerCase())
+      typeof option === 'string' && option.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [safeOptions, searchQuery]);
 
   // Render a simple input field if there are no options
-  if (safeOptions.length === 0) {
+  if (!safeOptions || safeOptions.length === 0) {
     return (
       <input
         type="text"
@@ -204,28 +210,36 @@ const Combobox = ({
     );
   }
 
-  // Ensure we have a non-empty array of filtered options for the Command component
-  const commandItems = filteredOptions.length > 0 
-    ? filteredOptions.map((option) => (
-        <CommandItem
-          key={option}
-          value={option}
-          onSelect={() => {
-            onValueChange(option);
-            setSearchQuery("");
-            setOpen(false);
-          }}
-        >
-          <Check
-            className={cn(
-              "mr-2 h-4 w-4",
-              value === option ? "opacity-100" : "opacity-0"
-            )}
-          />
-          {option}
+  // Create a reliable array of CommandItem elements
+  const commandItems = React.useMemo(() => {
+    if (!filteredOptions || filteredOptions.length === 0) {
+      return [
+        <CommandItem key="empty-placeholder" value="" disabled>
+          No options available
         </CommandItem>
-      ))
-    : [<CommandItem key="empty-placeholder" value="" disabled>No options available</CommandItem>];
+      ];
+    }
+    
+    return filteredOptions.map((option) => (
+      <CommandItem
+        key={option}
+        value={option}
+        onSelect={() => {
+          onValueChange(option);
+          setSearchQuery("");
+          setOpen(false);
+        }}
+      >
+        <Check
+          className={cn(
+            "mr-2 h-4 w-4",
+            value === option ? "opacity-100" : "opacity-0"
+          )}
+        />
+        {option}
+      </CommandItem>
+    ));
+  }, [filteredOptions, value, onValueChange]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

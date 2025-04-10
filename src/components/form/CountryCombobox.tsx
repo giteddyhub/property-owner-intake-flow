@@ -22,27 +22,32 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   // Make sure we have a valid array to work with
   const countriesArray = React.useMemo(() => {
     // Defensive check to ensure COUNTRIES is an array
-    return Array.isArray(COUNTRIES) ? [...COUNTRIES] : [];
+    if (!COUNTRIES || !Array.isArray(COUNTRIES)) {
+      console.warn("CountryCombobox: COUNTRIES is not a valid array", COUNTRIES);
+      return [] as string[];
+    }
+    return [...COUNTRIES];
   }, []);
   
   const filteredCountries = React.useMemo(() => {
     // Defensive check for empty countries
-    if (countriesArray.length === 0) {
-      return [];
+    if (!countriesArray || countriesArray.length === 0) {
+      return [] as string[];
     }
     
     // Apply exclusion filter if needed
-    if (!Array.isArray(excludeCountries) || excludeCountries.length === 0) {
+    if (!excludeCountries || !Array.isArray(excludeCountries) || excludeCountries.length === 0) {
       return countriesArray;
     }
     
     return countriesArray.filter(country => 
-      !excludeCountries.includes(country)
+      typeof country === 'string' && !excludeCountries.includes(country)
     );
   }, [countriesArray, excludeCountries]);
 
   // Always render a standard input if there are no countries available
-  if (filteredCountries.length === 0) {
+  if (!filteredCountries || filteredCountries.length === 0) {
+    console.warn("CountryCombobox: No filtered countries available");
     return (
       <input
         type="text"
