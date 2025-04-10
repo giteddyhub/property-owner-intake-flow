@@ -33,12 +33,22 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   const { currentStep } = state;
   const isLastStep = currentStep === 4;
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleNext = () => {
     if (onNext) {
       const canProceed = onNext();
       if (!canProceed) return;
     }
     nextStep();
+    scrollToTop();
+  };
+
+  const handlePrev = () => {
+    prevStep();
+    scrollToTop();
   };
 
   // If we're in form mode, render a cancel and submit button pair
@@ -78,7 +88,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
         <Button 
           type="button" 
           variant="outline" 
-          onClick={prevStep}
+          onClick={handlePrev}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />

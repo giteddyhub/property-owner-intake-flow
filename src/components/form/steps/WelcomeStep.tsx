@@ -7,6 +7,11 @@ import { ArrowRight } from 'lucide-react';
 const WelcomeStep: React.FC = () => {
   const { nextStep } = useFormContext();
 
+  const handleGetStarted = () => {
+    nextStep();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="text-center max-w-2xl mx-auto py-6">
       <h1 className="text-3xl font-bold text-form-400 mb-1">Italian 🇮🇹 Tax Profile</h1>
@@ -64,7 +69,7 @@ const WelcomeStep: React.FC = () => {
       </div>
       
       <Button 
-        onClick={nextStep}
+        onClick={handleGetStarted}
         className="bg-form-300 hover:bg-form-400 text-white flex items-center gap-2 mx-auto"
         size="lg"
       >
