@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -45,10 +44,9 @@ const ReviewStep: React.FC = () => {
         const { data: ownerData, error: ownerError } = await supabase
           .from('owners')
           .insert({
-            id: owner.id,
             first_name: owner.firstName,
             last_name: owner.lastName,
-            date_of_birth: owner.dateOfBirth,
+            date_of_birth: owner.dateOfBirth ? owner.dateOfBirth.toISOString() : null,
             country_of_birth: owner.countryOfBirth,
             citizenship: owner.citizenship,
             address_street: owner.address.street,
@@ -80,16 +78,15 @@ const ReviewStep: React.FC = () => {
         const { data: propertyData, error: propertyError } = await supabase
           .from('properties')
           .insert({
-            id: property.id,
             label: property.label,
             address_comune: property.address.comune,
             address_province: property.address.province,
             address_street: property.address.street,
             address_zip: property.address.zip,
             activity_2024: property.activity2024,
-            purchase_date: property.purchaseDate,
+            purchase_date: property.purchaseDate ? property.purchaseDate.toISOString() : null,
             purchase_price: property.purchasePrice,
-            sale_date: property.saleDate,
+            sale_date: property.saleDate ? property.saleDate.toISOString() : null,
             sale_price: property.salePrice,
             property_type: property.propertyType,
             remodeling: property.remodeling,
@@ -113,13 +110,14 @@ const ReviewStep: React.FC = () => {
         const { data: assignmentData, error: assignmentError } = await supabase
           .from('owner_property_assignments')
           .insert({
-            id: assignment.propertyId + '-' + assignment.ownerId,
             property_id: assignment.propertyId,
             owner_id: assignment.ownerId,
             ownership_percentage: assignment.ownershipPercentage,
             resident_at_property: assignment.residentAtProperty,
-            resident_from_date: assignment.residentDateRange?.from || null,
-            resident_to_date: assignment.residentDateRange?.to || null,
+            resident_from_date: assignment.residentDateRange?.from ? 
+              assignment.residentDateRange.from.toISOString() : null,
+            resident_to_date: assignment.residentDateRange?.to ? 
+              assignment.residentDateRange.to.toISOString() : null,
             tax_credits: assignment.taxCredits
           })
           .select();
@@ -238,7 +236,6 @@ const ReviewStep: React.FC = () => {
     );
   };
 
-  // Submission section at the top
   const renderSubmissionSection = () => (
     <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
       <h3 className="text-xl font-semibold text-green-800 mb-3">Ready for Submission</h3>
@@ -250,7 +247,6 @@ const ReviewStep: React.FC = () => {
         A confirmation email will be sent to you with a summary of your submitted information.
       </p>
       
-      {/* Add disclaimer */}
       <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded text-amber-800 text-sm">
         <p className="font-medium mb-1">Disclaimer:</p>
         <p>By submitting this form, you acknowledge that you take full responsibility for the accuracy of all information provided. 
