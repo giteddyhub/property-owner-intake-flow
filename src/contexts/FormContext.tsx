@@ -1,7 +1,11 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { FormContextType, FormState, Owner, Property, OwnerPropertyAssignment } from '@/types/form';
+import { ownerService } from '@/services/ownerService';
+import { propertyService } from '@/services/propertyService';
+import { assignmentService } from '@/services/assignmentService';
+import { useToast } from '@/hooks/use-toast';
 
 const initialState: FormState = {
   owners: [],
@@ -14,98 +18,294 @@ const FormContext = createContext<FormContextType | undefined>(undefined);
 
 export const FormProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, setState] = useState<FormState>(initialState);
+  const { toast } = useToast();
 
-  const addOwner = (owner: Owner) => {
-    const newOwner = { ...owner, id: uuidv4() };
-    setState(prev => ({
-      ...prev,
-      owners: [...prev.owners, newOwner]
-    }));
-  };
+  // Load initial data from database
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load owners
+        const owners = await ownerService.listOwners();
+        
+        // Load properties
+        const properties = await propertyService.listProperties();
+        
+        // Load assignments
+        const assignments = await assignmentService.listAssignments();
+        
+        setState(prev => ({
+          ...prev,
+          owners,
+          properties,
+          assignments,
+        }));
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load data from the database.",
+          variant: "destructive",
+        });
+      }
+    };
 
-  const updateOwner = (index: number, owner: Owner) => {
-    setState(prev => {
-      const newOwners = [...prev.owners];
-      newOwners[index] = owner;
-      return { ...prev, owners: newOwners };
-    });
-  };
+    loadData();
+  }, [toast]);
 
-  const removeOwner = (index: number) => {
-    setState(prev => {
-      const newOwners = [...prev.owners];
-      newOwners.splice(index, 1);
+  const addOwner = async (owner: Owner) => {
+    try {
+      const newOwner = { ...owner, id: uuidv4() };
+      const savedOwner = await ownerService.createOwner(newOwner);
       
-      // Remove assignments for this owner
-      const ownerId = prev.owners[index].id;
-      const newAssignments = prev.assignments.filter(
-        assignment => assignment.ownerId !== ownerId
-      );
+      if (savedOwner) {
+        setState(prev => ({
+          ...prev,
+          owners: [...prev.owners, savedOwner]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Owner added successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding owner:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add owner.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateOwner = async (index: number, owner: Owner) => {
+    try {
+      const updatedOwner = await ownerService.updateOwner(owner);
       
-      return { 
-        ...prev, 
-        owners: newOwners,
-        assignments: newAssignments
-      };
-    });
+      if (updatedOwner) {
+        setState(prev => {
+          const newOwners = [...prev.owners];
+          newOwners[index] = updatedOwner;
+          return { ...prev, owners: newOwners };
+        });
+        
+        toast({
+          title: "Success",
+          description: "Owner updated successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating owner:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update owner.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const addProperty = (property: Property) => {
-    const newProperty = { ...property, id: uuidv4() };
-    setState(prev => ({
-      ...prev,
-      properties: [...prev.properties, newProperty]
-    }));
-  };
-
-  const updateProperty = (index: number, property: Property) => {
-    setState(prev => {
-      const newProperties = [...prev.properties];
-      newProperties[index] = property;
-      return { ...prev, properties: newProperties };
-    });
-  };
-
-  const removeProperty = (index: number) => {
-    setState(prev => {
-      const newProperties = [...prev.properties];
-      const propertyId = prev.properties[index].id;
-      newProperties.splice(index, 1);
+  const removeOwner = async (index: number) => {
+    try {
+      const ownerId = state.owners[index].id;
+      const success = await ownerService.deleteOwner(ownerId);
       
-      // Remove assignments for this property
-      const newAssignments = prev.assignments.filter(
-        assignment => assignment.propertyId !== propertyId
-      );
+      if (success) {
+        setState(prev => {
+          const newOwners = [...prev.owners];
+          newOwners.splice(index, 1);
+          
+          // Remove assignments for this owner
+          const newAssignments = prev.assignments.filter(
+            assignment => assignment.ownerId !== ownerId
+          );
+          
+          return { 
+            ...prev, 
+            owners: newOwners,
+            assignments: newAssignments
+          };
+        });
+        
+        toast({
+          title: "Success",
+          description: "Owner removed successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error removing owner:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove owner.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addProperty = async (property: Property) => {
+    try {
+      const newProperty = { ...property, id: uuidv4() };
+      const savedProperty = await propertyService.createProperty(newProperty);
       
-      return { 
-        ...prev, 
-        properties: newProperties,
-        assignments: newAssignments
-      };
-    });
+      if (savedProperty) {
+        setState(prev => ({
+          ...prev,
+          properties: [...prev.properties, savedProperty]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Property added successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding property:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add property.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const addAssignment = (assignment: OwnerPropertyAssignment) => {
-    setState(prev => ({
-      ...prev,
-      assignments: [...prev.assignments, assignment]
-    }));
+  const updateProperty = async (index: number, property: Property) => {
+    try {
+      const updatedProperty = await propertyService.updateProperty(property);
+      
+      if (updatedProperty) {
+        setState(prev => {
+          const newProperties = [...prev.properties];
+          newProperties[index] = updatedProperty;
+          return { ...prev, properties: newProperties };
+        });
+        
+        toast({
+          title: "Success",
+          description: "Property updated successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating property:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update property.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const updateAssignment = (index: number, assignment: OwnerPropertyAssignment) => {
-    setState(prev => {
-      const newAssignments = [...prev.assignments];
-      newAssignments[index] = assignment;
-      return { ...prev, assignments: newAssignments };
-    });
+  const removeProperty = async (index: number) => {
+    try {
+      const propertyId = state.properties[index].id;
+      const success = await propertyService.deleteProperty(propertyId);
+      
+      if (success) {
+        setState(prev => {
+          const newProperties = [...prev.properties];
+          newProperties.splice(index, 1);
+          
+          // Remove assignments for this property
+          const newAssignments = prev.assignments.filter(
+            assignment => assignment.propertyId !== propertyId
+          );
+          
+          return { 
+            ...prev, 
+            properties: newProperties,
+            assignments: newAssignments
+          };
+        });
+        
+        toast({
+          title: "Success",
+          description: "Property removed successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error removing property:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove property.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const removeAssignment = (index: number) => {
-    setState(prev => {
-      const newAssignments = [...prev.assignments];
-      newAssignments.splice(index, 1);
-      return { ...prev, assignments: newAssignments };
-    });
+  const addAssignment = async (assignment: OwnerPropertyAssignment) => {
+    try {
+      const savedAssignment = await assignmentService.createAssignment(assignment);
+      
+      if (savedAssignment) {
+        setState(prev => ({
+          ...prev,
+          assignments: [...prev.assignments, savedAssignment]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Assignment added successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding assignment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add assignment.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateAssignment = async (index: number, assignment: OwnerPropertyAssignment) => {
+    try {
+      const updatedAssignment = await assignmentService.updateAssignment(assignment);
+      
+      if (updatedAssignment) {
+        setState(prev => {
+          const newAssignments = [...prev.assignments];
+          newAssignments[index] = updatedAssignment;
+          return { ...prev, assignments: newAssignments };
+        });
+        
+        toast({
+          title: "Success",
+          description: "Assignment updated successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating assignment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update assignment.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeAssignment = async (index: number) => {
+    try {
+      const { propertyId, ownerId } = state.assignments[index];
+      const success = await assignmentService.deleteAssignment(propertyId, ownerId);
+      
+      if (success) {
+        setState(prev => {
+          const newAssignments = [...prev.assignments];
+          newAssignments.splice(index, 1);
+          return { ...prev, assignments: newAssignments };
+        });
+        
+        toast({
+          title: "Success",
+          description: "Assignment removed successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error removing assignment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove assignment.",
+        variant: "destructive",
+      });
+    }
   };
 
   const nextStep = () => {
