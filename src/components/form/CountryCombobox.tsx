@@ -43,15 +43,16 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   // Get countries with robust error handling
   const countriesArray = React.useMemo(() => {
     try {
+      // Retrieve countries list
       const countries = getCountries();
       
-      // Defensive programming - check if the result is a proper array
+      // Defensive check - ensure countries is an array
       if (!Array.isArray(countries)) {
         console.error("getCountries() did not return an array:", countries);
         return [];
       }
       
-      // Ensure we have a valid array of strings
+      // Ensure we have a valid array of strings by filtering out non-strings
       return countries.filter(country => typeof country === 'string');
     } catch (error) {
       console.error("Error fetching countries:", error);
@@ -59,8 +60,9 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     }
   }, []);
   
-  // Safety check for countriesArray
+  // Safety check for countriesArray before using it
   if (!Array.isArray(countriesArray) || countriesArray.length === 0) {
+    console.warn("No valid countries available, falling back to input");
     return (
       <BasicInput
         value={value}
@@ -75,7 +77,7 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   const filteredCountries = React.useMemo(() => {
     // Safety check for excludeCountries
     if (!Array.isArray(excludeCountries)) {
-      return countriesArray;
+      return [...countriesArray]; // Return a new array copy
     }
     
     // Filter out excluded countries
@@ -84,8 +86,9 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     );
   }, [countriesArray, excludeCountries]);
 
-  // Final safety check
+  // Final safety check before rendering Combobox
   if (!Array.isArray(filteredCountries) || filteredCountries.length === 0) {
+    console.warn("No countries available after filtering, falling back to input");
     return (
       <BasicInput
         value={value}

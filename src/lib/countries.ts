@@ -29,36 +29,39 @@ export const COUNTRIES = [
 
 /**
  * Get a list of countries with maximum safety guarantees
- * This function will always return a valid array, never undefined
+ * This function will always return a valid array, never undefined or null
  */
 export const getCountries = (): string[] => {
-  // Default empty array - will be returned if anything fails
+  // Create a default empty array that will be returned if anything fails
   const defaultCountries: string[] = [];
   
   try {
-    // First check if COUNTRIES exists and is an array
-    if (typeof COUNTRIES === 'undefined') {
-      console.error("countries.ts: COUNTRIES is undefined");
-      return defaultCountries;
+    // Check if COUNTRIES exists and is an array
+    if (typeof COUNTRIES === 'undefined' || COUNTRIES === null) {
+      console.error("countries.ts: COUNTRIES is undefined or null");
+      return [...defaultCountries];
     }
     
     if (!Array.isArray(COUNTRIES)) {
       console.error("countries.ts: COUNTRIES is not an array");
-      return defaultCountries;
+      return [...defaultCountries];
     }
     
     if (COUNTRIES.length === 0) {
       console.warn("countries.ts: COUNTRIES array is empty");
-      return defaultCountries;
+      return [...defaultCountries];
     }
     
+    // Create and return a copy of the array to avoid mutation issues
     // Filter out any non-string values to ensure we only have strings
-    const validCountries = COUNTRIES.filter(country => typeof country === 'string');
+    const validCountries = COUNTRIES.filter(country => 
+      typeof country === 'string' && country.trim() !== ''
+    );
     
-    // Final safety check
-    return validCountries;
+    // Always return a new array to avoid reference issues
+    return [...validCountries];
   } catch (error) {
     console.error("Fatal error in getCountries():", error);
-    return defaultCountries;
+    return [...defaultCountries];
   }
 };

@@ -70,7 +70,7 @@ SelectScrollDownButton.displayName =
 
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
-  React.ComponentPropsWithoutRef<SelectPrimitive.Content>
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
@@ -190,9 +190,9 @@ const Combobox = ({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  // Handle invalid options input - extra defensive
+  // First defensive check - if options is undefined or null, return input
   if (!options) {
-    console.warn("Combobox received no options");
+    console.warn("Combobox: options is undefined or null");
     return (
       <BasicInput
         value={value || ""}
@@ -203,9 +203,9 @@ const Combobox = ({
     );
   }
 
-  // Ensure options is an array
+  // Second defensive check - ensure options is an array
   if (!Array.isArray(options)) {
-    console.warn("Combobox received non-array options:", options);
+    console.warn("Combobox: options is not an array:", options);
     return (
       <BasicInput
         value={value || ""}
@@ -216,8 +216,9 @@ const Combobox = ({
     );
   }
 
-  // Ensure the array has items
+  // Third defensive check - ensure array has items
   if (options.length === 0) {
+    console.warn("Combobox: options array is empty");
     return (
       <BasicInput
         value={value || ""}
@@ -228,15 +229,30 @@ const Combobox = ({
     );
   }
 
-  // Filter options based on search
-  const filteredOptions = searchQuery.trim() === "" 
-    ? options 
-    : options.filter(option => 
+  // Initialize filteredOptions as a guaranteed array with a default empty array
+  let filteredOptions: string[] = [];
+  
+  try {
+    // Filter options based on search with full error handling
+    if (searchQuery.trim() === "") {
+      // When no search, use all options
+      filteredOptions = [...options];
+    } else {
+      // When searching, filter options that include the search text (case insensitive)
+      filteredOptions = options.filter(option => 
         typeof option === 'string' && option.toLowerCase().includes(searchQuery.toLowerCase())
       );
+    }
+  } catch (err) {
+    console.error("Error filtering options:", err);
+    // Fall back to the full options list
+    filteredOptions = [...options];
+  }
 
-  // Final safety check to ensure we have a valid array
-  const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
+  // Final safety check - ensure filteredOptions is a valid array
+  if (!Array.isArray(filteredOptions)) {
+    filteredOptions = [];
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -263,7 +279,7 @@ const Combobox = ({
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup className="max-h-[200px] overflow-y-auto">
-            {safeFilteredOptions.map((option) => (
+            {filteredOptions.map((option) => (
               <CommandItem
                 key={option}
                 value={option}
