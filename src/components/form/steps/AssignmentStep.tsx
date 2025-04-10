@@ -195,9 +195,9 @@ const AssignmentStep: React.FC = () => {
             <AccordionItem 
               key={property.id} 
               value={property.id}
-              className="border rounded-lg overflow-hidden hover:no-underline"
+              className="border rounded-lg overflow-hidden"
             >
-              <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 hover:no-underline">
+              <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100">
                 <div className="flex items-start justify-between w-full text-left">
                   <div>
                     <h3 className="font-medium">
@@ -207,7 +207,7 @@ const AssignmentStep: React.FC = () => {
                       {property.address.street}, {property.address.comune}, {property.address.province}
                     </p>
                   </div>
-                  <div className="text-right text-sm mr-8 flex items-center">
+                  <div className="text-right text-sm">
                     <span className={cn(
                       "inline-block px-2 py-1 rounded",
                       getTotalPercentage(property.id) === 100 
