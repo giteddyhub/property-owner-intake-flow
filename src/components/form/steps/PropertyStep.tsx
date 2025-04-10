@@ -66,7 +66,7 @@ const createEmptyProperty = (): Property => ({
   activity2024: 'neither',
   propertyType: 'RESIDENTIAL',
   remodeling: false,
-  occupancyStatuses: ['PERSONAL_USE'] as OccupancyStatus[],
+  occupancyStatuses: ['LONG_TERM_RENT'] as OccupancyStatus[],
   monthsOccupied: 12,
   rentalIncome: 0
 });
@@ -80,10 +80,10 @@ const PropertyStep: React.FC = () => {
   const [currentProperty, setCurrentProperty] = useState<Property>(createEmptyProperty());
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(properties.length === 0);
-  const [activeStatuses, setActiveStatuses] = useState<Set<OccupancyStatus>>(new Set(['PERSONAL_USE']));
+  const [activeStatuses, setActiveStatuses] = useState<Set<OccupancyStatus>>(new Set(['LONG_TERM_RENT']));
   const [occupancyMonths, setOccupancyMonths] = useState<Record<OccupancyStatus, number>>({
-    PERSONAL_USE: 12,
-    LONG_TERM_RENT: 0,
+    PERSONAL_USE: 0,
+    LONG_TERM_RENT: 12,
     SHORT_TERM_RENT: 0,
   });
   const [availableMonths, setAvailableMonths] = useState<Record<OccupancyStatus, number[]>>({
@@ -350,11 +350,11 @@ const PropertyStep: React.FC = () => {
     setEditingIndex(null);
     setShowForm(false);
     setOccupancyMonths({
-      PERSONAL_USE: 12,
-      LONG_TERM_RENT: 0,
+      PERSONAL_USE: 0,
+      LONG_TERM_RENT: 12,
       SHORT_TERM_RENT: 0,
     });
-    setActiveStatuses(new Set(['PERSONAL_USE']));
+    setActiveStatuses(new Set(['LONG_TERM_RENT']));
   };
 
   const handleEdit = (index: number) => {
@@ -363,7 +363,7 @@ const PropertyStep: React.FC = () => {
       ...property,
       occupancyStatuses: Array.isArray(property.occupancyStatuses) 
         ? property.occupancyStatuses 
-        : ['PERSONAL_USE' as OccupancyStatus]
+        : ['LONG_TERM_RENT' as OccupancyStatus]
     };
     
     setCurrentProperty(updatedProperty);
@@ -402,11 +402,11 @@ const PropertyStep: React.FC = () => {
     setEditingIndex(null);
     setShowForm(false);
     setOccupancyMonths({
-      PERSONAL_USE: 12,
-      LONG_TERM_RENT: 0,
+      PERSONAL_USE: 0,
+      LONG_TERM_RENT: 12,
       SHORT_TERM_RENT: 0,
     });
-    setActiveStatuses(new Set(['PERSONAL_USE']));
+    setActiveStatuses(new Set(['LONG_TERM_RENT']));
   };
 
   const validateAndProceed = () => {
@@ -794,72 +794,6 @@ const PropertyStep: React.FC = () => {
           <div className="mt-6">
             <h4 className="text-md font-medium mb-3">Rental Status*</h4>
             <div className="flex flex-col space-y-3">
-              {/* Personal Use / Vacant */}
-              <div 
-                className={cn(
-                  "relative rounded-lg border p-4 transition-all cursor-pointer",
-                  activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0 
-                    ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
-                    : "bg-white border-gray-200 hover:border-gray-300"
-                )}
-                onClick={() => handleOccupancyStatusChange('PERSONAL_USE')}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Checkbox 
-                    checked={activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0}
-                    className="cursor-pointer"
-                  />
-                  <span className="font-medium text-gray-900 cursor-pointer">Personal Use / Vacant</span>
-                </div>
-                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">
-                  {occupancyExplanations.PERSONAL_USE}
-                </p>
-                
-                <Collapsible 
-                  open={activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0}
-                  className="mt-2 ml-7.5"
-                >
-                  <CollapsibleContent>
-                    <Label htmlFor="personal_use_months">Number of Months*</Label>
-                    <div className="flex items-center gap-2">
-                      <Select 
-                        value={occupancyMonths.PERSONAL_USE.toString()}
-                        onValueChange={(value) => handleOccupancyMonthsChange('PERSONAL_USE', parseInt(value))}
-                        disabled={availableMonths.PERSONAL_USE.length === 0}
-                      >
-                        <SelectTrigger className="mt-1 w-24">
-                          <SelectValue placeholder="Months" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableMonths.PERSONAL_USE.map(month => (
-                            <SelectItem key={`personal-${month}`} value={month.toString()}>
-                              {month}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {currentProperty.occupancyStatuses.includes('PERSONAL_USE') && 
-                      occupancyMonths.PERSONAL_USE > 0 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="ml-2 text-red-500 hover:text-red-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveOccupancyStatus('PERSONAL_USE');
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-              
-              {/* Long-Term Rental */}
               <div 
                 className={cn(
                   "relative rounded-lg border p-4 transition-all cursor-pointer",
@@ -924,7 +858,6 @@ const PropertyStep: React.FC = () => {
                 </Collapsible>
               </div>
               
-              {/* Short-Term Rental */}
               <div 
                 className={cn(
                   "relative rounded-lg border p-4 transition-all cursor-pointer",
@@ -988,6 +921,70 @@ const PropertyStep: React.FC = () => {
                   </CollapsibleContent>
                 </Collapsible>
               </div>
+              
+              <div 
+                className={cn(
+                  "relative rounded-lg border p-4 transition-all cursor-pointer",
+                  activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0 
+                    ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
+                    : "bg-white border-gray-200 hover:border-gray-300"
+                )}
+                onClick={() => handleOccupancyStatusChange('PERSONAL_USE')}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Checkbox 
+                    checked={activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0}
+                    className="cursor-pointer"
+                  />
+                  <span className="font-medium text-gray-900 cursor-pointer">Personal Use / Vacant</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">
+                  {occupancyExplanations.PERSONAL_USE}
+                </p>
+                
+                <Collapsible 
+                  open={activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0}
+                  className="mt-2 ml-7.5"
+                >
+                  <CollapsibleContent>
+                    <Label htmlFor="personal_use_months">Number of Months*</Label>
+                    <div className="flex items-center gap-2">
+                      <Select 
+                        value={occupancyMonths.PERSONAL_USE.toString()}
+                        onValueChange={(value) => handleOccupancyMonthsChange('PERSONAL_USE', parseInt(value))}
+                        disabled={availableMonths.PERSONAL_USE.length === 0}
+                      >
+                        <SelectTrigger className="mt-1 w-24">
+                          <SelectValue placeholder="Months" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableMonths.PERSONAL_USE.map(month => (
+                            <SelectItem key={`personal-${month}`} value={month.toString()}>
+                              {month}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {currentProperty.occupancyStatuses.includes('PERSONAL_USE') && 
+                      occupancyMonths.PERSONAL_USE > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="ml-2 text-red-500 hover:text-red-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveOccupancyStatus('PERSONAL_USE');
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
             </div>
           </div>
           
@@ -1010,7 +1007,6 @@ const PropertyStep: React.FC = () => {
             </div>
           )}
           
-          {/* Form Navigation Buttons */}
           <FormNavigation 
             isFormMode={true} 
             onCancel={handleCancel} 
