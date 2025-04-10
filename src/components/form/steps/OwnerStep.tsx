@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from 'sonner';
 import { Owner, MaritalStatus, Address, ItalianResidenceDetails } from '@/types/form';
 import CountryCombobox from '@/components/form/CountryCombobox';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, StandardTooltipContent } from '@/components/ui/tooltip';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const COUNTRIES = [
@@ -493,10 +493,10 @@ const OwnerStep: React.FC = () => {
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
+                    <StandardTooltipContent>
                       <p>The "Codice Fiscale" is a unique identifier issued by the Italian government. It's required for tax purposes, property transactions, and official documents in Italy.</p>
                       <p className="mt-2 font-medium">Example: RSSMRA80A01H501W</p>
-                    </TooltipContent>
+                    </StandardTooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
@@ -573,6 +573,22 @@ const OwnerStep: React.FC = () => {
                 onCheckedChange={handleSwitchChange}
               />
               <Label htmlFor="isResidentInItaly">Resident in Italy?</Label>
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <StandardTooltipContent>
+                    <p>A person is considered an Italian tax resident if they meet at least one of these conditions:</p>
+                    <ul className="list-disc pl-5 mt-1 space-y-1">
+                      <li>Registered with the Italian Registry Office for most of the tax period (183+ days)</li>
+                      <li>Have their habitual abode in Italy</li>
+                      <li>Establish their main center of business and interests in Italy</li>
+                    </ul>
+                    <p className="mt-2">Italian tax residents are taxed on their worldwide income.</p>
+                  </StandardTooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             
             {currentOwner.isResidentInItaly && (
