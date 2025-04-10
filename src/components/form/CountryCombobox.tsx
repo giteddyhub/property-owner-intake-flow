@@ -19,13 +19,19 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   excludeCountries = []
 }) => {
   const filteredCountries = React.useMemo(() => {
+    // Make sure COUNTRIES is defined and is an array before filtering
+    if (!Array.isArray(COUNTRIES)) {
+      console.error("COUNTRIES is not an array:", COUNTRIES);
+      return [];
+    }
+    
     if (excludeCountries.length === 0) return COUNTRIES;
     return COUNTRIES.filter(country => !excludeCountries.includes(country));
   }, [excludeCountries]);
 
   return (
     <Combobox
-      options={filteredCountries}
+      options={filteredCountries || []} // Ensure we always pass an array
       value={value}
       onValueChange={onChange}
       placeholder={placeholder}

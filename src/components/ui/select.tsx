@@ -170,9 +170,12 @@ const Combobox = ({
   const [open, setOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
 
+  // Ensure options is always an array
+  const safeOptions = Array.isArray(options) ? options : [];
+
   const filteredOptions = searchQuery === ""
-    ? options
-    : options.filter((option) =>
+    ? safeOptions
+    : safeOptions.filter((option) =>
         option.toLowerCase().includes(searchQuery.toLowerCase())
       )
 
