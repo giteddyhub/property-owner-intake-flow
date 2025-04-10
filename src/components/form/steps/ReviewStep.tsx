@@ -29,12 +29,10 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ActivityType, OccupancyStatus, Owner, Property } from '@/types/form';
-import { useNavigate } from 'react-router-dom';
 
 const ReviewStep: React.FC = () => {
   const { state, goToStep } = useFormContext();
   const { owners, properties, assignments } = state;
-  const navigate = useNavigate();
   
   const getPropertyAssignments = (propertyId: string) => {
     return assignments.filter(assignment => assignment.propertyId === propertyId);
@@ -93,9 +91,14 @@ const ReviewStep: React.FC = () => {
       duration: 5000,
     });
     
-    // Navigate to dashboard after successful submission
     setTimeout(() => {
-      navigate('/dashboard');
+      toast("Your submission has been received", {
+        description: "A confirmation email has been sent with a summary of your submission.",
+        action: {
+          label: "Download Summary",
+          onClick: () => handleDownloadSummary(),
+        },
+      });
     }, 1000);
   };
   
