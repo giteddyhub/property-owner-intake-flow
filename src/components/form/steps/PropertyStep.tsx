@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

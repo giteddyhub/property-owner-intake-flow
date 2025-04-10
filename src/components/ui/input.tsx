@@ -7,8 +7,16 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
     
-    // Combine refs
-    React.useImperativeHandle(ref, () => inputRef.current!, []);
+    // Combine refs using useEffect to ensure our input ref is always updated
+    React.useEffect(() => {
+      if (ref) {
+        if (typeof ref === 'function') {
+          ref(inputRef.current);
+        } else {
+          ref.current = inputRef.current;
+        }
+      }
+    }, [ref]);
     
     return (
       <input
