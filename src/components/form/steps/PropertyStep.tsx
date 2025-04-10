@@ -224,6 +224,21 @@ const PropertyStep: React.FC = () => {
   };
 
   const handleOccupancyStatusChange = (status: OccupancyStatus) => {
+    if (activeStatuses.has(status) && occupancyMonths[status] === 0) {
+      setActiveStatuses(prev => {
+        const newStatuses = new Set(prev);
+        newStatuses.delete(status);
+        return newStatuses;
+      });
+      
+      setCurrentProperty(prev => ({
+        ...prev,
+        occupancyStatuses: prev.occupancyStatuses.filter(s => s !== status)
+      }));
+      
+      return;
+    }
+    
     setActiveStatuses(prev => {
       const newStatuses = new Set(prev);
       newStatuses.add(status);
