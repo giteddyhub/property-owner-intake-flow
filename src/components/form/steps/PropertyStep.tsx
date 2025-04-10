@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -614,7 +613,7 @@ const PropertyStep: React.FC = () => {
           </div>
           
           <div className="mt-6">
-            <h4 className="text-md font-medium mb-3">Occupancy Status*</h4>
+            <h4 className="text-md font-medium mb-3">Rental Status*</h4>
             <RadioGroup 
               value={currentProperty.occupancyStatus}
               onValueChange={(value) => handleOccupancyStatusChange(value as OccupancyStatus)}
