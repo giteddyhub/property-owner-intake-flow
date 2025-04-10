@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { Circle } from "lucide-react"
@@ -40,15 +39,15 @@ const RadioGroupItem = React.forwardRef<
 })
 RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
 
-// Create a modern styled radio item that matches the example image
 const ModernRadioGroupItem = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
->(({ className, ...props }, ref) => {
+>(({ className, value, ...props }, ref) => {
   return (
     <div className="flex items-center">
       <RadioGroupPrimitive.Item
         ref={ref}
+        value={value}
         className={cn(
           "peer relative h-6 w-12 cursor-pointer appearance-none rounded-full border-2 border-purple-300 bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-purple-600 data-[state=checked]:bg-purple-600",
           className
@@ -64,7 +63,6 @@ const ModernRadioGroupItem = React.forwardRef<
 })
 ModernRadioGroupItem.displayName = "ModernRadioGroupItem"
 
-// Create a card-style radio item that matches the example image
 const CardRadioGroupItem = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item> & {
@@ -74,7 +72,6 @@ const CardRadioGroupItem = React.forwardRef<
     children?: React.ReactNode;
   }
 >(({ className, title, description, explanation, children, ...props }, ref) => {
-  // Generate an ID for connecting the label to the radio
   const id = React.useId();
   
   return (
@@ -85,7 +82,6 @@ const CardRadioGroupItem = React.forwardRef<
       className
     )}
     onClick={(e) => {
-      // This ensures the click propagates to the radio input
       const radioInput = e.currentTarget.querySelector('button[role="radio"]');
       if (radioInput) {
         (radioInput as HTMLElement).click();
@@ -107,18 +103,12 @@ const CardRadioGroupItem = React.forwardRef<
         {title && <h3 className="font-medium text-gray-900 cursor-pointer">{title}</h3>}
         {description && <p className="text-sm text-gray-500 mt-1 cursor-pointer">{description}</p>}
         
-        {/* This is the container that will expand when checked to show the explanation and form fields */}
-        <div className={cn(
-          "radio-explanation",
-          props.checked ? "show" : ""
-        )}>
-          {explanation && (
-            <p className="text-sm text-gray-600 mb-3 cursor-pointer">
-              {explanation}
-            </p>
-          )}
-          {props.checked && children}
-        </div>
+        {explanation && (
+          <p className="text-sm text-gray-600 mb-3 cursor-pointer">
+            {explanation}
+          </p>
+        )}
+        {props.checked && children}
       </div>
     </div>
   )

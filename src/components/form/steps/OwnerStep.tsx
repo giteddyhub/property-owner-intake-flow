@@ -520,6 +520,7 @@ const OwnerStep: React.FC = () => {
               <div className="residency-toggle">
                 <ModernRadioGroupItem
                   id="isResidentInItaly"
+                  value={currentOwner.isResidentInItaly ? "yes" : "no"}
                   checked={currentOwner.isResidentInItaly}
                   onClick={() => handleSwitchChange(!currentOwner.isResidentInItaly)}
                 />
