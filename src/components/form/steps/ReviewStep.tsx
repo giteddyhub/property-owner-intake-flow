@@ -42,7 +42,12 @@ const ReviewStep: React.FC = () => {
     setShowContactDialog(true);
   };
   
-  const handleSubmit = async (contactInfo: { fullName: string, email: string }) => {
+  const handleSubmit = async (contactInfo: { 
+    fullName: string, 
+    email: string, 
+    termsAccepted: boolean, 
+    privacyAccepted: boolean 
+  }) => {
     try {
       setIsSubmitting(true);
       

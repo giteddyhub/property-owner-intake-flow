@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ExternalLink } from 'lucide-react';
 
 const contactFormSchema = z.object({
   fullName: z.string().min(2, {
@@ -28,6 +30,12 @@ const contactFormSchema = z.object({
   }),
   email: z.string().email({
     message: "Please enter a valid email address.",
+  }),
+  termsAccepted: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the terms and conditions." }),
+  }),
+  privacyAccepted: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the privacy policy." }),
   }),
 });
 
@@ -51,6 +59,8 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
     defaultValues: {
       fullName: '',
       email: '',
+      termsAccepted: false,
+      privacyAccepted: false,
     },
   });
 
@@ -95,6 +105,69 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
                 </FormItem>
               )}
             />
+            
+            <div className="space-y-3 pt-2">
+              <FormField
+                control={form.control}
+                name="termsAccepted"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox 
+                        checked={field.value} 
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm font-normal">
+                        I agree to the{' '}
+                        <a 
+                          href="https://www.italiantaxes.com/terms-and-conditions" 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-form-300 hover:text-form-400 hover:underline inline-flex items-center"
+                        >
+                          Terms and Conditions
+                          <ExternalLink className="ml-1 h-3 w-3" />
+                        </a>
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="privacyAccepted"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox 
+                        checked={field.value} 
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm font-normal">
+                        I agree to the{' '}
+                        <a 
+                          href="https://www.italiantaxes.com/privacy-policy" 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-form-300 hover:text-form-400 hover:underline inline-flex items-center"
+                        >
+                          Privacy Policy
+                          <ExternalLink className="ml-1 h-3 w-3" />
+                        </a>
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+            
             <DialogFooter className="pt-4">
               <Button 
                 type="button" 
