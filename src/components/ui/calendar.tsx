@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker, type DayClickEventHandler, type ActiveModifiers } from "react-day-picker";
@@ -14,6 +13,7 @@ function Calendar({
   classNames,
   showOutsideDays = true,
   onDayClick,
+  mode,
   ...props
 }: CalendarProps) {
   // Custom formatter for month labels to use abbreviated month names
@@ -21,7 +21,7 @@ function Calendar({
     return format(date, "MMM"); // This will return abbreviated month names like "Jan", "Feb", etc.
   };
 
-  // Handle day click to automatically close the popover
+  // Handle day click to automatically close the popover only for single mode or when range is complete
   const handleDayClick: DayClickEventHandler = React.useCallback(
     (day, modifiers, e) => {
       // If the day is disabled, don't do anything
@@ -32,16 +32,25 @@ function Calendar({
         onDayClick(day, modifiers, e);
       }
       
-      // Close any popover or dialog containing this calendar
-      // This works by simulating an Escape key press
-      const event = new KeyboardEvent("keydown", {
-        key: "Escape",
-        bubbles: true,
-        cancelable: true,
-      });
-      document.dispatchEvent(event);
+      // Only close the calendar if it's in single mode or if a range has been completed
+      const isRangeComplete = mode === "range" && props.selected && 
+        typeof props.selected === "object" && 
+        props.selected.from && 
+        props.selected.to;
+      
+      // Close in single mode or when range is complete
+      if (mode !== "range" || isRangeComplete) {
+        // Close any popover or dialog containing this calendar
+        // This works by simulating an Escape key press
+        const event = new KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          cancelable: true,
+        });
+        document.dispatchEvent(event);
+      }
     },
-    [onDayClick]
+    [onDayClick, mode, props.selected]
   );
 
   return (
@@ -95,6 +104,7 @@ function Calendar({
       fromYear={1900}
       toYear={2025}
       onDayClick={handleDayClick}
+      mode={mode}
       {...props}
     />
   );
