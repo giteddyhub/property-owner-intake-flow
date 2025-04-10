@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -93,9 +94,12 @@
 @layer base {
   * {
     @apply border-border;
+    font-family: 'Poppins', sans-serif;
   }
 
   body {
     @apply bg-background text-foreground;
   }
 }
+
+/* ... keep existing code (all remaining CSS styles) */
