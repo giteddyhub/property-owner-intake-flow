@@ -1049,7 +1049,7 @@ const PropertyStep: React.FC = () => {
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <HelpCircle className="h-4 w-4 text-orange-500 ml-1 cursor-help" />
+                      <HelpCircle className="h-4 w-4 ml-1 cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="w-80 p-4">
                       <p>This is a key figure that will be used to calculate your tax liability.</p>
@@ -1058,7 +1058,7 @@ const PropertyStep: React.FC = () => {
                 </TooltipProvider>
               </h4>
               <div className="relative mt-1">
-                <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-orange-500" />
+                <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input 
                   id="rentalIncome" 
                   name="rentalIncome" 
@@ -1067,7 +1067,7 @@ const PropertyStep: React.FC = () => {
                   placeholder="Enter rental income"
                   value={currentProperty.rentalIncome || ''}
                   onChange={handleInputChange}
-                  className="pl-10 border-orange-500 focus-visible:ring-orange-500 bg-orange-50"
+                  className="pl-10"
                   size="lg"
                 />
               </div>
