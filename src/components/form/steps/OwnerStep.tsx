@@ -440,6 +440,8 @@ const OwnerStep: React.FC = () => {
                     selected={currentOwner.dateOfBirth || undefined}
                     onSelect={handleDateChange}
                     initialFocus
+                    fromYear={1900}
+                    toYear={2010}
                   />
                 </PopoverContent>
               </Popover>

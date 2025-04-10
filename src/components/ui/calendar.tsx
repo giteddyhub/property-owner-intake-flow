@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -69,7 +68,7 @@ function Calendar({
       captionLayout="dropdown-buttons"
       formatters={{ formatMonthCaption }}
       fromYear={1900}
-      toYear={2010}
+      toYear={2025}
       {...props}
     />
   );
