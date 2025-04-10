@@ -616,7 +616,7 @@ const PropertyStep: React.FC = () => {
                   {(property.occupancyStatuses.includes('LONG_TERM_RENT') || 
                     property.occupancyStatuses.includes('SHORT_TERM_RENT')) && (
                     <p className="text-sm text-gray-600 mt-2">
-                      <strong>2024 Rental Income:</strong> €{property.rentalIncome?.toLocaleString() || '0'}
+                      <strong>💸 2024 Rental Income:</strong> €{property.rentalIncome?.toLocaleString() || '0'}
                     </p>
                   )}
                 </CardContent>
@@ -1044,7 +1044,7 @@ const PropertyStep: React.FC = () => {
           
           {shouldShowRentalIncome() && (
             <div className="mt-6">
-              <h4 className="font-medium mb-3">2024 Rental Income*</h4>
+              <h4 className="font-medium mb-3">💸 2024 Rental Income*</h4>
               <div className="relative mt-1">
                 <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input 
