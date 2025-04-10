@@ -5,6 +5,19 @@ import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    
+    // Properly combine refs to ensure focus is maintained
+    React.useEffect(() => {
+      if (ref) {
+        if (typeof ref === 'function') {
+          ref(inputRef.current);
+        } else {
+          ref.current = inputRef.current;
+        }
+      }
+    }, [ref]);
+    
     return (
       <input
         type={type}
@@ -12,7 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground placeholder:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
           className
         )}
-        ref={ref}
+        ref={inputRef}
         {...props}
       />
     )
