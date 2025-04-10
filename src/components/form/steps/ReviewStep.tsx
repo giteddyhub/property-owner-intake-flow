@@ -4,7 +4,7 @@ import { useFormContext } from '@/contexts/FormContext';
 import FormNavigation from '../FormNavigation';
 
 interface ReviewStepProps {
-  onSubmitAttempt?: (formData: any) => void; // Updated to accept formData parameter
+  onSubmitAttempt?: (formData: any) => void;
   isUserSignedUp?: boolean;
 }
 
@@ -14,37 +14,37 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ onSubmitAttempt, isUserSignedUp
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-form-400">Review Your Information</h2>
+      <h2 className="text-4xl font-bold mb-8 text-[#2F3FD4]">Review Your Information</h2>
       
       {/* Summary counts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-500 mb-1">Total Owners</div>
-          <div className="text-2xl font-bold text-form-400">{owners.length}</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-gray-600 mb-2">Total Owners</div>
+          <div className="text-4xl font-bold text-[#2F3FD4]">{owners.length}</div>
         </div>
         
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-500 mb-1">Total Properties</div>
-          <div className="text-2xl font-bold text-form-400">{properties.length}</div>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-gray-600 mb-2">Total Properties</div>
+          <div className="text-4xl font-bold text-[#2F3FD4]">{properties.length}</div>
         </div>
         
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-500 mb-1">Total Assignments</div>
-          <div className="text-2xl font-bold text-form-400">{assignments.length}</div>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-gray-600 mb-2">Total Assignments</div>
+          <div className="text-4xl font-bold text-[#2F3FD4]">{assignments.length}</div>
         </div>
       </div>
       
       {/* Display details from previous steps */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Owners section */}
         <div>
-          <h3 className="text-lg font-medium mb-2 text-form-300">Owners</h3>
+          <h3 className="text-2xl font-bold mb-4 text-[#2F3FD4]">Owners</h3>
           <div className="space-y-3">
             {owners.length > 0 ? (
               owners.map((owner: any, index: number) => (
-                <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <div className="font-medium">{owner.firstName} {owner.lastName}</div>
-                  <div className="text-sm text-gray-500">{owner.isResidentInItaly ? 'Italian Resident' : 'Non-Italian Resident'}</div>
+                <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="font-bold text-xl">{owner.firstName} {owner.lastName}</div>
+                  <div className="text-gray-600">{owner.isResidentInItaly ? 'Italian Resident' : 'Non-Italian Resident'}</div>
                 </div>
               ))
             ) : (
@@ -55,13 +55,13 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ onSubmitAttempt, isUserSignedUp
         
         {/* Properties section */}
         <div>
-          <h3 className="text-lg font-medium mb-2 text-form-300">Properties</h3>
+          <h3 className="text-2xl font-bold mb-4 text-[#2F3FD4]">Properties</h3>
           <div className="space-y-3">
             {properties.length > 0 ? (
               properties.map((property: any, index: number) => (
-                <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <div className="font-medium">{property.label}</div>
-                  <div className="text-sm text-gray-500">{property.addressStreet}, {property.addressComune}</div>
+                <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="font-bold text-xl">{property.label}</div>
+                  <div className="text-gray-600">{property.addressStreet}, {property.addressComune}</div>
                 </div>
               ))
             ) : (
@@ -72,15 +72,15 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ onSubmitAttempt, isUserSignedUp
         
         {/* Assignments section */}
         <div>
-          <h3 className="text-lg font-medium mb-2 text-form-300">Assignments</h3>
+          <h3 className="text-2xl font-bold mb-4 text-[#2F3FD4]">Assignments</h3>
           <div className="space-y-3">
             {assignments.length > 0 ? (
               assignments.map((assignment: any, index: number) => (
-                <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <div className="font-medium">
+                <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="font-bold text-xl">
                     {owners.find((o: any) => o.id === assignment.ownerId)?.firstName} {owners.find((o: any) => o.id === assignment.ownerId)?.lastName}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-gray-600">
                     {properties.find((p: any) => p.id === assignment.propertyId)?.label} - {assignment.ownershipPercentage}%
                   </div>
                 </div>
