@@ -41,7 +41,6 @@ const WelcomeStep: React.FC = () => {
         
         <p>
           You can navigate between steps using the progress bar at the top.
-          Your information will be saved as you progress through the form.
         </p>
       </div>
       
