@@ -1,84 +1,29 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useFormContext } from '@/contexts/FormContext';
-import { Card, CardContent } from '@/components/ui/card';
 import WelcomeStep from './steps/WelcomeStep';
 import OwnerStep from './steps/OwnerStep';
 import PropertyStep from './steps/PropertyStep';
 import AssignmentStep from './steps/AssignmentStep';
 import ReviewStep from './steps/ReviewStep';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { LogOut, User } from 'lucide-react';
-import { saveOwner, saveProperty, saveAssignment } from '@/services/formDataService';
-import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
-const FormLayout = () => {
-  const { state } = useFormContext();
-  const { user, signOut } = useAuth();
-  const { currentStep, owners, properties, assignments } = state;
+const STEPS = [
+  { id: 0, name: 'Welcome' },
+  { id: 1, name: 'Owners' },
+  { id: 2, name: 'Properties' },
+  { id: 3, name: 'Assignments' },
+  { id: 4, name: 'Review' }
+];
 
-  // Save current data based on the current step
-  const saveCurrentStepData = async () => {
-    try {
-      switch (currentStep) {
-        case 1: // Owner step
-          if (owners.length > 0) {
-            // Save each owner
-            for (const owner of owners) {
-              await saveOwner(owner);
-            }
-            toast.success("Owner information saved", {
-              description: "Your owner data has been saved successfully.",
-              duration: 3000,
-            });
-          }
-          break;
-        case 2: // Property step
-          if (properties.length > 0) {
-            // Save each property
-            for (const property of properties) {
-              await saveProperty(property);
-            }
-            toast.success("Property information saved", {
-              description: "Your property data has been saved successfully.",
-              duration: 3000,
-            });
-          }
-          break;
-        case 3: // Assignment step
-          if (assignments.length > 0) {
-            // Save each assignment
-            for (const assignment of assignments) {
-              await saveAssignment(assignment);
-            }
-            toast.success("Assignment information saved", {
-              description: "Your assignment data has been saved successfully.",
-              duration: 3000,
-            });
-          }
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      console.error("Error saving data:", error);
-      toast.error("Error saving data", {
-        description: "There was an error saving your data. Please try again.",
-        duration: 3000,
-      });
-    }
-  };
+const FormLayout: React.FC = () => {
+  const { state, goToStep } = useFormContext();
+  const { currentStep } = state;
 
   const renderStep = () => {
-    // Create props object for each step component
-    const commonProps = {
-      onSave: saveCurrentStepData
-    };
-    
     switch (currentStep) {
       case 0:
-        return <WelcomeStep onSave={saveCurrentStepData} />;
+        return <WelcomeStep />;
       case 1:
         return <OwnerStep />;
       case 2:
@@ -86,52 +31,60 @@ const FormLayout = () => {
       case 3:
         return <AssignmentStep />;
       case 4:
-        return <ReviewStep expandAllSections={true} />;
+        return <ReviewStep />;
       default:
-        return <WelcomeStep onSave={saveCurrentStepData} />;
+        return <WelcomeStep />;
     }
   };
 
-  // Save data when component mounts or user navigates away
-  useEffect(() => {
-    // Add beforeunload event to save data when user navigates away
-    const handleBeforeUnload = () => {
-      saveCurrentStepData();
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [currentStep, owners, properties, assignments]);
-
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-form-500">Italy Tax Form</h1>
-        <div className="flex items-center space-x-2">
-          {user && (
-            <>
-              <div className="flex items-center text-sm text-gray-600">
-                <User className="h-4 w-4 mr-1" />
-                <span>{user.email}</span>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto py-8 px-4 md:px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+            {/* Progress Stepper */}
+            <div className="p-4 bg-form-100 border-b">
+              <div className="flex justify-between">
+                {STEPS.map((step) => (
+                  <div key={step.id} className="flex flex-col items-center">
+                    <button 
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                        step.id === currentStep 
+                          ? "bg-form-300 text-white" 
+                          : step.id < currentStep 
+                            ? "bg-green-500 text-white" 
+                            : "bg-gray-200 text-gray-500"
+                      )}
+                      onClick={() => {
+                        // Allow navigation to previous steps, but don't skip ahead
+                        if (step.id <= currentStep) {
+                          goToStep(step.id);
+                        }
+                      }}
+                      disabled={step.id > currentStep}
+                    >
+                      {step.id < currentStep ? '✓' : step.id + 1}
+                    </button>
+                    <span className="text-xs mt-1 hidden sm:block">{step.name}</span>
+                  </div>
+                ))}
               </div>
-              <Button variant="outline" size="sm" onClick={signOut}>
-                <LogOut className="h-4 w-4 mr-1" />
-                Logout
-              </Button>
-            </>
-          )}
+              <div className="relative mt-2">
+                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2"></div>
+                <div 
+                  className="absolute top-1/2 left-0 h-0.5 bg-form-300 -translate-y-1/2 transition-all" 
+                  style={{ width: `${(currentStep) * 25}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Form Content */}
+            <div className="p-6">
+              {renderStep()}
+            </div>
+          </div>
         </div>
-      </div>
-      
-      <div className="max-w-3xl mx-auto">
-        <Card>
-          <CardContent className="p-6">
-            {renderStep()}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

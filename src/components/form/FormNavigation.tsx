@@ -6,26 +6,22 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface FormNavigationProps {
   onNext?: () => boolean; // Return true to proceed, false to stop
-  onSave?: () => Promise<void>; // Added save function
   submitText?: string;
   showBack?: boolean;
   showNext?: boolean;
-  hideNextButton?: boolean;
-  onCancel?: () => void;
-  cancelText?: string;
-  onSubmit?: () => void;
-  submitButtonText?: string;
-  isFormMode?: boolean;
-  hideCancel?: boolean;
+  onCancel?: () => void; // Added for form cancellation
+  cancelText?: string; // Added for custom cancel text
+  onSubmit?: () => void; // Added for form submission
+  submitButtonText?: string; // Added for custom submit button text
+  isFormMode?: boolean; // Added to determine if we're in a form editing mode
+  hideCancel?: boolean; // Added to hide cancel button in specific cases
 }
 
 const FormNavigation: React.FC<FormNavigationProps> = ({
   onNext,
-  onSave,
   submitText = 'Submit',
   showBack = true,
   showNext = true,
-  hideNextButton = false,
   onCancel,
   cancelText = 'Cancel',
   onSubmit,
@@ -37,27 +33,12 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   const { currentStep } = state;
   const isLastStep = currentStep === 4;
 
-  const handleNext = async () => {
+  const handleNext = () => {
     if (onNext) {
       const canProceed = onNext();
       if (!canProceed) return;
     }
-    
-    // Save data before proceeding to next step
-    if (onSave) {
-      await onSave();
-    }
-    
     nextStep();
-  };
-
-  const handlePrev = async () => {
-    // Save data before going back
-    if (onSave) {
-      await onSave();
-    }
-    
-    prevStep();
   };
 
   // If we're in form mode, render a cancel and submit button pair
@@ -97,7 +78,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
         <Button 
           type="button" 
           variant="outline" 
-          onClick={handlePrev}
+          onClick={prevStep}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -107,7 +88,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
         <div></div>
       )}
       
-      {showNext && !hideNextButton && (
+      {showNext && (
         <Button 
           type="button" 
           onClick={handleNext}
