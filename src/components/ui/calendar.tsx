@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker, type DayClickEventHandler, type ActiveModifiers } from "react-day-picker";
@@ -33,8 +34,13 @@ function Calendar({
       }
       
       // Only close the calendar if it's in single mode or if a range has been completed
-      const isRangeComplete = mode === "range" && props.selected && 
+      // Need to check if props.selected is a DateRange with from and to properties
+      const isDateRange = props.selected && 
         typeof props.selected === "object" && 
+        'from' in props.selected && 
+        'to' in props.selected;
+      
+      const isRangeComplete = mode === "range" && isDateRange && 
         props.selected.from && 
         props.selected.to;
       
@@ -104,7 +110,8 @@ function Calendar({
       fromYear={1900}
       toYear={2025}
       onDayClick={handleDayClick}
-      mode={mode}
+      // Only pass mode if it's explicitly set
+      {...(mode ? { mode } : {})}
       {...props}
     />
   );
