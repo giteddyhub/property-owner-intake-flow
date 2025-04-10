@@ -16,7 +16,15 @@ const STEPS = [
   { id: 4, name: 'Review' }
 ];
 
-const FormLayout: React.FC = () => {
+interface FormLayoutProps {
+  onSubmitAttempt?: () => void;
+  isUserSignedUp?: boolean;
+}
+
+const FormLayout: React.FC<FormLayoutProps> = ({
+  onSubmitAttempt,
+  isUserSignedUp = false
+}) => {
   const { state, goToStep } = useFormContext();
   const { currentStep } = state;
 
@@ -31,7 +39,7 @@ const FormLayout: React.FC = () => {
       case 3:
         return <AssignmentStep />;
       case 4:
-        return <ReviewStep />;
+        return <ReviewStep onSubmitAttempt={onSubmitAttempt} isUserSignedUp={isUserSignedUp} />;
       default:
         return <WelcomeStep />;
     }

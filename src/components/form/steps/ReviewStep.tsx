@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,15 @@ import { Badge } from '@/components/ui/badge';
 import { ActivityType, OccupancyStatus, Owner, Property } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 
-const ReviewStep: React.FC = () => {
+interface ReviewStepProps {
+  onSubmitAttempt?: () => void;
+  isUserSignedUp?: boolean;
+}
+
+const ReviewStep: React.FC<ReviewStepProps> = ({ 
+  onSubmitAttempt,
+  isUserSignedUp = false 
+}) => {
   const { state, goToStep, prevStep } = useFormContext();
   const { owners, properties, assignments } = state;
   const [isSubmitting, setIsSubmitting] = useState(false);

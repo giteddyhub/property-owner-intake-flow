@@ -15,6 +15,8 @@ interface FormNavigationProps {
   submitButtonText?: string; // Added for custom submit button text
   isFormMode?: boolean; // Added to determine if we're in a form editing mode
   hideCancel?: boolean; // Added to hide cancel button in specific cases
+  onSubmitAttempt?: () => void; // Added for the signup flow
+  isUserSignedUp?: boolean; // Added to check if user has signed up
 }
 
 const FormNavigation: React.FC<FormNavigationProps> = ({
@@ -28,6 +30,8 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   submitButtonText = 'Save',
   isFormMode = false,
   hideCancel = false,
+  onSubmitAttempt,
+  isUserSignedUp = false,
 }) => {
   const { state, nextStep, prevStep } = useFormContext();
   const { currentStep } = state;
@@ -39,6 +43,24 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
       if (!canProceed) return;
     }
     nextStep();
+  };
+
+  const handleSubmit = () => {
+    // If it's the last step and we need signup, trigger signup flow
+    if (isLastStep && onSubmitAttempt && !isUserSignedUp) {
+      onSubmitAttempt();
+      return;
+    }
+    
+    // Normal submission if user is signed up or no signup required
+    if (onSubmit) {
+      onSubmit();
+    } else if (isLastStep) {
+      // Here we would typically process the final submission
+      console.log('Form submitted!');
+    } else {
+      handleNext();
+    }
   };
 
   // If we're in form mode, render a cancel and submit button pair
@@ -91,10 +113,10 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
       {showNext && (
         <Button 
           type="button" 
-          onClick={handleNext}
+          onClick={isLastStep ? handleSubmit : handleNext}
           className="bg-form-300 hover:bg-form-400 text-white flex items-center gap-2"
         >
-          {isLastStep ? submitText : (
+          {isLastStep ? (isUserSignedUp ? submitText : "Sign up & Submit") : (
             <>
               Next
               <ArrowRight className="h-4 w-4" />
