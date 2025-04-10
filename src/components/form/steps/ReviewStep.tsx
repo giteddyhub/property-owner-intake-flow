@@ -44,14 +44,22 @@ const ReviewStep: React.FC = () => {
       const ownerIdMap = new Map<string, string>();
       const propertyIdMap = new Map<string, string>();
       
+      console.log("Starting submission process with:", {
+        ownersCount: owners.length,
+        propertiesCount: properties.length,
+        assignmentsCount: assignments.length
+      });
+      
       // First, save all owners
       for (const owner of owners) {
+        console.log("Saving owner:", owner.firstName, owner.lastName);
+        
         const { data: ownerData, error: ownerError } = await supabase
           .from('owners')
           .insert({
             first_name: owner.firstName,
             last_name: owner.lastName,
-            date_of_birth: owner.dateOfBirth ? owner.dateOfBirth.toISOString() : null,
+            date_of_birth: owner.dateOfBirth ? owner.dateOfBirth.toISOString().split('T')[0] : null,
             country_of_birth: owner.countryOfBirth,
             citizenship: owner.citizenship,
             address_street: owner.address.street,
@@ -70,16 +78,23 @@ const ReviewStep: React.FC = () => {
           .select();
           
         if (ownerError) {
+          console.error("Error saving owner:", ownerError);
           throw new Error(`Error saving owner: ${ownerError.message}`);
         }
         
         if (ownerData && ownerData.length > 0) {
           ownerIdMap.set(owner.id, ownerData[0].id);
+          console.log(`Mapped owner ${owner.id} to database ID ${ownerData[0].id}`);
+        } else {
+          console.error("Owner was saved but no data was returned");
+          throw new Error("Failed to get database ID for owner");
         }
       }
       
       // Then, save all properties
       for (const property of properties) {
+        console.log("Saving property:", property.label);
+        
         const { data: propertyData, error: propertyError } = await supabase
           .from('properties')
           .insert({
@@ -89,9 +104,9 @@ const ReviewStep: React.FC = () => {
             address_street: property.address.street,
             address_zip: property.address.zip,
             activity_2024: property.activity2024,
-            purchase_date: property.purchaseDate ? property.purchaseDate.toISOString() : null,
+            purchase_date: property.purchaseDate ? property.purchaseDate.toISOString().split('T')[0] : null,
             purchase_price: property.purchasePrice,
-            sale_date: property.saleDate ? property.saleDate.toISOString() : null,
+            sale_date: property.saleDate ? property.saleDate.toISOString().split('T')[0] : null,
             sale_price: property.salePrice,
             property_type: property.propertyType,
             remodeling: property.remodeling,
@@ -102,13 +117,23 @@ const ReviewStep: React.FC = () => {
           .select();
           
         if (propertyError) {
+          console.error("Error saving property:", propertyError);
           throw new Error(`Error saving property: ${propertyError.message}`);
         }
         
         if (propertyData && propertyData.length > 0) {
           propertyIdMap.set(property.id, propertyData[0].id);
+          console.log(`Mapped property ${property.id} to database ID ${propertyData[0].id}`);
+        } else {
+          console.error("Property was saved but no data was returned");
+          throw new Error("Failed to get database ID for property");
         }
       }
+      
+      console.log("ID Mappings created:", {
+        owners: Array.from(ownerIdMap.entries()),
+        properties: Array.from(propertyIdMap.entries())
+      });
       
       // Finally, save all assignments using the new database IDs
       for (const assignment of assignments) {
@@ -117,8 +142,10 @@ const ReviewStep: React.FC = () => {
         
         if (!newPropertyId || !newOwnerId) {
           console.error('Could not find DB ID mapping for:', { 
-            propertyId: assignment.propertyId, 
+            propertyId: assignment.propertyId,
+            localPropertyExists: properties.some(p => p.id === assignment.propertyId),
             ownerId: assignment.ownerId,
+            localOwnerExists: owners.some(o => o.id === assignment.ownerId),
             maps: { 
               properties: Array.from(propertyIdMap.entries()),
               owners: Array.from(ownerIdMap.entries())
@@ -127,22 +154,36 @@ const ReviewStep: React.FC = () => {
           throw new Error('Failed to map local IDs to database IDs');
         }
         
+        console.log("Saving assignment with mapped IDs:", {
+          originalPropertyId: assignment.propertyId,
+          newPropertyId,
+          originalOwnerId: assignment.ownerId,
+          newOwnerId
+        });
+        
+        const insertData = {
+          property_id: newPropertyId,
+          owner_id: newOwnerId,
+          ownership_percentage: assignment.ownershipPercentage,
+          resident_at_property: assignment.residentAtProperty,
+          resident_from_date: assignment.residentDateRange?.from 
+            ? assignment.residentDateRange.from.toISOString().split('T')[0]
+            : null,
+          resident_to_date: assignment.residentDateRange?.to
+            ? assignment.residentDateRange.to.toISOString().split('T')[0]
+            : null,
+          tax_credits: assignment.taxCredits
+        };
+        
+        console.log("Assignment data to insert:", insertData);
+        
         const { data: assignmentData, error: assignmentError } = await supabase
           .from('owner_property_assignments')
-          .insert({
-            property_id: newPropertyId,
-            owner_id: newOwnerId,
-            ownership_percentage: assignment.ownershipPercentage,
-            resident_at_property: assignment.residentAtProperty,
-            resident_from_date: assignment.residentDateRange?.from ? 
-              assignment.residentDateRange.from.toISOString() : null,
-            resident_to_date: assignment.residentDateRange?.to ? 
-              assignment.residentDateRange.to.toISOString() : null,
-            tax_credits: assignment.taxCredits
-          })
+          .insert(insertData)
           .select();
           
         if (assignmentError) {
+          console.error("Error saving assignment:", assignmentError);
           throw new Error(`Error saving assignment: ${assignmentError.message}`);
         }
       }
