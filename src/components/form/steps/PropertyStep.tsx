@@ -65,7 +65,7 @@ const createEmptyProperty = (): Property => ({
   activity2024: 'neither',
   propertyType: 'RESIDENTIAL',
   remodeling: false,
-  occupancyStatuses: ['PERSONAL_USE'], // Initialize with PERSONAL_USE as default
+  occupancyStatuses: ['PERSONAL_USE'] as OccupancyStatus[],
   monthsOccupied: 12
 });
 
@@ -263,7 +263,7 @@ const PropertyStep: React.FC = () => {
       ...property,
       occupancyStatuses: Array.isArray(property.occupancyStatuses) 
         ? property.occupancyStatuses 
-        : ['PERSONAL_USE']
+        : ['PERSONAL_USE' as OccupancyStatus]
     };
     
     setCurrentProperty(updatedProperty);
