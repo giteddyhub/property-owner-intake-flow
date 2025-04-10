@@ -15,7 +15,7 @@ interface FormNavigationProps {
   submitButtonText?: string; // Added for custom submit button text
   isFormMode?: boolean; // Added to determine if we're in a form editing mode
   hideCancel?: boolean; // Added to hide cancel button in specific cases
-  onSubmitAttempt?: () => void; // Added for the signup flow
+  onSubmitAttempt?: (formData: any) => void; // Updated to accept formData parameter
   isUserSignedUp?: boolean; // Added to check if user has signed up
 }
 
@@ -48,7 +48,9 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   const handleSubmit = () => {
     // If it's the last step and we need signup, trigger signup flow
     if (isLastStep && onSubmitAttempt && !isUserSignedUp) {
-      onSubmitAttempt();
+      // Get the form state from context to pass to the submit attempt handler
+      const { state } = useFormContext();
+      onSubmitAttempt(state);
       return;
     }
     

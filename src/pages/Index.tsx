@@ -17,6 +17,7 @@ const Index = () => {
     console.log('Form data to be submitted:', formData);
   };
 
+  // Modified to match the expected function signature in FormLayout
   const handleFormSubmitAttempt = (formData: any) => {
     // Store the form data to submit after signup
     setFormData(formData);

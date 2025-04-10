@@ -17,7 +17,7 @@ const STEPS = [
 ];
 
 interface FormLayoutProps {
-  onSubmitAttempt?: () => void;
+  onSubmitAttempt?: (formData: any) => void; // Updated to accept formData parameter
   isUserSignedUp?: boolean;
 }
 
