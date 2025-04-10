@@ -111,7 +111,7 @@ export const FormProvider = ({ children }: { children: React.ReactNode }) => {
   const nextStep = () => {
     setState(prev => ({
       ...prev,
-      currentStep: Math.min(prev.currentStep + 1, 4)
+      currentStep: Math.min(prev.currentStep + 1, 5)
     }));
   };
 
@@ -125,7 +125,7 @@ export const FormProvider = ({ children }: { children: React.ReactNode }) => {
   const goToStep = (step: number) => {
     setState(prev => ({
       ...prev,
-      currentStep: Math.max(0, Math.min(step, 4))
+      currentStep: Math.max(0, Math.min(step, 5))
     }));
   };
 

@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import FormNavigation from '@/components/form/FormNavigation';
 import { format } from 'date-fns';
-import { Check, Download, Edit } from 'lucide-react';
+import { Check, Edit } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -25,13 +26,12 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ActivityType, OccupancyStatus, Owner, Property } from '@/types/form';
 
 const ReviewStep: React.FC = () => {
-  const { state, goToStep } = useFormContext();
+  const { state, goToStep, nextStep } = useFormContext();
   const { owners, properties, assignments } = state;
   
   const getPropertyAssignments = (propertyId: string) => {
@@ -84,46 +84,6 @@ const ReviewStep: React.FC = () => {
     
     return statuses.map(status => statusMap[status]).join(', ');
   };
-  
-  const handleSubmit = () => {
-    toast.success('Form submitted successfully!', {
-      description: 'Thank you for completing the property owner intake process.',
-      duration: 5000,
-    });
-    
-    setTimeout(() => {
-      toast("Your submission has been received", {
-        description: "A confirmation email has been sent with a summary of your submission.",
-        action: {
-          label: "Download Summary",
-          onClick: () => handleDownloadSummary(),
-        },
-      });
-    }, 1000);
-  };
-  
-  const handleDownloadSummary = () => {
-    const formData = {
-      owners,
-      properties,
-      assignments,
-      submittedAt: new Date().toISOString()
-    };
-    
-    const jsonString = JSON.stringify(formData, null, 2);
-    
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'property-owner-submission.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast.success('Summary downloaded successfully');
-  };
 
   const hasRentalStatus = (property: Property) => {
     return property.occupancyStatuses.some(
@@ -133,10 +93,10 @@ const ReviewStep: React.FC = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-form-400">Review & Submit</h2>
+      <h2 className="text-2xl font-bold mb-6 text-form-400">Review & Verify</h2>
       
       <p className="mb-6 text-gray-600">
-        Please review all the information below before submitting. You can go back to make changes if needed.
+        Please review all the information below before proceeding to submit. You can go back to make changes if needed.
       </p>
       
       <div className="mb-8">
@@ -421,22 +381,12 @@ const ReviewStep: React.FC = () => {
           Back
         </Button>
         
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={handleDownloadSummary}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Download Summary
-          </Button>
-          <Button 
-            onClick={handleSubmit}
-            className="bg-form-300 hover:bg-form-400 text-white"
-          >
-            Submit
-          </Button>
-        </div>
+        <Button 
+          onClick={() => nextStep()}
+          className="bg-form-300 hover:bg-form-400 text-white"
+        >
+          Continue to Submit
+        </Button>
       </div>
     </div>
   );
