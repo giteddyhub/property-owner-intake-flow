@@ -20,15 +20,38 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
-// Define a union type for the mode-specific props
-type CalendarModeProps = 
-  | { mode: "single"; selected?: Date; onSelect?: SelectSingleEventHandler }
-  | { mode: "range"; selected?: DateRange; onSelect?: SelectRangeEventHandler }
-  | { mode: "multiple"; selected?: Date[]; onSelect?: SelectMultipleEventHandler }
-  | { mode?: "default" };
+// Define the base props that all calendar modes share
+type CalendarBaseProps = Omit<React.ComponentProps<typeof DayPicker>, "mode" | "selected" | "onSelect">;
 
-// Extend the DayPicker props with our mode-specific props
-export type CalendarProps = Omit<React.ComponentProps<typeof DayPicker>, "mode" | "selected" | "onSelect"> & CalendarModeProps;
+// Define specific props for each mode
+interface CalendarSingleProps extends CalendarBaseProps {
+  mode: "single";
+  selected?: Date;
+  onSelect?: SelectSingleEventHandler;
+}
+
+interface CalendarRangeProps extends CalendarBaseProps {
+  mode: "range";
+  selected?: DateRange;
+  onSelect?: SelectRangeEventHandler;
+}
+
+interface CalendarMultipleProps extends CalendarBaseProps {
+  mode: "multiple";
+  selected?: Date[];
+  onSelect?: SelectMultipleEventHandler;
+}
+
+interface CalendarDefaultProps extends CalendarBaseProps {
+  mode?: "default";
+}
+
+// Export a union type of all possible prop combinations
+export type CalendarProps = 
+  | CalendarSingleProps
+  | CalendarRangeProps
+  | CalendarMultipleProps
+  | CalendarDefaultProps;
 
 function Calendar({
   className,
