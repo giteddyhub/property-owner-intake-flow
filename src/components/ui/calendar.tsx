@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, SelectSingleEventHandler, SelectRangeEventHandler, SelectMultipleEventHandler } from "react-day-picker";
+import { DayPicker } from "react-day-picker";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -18,13 +18,6 @@ function Calendar({
   // Custom formatter for month labels to use abbreviated month names
   const formatMonthCaption = (date: Date) => {
     return format(date, "MMM"); // This will return abbreviated month names like "Jan", "Feb", etc.
-  };
-
-  // We need to handle the onSelect prop based on the mode
-  // This fixes the TypeScript errors by properly handling the event handler types
-  const getSelectHandler = () => {
-    // Default is to just return the props as is
-    return props;
   };
 
   return (
@@ -77,7 +70,7 @@ function Calendar({
       formatters={{ formatMonthCaption }}
       fromYear={1900}
       toYear={2025}
-      {...getSelectHandler()}
+      {...props}
     />
   );
 }
