@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -1018,6 +1017,7 @@ const PropertyStep: React.FC = () => {
             onSubmit={handleSubmit} 
             cancelText="Cancel" 
             submitButtonText={editingIndex !== null ? "Update Property" : "Add Property"}
+            hideCancel={properties.length === 0 && editingIndex === null}
           />
         </div>
       ) : (

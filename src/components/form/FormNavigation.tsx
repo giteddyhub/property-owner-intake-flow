@@ -14,6 +14,7 @@ interface FormNavigationProps {
   onSubmit?: () => void; // Added for form submission
   submitButtonText?: string; // Added for custom submit button text
   isFormMode?: boolean; // Added to determine if we're in a form editing mode
+  hideCancel?: boolean; // Added to hide cancel button in specific cases
 }
 
 const FormNavigation: React.FC<FormNavigationProps> = ({
@@ -26,6 +27,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   onSubmit,
   submitButtonText = 'Save',
   isFormMode = false,
+  hideCancel = false,
 }) => {
   const { state, nextStep, prevStep } = useFormContext();
   const { currentStep } = state;
@@ -43,7 +45,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   if (isFormMode) {
     return (
       <div className="flex justify-between mt-8">
-        {onCancel && (
+        {onCancel && !hideCancel && (
           <Button 
             type="button" 
             variant="outline" 
@@ -60,6 +62,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
             type="button" 
             onClick={onSubmit}
             className="bg-form-300 hover:bg-form-400 text-white flex items-center gap-2"
+            style={{marginLeft: hideCancel ? 'auto' : undefined}}
           >
             {submitButtonText}
           </Button>
