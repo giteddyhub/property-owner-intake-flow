@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -96,6 +97,109 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
+}
+
+@layer base {
+  html {
+    font-family: 'Poppins', sans-serif;
+  }
+}
+
+/* Placeholder styling */
+::placeholder {
+  color: #8E9196;
+  opacity: 0.7;
+}
+
+/* Custom radio styles */
+.radio-card {
+  @apply relative rounded-lg border border-gray-200 p-4 transition-all cursor-pointer;
+}
+
+.radio-card:hover {
+  @apply border-gray-300;
+}
+
+.radio-card[data-state="checked"] {
+  @apply border-purple-500 ring-1 ring-purple-500;
+}
+
+.radio-card-selected {
+  @apply bg-purple-50;
+}
+
+/* Make labels and text near radio buttons show pointer cursor */
+.radio-group-item-label,
+label:has(+ input[type="radio"]),
+label:has(input[type="radio"]),
+*:has(> input[type="radio"]),
+[role="radio"] + *,
+[role="radio"] ~ * {
+  cursor: pointer !important;
+}
+
+/* Ensure the pointer hand cursor appears on all radio-related elements */
+.radio-card,
+.radio-card *,
+input[type="radio"],
+label[for]:has(+ input[type="radio"]),
+[role="radiogroup"] label,
+[role="radio"],
+[role="radio"] + *,
+input[type="radio"] ~ *,
+input[type="radio"] + *,
+[role="radio"] ~ *,
+/* Target text labels next to radio buttons */
+.radio-label,
+span:has(+ input[type="radio"]),
+span:has(~ input[type="radio"]),
+div:has(> input[type="radio"]),
+/* Target the text within a radio group */
+[role="radiogroup"] *,
+/* Target the specific radio option text */
+[role="radio"] ~ span,
+[role="radio"] + span,
+[role="radio"] + div,
+[role="radio"] ~ div,
+/* Radix Radio Group specific selectors */
+[data-radix-collection-item] + *,
+[data-radix-collection-item] ~ *,
+/* Target text near toggle buttons that might be used as radio alternatives */
+.radio-group-item-label *,
+/* Target any text that is a sibling of a radio input */
+input[type="radio"] ~ * *,
+[role="radio"] ~ * * {
+  cursor: pointer !important;
+}
+
+/* Custom animation for radio selection */
+.radio-animate {
+  transition: all 0.2s ease-in-out;
+}
+
+.radio-animate:active {
+  transform: scale(0.95);
+}
+
+/* Radio explanation styling */
+.radio-explanation {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin 0.3s ease-out;
+  opacity: 0;
+}
+
+.radio-explanation.show {
+  max-height: 400px; /* Increased to accommodate form fields */
+  opacity: 1;
+  margin-top: 1rem;
+}
+
+/* Add a smooth transition when explanation appears */
+[data-state="checked"] .radio-explanation {
+  max-height: 400px; /* Increased to accommodate form fields */
+  opacity: 1;
+  margin-top: 1rem;
 }
