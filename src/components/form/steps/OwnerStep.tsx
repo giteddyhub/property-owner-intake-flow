@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Owner, MaritalStatus, Address, ItalianResidenceDetails } from '@/types/form';
 import CountryCombobox from '@/components/form/CountryCombobox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const COUNTRIES = [
   "Italy", "United States", "United Kingdom", "France", "Germany", 
@@ -142,7 +143,8 @@ const OwnerStep: React.FC = () => {
             comuneName: '', 
             street: '',
             city: '',
-            zip: ''
+            zip: '',
+            spentOver182Days: undefined
           })
         : undefined
     }));
@@ -157,9 +159,26 @@ const OwnerStep: React.FC = () => {
           comuneName: '', 
           street: '',
           city: '',
-          zip: ''
+          zip: '',
+          spentOver182Days: undefined
         }),
         [name]: value
+      }
+    }));
+  };
+
+  const handleDaysInItalyChange = (value: string) => {
+    const spentOver182Days = value === 'over182';
+    setCurrentOwner(prev => ({
+      ...prev,
+      italianResidenceDetails: {
+        ...(prev.italianResidenceDetails || {
+          comuneName: '',
+          street: '',
+          city: '',
+          zip: '',
+        }),
+        spentOver182Days
       }
     }));
   };
@@ -222,6 +241,11 @@ const OwnerStep: React.FC = () => {
           !currentOwner.italianResidenceDetails?.city || 
           !currentOwner.italianResidenceDetails?.zip) {
         toast.error('Please complete the Italian address fields');
+        return;
+      }
+
+      if (currentOwner.italianResidenceDetails?.spentOver182Days === undefined) {
+        toast.error('Please specify if you spent more than 182 days in Italy in 2024');
         return;
       }
     }
@@ -295,6 +319,9 @@ const OwnerStep: React.FC = () => {
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>Italian Tax Resident</p>
+                              {owner.italianResidenceDetails?.spentOver182Days !== undefined && (
+                                <p>{owner.italianResidenceDetails?.spentOver182Days ? 'More than' : 'Less than'} 182 days in Italy in 2024</p>
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -328,6 +355,11 @@ const OwnerStep: React.FC = () => {
                       <p className="text-sm text-gray-600">
                         <strong>Italian Residence:</strong> {owner.italianResidenceDetails.comuneName}, {owner.italianResidenceDetails.street}, {owner.italianResidenceDetails.city}, {owner.italianResidenceDetails.zip}
                       </p>
+                      {owner.italianResidenceDetails.spentOver182Days !== undefined && (
+                        <p className="text-sm text-gray-600">
+                          <strong>Time in Italy (2024):</strong> {owner.italianResidenceDetails.spentOver182Days ? 'More than' : 'Less than'} 182 days
+                        </p>
+                      )}
                     </>
                   )}
                 </CardContent>
@@ -594,6 +626,28 @@ const OwnerStep: React.FC = () => {
                       onChange={handleResidencyDetailChange}
                       className="mt-1"
                     />
+                  </div>
+                </div>
+                
+                <div className="mt-6">
+                  <Label className="font-medium mb-2 block">Time spent in Italy during 2024*</Label>
+                  <div className="mt-2">
+                    <RadioGroup 
+                      value={currentOwner.italianResidenceDetails?.spentOver182Days !== undefined 
+                        ? (currentOwner.italianResidenceDetails.spentOver182Days ? 'over182' : 'under182') 
+                        : undefined}
+                      onValueChange={handleDaysInItalyChange}
+                      className="flex flex-col gap-3"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="over182" id="over182" />
+                        <Label htmlFor="over182" className="cursor-pointer">More than 182 days</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="under182" id="under182" />
+                        <Label htmlFor="under182" className="cursor-pointer">Less than 182 days</Label>
+                      </div>
+                    </RadioGroup>
                   </div>
                 </div>
               </div>
