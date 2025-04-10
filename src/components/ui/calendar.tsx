@@ -13,12 +13,36 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  onDayClick,
   ...props
 }: CalendarProps) {
   // Custom formatter for month labels to use abbreviated month names
   const formatMonthCaption = (date: Date) => {
     return format(date, "MMM"); // This will return abbreviated month names like "Jan", "Feb", etc.
   };
+
+  // Handle day click to automatically close the popover
+  const handleDayClick = React.useCallback(
+    (day: Date, modifiers: { selected?: boolean; disabled?: boolean }) => {
+      // If the day is disabled, don't do anything
+      if (modifiers.disabled) return;
+      
+      // Call the original onDayClick handler if provided
+      if (onDayClick) {
+        onDayClick(day, modifiers);
+      }
+      
+      // Close any popover or dialog containing this calendar
+      // This works by simulating an Escape key press
+      const event = new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      });
+      document.dispatchEvent(event);
+    },
+    [onDayClick]
+  );
 
   return (
     <DayPicker
@@ -70,6 +94,7 @@ function Calendar({
       formatters={{ formatMonthCaption }}
       fromYear={1900}
       toYear={2025}
+      onDayClick={handleDayClick}
       {...props}
     />
   );
