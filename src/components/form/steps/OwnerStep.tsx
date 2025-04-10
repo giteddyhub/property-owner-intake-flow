@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -8,13 +9,14 @@ import FormNavigation from '@/components/form/FormNavigation';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, Plus, Trash2 } from 'lucide-react';
+import { CalendarIcon, Plus, Trash2, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Owner, MaritalStatus, Address, ItalianResidenceDetails } from '@/types/form';
 import CountryCombobox from '@/components/form/CountryCombobox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // List of countries for dropdowns
 const COUNTRIES = [
@@ -37,7 +39,8 @@ const createEmptyOwner = (): Owner => ({
     country: ''
   },
   maritalStatus: 'UNMARRIED',
-  isResidentInItaly: false
+  isResidentInItaly: false,
+  italianTaxCode: ''
 });
 
 const OwnerStep: React.FC = () => {
@@ -215,6 +218,11 @@ const OwnerStep: React.FC = () => {
     if (!currentOwner.address.street || !currentOwner.address.city || 
         !currentOwner.address.zip || !currentOwner.address.country) {
       toast.error('Please complete all address fields');
+      return;
+    }
+
+    if (!currentOwner.italianTaxCode) {
+      toast.error('Please enter Italian Tax Code');
       return;
     }
     
@@ -430,13 +438,26 @@ const OwnerStep: React.FC = () => {
             </div>
             
             <div>
-              <Label htmlFor="italianTaxCode">Italian Tax Code (Optional)</Label>
+              <div className="flex items-center space-x-1">
+                <Label htmlFor="italianTaxCode">Italian Tax Code*</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>The "Codice Fiscale" is a unique identifier issued by the Italian government. It's required for tax purposes, property transactions, and official documents in Italy.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Input 
                 id="italianTaxCode" 
                 name="italianTaxCode" 
                 value={currentOwner.italianTaxCode || ''} 
                 onChange={handleInputChange}
                 className="mt-1"
+                required
               />
             </div>
           </div>

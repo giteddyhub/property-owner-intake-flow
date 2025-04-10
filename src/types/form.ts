@@ -23,7 +23,7 @@ export interface Owner {
   countryOfBirth: string;
   citizenship: string;
   address: Address;
-  italianTaxCode?: string;
+  italianTaxCode: string;
   maritalStatus: MaritalStatus;
   isResidentInItaly: boolean;
   italianResidenceDetails?: ItalianResidenceDetails;
