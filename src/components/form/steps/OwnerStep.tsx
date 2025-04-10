@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -432,7 +431,7 @@ const OwnerStep: React.FC = () => {
             <div>
               <div className="flex items-center space-x-1">
                 <Label htmlFor="italianTaxCode">Italian Tax Code*</Label>
-                <TooltipProvider>
+                <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
