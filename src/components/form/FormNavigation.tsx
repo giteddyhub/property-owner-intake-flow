@@ -6,10 +6,11 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface FormNavigationProps {
   onNext?: () => boolean; // Return true to proceed, false to stop
+  onSave?: () => Promise<void>; // Added save function
   submitText?: string;
   showBack?: boolean;
   showNext?: boolean;
-  hideNextButton?: boolean; // Added this prop
+  hideNextButton?: boolean;
   onCancel?: () => void;
   cancelText?: string;
   onSubmit?: () => void;
@@ -20,10 +21,11 @@ interface FormNavigationProps {
 
 const FormNavigation: React.FC<FormNavigationProps> = ({
   onNext,
+  onSave,
   submitText = 'Submit',
   showBack = true,
   showNext = true,
-  hideNextButton = false, // Added default value
+  hideNextButton = false,
   onCancel,
   cancelText = 'Cancel',
   onSubmit,
@@ -35,12 +37,27 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   const { currentStep } = state;
   const isLastStep = currentStep === 4;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (onNext) {
       const canProceed = onNext();
       if (!canProceed) return;
     }
+    
+    // Save data before proceeding to next step
+    if (onSave) {
+      await onSave();
+    }
+    
     nextStep();
+  };
+
+  const handlePrev = async () => {
+    // Save data before going back
+    if (onSave) {
+      await onSave();
+    }
+    
+    prevStep();
   };
 
   // If we're in form mode, render a cancel and submit button pair
@@ -80,7 +97,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
         <Button 
           type="button" 
           variant="outline" 
-          onClick={prevStep}
+          onClick={handlePrev}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
