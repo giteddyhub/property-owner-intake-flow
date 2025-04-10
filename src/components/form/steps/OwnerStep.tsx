@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -76,6 +75,9 @@ const OwnerStep: React.FC = () => {
             ...prev,
             italianResidenceDetails: {
               comuneName: '',
+              street: '',
+              city: '',
+              zip: '',
               [child]: value
             }
           };
@@ -112,6 +114,9 @@ const OwnerStep: React.FC = () => {
             ...prev,
             italianResidenceDetails: {
               comuneName: '',
+              street: '',
+              city: '',
+              zip: '',
               [child]: value
             }
           };
@@ -212,7 +217,6 @@ const OwnerStep: React.FC = () => {
         return;
       }
       
-      // Validate Italian address fields
       if (!currentOwner.italianResidenceDetails?.street || 
           !currentOwner.italianResidenceDetails?.city || 
           !currentOwner.italianResidenceDetails?.zip) {
@@ -557,7 +561,6 @@ const OwnerStep: React.FC = () => {
                     />
                   </div>
                   
-                  {/* Italian Address Fields */}
                   <div className="col-span-2 mt-4">
                     <h4 className="font-medium mb-3">Italian Address*</h4>
                     <div className="grid gap-4 md:grid-cols-2">
