@@ -1,4 +1,3 @@
-
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -63,8 +62,10 @@
 .radio-group-item-label,
 label:has(+ input[type="radio"]),
 label:has(input[type="radio"]),
-*:has(> input[type="radio"]) {
-  cursor: pointer;
+*:has(> input[type="radio"]),
+[role="radio"] + *,
+[role="radio"] ~ * {
+  cursor: pointer !important;
 }
 
 /* Ensure the pointer hand cursor appears on all radio-related elements */
@@ -75,14 +76,11 @@ label[for]:has(+ input[type="radio"]),
 [role="radiogroup"] label,
 [role="radio"],
 [role="radio"] + *,
-input[type="checkbox"],
-label[for]:has(+ input[type="checkbox"]),
-/* Target text labels next to radio buttons */
-.radio-label,
 input[type="radio"] ~ *,
 input[type="radio"] + *,
 [role="radio"] ~ *,
-/* Add more specific selectors for radio button labels */
+/* Target text labels next to radio buttons */
+.radio-label,
 span:has(+ input[type="radio"]),
 span:has(~ input[type="radio"]),
 div:has(> input[type="radio"]),

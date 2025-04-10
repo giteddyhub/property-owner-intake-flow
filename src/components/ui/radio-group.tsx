@@ -58,7 +58,14 @@ const CardRadioGroupItem = React.forwardRef<
       "data-[state=checked]:border-purple-500 data-[state=checked]:ring-1 data-[state=checked]:ring-purple-500",
       props.checked ? "bg-purple-50" : "bg-white",
       className
-    )}>
+    )}
+    onClick={(e) => {
+      // This ensures the click propagates to the radio input
+      const radioInput = e.currentTarget.querySelector('button[role="radio"]');
+      if (radioInput) {
+        (radioInput as HTMLElement).click();
+      }
+    }}>
       <RadioGroupPrimitive.Item
         ref={ref}
         id={id}
