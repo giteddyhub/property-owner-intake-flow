@@ -23,8 +23,9 @@ const WelcomeStep: React.FC = () => {
           <li>Personal details for all property owners</li>
           <li>Property addresses and details</li>
           <li>Purchase/sale dates and prices (if applicable)</li>
+          <li>Rental income information (if applicable)</li>
           <li>Ownership percentages for each property</li>
-          <li>Italian tax codes (if available)</li>
+          <li>Italian tax codes (mandatory)</li>
         </ul>
         
         <p className="mb-4">
