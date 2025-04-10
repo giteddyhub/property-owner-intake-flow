@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import FormNavigation from '@/components/form/FormNavigation';
 import { format } from 'date-fns';
-import { Check, Download, Edit, FileText } from 'lucide-react';
+import { Check, Download, Edit } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -29,7 +30,6 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ActivityType, OccupancyStatus, Owner, Property } from '@/types/form';
-import { generateTaxProfilePDF } from '@/utils/pdfGenerator';
 
 const ReviewStep: React.FC = () => {
   const { state, goToStep } = useFormContext();
@@ -96,8 +96,8 @@ const ReviewStep: React.FC = () => {
       toast("Your submission has been received", {
         description: "A confirmation email has been sent with a summary of your submission.",
         action: {
-          label: "Download PDF",
-          onClick: () => handleDownloadPDF(),
+          label: "Download Summary",
+          onClick: () => handleDownloadSummary(),
         },
       });
     }, 1000);
@@ -126,17 +126,7 @@ const ReviewStep: React.FC = () => {
     toast.success('Summary downloaded successfully');
   };
 
-  const handleDownloadPDF = async () => {
-    toast.loading('Generating PDF...');
-    try {
-      await generateTaxProfilePDF(state);
-      toast.success('Tax Profile PDF generated successfully');
-    } catch (error) {
-      console.error('PDF generation failed:', error);
-      toast.error('Failed to generate PDF. Please try again.');
-    }
-  };
-
+  // Helper function to determine if we should show rental income
   const hasRentalStatus = (property: Property) => {
     return property.occupancyStatuses.some(
       status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
@@ -293,6 +283,7 @@ const ReviewStep: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Add rental income section */}
                   {hasRentalStatus(property) && property.rentalIncome !== undefined && (
                     <div className="border-t pt-2 mt-2">
                       <p className="font-medium">Rental Income for 2024</p>
@@ -354,6 +345,7 @@ const ReviewStep: React.FC = () => {
                   </div>
                   <CardDescription>
                     {property.address.street}, {property.address.comune}, {property.address.province}
+                    {/* Add rental income if applicable */}
                     {hasRentalStatus(property) && property.rentalIncome !== undefined && (
                       <span className="font-medium ml-2">
                         • Rental Income: €{property.rentalIncome.toLocaleString()}
@@ -436,11 +428,11 @@ const ReviewStep: React.FC = () => {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={handleDownloadPDF}
+            onClick={handleDownloadSummary}
             className="flex items-center gap-2"
           >
-            <FileText className="h-4 w-4" />
-            Download PDF
+            <Download className="h-4 w-4" />
+            Download Summary
           </Button>
           <Button 
             onClick={handleSubmit}
