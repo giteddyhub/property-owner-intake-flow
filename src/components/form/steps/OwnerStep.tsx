@@ -518,12 +518,14 @@ const OwnerStep: React.FC = () => {
             <div className="flex items-center space-x-3 border-b pb-4 mb-4">
               <Label htmlFor="isResidentInItaly" className="mr-3 text-base">Resident in Italy?</Label>
               <div className="residency-toggle">
-                <ModernRadioGroupItem
-                  id="isResidentInItaly"
-                  value={currentOwner.isResidentInItaly ? "yes" : "no"}
-                  checked={currentOwner.isResidentInItaly}
-                  onClick={() => handleSwitchChange(!currentOwner.isResidentInItaly)}
-                />
+                <RadioGroup value={currentOwner.isResidentInItaly ? "yes" : "no"}>
+                  <ModernRadioGroupItem
+                    id="isResidentInItaly"
+                    value={currentOwner.isResidentInItaly ? "yes" : "no"}
+                    checked={currentOwner.isResidentInItaly}
+                    onClick={() => handleSwitchChange(!currentOwner.isResidentInItaly)}
+                  />
+                </RadioGroup>
               </div>
             </div>
             
