@@ -48,8 +48,9 @@ const CardRadioGroupItem = React.forwardRef<
     description?: string;
     explanation?: string;
     children?: React.ReactNode;
+    hideRadio?: boolean;
   }
->(({ className, title, description, explanation, children, ...props }, ref) => {
+>(({ className, title, description, explanation, children, hideRadio = false, ...props }, ref) => {
   // Generate an ID for connecting the label to the radio
   const id = React.useId();
   
@@ -67,19 +68,21 @@ const CardRadioGroupItem = React.forwardRef<
         (radioInput as HTMLElement).click();
       }
     }}>
-      <RadioGroupPrimitive.Item
-        ref={ref}
-        id={id}
-        className={cn(
-          "absolute left-4 top-4 aspect-square h-5 w-5 rounded-full border border-gray-300 text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-purple-500 data-[state=checked]:bg-purple-100/40 cursor-pointer",
-        )}
-        {...props}
-      >
-        <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-          <Circle className="h-3 w-3 fill-purple-600 text-purple-600" />
-        </RadioGroupPrimitive.Indicator>
-      </RadioGroupPrimitive.Item>
-      <div className="radio-group-item-label pl-8 block cursor-pointer">
+      {!hideRadio && (
+        <RadioGroupPrimitive.Item
+          ref={ref}
+          id={id}
+          className={cn(
+            "absolute left-4 top-4 aspect-square h-5 w-5 rounded-full border border-gray-300 text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-purple-500 data-[state=checked]:bg-purple-100/40 cursor-pointer",
+          )}
+          {...props}
+        >
+          <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+            <Circle className="h-3 w-3 fill-purple-600 text-purple-600" />
+          </RadioGroupPrimitive.Indicator>
+        </RadioGroupPrimitive.Item>
+      )}
+      <div className={cn("radio-group-item-label", !hideRadio && "pl-8")} className="block cursor-pointer">
         {title && <h3 className="font-medium text-gray-900 cursor-pointer">{title}</h3>}
         {description && <p className="text-sm text-gray-500 mt-1 cursor-pointer">{description}</p>}
         

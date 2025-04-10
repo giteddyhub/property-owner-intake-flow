@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +69,8 @@ const createEmptyProperty = (): Property => ({
   monthsOccupied: 12
 });
 
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
+
 const PropertyStep: React.FC = () => {
   const { state, addProperty, updateProperty, removeProperty } = useFormContext();
   const { properties } = state;
@@ -76,6 +78,45 @@ const PropertyStep: React.FC = () => {
   const [currentProperty, setCurrentProperty] = useState<Property>(createEmptyProperty());
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(properties.length === 0);
+  const [selectedOccupancyStatus, setSelectedOccupancyStatus] = useState<OccupancyStatus>('PERSONAL_USE');
+  const [occupancyMonths, setOccupancyMonths] = useState<Record<OccupancyStatus, number>>({
+    PERSONAL_USE: 12,
+    LONG_TERM_RENT: 0,
+    SHORT_TERM_RENT: 0,
+  });
+  const [availableMonths, setAvailableMonths] = useState<Record<OccupancyStatus, number[]>>({
+    PERSONAL_USE: [],
+    LONG_TERM_RENT: [],
+    SHORT_TERM_RENT: [],
+  });
+
+  useEffect(() => {
+    const totalMonthsUsed = Object.values(occupancyMonths).reduce((sum, months) => sum + months, 0);
+    const remainingMonths = 12 - totalMonthsUsed;
+    
+    const newAvailableMonths: Record<OccupancyStatus, number[]> = {
+      PERSONAL_USE: [],
+      LONG_TERM_RENT: [],
+      SHORT_TERM_RENT: [],
+    };
+    
+    Object.keys(newAvailableMonths).forEach((status) => {
+      const statusKey = status as OccupancyStatus;
+      const currentValue = occupancyMonths[statusKey];
+      const maxAvailable = remainingMonths + currentValue;
+      
+      if (maxAvailable > 0) {
+        newAvailableMonths[statusKey] = Array.from(
+          { length: maxAvailable }, 
+          (_, i) => i + 1
+        );
+      } else {
+        newAvailableMonths[statusKey] = [];
+      }
+    });
+    
+    setAvailableMonths(newAvailableMonths);
+  }, [occupancyMonths]);
 
   const activityExplanations = {
     purchased: "Select this if you purchased the property during 2024 but did not sell it. You'll need to provide the purchase date and price.",
@@ -161,21 +202,50 @@ const PropertyStep: React.FC = () => {
     setCurrentProperty(prev => ({ ...prev, remodeling: checked }));
   };
 
-  const handleOccupancyStatusChange = (status: OccupancyStatus, checked: boolean) => {
-    setCurrentProperty(prev => {
-      if (checked) {
-        return {
-          ...prev,
-          occupancyStatuses: [...prev.occupancyStatuses.filter(s => s !== status), status]
-        };
+  const handleOccupancyStatusChange = (status: OccupancyStatus) => {
+    setSelectedOccupancyStatus(status);
+    
+    if (!currentProperty.occupancyStatuses.includes(status)) {
+      setCurrentProperty(prev => ({
+        ...prev,
+        occupancyStatuses: [...prev.occupancyStatuses, status]
+      }));
+    }
+  };
+
+  const handleOccupancyMonthsChange = (status: OccupancyStatus, months: number) => {
+    setOccupancyMonths(prev => ({
+      ...prev,
+      [status]: months
+    }));
+    
+    if (status === selectedOccupancyStatus) {
+      setCurrentProperty(prev => ({
+        ...prev,
+        monthsOccupied: months
+      }));
+    }
+  };
+
+  const handleRemoveOccupancyStatus = (status: OccupancyStatus) => {
+    setCurrentProperty(prev => ({
+      ...prev,
+      occupancyStatuses: prev.occupancyStatuses.filter(s => s !== status)
+    }));
+    
+    setOccupancyMonths(prev => ({
+      ...prev,
+      [status]: 0
+    }));
+    
+    if (selectedOccupancyStatus === status) {
+      const remainingStatuses = currentProperty.occupancyStatuses.filter(s => s !== status);
+      if (remainingStatuses.length > 0) {
+        setSelectedOccupancyStatus(remainingStatuses[0]);
       } else {
-        const newStatuses = prev.occupancyStatuses.filter(s => s !== status);
-        return {
-          ...prev,
-          occupancyStatuses: newStatuses.length > 0 ? newStatuses : prev.occupancyStatuses
-        };
+        setSelectedOccupancyStatus('PERSONAL_USE');
       }
-    });
+    }
   };
 
   const handleSubmit = () => {
@@ -238,23 +308,33 @@ const PropertyStep: React.FC = () => {
       return;
     }
     
-    if (currentProperty.monthsOccupied !== undefined && 
-        (currentProperty.monthsOccupied < 1 || currentProperty.monthsOccupied > 12)) {
-      toast.error('Months occupied must be between 1 and 12');
+    const totalMonths = Object.values(occupancyMonths).reduce((sum, val) => sum + val, 0);
+    if (totalMonths !== 12) {
+      toast.error('Total months must equal 12');
       return;
     }
 
+    const finalProperty = {
+      ...currentProperty,
+      monthsOccupied: occupancyMonths[selectedOccupancyStatus]
+    };
+
     if (editingIndex !== null) {
-      updateProperty(editingIndex, currentProperty);
+      updateProperty(editingIndex, finalProperty);
       toast.success('Property updated successfully');
     } else {
-      addProperty(currentProperty);
+      addProperty(finalProperty);
       toast.success('Property added successfully');
     }
     
     setCurrentProperty(createEmptyProperty());
     setEditingIndex(null);
     setShowForm(false);
+    setOccupancyMonths({
+      PERSONAL_USE: 12,
+      LONG_TERM_RENT: 0,
+      SHORT_TERM_RENT: 0,
+    });
   };
 
   const handleEdit = (index: number) => {
@@ -269,6 +349,20 @@ const PropertyStep: React.FC = () => {
     setCurrentProperty(updatedProperty);
     setEditingIndex(index);
     setShowForm(true);
+    
+    const initialOccupancyMonths = {
+      PERSONAL_USE: 0,
+      LONG_TERM_RENT: 0,
+      SHORT_TERM_RENT: 0,
+    };
+    
+    if (updatedProperty.occupancyStatuses.length > 0) {
+      const primaryStatus = updatedProperty.occupancyStatuses[0];
+      initialOccupancyMonths[primaryStatus] = updatedProperty.monthsOccupied || 12;
+      setSelectedOccupancyStatus(primaryStatus);
+    }
+    
+    setOccupancyMonths(initialOccupancyMonths);
   };
 
   const handleDelete = (index: number) => {
@@ -647,76 +741,140 @@ const PropertyStep: React.FC = () => {
           
           <div className="mt-6">
             <h4 className="text-md font-medium mb-3">Rental Status*</h4>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="personal_use" 
-                  checked={currentProperty.occupancyStatuses.includes('PERSONAL_USE')}
-                  onCheckedChange={(checked) => 
-                    handleOccupancyStatusChange('PERSONAL_USE', checked as boolean)
-                  }
-                />
-                <div>
-                  <Label 
-                    htmlFor="personal_use" 
-                    className="text-sm font-medium cursor-pointer"
+            <RadioGroup 
+              value={selectedOccupancyStatus}
+              onValueChange={(value) => handleOccupancyStatusChange(value as OccupancyStatus)}
+              className="flex flex-col space-y-3"
+            >
+              <CardRadioGroupItem 
+                value="PERSONAL_USE" 
+                checked={selectedOccupancyStatus === 'PERSONAL_USE'}
+                title="Personal Use / Vacant"
+                explanation={occupancyExplanations.PERSONAL_USE}
+              >
+                <div className="mt-2">
+                  <Label htmlFor="personal_use_months">Number of Months*</Label>
+                  <Select 
+                    value={occupancyMonths.PERSONAL_USE.toString()}
+                    onValueChange={(value) => handleOccupancyMonthsChange('PERSONAL_USE', parseInt(value))}
+                    disabled={availableMonths.PERSONAL_USE.length === 0}
                   >
-                    Personal Use / Vacant
-                  </Label>
-                  <p className="text-xs text-gray-500">{occupancyExplanations.PERSONAL_USE}</p>
+                    <SelectTrigger className="mt-1 w-24">
+                      <SelectValue placeholder="Months" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableMonths.PERSONAL_USE.map(month => (
+                        <SelectItem key={`personal-${month}`} value={month.toString()}>
+                          {month}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {currentProperty.occupancyStatuses.includes('PERSONAL_USE') && 
+                   occupancyMonths.PERSONAL_USE > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="ml-2 text-red-500 hover:text-red-700"
+                      onClick={() => handleRemoveOccupancyStatus('PERSONAL_USE')}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Remove
+                    </Button>
+                  )}
                 </div>
-              </div>
+              </CardRadioGroupItem>
               
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="long_term_rent" 
-                  checked={currentProperty.occupancyStatuses.includes('LONG_TERM_RENT')}
-                  onCheckedChange={(checked) => 
-                    handleOccupancyStatusChange('LONG_TERM_RENT', checked as boolean)
-                  }
-                />
-                <div>
-                  <Label 
-                    htmlFor="long_term_rent" 
-                    className="text-sm font-medium cursor-pointer"
+              <CardRadioGroupItem 
+                value="LONG_TERM_RENT" 
+                checked={selectedOccupancyStatus === 'LONG_TERM_RENT'}
+                title="Long-Term Rental"
+                explanation={occupancyExplanations.LONG_TERM_RENT}
+              >
+                <div className="mt-2">
+                  <Label htmlFor="long_term_months">Number of Months*</Label>
+                  <Select 
+                    value={occupancyMonths.LONG_TERM_RENT.toString()}
+                    onValueChange={(value) => handleOccupancyMonthsChange('LONG_TERM_RENT', parseInt(value))}
+                    disabled={availableMonths.LONG_TERM_RENT.length === 0}
                   >
-                    Long-Term Rental
-                  </Label>
-                  <p className="text-xs text-gray-500">{occupancyExplanations.LONG_TERM_RENT}</p>
+                    <SelectTrigger className="mt-1 w-24">
+                      <SelectValue placeholder="Months" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableMonths.LONG_TERM_RENT.map(month => (
+                        <SelectItem key={`longterm-${month}`} value={month.toString()}>
+                          {month}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {currentProperty.occupancyStatuses.includes('LONG_TERM_RENT') && 
+                   occupancyMonths.LONG_TERM_RENT > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="ml-2 text-red-500 hover:text-red-700"
+                      onClick={() => handleRemoveOccupancyStatus('LONG_TERM_RENT')}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Remove
+                    </Button>
+                  )}
                 </div>
-              </div>
+              </CardRadioGroupItem>
               
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="short_term_rent" 
-                  checked={currentProperty.occupancyStatuses.includes('SHORT_TERM_RENT')}
-                  onCheckedChange={(checked) => 
-                    handleOccupancyStatusChange('SHORT_TERM_RENT', checked as boolean)
-                  }
-                />
-                <div>
-                  <Label 
-                    htmlFor="short_term_rent" 
-                    className="text-sm font-medium cursor-pointer"
+              <CardRadioGroupItem 
+                value="SHORT_TERM_RENT" 
+                checked={selectedOccupancyStatus === 'SHORT_TERM_RENT'}
+                title="Short-Term Rental"
+                explanation={occupancyExplanations.SHORT_TERM_RENT}
+              >
+                <div className="mt-2">
+                  <Label htmlFor="short_term_months">Number of Months*</Label>
+                  <Select 
+                    value={occupancyMonths.SHORT_TERM_RENT.toString()}
+                    onValueChange={(value) => handleOccupancyMonthsChange('SHORT_TERM_RENT', parseInt(value))}
+                    disabled={availableMonths.SHORT_TERM_RENT.length === 0}
                   >
-                    Short-Term Rental
-                  </Label>
-                  <p className="text-xs text-gray-500">{occupancyExplanations.SHORT_TERM_RENT}</p>
+                    <SelectTrigger className="mt-1 w-24">
+                      <SelectValue placeholder="Months" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableMonths.SHORT_TERM_RENT.map(month => (
+                        <SelectItem key={`shortterm-${month}`} value={month.toString()}>
+                          {month}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {currentProperty.occupancyStatuses.includes('SHORT_TERM_RENT') && 
+                   occupancyMonths.SHORT_TERM_RENT > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="ml-2 text-red-500 hover:text-red-700"
+                      onClick={() => handleRemoveOccupancyStatus('SHORT_TERM_RENT')}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Remove
+                    </Button>
+                  )}
                 </div>
-              </div>
-              
-              <div className="mt-4">
-                <Label htmlFor="monthsOccupied">Number of Months*</Label>
-                <Input 
-                  id="monthsOccupied" 
-                  name="monthsOccupied" 
-                  type="number"
-                  min="1"
-                  max="12"
-                  placeholder="e.g. 12"
-                  value={currentProperty.monthsOccupied || ''}
-                  onChange={handleInputChange}
-                  className="mt-1 w-20"
+              </CardRadioGroupItem>
+            </RadioGroup>
+            
+            <div className="mt-4 p-3 bg-gray-100 rounded-md">
+              <p className="text-sm text-gray-700 font-medium">Total Months: {Object.values(occupancyMonths).reduce((sum, val) => sum + val, 0)}/12</p>
+              <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-500 to-blue-500" 
+                  style={{ 
+                    width: `${(Object.values(occupancyMonths).reduce((sum, val) => sum + val, 0) / 12) * 100}%` 
+                  }}
                 />
               </div>
             </div>
@@ -730,6 +888,11 @@ const PropertyStep: React.FC = () => {
                 setShowForm(false);
                 setCurrentProperty(createEmptyProperty());
                 setEditingIndex(null);
+                setOccupancyMonths({
+                  PERSONAL_USE: 12,
+                  LONG_TERM_RENT: 0,
+                  SHORT_TERM_RENT: 0,
+                });
               }}
             >
               Cancel
@@ -752,6 +915,11 @@ const PropertyStep: React.FC = () => {
             onClick={() => {
               setShowForm(true);
               setCurrentProperty(createEmptyProperty());
+              setOccupancyMonths({
+                PERSONAL_USE: 12,
+                LONG_TERM_RENT: 0,
+                SHORT_TERM_RENT: 0,
+              });
             }}
             className="bg-form-300 hover:bg-form-400 text-white"
           >
