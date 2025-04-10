@@ -59,10 +59,22 @@ function Calendar({
   showOutsideDays = true,
   onDayClick,
   mode = "default",
-  selected,
-  onSelect,
   ...props
 }: CalendarProps) {
+  // Extract selected and onSelect based on the mode
+  // This is a type-safe way to access these properties
+  const selected = 
+    mode === "single" ? (props as CalendarSingleProps).selected :
+    mode === "range" ? (props as CalendarRangeProps).selected :
+    mode === "multiple" ? (props as CalendarMultipleProps).selected :
+    undefined;
+
+  const onSelect = 
+    mode === "single" ? (props as CalendarSingleProps).onSelect :
+    mode === "range" ? (props as CalendarRangeProps).onSelect :
+    mode === "multiple" ? (props as CalendarMultipleProps).onSelect :
+    undefined;
+
   // Custom formatter for month labels to use abbreviated month names
   const formatMonthCaption = (date: Date) => {
     return format(date, "MMM"); // This will return abbreviated month names like "Jan", "Feb", etc.
