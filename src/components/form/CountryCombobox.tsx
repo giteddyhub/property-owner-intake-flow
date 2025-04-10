@@ -1,8 +1,7 @@
 
 import React from 'react';
-import { Combobox } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCountries } from '@/lib/countries';
-import { cn } from "@/lib/utils";
 
 interface CountryComboboxProps {
   value: string;
@@ -12,27 +11,6 @@ interface CountryComboboxProps {
   excludeCountries?: string[];
 }
 
-// Basic input fallback component
-const BasicInput: React.FC<{
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-}> = ({ value, onChange, placeholder, className }) => {
-  return (
-    <input
-      type="text"
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={cn(
-        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
-    />
-  );
-};
-
 const CountryCombobox: React.FC<CountryComboboxProps> = ({
   value,
   onChange,
@@ -40,64 +18,30 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   className,
   excludeCountries = []
 }) => {
-  // Get countries with robust error handling
-  const countriesArray = React.useMemo(() => {
-    try {
-      // Retrieve countries list
-      const countries = getCountries();
-      
-      // Defensive check - ensure countries is an array
-      if (!Array.isArray(countries)) {
-        console.error("getCountries() did not return an array:", countries);
-        return [];
-      }
-      
-      // Filter and return a new array to avoid mutation issues
-      return [...countries.filter(country => typeof country === 'string')];
-    } catch (error) {
-      console.error("Error fetching countries:", error);
-      return [];
-    }
-  }, []);
+  // Get countries
+  const countries = getCountries();
   
-  // Apply exclusion filter with safety checks
-  const filteredCountries = React.useMemo(() => {
-    // Safety check for countriesArray
-    if (!Array.isArray(countriesArray) || countriesArray.length === 0) {
-      return [];
-    }
-    
-    // Safety check for excludeCountries
-    if (!Array.isArray(excludeCountries)) {
-      return [...countriesArray]; // Return a new array copy
-    }
-    
-    // Filter out excluded countries and return a new array
-    return [...countriesArray.filter(country => 
-      !excludeCountries.includes(country)
-    )];
-  }, [countriesArray, excludeCountries]);
-
-  // Final safety check before rendering Combobox
-  if (!Array.isArray(filteredCountries) || filteredCountries.length === 0) {
-    return (
-      <BasicInput
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className={className}
-      />
-    );
-  }
+  // Filter out excluded countries
+  const filteredCountries = countries.filter(country => 
+    !excludeCountries.includes(country)
+  );
 
   return (
-    <Combobox
-      options={filteredCountries}
-      value={value || ""}
+    <Select
+      value={value}
       onValueChange={onChange}
-      placeholder={placeholder}
-      className={className}
-    />
+    >
+      <SelectTrigger className={className}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {filteredCountries.map((country) => (
+          <SelectItem key={country} value={country}>
+            {country}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };
 
