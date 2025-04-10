@@ -204,6 +204,29 @@ const Combobox = ({
     );
   }
 
+  // Ensure we have a non-empty array of filtered options for the Command component
+  const commandItems = filteredOptions.length > 0 
+    ? filteredOptions.map((option) => (
+        <CommandItem
+          key={option}
+          value={option}
+          onSelect={() => {
+            onValueChange(option);
+            setSearchQuery("");
+            setOpen(false);
+          }}
+        >
+          <Check
+            className={cn(
+              "mr-2 h-4 w-4",
+              value === option ? "opacity-100" : "opacity-0"
+            )}
+          />
+          {option}
+        </CommandItem>
+      ))
+    : [<CommandItem key="empty-placeholder" value="" disabled>No options available</CommandItem>];
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -229,25 +252,7 @@ const Combobox = ({
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup className="max-h-[200px] overflow-y-auto">
-            {filteredOptions.map((option) => (
-              <CommandItem
-                key={option}
-                value={option}
-                onSelect={() => {
-                  onValueChange(option);
-                  setSearchQuery("");
-                  setOpen(false);
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === option ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                {option}
-              </CommandItem>
-            ))}
+            {commandItems}
           </CommandGroup>
         </Command>
       </PopoverContent>
