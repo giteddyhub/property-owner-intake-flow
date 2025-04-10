@@ -557,7 +557,7 @@ const PropertyStep: React.FC = () => {
   };
 
   const calculateTotalMonths = () => {
-    return Object.values(occupancyMonths).reduce((sum, months) => sum + months, 0);
+    return Object.values(occupancyMonths).reduce((sum, val) => sum + val, 0);
   };
 
   const totalMonthsAllocated = calculateTotalMonths();
@@ -1058,7 +1058,7 @@ const PropertyStep: React.FC = () => {
                 </TooltipProvider>
               </h4>
               <div className="relative mt-1">
-                <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-orange-500" />
+                <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-orange-500" />
                 <Input 
                   id="rentalIncome" 
                   name="rentalIncome" 
@@ -1068,6 +1068,7 @@ const PropertyStep: React.FC = () => {
                   value={currentProperty.rentalIncome || ''}
                   onChange={handleInputChange}
                   className="pl-10 border-orange-500 focus-visible:ring-orange-500 bg-orange-50"
+                  size="lg"
                 />
               </div>
             </div>
