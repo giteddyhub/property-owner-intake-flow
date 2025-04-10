@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -49,50 +48,41 @@ const AssignmentStep: React.FC = () => {
   const { state, addAssignment, updateAssignment, removeAssignment } = useFormContext();
   const { owners, properties, assignments } = state;
   
-  // For date range picker
   const [dateRange, setDateRange] = useState<DateRange>({
     from: null,
     to: null,
   });
   
-  // Check if all properties have at least one owner assigned
   const allPropertiesAssigned = properties.every(property => 
     assignments.some(assignment => assignment.propertyId === property.id)
   );
   
-  // Get assignments for a specific property
   const getPropertyAssignments = (propertyId: string) => {
     return assignments.filter(assignment => assignment.propertyId === propertyId);
   };
   
-  // Find an assignment
   const findAssignment = (propertyId: string, ownerId: string) => {
     return assignments.find(
       assignment => assignment.propertyId === propertyId && assignment.ownerId === ownerId
     );
   };
   
-  // Get owner by ID
   const getOwnerById = (ownerId: string) => {
     return owners.find(owner => owner.id === ownerId);
   };
   
-  // Handle ownership percentage change
   const handlePercentageChange = (propertyId: string, ownerId: string, value: string) => {
     const percentage = value === '' ? 0 : Math.min(100, Math.max(0, parseInt(value)));
     
-    // Check if an assignment already exists
     const existingAssignment = findAssignment(propertyId, ownerId);
     
     if (existingAssignment) {
-      // Update existing assignment
       const index = assignments.indexOf(existingAssignment);
       updateAssignment(index, {
         ...existingAssignment,
         ownershipPercentage: percentage
       });
     } else if (percentage > 0) {
-      // Create new assignment
       addAssignment({
         propertyId,
         ownerId,
@@ -102,7 +92,6 @@ const AssignmentStep: React.FC = () => {
     }
   };
   
-  // Handle resident status change
   const handleResidentStatusChange = (propertyId: string, ownerId: string, checked: boolean) => {
     const existingAssignment = findAssignment(propertyId, ownerId);
     
@@ -114,7 +103,6 @@ const AssignmentStep: React.FC = () => {
         residentDateRange: checked ? existingAssignment.residentDateRange || { from: null, to: null } : undefined
       });
     } else if (checked) {
-      // Create new assignment with 0% ownership but marked as resident
       addAssignment({
         propertyId,
         ownerId,
@@ -125,7 +113,6 @@ const AssignmentStep: React.FC = () => {
     }
   };
   
-  // Handle date range change
   const handleDateRangeChange = (
     propertyId: string, 
     ownerId: string, 
@@ -142,7 +129,6 @@ const AssignmentStep: React.FC = () => {
     }
   };
   
-  // Handle tax credit change
   const handleTaxCreditChange = (propertyId: string, ownerId: string, value: string) => {
     const taxCredit = value === '' ? undefined : Number(value);
     
@@ -155,7 +141,6 @@ const AssignmentStep: React.FC = () => {
         taxCredits: taxCredit
       });
     } else if (taxCredit !== undefined) {
-      // Create new assignment with tax credit but 0% ownership
       addAssignment({
         propertyId,
         ownerId,
@@ -166,20 +151,17 @@ const AssignmentStep: React.FC = () => {
     }
   };
   
-  // Get total ownership percentage for a property
   const getTotalPercentage = (propertyId: string) => {
     return getPropertyAssignments(propertyId)
       .reduce((sum, assignment) => sum + assignment.ownershipPercentage, 0);
   };
   
-  // Validate before proceeding
   const validateAndProceed = () => {
     if (!allPropertiesAssigned) {
       toast.error('Each property must have at least one owner assigned');
       return false;
     }
     
-    // Check if any property has more than 100% ownership allocated
     const propertyWithOverAllocation = properties.find(property => 
       getTotalPercentage(property.id) > 100
     );
@@ -225,9 +207,9 @@ const AssignmentStep: React.FC = () => {
                       {property.address.street}, {property.address.comune}, {property.address.province}
                     </p>
                   </div>
-                  <div className="flex items-center">
+                  <div className="text-right text-sm">
                     <span className={cn(
-                      "inline-block px-2 py-1 rounded mr-4", // Added mr-4 for more spacing from the dropdown
+                      "inline-block px-2 py-1 rounded",
                       getTotalPercentage(property.id) === 100 
                         ? "bg-green-100 text-green-800" 
                         : getTotalPercentage(property.id) > 100
