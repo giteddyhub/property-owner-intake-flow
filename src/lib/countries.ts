@@ -27,5 +27,10 @@ export const COUNTRIES = [
   "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
 ];
 
-// Provide a safe way to access countries that guarantees an array
-export const getCountries = () => COUNTRIES || [];
+// Ensure we always return a valid array
+export const getCountries = () => {
+  if (!COUNTRIES || !Array.isArray(COUNTRIES)) {
+    return [];
+  }
+  return COUNTRIES;
+};
