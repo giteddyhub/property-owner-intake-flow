@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -18,13 +17,11 @@ import { Owner, MaritalStatus, Address, ItalianResidenceDetails } from '@/types/
 import CountryCombobox from '@/components/form/CountryCombobox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-// List of countries for dropdowns
 const COUNTRIES = [
   "Italy", "United States", "United Kingdom", "France", "Germany", 
   "Spain", "Canada", "Australia", "Switzerland", "Other"
 ];
 
-// Default empty owner template
 const createEmptyOwner = (): Owner => ({
   id: '',
   firstName: '',
@@ -55,7 +52,6 @@ const OwnerStep: React.FC = () => {
     const { name, value } = e.target;
     
     if (name.includes('.')) {
-      // Handle nested objects (like address.street)
       const [parent, child] = name.split('.');
       setCurrentOwner(prev => {
         if (parent === 'address') {
@@ -75,7 +71,6 @@ const OwnerStep: React.FC = () => {
             }
           };
         } else if (parent === 'italianResidenceDetails') {
-          // Create the object if it doesn't exist
           return {
             ...prev,
             italianResidenceDetails: {
@@ -94,7 +89,6 @@ const OwnerStep: React.FC = () => {
 
   const handleSelectChange = (name: string, value: string) => {
     if (name.includes('.')) {
-      // Handle nested objects
       const [parent, child] = name.split('.');
       setCurrentOwner(prev => {
         if (parent === 'address') {
@@ -194,7 +188,6 @@ const OwnerStep: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    // Basic validation
     if (!currentOwner.firstName.trim() || !currentOwner.lastName.trim()) {
       toast.error('Please enter first and last name');
       return;
@@ -240,7 +233,6 @@ const OwnerStep: React.FC = () => {
       toast.success('Owner added successfully');
     }
     
-    // Reset form
     setCurrentOwner(createEmptyOwner());
     setEditingIndex(null);
     setShowForm(false);
@@ -269,7 +261,6 @@ const OwnerStep: React.FC = () => {
     <div>
       <h2 className="text-2xl font-bold mb-6 text-form-400">Owner Information</h2>
       
-      {/* Show list of added owners if any */}
       {owners.length > 0 && !showForm && (
         <div className="mb-6">
           <div className="flex justify-between mb-4">
@@ -336,7 +327,6 @@ const OwnerStep: React.FC = () => {
         </div>
       )}
       
-      {/* Owner form */}
       {showForm && (
         <div className="border rounded-lg p-6 bg-gray-50">
           <h3 className="text-lg font-semibold mb-4">
@@ -344,7 +334,6 @@ const OwnerStep: React.FC = () => {
           </h3>
           
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Basic information */}
             <div>
               <Label htmlFor="firstName">First Name*</Label>
               <Input 
@@ -447,6 +436,7 @@ const OwnerStep: React.FC = () => {
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p>The "Codice Fiscale" is a unique identifier issued by the Italian government. It's required for tax purposes, property transactions, and official documents in Italy.</p>
+                      <p className="mt-2 font-medium">Example: RSSMRA80A01H501W</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -462,7 +452,6 @@ const OwnerStep: React.FC = () => {
             </div>
           </div>
           
-          {/* Address */}
           <div className="mt-6">
             <h4 className="text-md font-medium mb-3">Address outside Italy*</h4>
             <div className="grid gap-4 md:grid-cols-2">
@@ -513,7 +502,6 @@ const OwnerStep: React.FC = () => {
             </div>
           </div>
           
-          {/* Italian Residency */}
           <div className="mt-6">
             <div className="flex items-center space-x-2">
               <Switch 
