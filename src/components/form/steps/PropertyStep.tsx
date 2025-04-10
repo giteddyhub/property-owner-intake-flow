@@ -14,7 +14,7 @@ import FormNavigation from '@/components/form/FormNavigation';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, Euro, Plus, Trash2 } from 'lucide-react';
+import { CalendarIcon, Euro, Plus, Trash2, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox'; 
@@ -36,6 +36,8 @@ import {
 } from '@/types/form';
 import { RadioGroup, RadioGroupItem, CardRadioGroupItem } from '@/components/ui/radio-group';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const PROVINCES = [
   "Agrigento", "Alessandria", "Ancona", "Aosta", "Arezzo", "Ascoli Piceno", "Asti", "Avellino", 
@@ -536,6 +538,13 @@ const PropertyStep: React.FC = () => {
     occupancyMonths.LONG_TERM_RENT > 0 || occupancyMonths.SHORT_TERM_RENT > 0;
   };
 
+  const calculateTotalMonths = () => {
+    return Object.values(occupancyMonths).reduce((sum, months) => sum + months, 0);
+  };
+
+  const totalMonthsAllocated = calculateTotalMonths();
+  const monthsRemaining = 12 - totalMonthsAllocated;
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6 text-form-400">Property Information</h2>
@@ -793,6 +802,33 @@ const PropertyStep: React.FC = () => {
           
           <div className="mt-6">
             <h4 className="text-md font-medium mb-3">Rental Status*</h4>
+            
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <span className="font-medium">Months Allocation</span>
+                  <TooltipProvider delayDuration={100}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground ml-1 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="w-80 p-4">
+                        <p>The total number of months allocated across all rental statuses must equal 12 (one full year).</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <span className={`text-sm font-medium ${totalMonthsAllocated === 12 ? 'text-green-600' : 'text-amber-600'}`}>
+                  {totalMonthsAllocated}/12 months allocated {monthsRemaining > 0 ? `(${monthsRemaining} remaining)` : ''}
+                </span>
+              </div>
+              <Progress 
+                value={(totalMonthsAllocated / 12) * 100} 
+                className={`h-2 ${totalMonthsAllocated === 12 ? 'bg-green-100' : ''}`}
+                indicatorClassName={totalMonthsAllocated === 12 ? 'bg-green-600' : 'bg-amber-600'} 
+              />
+            </div>
+            
             <div className="flex flex-col space-y-3">
               <div 
                 className={cn(
