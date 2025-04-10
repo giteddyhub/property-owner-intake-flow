@@ -27,32 +27,38 @@ export const COUNTRIES = [
   "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
 ];
 
-// Get countries with maximum safety guarantees
+/**
+ * Get a list of countries with maximum safety guarantees
+ * This function will always return a valid array, never undefined
+ */
 export const getCountries = (): string[] => {
+  // Default empty array - will be returned if anything fails
+  const defaultCountries: string[] = [];
+  
   try {
     // First check if COUNTRIES exists and is an array
     if (typeof COUNTRIES === 'undefined') {
       console.error("countries.ts: COUNTRIES is undefined");
-      return [];
+      return defaultCountries;
     }
     
     if (!Array.isArray(COUNTRIES)) {
       console.error("countries.ts: COUNTRIES is not an array");
-      return [];
+      return defaultCountries;
     }
     
     if (COUNTRIES.length === 0) {
       console.warn("countries.ts: COUNTRIES array is empty");
-      return [];
+      return defaultCountries;
     }
     
     // Filter out any non-string values to ensure we only have strings
     const validCountries = COUNTRIES.filter(country => typeof country === 'string');
     
-    // Final safety check to ensure we never return undefined
-    return Array.isArray(validCountries) ? validCountries : [];
+    // Final safety check
+    return validCountries;
   } catch (error) {
     console.error("Fatal error in getCountries():", error);
-    return [];
+    return defaultCountries;
   }
 };

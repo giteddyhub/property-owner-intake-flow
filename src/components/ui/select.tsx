@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
@@ -69,7 +70,7 @@ SelectScrollDownButton.displayName =
 
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
+  React.ComponentPropsWithoutRef<SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
@@ -156,6 +157,27 @@ interface ComboboxProps {
   triggerClassName?: string;
 }
 
+// Create a completely separate basic input for fallback
+const BasicInput: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}> = ({ value, onChange, placeholder, className }) => {
+  return (
+    <input
+      type="text"
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={cn(
+        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+    />
+  );
+};
+
 const Combobox = ({
   options,
   value,
@@ -168,40 +190,53 @@ const Combobox = ({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const safeOptions = React.useMemo(() => {
-    if (!options || !Array.isArray(options)) {
-      console.warn("Combobox received invalid options:", options);
-      return [] as readonly string[];
-    }
-    return options;
-  }, [options]);
-
-  const filteredOptions = React.useMemo(() => {
-    if (!searchQuery) {
-      return safeOptions;
-    }
-    
-    return safeOptions.filter((option) => 
-      typeof option === 'string' && option.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [safeOptions, searchQuery]);
-
-  const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
-
-  if (safeOptions.length === 0) {
+  // Handle invalid options input - extra defensive
+  if (!options) {
+    console.warn("Combobox received no options");
     return (
-      <input
-        type="text"
+      <BasicInput
         value={value || ""}
-        onChange={(e) => onValueChange(e.target.value)}
+        onChange={onValueChange}
         placeholder={placeholder}
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        )}
+        className={className}
       />
     );
   }
+
+  // Ensure options is an array
+  if (!Array.isArray(options)) {
+    console.warn("Combobox received non-array options:", options);
+    return (
+      <BasicInput
+        value={value || ""}
+        onChange={onValueChange}
+        placeholder={placeholder}
+        className={className}
+      />
+    );
+  }
+
+  // Ensure the array has items
+  if (options.length === 0) {
+    return (
+      <BasicInput
+        value={value || ""}
+        onChange={onValueChange}
+        placeholder={placeholder}
+        className={className}
+      />
+    );
+  }
+
+  // Filter options based on search
+  const filteredOptions = searchQuery.trim() === "" 
+    ? options 
+    : options.filter(option => 
+        typeof option === 'string' && option.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+  // Final safety check to ensure we have a valid array
+  const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
