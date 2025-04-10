@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -29,26 +29,133 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ActivityType, OccupancyStatus, Owner, Property } from '@/types/form';
+import { supabase } from '@/integrations/supabase/client';
 
 const ReviewStep: React.FC = () => {
   const { state, goToStep, prevStep } = useFormContext();
   const { owners, properties, assignments } = state;
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handleSubmit = () => {
-    toast.success('Form submitted successfully!', {
-      description: 'Thank you for completing the property owner intake process.',
-      duration: 5000,
-    });
-    
-    setTimeout(() => {
-      toast("Your submission has been received", {
-        description: "A confirmation email has been sent with a summary of your submission.",
-        action: {
-          label: "Download Summary",
-          onClick: () => handleDownloadSummary(),
-        },
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      // First, save all owners
+      const ownersPromises = owners.map(async (owner) => {
+        const { data: ownerData, error: ownerError } = await supabase
+          .from('owners')
+          .insert({
+            id: owner.id,
+            first_name: owner.firstName,
+            last_name: owner.lastName,
+            date_of_birth: owner.dateOfBirth,
+            country_of_birth: owner.countryOfBirth,
+            citizenship: owner.citizenship,
+            address_street: owner.address.street,
+            address_city: owner.address.city,
+            address_zip: owner.address.zip,
+            address_country: owner.address.country,
+            italian_tax_code: owner.italianTaxCode,
+            marital_status: owner.maritalStatus,
+            is_resident_in_italy: owner.isResidentInItaly,
+            spent_over_182_days: owner.italianResidenceDetails?.spentOver182Days,
+            italian_residence_comune_name: owner.italianResidenceDetails?.comuneName,
+            italian_residence_street: owner.italianResidenceDetails?.street,
+            italian_residence_city: owner.italianResidenceDetails?.city,
+            italian_residence_zip: owner.italianResidenceDetails?.zip
+          })
+          .select();
+          
+        if (ownerError) {
+          throw new Error(`Error saving owner: ${ownerError.message}`);
+        }
+        
+        return ownerData;
       });
-    }, 1000);
+      
+      await Promise.all(ownersPromises);
+      
+      // Then, save all properties
+      const propertiesPromises = properties.map(async (property) => {
+        const { data: propertyData, error: propertyError } = await supabase
+          .from('properties')
+          .insert({
+            id: property.id,
+            label: property.label,
+            address_comune: property.address.comune,
+            address_province: property.address.province,
+            address_street: property.address.street,
+            address_zip: property.address.zip,
+            activity_2024: property.activity2024,
+            purchase_date: property.purchaseDate,
+            purchase_price: property.purchasePrice,
+            sale_date: property.saleDate,
+            sale_price: property.salePrice,
+            property_type: property.propertyType,
+            remodeling: property.remodeling,
+            occupancy_statuses: property.occupancyStatuses,
+            months_occupied: property.monthsOccupied,
+            rental_income: property.rentalIncome
+          })
+          .select();
+          
+        if (propertyError) {
+          throw new Error(`Error saving property: ${propertyError.message}`);
+        }
+        
+        return propertyData;
+      });
+      
+      await Promise.all(propertiesPromises);
+      
+      // Finally, save all assignments
+      const assignmentsPromises = assignments.map(async (assignment) => {
+        const { data: assignmentData, error: assignmentError } = await supabase
+          .from('owner_property_assignments')
+          .insert({
+            id: assignment.propertyId + '-' + assignment.ownerId,
+            property_id: assignment.propertyId,
+            owner_id: assignment.ownerId,
+            ownership_percentage: assignment.ownershipPercentage,
+            resident_at_property: assignment.residentAtProperty,
+            resident_from_date: assignment.residentDateRange?.from || null,
+            resident_to_date: assignment.residentDateRange?.to || null,
+            tax_credits: assignment.taxCredits
+          })
+          .select();
+          
+        if (assignmentError) {
+          throw new Error(`Error saving assignment: ${assignmentError.message}`);
+        }
+        
+        return assignmentData;
+      });
+      
+      await Promise.all(assignmentsPromises);
+      
+      // Show success toast
+      toast.success('Form submitted successfully!', {
+        description: 'Thank you for completing the property owner intake process.',
+        duration: 5000,
+      });
+      
+      setTimeout(() => {
+        toast("Your submission has been received", {
+          description: "A confirmation email has been sent with a summary of your submission.",
+          action: {
+            label: "Download Summary",
+            onClick: () => handleDownloadSummary(),
+          },
+        });
+      }, 1000);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('Error submitting form', {
+        description: error instanceof Error ? error.message : 'Please try again later',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const handleDownloadSummary = () => {
@@ -479,9 +586,10 @@ const ReviewStep: React.FC = () => {
           </Button>
           <Button 
             onClick={handleSubmit}
+            disabled={isSubmitting}
             className="bg-form-300 hover:bg-form-400 text-white w-full sm:w-auto"
           >
-            Submit
+            {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </div>
       </div>
