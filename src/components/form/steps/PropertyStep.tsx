@@ -34,7 +34,7 @@ import {
   PropertyAddress, 
   PropertyType 
 } from '@/types/form';
-import { RadioGroup, CardRadioGroupItem } from '@/components/ui/radio-group';
+import { RadioGroup, RadioGroupItem, CardRadioGroupItem } from '@/components/ui/radio-group';
 
 const PROVINCES = [
   "Agrigento", "Alessandria", "Ancona", "Aosta", "Arezzo", "Ascoli Piceno", "Asti", "Avellino", 
@@ -741,131 +741,181 @@ const PropertyStep: React.FC = () => {
           
           <div className="mt-6">
             <h4 className="text-md font-medium mb-3">Rental Status*</h4>
-            <RadioGroup 
-              value={selectedOccupancyStatus}
-              onValueChange={(value) => handleOccupancyStatusChange(value as OccupancyStatus)}
-              className="flex flex-col space-y-3"
-            >
-              <CardRadioGroupItem 
-                value="PERSONAL_USE" 
-                checked={selectedOccupancyStatus === 'PERSONAL_USE'}
-                title="Personal Use / Vacant"
-                explanation={occupancyExplanations.PERSONAL_USE}
+            <div className="flex flex-col space-y-3">
+              <div 
+                className={cn(
+                  "relative rounded-lg border border-gray-200 p-4 transition-all hover:border-gray-300 cursor-pointer",
+                  selectedOccupancyStatus === 'PERSONAL_USE' ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" : "bg-white"
+                )}
+                onClick={() => handleOccupancyStatusChange('PERSONAL_USE')}
               >
-                <div className="mt-2">
+                <div className="flex items-center gap-2.5">
+                  <Checkbox 
+                    checked={selectedOccupancyStatus === 'PERSONAL_USE'}
+                    className="cursor-pointer"
+                  />
+                  <span className="font-medium text-gray-900 cursor-pointer">Personal Use / Vacant</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">{occupancyExplanations.PERSONAL_USE}</p>
+                
+                <div className={cn(
+                  "mt-2 ml-7.5",
+                  selectedOccupancyStatus === 'PERSONAL_USE' ? "block" : "hidden"
+                )}>
                   <Label htmlFor="personal_use_months">Number of Months*</Label>
-                  <Select 
-                    value={occupancyMonths.PERSONAL_USE.toString()}
-                    onValueChange={(value) => handleOccupancyMonthsChange('PERSONAL_USE', parseInt(value))}
-                    disabled={availableMonths.PERSONAL_USE.length === 0}
-                  >
-                    <SelectTrigger className="mt-1 w-24">
-                      <SelectValue placeholder="Months" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableMonths.PERSONAL_USE.map(month => (
-                        <SelectItem key={`personal-${month}`} value={month.toString()}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {currentProperty.occupancyStatuses.includes('PERSONAL_USE') && 
-                   occupancyMonths.PERSONAL_USE > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="ml-2 text-red-500 hover:text-red-700"
-                      onClick={() => handleRemoveOccupancyStatus('PERSONAL_USE')}
+                  <div className="flex items-center gap-2">
+                    <Select 
+                      value={occupancyMonths.PERSONAL_USE.toString()}
+                      onValueChange={(value) => handleOccupancyMonthsChange('PERSONAL_USE', parseInt(value))}
+                      disabled={availableMonths.PERSONAL_USE.length === 0}
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Remove
-                    </Button>
-                  )}
+                      <SelectTrigger className="mt-1 w-24">
+                        <SelectValue placeholder="Months" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableMonths.PERSONAL_USE.map(month => (
+                          <SelectItem key={`personal-${month}`} value={month.toString()}>
+                            {month}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {currentProperty.occupancyStatuses.includes('PERSONAL_USE') && 
+                    occupancyMonths.PERSONAL_USE > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 text-red-500 hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveOccupancyStatus('PERSONAL_USE');
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </CardRadioGroupItem>
+              </div>
               
-              <CardRadioGroupItem 
-                value="LONG_TERM_RENT" 
-                checked={selectedOccupancyStatus === 'LONG_TERM_RENT'}
-                title="Long-Term Rental"
-                explanation={occupancyExplanations.LONG_TERM_RENT}
+              <div 
+                className={cn(
+                  "relative rounded-lg border border-gray-200 p-4 transition-all hover:border-gray-300 cursor-pointer",
+                  selectedOccupancyStatus === 'LONG_TERM_RENT' ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" : "bg-white"
+                )}
+                onClick={() => handleOccupancyStatusChange('LONG_TERM_RENT')}
               >
-                <div className="mt-2">
+                <div className="flex items-center gap-2.5">
+                  <Checkbox 
+                    checked={selectedOccupancyStatus === 'LONG_TERM_RENT'}
+                    className="cursor-pointer"
+                  />
+                  <span className="font-medium text-gray-900 cursor-pointer">Long-Term Rental</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">{occupancyExplanations.LONG_TERM_RENT}</p>
+                
+                <div className={cn(
+                  "mt-2 ml-7.5",
+                  selectedOccupancyStatus === 'LONG_TERM_RENT' ? "block" : "hidden"
+                )}>
                   <Label htmlFor="long_term_months">Number of Months*</Label>
-                  <Select 
-                    value={occupancyMonths.LONG_TERM_RENT.toString()}
-                    onValueChange={(value) => handleOccupancyMonthsChange('LONG_TERM_RENT', parseInt(value))}
-                    disabled={availableMonths.LONG_TERM_RENT.length === 0}
-                  >
-                    <SelectTrigger className="mt-1 w-24">
-                      <SelectValue placeholder="Months" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableMonths.LONG_TERM_RENT.map(month => (
-                        <SelectItem key={`longterm-${month}`} value={month.toString()}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {currentProperty.occupancyStatuses.includes('LONG_TERM_RENT') && 
-                   occupancyMonths.LONG_TERM_RENT > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="ml-2 text-red-500 hover:text-red-700"
-                      onClick={() => handleRemoveOccupancyStatus('LONG_TERM_RENT')}
+                  <div className="flex items-center gap-2">
+                    <Select 
+                      value={occupancyMonths.LONG_TERM_RENT.toString()}
+                      onValueChange={(value) => handleOccupancyMonthsChange('LONG_TERM_RENT', parseInt(value))}
+                      disabled={availableMonths.LONG_TERM_RENT.length === 0}
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Remove
-                    </Button>
-                  )}
+                      <SelectTrigger className="mt-1 w-24">
+                        <SelectValue placeholder="Months" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableMonths.LONG_TERM_RENT.map(month => (
+                          <SelectItem key={`longterm-${month}`} value={month.toString()}>
+                            {month}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {currentProperty.occupancyStatuses.includes('LONG_TERM_RENT') && 
+                    occupancyMonths.LONG_TERM_RENT > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 text-red-500 hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveOccupancyStatus('LONG_TERM_RENT');
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </CardRadioGroupItem>
+              </div>
               
-              <CardRadioGroupItem 
-                value="SHORT_TERM_RENT" 
-                checked={selectedOccupancyStatus === 'SHORT_TERM_RENT'}
-                title="Short-Term Rental"
-                explanation={occupancyExplanations.SHORT_TERM_RENT}
+              <div 
+                className={cn(
+                  "relative rounded-lg border border-gray-200 p-4 transition-all hover:border-gray-300 cursor-pointer",
+                  selectedOccupancyStatus === 'SHORT_TERM_RENT' ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" : "bg-white"
+                )}
+                onClick={() => handleOccupancyStatusChange('SHORT_TERM_RENT')}
               >
-                <div className="mt-2">
-                  <Label htmlFor="short_term_months">Number of Months*</Label>
-                  <Select 
-                    value={occupancyMonths.SHORT_TERM_RENT.toString()}
-                    onValueChange={(value) => handleOccupancyMonthsChange('SHORT_TERM_RENT', parseInt(value))}
-                    disabled={availableMonths.SHORT_TERM_RENT.length === 0}
-                  >
-                    <SelectTrigger className="mt-1 w-24">
-                      <SelectValue placeholder="Months" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableMonths.SHORT_TERM_RENT.map(month => (
-                        <SelectItem key={`shortterm-${month}`} value={month.toString()}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {currentProperty.occupancyStatuses.includes('SHORT_TERM_RENT') && 
-                   occupancyMonths.SHORT_TERM_RENT > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="ml-2 text-red-500 hover:text-red-700"
-                      onClick={() => handleRemoveOccupancyStatus('SHORT_TERM_RENT')}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Remove
-                    </Button>
-                  )}
+                <div className="flex items-center gap-2.5">
+                  <Checkbox 
+                    checked={selectedOccupancyStatus === 'SHORT_TERM_RENT'}
+                    className="cursor-pointer"
+                  />
+                  <span className="font-medium text-gray-900 cursor-pointer">Short-Term Rental</span>
                 </div>
-              </CardRadioGroupItem>
-            </RadioGroup>
+                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">{occupancyExplanations.SHORT_TERM_RENT}</p>
+                
+                <div className={cn(
+                  "mt-2 ml-7.5", 
+                  selectedOccupancyStatus === 'SHORT_TERM_RENT' ? "block" : "hidden"
+                )}>
+                  <Label htmlFor="short_term_months">Number of Months*</Label>
+                  <div className="flex items-center gap-2">
+                    <Select 
+                      value={occupancyMonths.SHORT_TERM_RENT.toString()}
+                      onValueChange={(value) => handleOccupancyMonthsChange('SHORT_TERM_RENT', parseInt(value))}
+                      disabled={availableMonths.SHORT_TERM_RENT.length === 0}
+                    >
+                      <SelectTrigger className="mt-1 w-24">
+                        <SelectValue placeholder="Months" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableMonths.SHORT_TERM_RENT.map(month => (
+                          <SelectItem key={`shortterm-${month}`} value={month.toString()}>
+                            {month}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {currentProperty.occupancyStatuses.includes('SHORT_TERM_RENT') && 
+                    occupancyMonths.SHORT_TERM_RENT > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 text-red-500 hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveOccupancyStatus('SHORT_TERM_RENT');
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
             
             <div className="mt-4 p-3 bg-gray-100 rounded-md">
               <p className="text-sm text-gray-700 font-medium">Total Months: {Object.values(occupancyMonths).reduce((sum, val) => sum + val, 0)}/12</p>
