@@ -397,6 +397,18 @@ const PropertyStep: React.FC = () => {
     toast.success('Property removed successfully');
   };
 
+  const handleCancel = () => {
+    setCurrentProperty(createEmptyProperty());
+    setEditingIndex(null);
+    setShowForm(false);
+    setOccupancyMonths({
+      PERSONAL_USE: 12,
+      LONG_TERM_RENT: 0,
+      SHORT_TERM_RENT: 0,
+    });
+    setActiveStatuses(new Set(['PERSONAL_USE']));
+  };
+
   const validateAndProceed = () => {
     if (properties.length === 0) {
       toast.error('Please add at least one property before proceeding');
@@ -603,7 +615,7 @@ const PropertyStep: React.FC = () => {
         </div>
       )}
       
-      {showForm && (
+      {showForm ? (
         <div className="border rounded-lg p-6 bg-gray-50">
           <h3 className="text-lg font-semibold mb-4">
             {editingIndex !== null ? 'Edit Property' : 'Add New Property'}
@@ -853,174 +865,4 @@ const PropertyStep: React.FC = () => {
                   "relative rounded-lg border p-4 transition-all cursor-pointer",
                   activeStatuses.has('LONG_TERM_RENT') || occupancyMonths.LONG_TERM_RENT > 0 
                     ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
-                    : "bg-white border-gray-200 hover:border-gray-300"
-                )}
-                onClick={() => handleOccupancyStatusChange('LONG_TERM_RENT')}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Checkbox 
-                    checked={activeStatuses.has('LONG_TERM_RENT') || occupancyMonths.LONG_TERM_RENT > 0}
-                    className="cursor-pointer"
-                  />
-                  <span className="font-medium text-gray-900 cursor-pointer">Long-Term Rental</span>
-                </div>
-                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">
-                  {occupancyExplanations.LONG_TERM_RENT}
-                </p>
-                
-                <Collapsible 
-                  open={activeStatuses.has('LONG_TERM_RENT') || occupancyMonths.LONG_TERM_RENT > 0}
-                  className="mt-2 ml-7.5"
-                >
-                  <CollapsibleContent>
-                    <Label htmlFor="long_term_months">Number of Months*</Label>
-                    <div className="flex items-center gap-2">
-                      <Select 
-                        value={occupancyMonths.LONG_TERM_RENT.toString()}
-                        onValueChange={(value) => handleOccupancyMonthsChange('LONG_TERM_RENT', parseInt(value))}
-                        disabled={availableMonths.LONG_TERM_RENT.length === 0}
-                      >
-                        <SelectTrigger className="mt-1 w-24">
-                          <SelectValue placeholder="Months" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableMonths.LONG_TERM_RENT.map(month => (
-                            <SelectItem key={`long-term-${month}`} value={month.toString()}>
-                              {month}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {currentProperty.occupancyStatuses.includes('LONG_TERM_RENT') && 
-                      occupancyMonths.LONG_TERM_RENT > 0 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="ml-2 text-red-500 hover:text-red-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveOccupancyStatus('LONG_TERM_RENT');
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-              
-              {/* Short-Term Rental */}
-              <div 
-                className={cn(
-                  "relative rounded-lg border p-4 transition-all cursor-pointer",
-                  activeStatuses.has('SHORT_TERM_RENT') || occupancyMonths.SHORT_TERM_RENT > 0 
-                    ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
-                    : "bg-white border-gray-200 hover:border-gray-300"
-                )}
-                onClick={() => handleOccupancyStatusChange('SHORT_TERM_RENT')}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Checkbox 
-                    checked={activeStatuses.has('SHORT_TERM_RENT') || occupancyMonths.SHORT_TERM_RENT > 0}
-                    className="cursor-pointer"
-                  />
-                  <span className="font-medium text-gray-900 cursor-pointer">Short-Term Rental</span>
-                </div>
-                <p className="text-sm text-gray-500 mt-1 cursor-pointer ml-7.5">
-                  {occupancyExplanations.SHORT_TERM_RENT}
-                </p>
-                
-                <Collapsible 
-                  open={activeStatuses.has('SHORT_TERM_RENT') || occupancyMonths.SHORT_TERM_RENT > 0}
-                  className="mt-2 ml-7.5"
-                >
-                  <CollapsibleContent>
-                    <Label htmlFor="short_term_months">Number of Months*</Label>
-                    <div className="flex items-center gap-2">
-                      <Select 
-                        value={occupancyMonths.SHORT_TERM_RENT.toString()}
-                        onValueChange={(value) => handleOccupancyMonthsChange('SHORT_TERM_RENT', parseInt(value))}
-                        disabled={availableMonths.SHORT_TERM_RENT.length === 0}
-                      >
-                        <SelectTrigger className="mt-1 w-24">
-                          <SelectValue placeholder="Months" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableMonths.SHORT_TERM_RENT.map(month => (
-                            <SelectItem key={`short-term-${month}`} value={month.toString()}>
-                              {month}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {currentProperty.occupancyStatuses.includes('SHORT_TERM_RENT') && 
-                      occupancyMonths.SHORT_TERM_RENT > 0 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="ml-2 text-red-500 hover:text-red-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveOccupancyStatus('SHORT_TERM_RENT');
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            </div>
-          </div>
-          
-          {shouldShowRentalIncome() && (
-            <div className="mt-6 p-4 border border-purple-200 rounded-lg bg-purple-50">
-              <h4 className="text-md font-medium mb-3">2024 Rental Income*</h4>
-              <p className="text-sm text-gray-600 mb-3">
-                Please enter the total rental income received (or expected to receive) for this property during the 2024 tax year.
-              </p>
-              <div className="relative">
-                <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input 
-                  id="rentalIncome" 
-                  name="rentalIncome" 
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="Enter rental income"
-                  value={currentProperty.rentalIncome || ''}
-                  onChange={handleInputChange}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          )}
-          
-          <div className="mt-6 flex justify-end">
-            <Button
-              type="button"
-              className="bg-form-300 hover:bg-form-400 text-white"
-              onClick={handleSubmit}
-            >
-              {editingIndex !== null ? 'Update Property' : 'Add Property'}
-            </Button>
-          </div>
-        </div>
-      )}
-      
-      <FormNavigation 
-        onNext={validateAndProceed}
-        showNext={!showForm}
-        showBack={!showForm}
-      />
-    </div>
-  );
-};
-
-export default PropertyStep;
+                    : "
