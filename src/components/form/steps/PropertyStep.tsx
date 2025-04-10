@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -565,7 +566,7 @@ const PropertyStep: React.FC = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-form-400">Property Information</h2>
+      <h2 className="text-2xl font-bold mb-6">💸 Property Information</h2>
       
       {properties.length > 0 && !showForm && (
         <div className="mb-6">
@@ -853,4 +854,213 @@ const PropertyStep: React.FC = () => {
                   "relative rounded-lg border p-4 transition-all cursor-pointer",
                   activeStatuses.has('LONG_TERM_RENT') || occupancyMonths.LONG_TERM_RENT > 0 
                     ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
-                    : "bg-white border-
+                    : "bg-white border-gray-200"
+                )}
+                onClick={() => handleOccupancyStatusChange('LONG_TERM_RENT')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="long-term-rent" 
+                      checked={activeStatuses.has('LONG_TERM_RENT')}
+                      className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleOccupancyStatusChange('LONG_TERM_RENT');
+                        } else {
+                          handleRemoveOccupancyStatus('LONG_TERM_RENT');
+                        }
+                      }}
+                    />
+                    <Label htmlFor="long-term-rent" className="font-medium cursor-pointer">Long-Term Rental</Label>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{occupancyExplanations.LONG_TERM_RENT}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  {activeStatuses.has('LONG_TERM_RENT') && (
+                    <Select 
+                      value={occupancyMonths.LONG_TERM_RENT.toString()}
+                      onValueChange={(value) => handleOccupancyMonthsChange('LONG_TERM_RENT', parseInt(value))}
+                      disabled={!activeStatuses.has('LONG_TERM_RENT')}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Months" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableMonths.LONG_TERM_RENT.map(month => (
+                          <SelectItem key={`long-term-${month}`} value={month.toString()}>
+                            {month} {month === 1 ? 'month' : 'months'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
+              
+              <div 
+                className={cn(
+                  "relative rounded-lg border p-4 transition-all cursor-pointer",
+                  activeStatuses.has('SHORT_TERM_RENT') || occupancyMonths.SHORT_TERM_RENT > 0
+                    ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
+                    : "bg-white border-gray-200"
+                )}
+                onClick={() => handleOccupancyStatusChange('SHORT_TERM_RENT')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="short-term-rent" 
+                      checked={activeStatuses.has('SHORT_TERM_RENT')}
+                      className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleOccupancyStatusChange('SHORT_TERM_RENT');
+                        } else {
+                          handleRemoveOccupancyStatus('SHORT_TERM_RENT');
+                        }
+                      }}
+                    />
+                    <Label htmlFor="short-term-rent" className="font-medium cursor-pointer">Short-Term Rental</Label>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{occupancyExplanations.SHORT_TERM_RENT}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  {activeStatuses.has('SHORT_TERM_RENT') && (
+                    <Select 
+                      value={occupancyMonths.SHORT_TERM_RENT.toString()}
+                      onValueChange={(value) => handleOccupancyMonthsChange('SHORT_TERM_RENT', parseInt(value))}
+                      disabled={!activeStatuses.has('SHORT_TERM_RENT')}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Months" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableMonths.SHORT_TERM_RENT.map(month => (
+                          <SelectItem key={`short-term-${month}`} value={month.toString()}>
+                            {month} {month === 1 ? 'month' : 'months'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
+              
+              <div 
+                className={cn(
+                  "relative rounded-lg border p-4 transition-all cursor-pointer",
+                  activeStatuses.has('PERSONAL_USE') || occupancyMonths.PERSONAL_USE > 0
+                    ? "bg-purple-50 border-purple-500 ring-1 ring-purple-500" 
+                    : "bg-white border-gray-200"
+                )}
+                onClick={() => handleOccupancyStatusChange('PERSONAL_USE')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="personal-use" 
+                      checked={activeStatuses.has('PERSONAL_USE')}
+                      className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleOccupancyStatusChange('PERSONAL_USE');
+                        } else {
+                          handleRemoveOccupancyStatus('PERSONAL_USE');
+                        }
+                      }}
+                    />
+                    <Label htmlFor="personal-use" className="font-medium cursor-pointer">Personal Use</Label>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{occupancyExplanations.PERSONAL_USE}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  {activeStatuses.has('PERSONAL_USE') && (
+                    <Select 
+                      value={occupancyMonths.PERSONAL_USE.toString()}
+                      onValueChange={(value) => handleOccupancyMonthsChange('PERSONAL_USE', parseInt(value))}
+                      disabled={!activeStatuses.has('PERSONAL_USE')}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Months" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableMonths.PERSONAL_USE.map(month => (
+                          <SelectItem key={`personal-${month}`} value={month.toString()}>
+                            {month} {month === 1 ? 'month' : 'months'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {shouldShowRentalIncome() && (
+              <div className="mt-4">
+                <Label htmlFor="rentalIncome">2024 Rental Income (€)*</Label>
+                <div className="relative mt-1">
+                  <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input 
+                    id="rentalIncome" 
+                    name="rentalIncome" 
+                    type="number"
+                    min="0"
+                    placeholder="Enter rental income"
+                    value={currentProperty.rentalIncome || ''}
+                    onChange={handleInputChange}
+                    className="pl-10"
+                    size="lg"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-end mt-8 gap-3">
+            <Button 
+              variant="outline" 
+              onClick={handleCancel}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmit}
+              className="bg-form-300 hover:bg-form-400 text-white"
+            >
+              {editingIndex !== null ? 'Update Property' : 'Add Property'}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <FormNavigation 
+          onNext={validateAndProceed} 
+        />
+      )}
+    </div>
+  );
+};
+
+export default PropertyStep;
