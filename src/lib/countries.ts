@@ -47,7 +47,10 @@ export const getCountries = (): string[] => {
     }
     
     // Filter out any non-string values to ensure we only have strings
-    return COUNTRIES.filter(country => typeof country === 'string');
+    const validCountries = COUNTRIES.filter(country => typeof country === 'string');
+    
+    // Final safety check to ensure we never return undefined
+    return Array.isArray(validCountries) ? validCountries : [];
   } catch (error) {
     console.error("Fatal error in getCountries():", error);
     return [];

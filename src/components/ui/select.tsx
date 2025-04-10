@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
@@ -166,39 +165,30 @@ const Combobox = ({
   className,
   triggerClassName,
 }: ComboboxProps) => {
-  // Initialize with empty state to prevent undefined-related errors
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  // Convert options to a safe array, with defensive programming
   const safeOptions = React.useMemo(() => {
-    // If options is undefined, null, or not an array, return an empty array
     if (!options || !Array.isArray(options)) {
       console.warn("Combobox received invalid options:", options);
       return [] as readonly string[];
     }
-    // Filter out any non-string values to ensure we only have strings
-    return options.filter(option => typeof option === 'string') as readonly string[];
+    return options;
   }, [options]);
 
-  // Filter options based on search query with safety checks
   const filteredOptions = React.useMemo(() => {
-    if (!Array.isArray(safeOptions) || safeOptions.length === 0) {
-      return [] as readonly string[];
-    }
-    
     if (!searchQuery) {
       return safeOptions;
     }
     
-    // Extra safety to ensure we only include string values
     return safeOptions.filter((option) => 
       typeof option === 'string' && option.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [safeOptions, searchQuery]);
 
-  // If there are no valid options, render a simple input field
-  if (!Array.isArray(safeOptions) || safeOptions.length === 0) {
+  const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
+
+  if (safeOptions.length === 0) {
     return (
       <input
         type="text"
@@ -238,7 +228,7 @@ const Combobox = ({
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup className="max-h-[200px] overflow-y-auto">
-            {filteredOptions.length > 0 && filteredOptions.map((option) => (
+            {safeFilteredOptions.map((option) => (
               <CommandItem
                 key={option}
                 value={option}

@@ -39,7 +39,7 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   // Apply exclusion filter with safety checks
   const filteredCountries = React.useMemo(() => {
     // Make sure countriesArray is a valid array
-    if (!Array.isArray(countriesArray) || countriesArray.length === 0) {
+    if (!Array.isArray(countriesArray)) {
       return [];
     }
     
@@ -54,26 +54,12 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
     );
   }, [countriesArray, excludeCountries]);
 
-  // Fallback to a simple input if no countries are available
-  if (!Array.isArray(filteredCountries) || filteredCountries.length === 0) {
-    return (
-      <input
-        type="text"
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-          className
-        )}
-      />
-    );
-  }
+  // Ensure we always have a valid array, never undefined
+  const safeCountries = Array.isArray(filteredCountries) ? filteredCountries : [];
 
-  // Use the Combobox component with explicit array check
   return (
     <Combobox
-      options={Array.isArray(filteredCountries) ? filteredCountries : []}
+      options={safeCountries}
       value={value || ""}
       onValueChange={onChange}
       placeholder={placeholder}
