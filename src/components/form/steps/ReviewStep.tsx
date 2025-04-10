@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -39,8 +40,12 @@ const ReviewStep: React.FC = () => {
     try {
       setIsSubmitting(true);
       
+      // Create a mapping from local IDs to database IDs
+      const ownerIdMap = new Map<string, string>();
+      const propertyIdMap = new Map<string, string>();
+      
       // First, save all owners
-      const ownersPromises = owners.map(async (owner) => {
+      for (const owner of owners) {
         const { data: ownerData, error: ownerError } = await supabase
           .from('owners')
           .insert({
@@ -68,13 +73,13 @@ const ReviewStep: React.FC = () => {
           throw new Error(`Error saving owner: ${ownerError.message}`);
         }
         
-        return ownerData;
-      });
-      
-      await Promise.all(ownersPromises);
+        if (ownerData && ownerData.length > 0) {
+          ownerIdMap.set(owner.id, ownerData[0].id);
+        }
+      }
       
       // Then, save all properties
-      const propertiesPromises = properties.map(async (property) => {
+      for (const property of properties) {
         const { data: propertyData, error: propertyError } = await supabase
           .from('properties')
           .insert({
@@ -100,18 +105,33 @@ const ReviewStep: React.FC = () => {
           throw new Error(`Error saving property: ${propertyError.message}`);
         }
         
-        return propertyData;
-      });
+        if (propertyData && propertyData.length > 0) {
+          propertyIdMap.set(property.id, propertyData[0].id);
+        }
+      }
       
-      await Promise.all(propertiesPromises);
-      
-      // Finally, save all assignments
-      const assignmentsPromises = assignments.map(async (assignment) => {
+      // Finally, save all assignments using the new database IDs
+      for (const assignment of assignments) {
+        const newPropertyId = propertyIdMap.get(assignment.propertyId);
+        const newOwnerId = ownerIdMap.get(assignment.ownerId);
+        
+        if (!newPropertyId || !newOwnerId) {
+          console.error('Could not find DB ID mapping for:', { 
+            propertyId: assignment.propertyId, 
+            ownerId: assignment.ownerId,
+            maps: { 
+              properties: Array.from(propertyIdMap.entries()),
+              owners: Array.from(ownerIdMap.entries())
+            }
+          });
+          throw new Error('Failed to map local IDs to database IDs');
+        }
+        
         const { data: assignmentData, error: assignmentError } = await supabase
           .from('owner_property_assignments')
           .insert({
-            property_id: assignment.propertyId,
-            owner_id: assignment.ownerId,
+            property_id: newPropertyId,
+            owner_id: newOwnerId,
             ownership_percentage: assignment.ownershipPercentage,
             resident_at_property: assignment.residentAtProperty,
             resident_from_date: assignment.residentDateRange?.from ? 
@@ -125,11 +145,7 @@ const ReviewStep: React.FC = () => {
         if (assignmentError) {
           throw new Error(`Error saving assignment: ${assignmentError.message}`);
         }
-        
-        return assignmentData;
-      });
-      
-      await Promise.all(assignmentsPromises);
+      }
       
       // Show success toast
       toast.success('Form submitted successfully!', {
