@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,20 @@ import {
   TooltipTrigger,
   StandardTooltipContent
 } from "@/components/ui/tooltip";
+
+// Reusable tooltip component with standardized styling
+const InfoTooltip = ({ content }: { content: string }) => (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger className="flex items-center justify-center">
+        <Info className="h-4 w-4 text-form-300" />
+      </TooltipTrigger>
+      <StandardTooltipContent>
+        <p className="text-xs">{content}</p>
+      </StandardTooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 const AssignmentStep: React.FC = () => {
   const { state, addAssignment, updateAssignment, removeAssignment } = useFormContext();
@@ -246,65 +261,29 @@ const AssignmentStep: React.FC = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-[180px]">Owner</TableHead>
-                          <TableHead className="w-[100px] text-center">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="flex items-center gap-1 mx-auto">
-                                  Ownership %
-                                  <Info className="h-3.5 w-3.5 opacity-70" />
-                                </TooltipTrigger>
-                                <StandardTooltipContent>
-                                  <p className="text-xs">
-                                    Enter the percentage of ownership for each owner. The total should be 100%.
-                                  </p>
-                                </StandardTooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                          <TableHead className="w-[130px]">
+                            <div className="flex items-center justify-center gap-2">
+                              <span>Ownership %</span>
+                              <InfoTooltip content="Enter the percentage of ownership for each owner. The total should be 100%." />
+                            </div>
                           </TableHead>
-                          <TableHead className="w-[130px] text-center">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="flex items-center gap-1 mx-auto">
-                                  Resident
-                                  <Info className="h-3.5 w-3.5 opacity-70" />
-                                </TooltipTrigger>
-                                <StandardTooltipContent>
-                                  <p className="text-xs">
-                                    Check if the owner uses this property as a residence.
-                                  </p>
-                                </StandardTooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                          <TableHead className="w-[130px]">
+                            <div className="flex items-center justify-center gap-2">
+                              <span>Resident</span>
+                              <InfoTooltip content="Check if the owner uses this property as a residence." />
+                            </div>
                           </TableHead>
-                          <TableHead className="text-center">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="flex items-center gap-1 mx-auto">
-                                  Residence Period
-                                  <Info className="h-3.5 w-3.5 opacity-70" />
-                                </TooltipTrigger>
-                                <StandardTooltipContent>
-                                  <p className="text-xs">
-                                    If the owner is a resident, specify the period of residence in 2024.
-                                  </p>
-                                </StandardTooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                          <TableHead>
+                            <div className="flex items-center justify-center gap-2">
+                              <span>Residence Period</span>
+                              <InfoTooltip content="If the owner is a resident, specify the period of residence in 2024." />
+                            </div>
                           </TableHead>
-                          <TableHead className="w-[120px] text-center">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="flex items-center gap-1 mx-auto">
-                                  Tax Credits (€)
-                                  <Info className="h-3.5 w-3.5 opacity-70" />
-                                </TooltipTrigger>
-                                <StandardTooltipContent>
-                                  <p className="text-xs">
-                                    Enter any tax credits claimed for this property by this owner.
-                                  </p>
-                                </StandardTooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                          <TableHead className="w-[150px]">
+                            <div className="flex items-center justify-center gap-2">
+                              <span>Tax Credits (€)</span>
+                              <InfoTooltip content="Enter any tax credits claimed for this property by this owner." />
+                            </div>
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -332,7 +311,7 @@ const AssignmentStep: React.FC = () => {
                                     owner.id, 
                                     e.target.value
                                   )}
-                                  className="w-16 mx-auto text-center h-8"
+                                  className="w-20 mx-auto text-center h-9"
                                 />
                               </TableCell>
                               <TableCell className="text-center">
@@ -353,7 +332,7 @@ const AssignmentStep: React.FC = () => {
                                       <Button
                                         variant="outline"
                                         className={cn(
-                                          "w-full justify-start text-left font-normal h-8",
+                                          "w-full justify-start text-left font-normal h-9",
                                           !residencePeriod?.from && "text-muted-foreground"
                                         )}
                                       >
@@ -410,7 +389,7 @@ const AssignmentStep: React.FC = () => {
                                       owner.id,
                                       e.target.value
                                     )}
-                                    className="pl-7 w-full h-8"
+                                    className="pl-7 w-full h-9"
                                   />
                                 </div>
                               </TableCell>
