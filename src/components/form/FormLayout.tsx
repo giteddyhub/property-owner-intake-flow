@@ -86,7 +86,7 @@ const FormLayout = () => {
       case 3:
         return <AssignmentStep />;
       case 4:
-        return <ReviewStep />;
+        return <ReviewStep expandAllSections={true} />;
       default:
         return <WelcomeStep onSave={saveCurrentStepData} />;
     }

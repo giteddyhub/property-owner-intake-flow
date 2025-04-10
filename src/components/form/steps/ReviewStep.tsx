@@ -17,11 +17,20 @@ import {
   TableRow 
 } from "@/components/ui/table";
 
-const ReviewStep: React.FC = () => {
+interface ReviewStepProps {
+  expandAllSections?: boolean;
+}
+
+const ReviewStep: React.FC<ReviewStepProps> = ({ expandAllSections = false }) => {
   const { state } = useFormContext();
   const { owners, properties, assignments } = state;
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  
+  // Set default values for accordion based on expandAllSections prop
+  const defaultAccordionValue = expandAllSections 
+    ? ["owners", "properties", "assignments"] 
+    : undefined;
   
   const getOwnerById = (id: string) => {
     return owners.find(owner => owner.id === id);
@@ -81,7 +90,11 @@ const ReviewStep: React.FC = () => {
         </div>
       ) : (
         <>
-          <Accordion type="single" collapsible defaultValue="owners" className="mb-6">
+          <Accordion 
+            type="multiple" 
+            defaultValue={defaultAccordionValue} 
+            className="mb-6"
+          >
             <AccordionItem value="owners">
               <AccordionTrigger className="py-4 px-6 bg-gray-50 rounded-t-lg hover:bg-gray-100">
                 <div className="flex items-center">
