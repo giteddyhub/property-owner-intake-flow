@@ -225,9 +225,9 @@ const AssignmentStep: React.FC = () => {
                       {property.address.street}, {property.address.comune}, {property.address.province}
                     </p>
                   </div>
-                  <div className="text-right text-sm">
+                  <div className="flex items-center">
                     <span className={cn(
-                      "inline-block px-2 py-1 rounded",
+                      "inline-block px-2 py-1 rounded mr-4", // Added mr-4 for more spacing from the dropdown
                       getTotalPercentage(property.id) === 100 
                         ? "bg-green-100 text-green-800" 
                         : getTotalPercentage(property.id) > 100
