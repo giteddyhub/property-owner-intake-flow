@@ -4,7 +4,7 @@ import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import FormNavigation from '@/components/form/FormNavigation';
 import { format } from 'date-fns';
-import { Check, Download, Edit } from 'lucide-react';
+import { Check, Download, Edit, FileText } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ActivityType, OccupancyStatus, Owner, Property } from '@/types/form';
+import { generateTaxProfilePDF } from '@/utils/pdfGenerator';
 
 const ReviewStep: React.FC = () => {
   const { state, goToStep } = useFormContext();
@@ -96,8 +97,8 @@ const ReviewStep: React.FC = () => {
       toast("Your submission has been received", {
         description: "A confirmation email has been sent with a summary of your submission.",
         action: {
-          label: "Download Summary",
-          onClick: () => handleDownloadSummary(),
+          label: "Download PDF",
+          onClick: () => handleDownloadPDF(),
         },
       });
     }, 1000);
@@ -124,6 +125,17 @@ const ReviewStep: React.FC = () => {
     URL.revokeObjectURL(url);
     
     toast.success('Summary downloaded successfully');
+  };
+
+  const handleDownloadPDF = async () => {
+    toast.loading('Generating PDF...');
+    try {
+      await generateTaxProfilePDF(state);
+      toast.success('Tax Profile PDF generated successfully');
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      toast.error('Failed to generate PDF. Please try again.');
+    }
   };
 
   // Helper function to determine if we should show rental income
@@ -432,7 +444,15 @@ const ReviewStep: React.FC = () => {
             className="flex items-center gap-2"
           >
             <Download className="h-4 w-4" />
-            Download Summary
+            JSON Summary
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadPDF}
+            className="flex items-center gap-2 bg-gray-50"
+          >
+            <FileText className="h-4 w-4" />
+            Download PDF
           </Button>
           <Button 
             onClick={handleSubmit}
