@@ -52,43 +52,34 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
         return [];
       }
       
-      // Ensure we have a valid array of strings by filtering out non-strings
-      return countries.filter(country => typeof country === 'string');
+      // Filter and return a new array to avoid mutation issues
+      return [...countries.filter(country => typeof country === 'string')];
     } catch (error) {
       console.error("Error fetching countries:", error);
       return [];
     }
   }, []);
   
-  // Safety check for countriesArray before using it
-  if (!Array.isArray(countriesArray) || countriesArray.length === 0) {
-    console.warn("No valid countries available, falling back to input");
-    return (
-      <BasicInput
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className={className}
-      />
-    );
-  }
-  
   // Apply exclusion filter with safety checks
   const filteredCountries = React.useMemo(() => {
+    // Safety check for countriesArray
+    if (!Array.isArray(countriesArray) || countriesArray.length === 0) {
+      return [];
+    }
+    
     // Safety check for excludeCountries
     if (!Array.isArray(excludeCountries)) {
       return [...countriesArray]; // Return a new array copy
     }
     
-    // Filter out excluded countries
-    return countriesArray.filter(country => 
+    // Filter out excluded countries and return a new array
+    return [...countriesArray.filter(country => 
       !excludeCountries.includes(country)
-    );
+    )];
   }, [countriesArray, excludeCountries]);
 
   // Final safety check before rendering Combobox
   if (!Array.isArray(filteredCountries) || filteredCountries.length === 0) {
-    console.warn("No countries available after filtering, falling back to input");
     return (
       <BasicInput
         value={value}

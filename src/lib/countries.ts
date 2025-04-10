@@ -37,13 +37,8 @@ export const getCountries = (): string[] => {
   
   try {
     // Check if COUNTRIES exists and is an array
-    if (typeof COUNTRIES === 'undefined' || COUNTRIES === null) {
-      console.error("countries.ts: COUNTRIES is undefined or null");
-      return [...defaultCountries];
-    }
-    
-    if (!Array.isArray(COUNTRIES)) {
-      console.error("countries.ts: COUNTRIES is not an array");
+    if (!COUNTRIES || !Array.isArray(COUNTRIES)) {
+      console.error("countries.ts: COUNTRIES is undefined, null, or not an array");
       return [...defaultCountries];
     }
     
@@ -52,7 +47,6 @@ export const getCountries = (): string[] => {
       return [...defaultCountries];
     }
     
-    // Create and return a copy of the array to avoid mutation issues
     // Filter out any non-string values to ensure we only have strings
     const validCountries = COUNTRIES.filter(country => 
       typeof country === 'string' && country.trim() !== ''

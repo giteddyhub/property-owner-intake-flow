@@ -230,12 +230,13 @@ const Combobox = ({
   }
 
   // Initialize filteredOptions as a guaranteed array with a default empty array
-  let filteredOptions: string[] = [];
+  const emptyArray: string[] = [];
+  let filteredOptions: string[] = [...emptyArray];
   
   try {
     // Filter options based on search with full error handling
     if (searchQuery.trim() === "") {
-      // When no search, use all options
+      // When no search, use all options - ensure we're creating a new array
       filteredOptions = [...options];
     } else {
       // When searching, filter options that include the search text (case insensitive)
@@ -245,13 +246,18 @@ const Combobox = ({
     }
   } catch (err) {
     console.error("Error filtering options:", err);
-    // Fall back to the full options list
-    filteredOptions = [...options];
+    // Fall back to the full options list if we can
+    try {
+      filteredOptions = [...options];
+    } catch (e) {
+      console.error("Failed to copy options array:", e);
+      filteredOptions = [...emptyArray];
+    }
   }
 
   // Final safety check - ensure filteredOptions is a valid array
   if (!Array.isArray(filteredOptions)) {
-    filteredOptions = [];
+    filteredOptions = [...emptyArray];
   }
 
   return (
