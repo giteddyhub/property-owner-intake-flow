@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -126,7 +125,6 @@ const ReviewStep: React.FC = () => {
     toast.success('Summary downloaded successfully');
   };
 
-  // Helper function to determine if we should show rental income
   const hasRentalStatus = (property: Property) => {
     return property.occupancyStatuses.some(
       status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
@@ -181,14 +179,14 @@ const ReviewStep: React.FC = () => {
                   <span className="font-medium">Italian Resident:</span> {owner.isResidentInItaly ? 'Yes' : 'No'}
                 </p>
                 {owner.isResidentInItaly && owner.italianResidenceDetails && (
-                  <p className="mb-1">
-                    <span className="font-medium">Residency Details:</span> {owner.italianResidenceDetails.comuneName}, 
-                    {owner.italianResidenceDetails.fullYear 
-                      ? ' Full Year' 
-                      : owner.italianResidenceDetails.startDate 
-                        ? ` From ${format(new Date(owner.italianResidenceDetails.startDate), 'PPP')}` 
-                        : ' Partial Year'}
-                  </p>
+                  <>
+                    <p className="mb-1">
+                      <span className="font-medium">Residency Details:</span> {owner.italianResidenceDetails.comuneName}
+                    </p>
+                    <p className="mb-1">
+                      <span className="font-medium">Italian Address:</span> {owner.italianResidenceDetails.street}, {owner.italianResidenceDetails.city}, {owner.italianResidenceDetails.zip}
+                    </p>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -283,7 +281,6 @@ const ReviewStep: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Add rental income section */}
                   {hasRentalStatus(property) && property.rentalIncome !== undefined && (
                     <div className="border-t pt-2 mt-2">
                       <p className="font-medium">Rental Income for 2024</p>
@@ -345,7 +342,6 @@ const ReviewStep: React.FC = () => {
                   </div>
                   <CardDescription>
                     {property.address.street}, {property.address.comune}, {property.address.province}
-                    {/* Add rental income if applicable */}
                     {hasRentalStatus(property) && property.rentalIncome !== undefined && (
                       <span className="font-medium ml-2">
                         • Rental Income: €{property.rentalIncome.toLocaleString()}

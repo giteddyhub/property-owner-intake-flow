@@ -76,7 +76,6 @@ const OwnerStep: React.FC = () => {
             ...prev,
             italianResidenceDetails: {
               comuneName: '',
-              fullYear: true,
               [child]: value
             }
           };
@@ -113,7 +112,6 @@ const OwnerStep: React.FC = () => {
             ...prev,
             italianResidenceDetails: {
               comuneName: '',
-              fullYear: true,
               [child]: value
             }
           };
@@ -136,7 +134,6 @@ const OwnerStep: React.FC = () => {
       italianResidenceDetails: checked 
         ? (prev.italianResidenceDetails || { 
             comuneName: '', 
-            fullYear: true,
             street: '',
             city: '',
             zip: ''
@@ -152,34 +149,11 @@ const OwnerStep: React.FC = () => {
       italianResidenceDetails: {
         ...(prev.italianResidenceDetails || { 
           comuneName: '', 
-          fullYear: true,
           street: '',
           city: '',
           zip: ''
         }),
         [name]: value
-      }
-    }));
-  };
-
-  const handleResidencyTypeChange = (fullYear: boolean) => {
-    setCurrentOwner(prev => ({
-      ...prev,
-      italianResidenceDetails: {
-        ...(prev.italianResidenceDetails || { comuneName: '', fullYear: true }),
-        fullYear
-      }
-    }));
-  };
-
-  const handleResidencyDateChange = (date: Date | undefined) => {
-    if (!currentOwner.italianResidenceDetails) return;
-    
-    setCurrentOwner(prev => ({
-      ...prev,
-      italianResidenceDetails: {
-        ...(prev.italianResidenceDetails as ItalianResidenceDetails),
-        startDate: date || undefined
       }
     }));
   };
@@ -348,11 +322,6 @@ const OwnerStep: React.FC = () => {
                     <>
                       <p className="text-sm text-gray-600">
                         <strong>Italian Residence:</strong> {owner.italianResidenceDetails.comuneName}
-                        {owner.italianResidenceDetails.fullYear 
-                          ? ' (Full Year)' 
-                          : owner.italianResidenceDetails.startDate 
-                            ? ` (From: ${format(new Date(owner.italianResidenceDetails.startDate), 'PPP')})` 
-                            : ' (Partial Year)'}
                       </p>
                       <p className="text-sm text-gray-600">
                         <strong>Italian Address:</strong> {owner.italianResidenceDetails.street}, {owner.italianResidenceDetails.city}, {owner.italianResidenceDetails.zip}
@@ -588,65 +557,7 @@ const OwnerStep: React.FC = () => {
                     />
                   </div>
                   
-                  <div>
-                    <Label>Residency Period</Label>
-                    <div className="flex space-x-4 mt-2">
-                      <div className="flex items-center">
-                        <input 
-                          type="radio" 
-                          id="fullYear" 
-                          checked={currentOwner.italianResidenceDetails?.fullYear ?? true}
-                          onChange={() => handleResidencyTypeChange(true)}
-                          className="mr-2"
-                        />
-                        <Label htmlFor="fullYear" className="cursor-pointer">Full Year</Label>
-                      </div>
-                      <div className="flex items-center">
-                        <input 
-                          type="radio" 
-                          id="partialYear" 
-                          checked={!(currentOwner.italianResidenceDetails?.fullYear ?? true)}
-                          onChange={() => handleResidencyTypeChange(false)}
-                          className="mr-2"
-                        />
-                        <Label htmlFor="partialYear" className="cursor-pointer">Partial Year</Label>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {currentOwner.italianResidenceDetails && !currentOwner.italianResidenceDetails.fullYear && (
-                    <div>
-                      <Label htmlFor="startDate">Start Date of Residency</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal mt-1",
-                              !currentOwner.italianResidenceDetails?.startDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {currentOwner.italianResidenceDetails?.startDate ? (
-                              format(new Date(currentOwner.italianResidenceDetails.startDate), "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 pointer-events-auto">
-                          <Calendar
-                            mode="single"
-                            selected={currentOwner.italianResidenceDetails?.startDate || undefined}
-                            onSelect={handleResidencyDateChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  )}
-                  
-                  {/* Add Italian Address Fields */}
+                  {/* Italian Address Fields */}
                   <div className="col-span-2 mt-4">
                     <h4 className="font-medium mb-3">Italian Address*</h4>
                     <div className="grid gap-4 md:grid-cols-2">
