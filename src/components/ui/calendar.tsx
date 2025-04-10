@@ -1,6 +1,7 @@
+
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, type DayClickEventHandler, type ActiveModifiers } from "react-day-picker";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -21,8 +22,8 @@ function Calendar({
   };
 
   // Handle day click to automatically close the popover
-  const handleDayClick = React.useCallback(
-    (day: Date, modifiers: { selected?: boolean; disabled?: boolean }, e: React.MouseEvent) => {
+  const handleDayClick: DayClickEventHandler = React.useCallback(
+    (day, modifiers, e) => {
       // If the day is disabled, don't do anything
       if (modifiers.disabled) return;
       
