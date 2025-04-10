@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -138,7 +137,6 @@ const ReviewStep: React.FC = () => {
     }
   };
 
-  // Helper function to determine if we should show rental income
   const hasRentalStatus = (property: Property) => {
     return property.occupancyStatuses.some(
       status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
@@ -295,7 +293,6 @@ const ReviewStep: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Add rental income section */}
                   {hasRentalStatus(property) && property.rentalIncome !== undefined && (
                     <div className="border-t pt-2 mt-2">
                       <p className="font-medium">Rental Income for 2024</p>
@@ -357,7 +354,6 @@ const ReviewStep: React.FC = () => {
                   </div>
                   <CardDescription>
                     {property.address.street}, {property.address.comune}, {property.address.province}
-                    {/* Add rental income if applicable */}
                     {hasRentalStatus(property) && property.rentalIncome !== undefined && (
                       <span className="font-medium ml-2">
                         • Rental Income: €{property.rentalIncome.toLocaleString()}
@@ -440,16 +436,8 @@ const ReviewStep: React.FC = () => {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={handleDownloadSummary}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            JSON Summary
-          </Button>
-          <Button 
-            variant="outline" 
             onClick={handleDownloadPDF}
-            className="flex items-center gap-2 bg-gray-50"
+            className="flex items-center gap-2"
           >
             <FileText className="h-4 w-4" />
             Download PDF
