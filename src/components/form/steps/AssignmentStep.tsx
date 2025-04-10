@@ -207,7 +207,7 @@ const AssignmentStep: React.FC = () => {
                       {property.address.street}, {property.address.comune}, {property.address.province}
                     </p>
                   </div>
-                  <div className="text-right text-sm">
+                  <div className="text-right text-sm mr-6 flex items-center">
                     <span className={cn(
                       "inline-block px-2 py-1 rounded",
                       getTotalPercentage(property.id) === 100 
