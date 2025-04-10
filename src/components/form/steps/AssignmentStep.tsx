@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,14 @@ const AssignmentStep: React.FC = () => {
     from: null,
     to: null,
   });
+  
+  const [defaultAccordionValue, setDefaultAccordionValue] = useState<string | undefined>(undefined);
+  
+  useEffect(() => {
+    if (properties.length > 0 && !defaultAccordionValue) {
+      setDefaultAccordionValue(properties[0].id);
+    }
+  }, [properties, defaultAccordionValue]);
   
   const allPropertiesAssigned = properties.every(property => 
     assignments.some(assignment => assignment.propertyId === property.id)
@@ -190,7 +198,13 @@ const AssignmentStep: React.FC = () => {
           <p className="text-gray-500">No properties added yet. Please go back to add properties first.</p>
         </div>
       ) : (
-        <Accordion type="single" collapsible className="w-full space-y-4">
+        <Accordion 
+          type="single" 
+          collapsible 
+          className="w-full space-y-4"
+          value={defaultAccordionValue}
+          onValueChange={setDefaultAccordionValue}
+        >
           {properties.map((property) => (
             <AccordionItem 
               key={property.id} 
