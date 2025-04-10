@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, type DayClickEventHandler, type ActiveModifiers } from "react-day-picker";
+import { DayPicker, type DayClickEventHandler, type ActiveModifiers, type DateRange } from "react-day-picker";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -37,12 +37,13 @@ function Calendar({
       // Need to check if props.selected is a DateRange with from and to properties
       const isDateRange = props.selected && 
         typeof props.selected === "object" && 
-        'from' in props.selected && 
-        'to' in props.selected;
+        'from' in props.selected;
       
-      const isRangeComplete = mode === "range" && isDateRange && 
-        props.selected.from && 
-        props.selected.to;
+      // Only proceed with range checking if we have a DateRange object
+      const isRangeComplete = mode === "range" && 
+        isDateRange && 
+        (props.selected as DateRange).from && 
+        (props.selected as DateRange).to;
       
       // Close in single mode or when range is complete
       if (mode !== "range" || isRangeComplete) {
