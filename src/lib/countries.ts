@@ -27,11 +27,16 @@ export const COUNTRIES = [
   "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
 ];
 
-// Ensure we always return a valid array
+// Ensure we always return a valid array with robust error handling
 export const getCountries = (): string[] => {
-  if (!COUNTRIES || !Array.isArray(COUNTRIES)) {
-    console.warn("countries.ts: COUNTRIES is not a valid array");
+  try {
+    if (!COUNTRIES || !Array.isArray(COUNTRIES) || COUNTRIES.length === 0) {
+      console.warn("countries.ts: COUNTRIES is not a valid array or is empty");
+      return [];
+    }
+    return [...COUNTRIES];
+  } catch (error) {
+    console.error("Error in getCountries():", error);
     return [];
   }
-  return [...COUNTRIES];
 };

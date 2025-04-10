@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
@@ -168,6 +169,7 @@ const Combobox = ({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
+  // Ensure options is always a valid array
   const safeOptions = React.useMemo(() => {
     if (!options || !Array.isArray(options)) {
       console.warn("Combobox received invalid options:", options);
@@ -176,6 +178,7 @@ const Combobox = ({
     return options;
   }, [options]);
 
+  // Filter options based on search query with safety checks
   const filteredOptions = React.useMemo(() => {
     if (!safeOptions || safeOptions.length === 0) {
       return [] as readonly string[];
@@ -190,6 +193,7 @@ const Combobox = ({
     );
   }, [safeOptions, searchQuery]);
 
+  // If there are no valid options, render a simple input field
   if (!safeOptions || safeOptions.length === 0) {
     return (
       <input
@@ -230,25 +234,27 @@ const Combobox = ({
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup className="max-h-[200px] overflow-y-auto">
-            {filteredOptions.map((option) => (
-              <CommandItem
-                key={option}
-                value={option}
-                onSelect={() => {
-                  onValueChange(option);
-                  setSearchQuery("");
-                  setOpen(false);
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === option ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                {option}
-              </CommandItem>
-            ))}
+            {filteredOptions && filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <CommandItem
+                  key={option}
+                  value={option}
+                  onSelect={() => {
+                    onValueChange(option);
+                    setSearchQuery("");
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option}
+                </CommandItem>
+              ))
+            ) : null}
           </CommandGroup>
         </Command>
       </PopoverContent>

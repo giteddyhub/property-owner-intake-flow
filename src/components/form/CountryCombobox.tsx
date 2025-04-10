@@ -19,14 +19,19 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   className,
   excludeCountries = []
 }) => {
-  // Get countries using the getCountries function
+  // Get countries using the getCountries function with safety checks
   const countriesArray = React.useMemo(() => {
-    const countries = getCountries();
-    return countries.length > 0 ? countries : [];
+    try {
+      const countries = getCountries();
+      return Array.isArray(countries) && countries.length > 0 ? countries : [];
+    } catch (error) {
+      console.error("Error fetching countries:", error);
+      return [];
+    }
   }, []);
   
   const filteredCountries = React.useMemo(() => {
-    if (!countriesArray || countriesArray.length === 0) {
+    if (!Array.isArray(countriesArray) || countriesArray.length === 0) {
       return [];
     }
     
@@ -41,7 +46,7 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   }, [countriesArray, excludeCountries]);
 
   // Always render a standard input if there are no countries available
-  if (!filteredCountries || filteredCountries.length === 0) {
+  if (!Array.isArray(filteredCountries) || filteredCountries.length === 0) {
     return (
       <input
         type="text"
