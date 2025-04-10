@@ -53,7 +53,7 @@ const FormLayout = () => {
         </div>
       </div>
       
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <Card>
           <CardContent className="p-6">
             {renderStep()}
