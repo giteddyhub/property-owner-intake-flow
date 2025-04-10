@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -68,7 +67,8 @@ const createEmptyProperty = (): Property => ({
   propertyType: 'RESIDENTIAL',
   remodeling: false,
   occupancyStatuses: ['PERSONAL_USE'] as OccupancyStatus[],
-  monthsOccupied: 12
+  monthsOccupied: 12,
+  rentalIncome: 0
 });
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
@@ -204,7 +204,6 @@ const PropertyStep: React.FC = () => {
   };
 
   const handleOccupancyStatusChange = (status: OccupancyStatus) => {
-    // Update activeStatuses to include this status
     setActiveStatuses(prev => {
       const newStatuses = new Set(prev);
       newStatuses.add(status);
@@ -225,7 +224,6 @@ const PropertyStep: React.FC = () => {
       [status]: months
     }));
     
-    // If months are added, make sure the status remains active
     if (months > 0) {
       setActiveStatuses(prev => {
         const newStatuses = new Set(prev);
@@ -246,7 +244,6 @@ const PropertyStep: React.FC = () => {
       [status]: 0
     }));
     
-    // Remove from active statuses
     setActiveStatuses(prev => {
       const newStatuses = new Set(prev);
       newStatuses.delete(status);
@@ -314,13 +311,21 @@ const PropertyStep: React.FC = () => {
       return;
     }
     
+    const hasRentalStatus = currentProperty.occupancyStatuses.some(
+      status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
+    );
+    
+    if (hasRentalStatus && (currentProperty.rentalIncome === undefined || currentProperty.rentalIncome < 0)) {
+      toast.error('Please enter a valid rental income amount');
+      return;
+    }
+    
     const totalMonths = Object.values(occupancyMonths).reduce((sum, val) => sum + val, 0);
     if (totalMonths !== 12) {
       toast.error('Total months must equal 12');
       return;
     }
 
-    // Create an array of statuses with months > 0
     const activeOccupancyStatuses = Object.entries(occupancyMonths)
       .filter(([_, months]) => months > 0)
       .map(([status]) => status as OccupancyStatus);
@@ -328,7 +333,6 @@ const PropertyStep: React.FC = () => {
     const finalProperty = {
       ...currentProperty,
       occupancyStatuses: activeOccupancyStatuses,
-      // For backward compatibility, we still set monthsOccupied to the first status with months
       monthsOccupied: activeOccupancyStatuses.length > 0 
         ? occupancyMonths[activeOccupancyStatuses[0]] 
         : 12
@@ -376,13 +380,10 @@ const PropertyStep: React.FC = () => {
     
     if (updatedProperty.occupancyStatuses.length > 0) {
       updatedProperty.occupancyStatuses.forEach((status, idx) => {
-        // For the first status, use the monthsOccupied value
-        // For others, just set to 1 by default (this is a limitation of the current data model)
         initialOccupancyMonths[status] = idx === 0 ? (updatedProperty.monthsOccupied || 12) : 1;
         newActiveStatuses.add(status);
       });
     } else {
-      // Default case
       initialOccupancyMonths.PERSONAL_USE = 12;
       newActiveStatuses.add('PERSONAL_USE');
     }
@@ -516,6 +517,13 @@ const PropertyStep: React.FC = () => {
     </div>
   );
 
+  const shouldShowRentalIncome = () => {
+    return currentProperty.occupancyStatuses.some(
+      status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
+    ) || activeStatuses.has('LONG_TERM_RENT') || activeStatuses.has('SHORT_TERM_RENT') ||
+    occupancyMonths.LONG_TERM_RENT > 0 || occupancyMonths.SHORT_TERM_RENT > 0;
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6 text-form-400">Property Information</h2>
@@ -566,6 +574,12 @@ const PropertyStep: React.FC = () => {
                         : 'Not specified'
                     } ({property.monthsOccupied} months)
                   </p>
+                  {(property.occupancyStatuses.includes('LONG_TERM_RENT') || 
+                    property.occupancyStatuses.includes('SHORT_TERM_RENT')) && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      <strong>2024 Rental Income:</strong> €{property.rentalIncome?.toLocaleString() || '0'}
+                    </p>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                   <Button 
@@ -964,6 +978,29 @@ const PropertyStep: React.FC = () => {
               </div>
             </div>
           </div>
+          
+          {shouldShowRentalIncome() && (
+            <div className="mt-6 p-4 border border-purple-200 rounded-lg bg-purple-50">
+              <h4 className="text-md font-medium mb-3">2024 Rental Income*</h4>
+              <p className="text-sm text-gray-600 mb-3">
+                Please enter the total rental income received (or expected to receive) for this property during the 2024 tax year.
+              </p>
+              <div className="relative">
+                <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input 
+                  id="rentalIncome" 
+                  name="rentalIncome" 
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Enter rental income"
+                  value={currentProperty.rentalIncome || ''}
+                  onChange={handleInputChange}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          )}
           
           <div className="mt-6 flex justify-end">
             <Button

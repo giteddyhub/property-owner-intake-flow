@@ -54,6 +54,7 @@ export interface Property {
   remodeling: boolean;
   occupancyStatuses: OccupancyStatus[]; // Changed from single status to array
   monthsOccupied?: number;
+  rentalIncome?: number; // Added rental income field
 }
 
 // Owner-Property assignments
