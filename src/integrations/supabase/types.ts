@@ -9,7 +9,242 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      owner_property_assignments: {
+        Row: {
+          created_at: string | null
+          id: string
+          owner_id: string | null
+          ownership_percentage: number | null
+          property_id: string | null
+          resident_at_property: boolean | null
+          resident_from: string | null
+          resident_to: string | null
+          tax_credits: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          owner_id?: string | null
+          ownership_percentage?: number | null
+          property_id?: string | null
+          resident_at_property?: boolean | null
+          resident_from?: string | null
+          resident_to?: string | null
+          tax_credits?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          owner_id?: string | null
+          ownership_percentage?: number | null
+          property_id?: string | null
+          resident_at_property?: boolean | null
+          resident_from?: string | null
+          resident_to?: string | null
+          tax_credits?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_property_assignments_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_property_assignments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owners: {
+        Row: {
+          citizenship: string | null
+          city: string | null
+          comune_name: string | null
+          country: string | null
+          country_of_birth: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          first_name: string
+          full_year: boolean | null
+          id: string
+          is_resident_in_italy: boolean | null
+          italian_tax_code: string | null
+          last_name: string
+          marital_status: string | null
+          residence_start_date: string | null
+          street: string | null
+          updated_at: string | null
+          user_id: string | null
+          zip: string | null
+        }
+        Insert: {
+          citizenship?: string | null
+          city?: string | null
+          comune_name?: string | null
+          country?: string | null
+          country_of_birth?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          first_name: string
+          full_year?: boolean | null
+          id?: string
+          is_resident_in_italy?: boolean | null
+          italian_tax_code?: string | null
+          last_name: string
+          marital_status?: string | null
+          residence_start_date?: string | null
+          street?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          zip?: string | null
+        }
+        Update: {
+          citizenship?: string | null
+          city?: string | null
+          comune_name?: string | null
+          country?: string | null
+          country_of_birth?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          first_name?: string
+          full_year?: boolean | null
+          id?: string
+          is_resident_in_italy?: boolean | null
+          italian_tax_code?: string | null
+          last_name?: string
+          marital_status?: string | null
+          residence_start_date?: string | null
+          street?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          activity_2024: string | null
+          comune: string | null
+          created_at: string | null
+          id: string
+          label: string
+          months_occupied: number | null
+          property_type: string | null
+          province: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          remodeling: boolean | null
+          rental_income: number | null
+          sale_date: string | null
+          sale_price: number | null
+          street: string | null
+          updated_at: string | null
+          user_id: string | null
+          zip: string | null
+        }
+        Insert: {
+          activity_2024?: string | null
+          comune?: string | null
+          created_at?: string | null
+          id?: string
+          label: string
+          months_occupied?: number | null
+          property_type?: string | null
+          province?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          remodeling?: boolean | null
+          rental_income?: number | null
+          sale_date?: string | null
+          sale_price?: number | null
+          street?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          zip?: string | null
+        }
+        Update: {
+          activity_2024?: string | null
+          comune?: string | null
+          created_at?: string | null
+          id?: string
+          label?: string
+          months_occupied?: number | null
+          property_type?: string | null
+          province?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          remodeling?: boolean | null
+          rental_income?: number | null
+          sale_date?: string | null
+          sale_price?: number | null
+          street?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      property_occupancy_statuses: {
+        Row: {
+          id: string
+          occupancy_status: string | null
+          property_id: string | null
+        }
+        Insert: {
+          id?: string
+          occupancy_status?: string | null
+          property_id?: string | null
+        }
+        Update: {
+          id?: string
+          occupancy_status?: string | null
+          property_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_occupancy_statuses_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
