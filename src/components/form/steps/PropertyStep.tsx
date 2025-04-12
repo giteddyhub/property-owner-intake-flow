@@ -350,9 +350,11 @@ const PropertyStep: React.FC = () => {
       status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
     );
     
-    if (hasRentalStatus && (currentProperty.rentalIncome === undefined || currentProperty.rentalIncome < 0)) {
-      toast.error('Please enter a valid rental income amount');
-      return;
+    if (hasRentalStatus) {
+      if (currentProperty.rentalIncome === undefined || currentProperty.rentalIncome <= 0) {
+        toast.error('Please enter a valid rental income amount greater than 0');
+        return;
+      }
     }
     
     const totalMonths = Object.values(occupancyMonths).reduce((sum, val) => sum + val, 0);
