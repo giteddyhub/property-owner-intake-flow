@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getCountries } from '@/lib/countries';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator, SelectLabel, SelectGroup } from "@/components/ui/select";
+import { getOrganizedCountries } from '@/lib/countries';
 
 interface CountryComboboxProps {
   value: string;
@@ -18,13 +18,13 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
   className,
   excludeCountries = []
 }) => {
-  // Get countries
-  const countries = getCountries();
+  // Get organized countries
+  const { popular, other } = getOrganizedCountries();
   
-  // Filter out excluded countries
-  const filteredCountries = countries.filter(country => 
-    !excludeCountries.includes(country)
-  );
+  // Filter out excluded countries from both groups
+  const excludeSet = new Set(excludeCountries);
+  const filteredPopular = popular.filter(country => !excludeSet.has(country));
+  const filteredOther = other.filter(country => !excludeSet.has(country));
 
   return (
     <Select
@@ -35,11 +35,27 @@ const CountryCombobox: React.FC<CountryComboboxProps> = ({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {filteredCountries.map((country) => (
-          <SelectItem key={country} value={country}>
-            {country}
-          </SelectItem>
-        ))}
+        {/* Popular countries section */}
+        <SelectGroup>
+          <SelectLabel>Popular</SelectLabel>
+          {filteredPopular.map((country) => (
+            <SelectItem key={`popular-${country}`} value={country}>
+              {country}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+        
+        <SelectSeparator />
+        
+        {/* All other countries section */}
+        <SelectGroup>
+          <SelectLabel>All Countries</SelectLabel>
+          {filteredOther.map((country) => (
+            <SelectItem key={country} value={country}>
+              {country}
+            </SelectItem>
+          ))}
+        </SelectGroup>
       </SelectContent>
     </Select>
   );

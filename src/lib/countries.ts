@@ -28,8 +28,29 @@ export const COUNTRIES = [
 ];
 
 /**
+ * Popular countries to be displayed at the top of the dropdown
+ */
+export const POPULAR_COUNTRIES = ["United States", "United Kingdom", "Germany", "Italy"];
+
+/**
  * Simple function to get the countries list
  */
 export const getCountries = (): string[] => {
   return COUNTRIES;
+};
+
+/**
+ * Get countries organized with popular countries first
+ */
+export const getOrganizedCountries = (): { popular: string[], other: string[] } => {
+  // Create a set for O(1) lookup
+  const popularSet = new Set(POPULAR_COUNTRIES);
+  
+  // Filter other countries (those not in popular)
+  const otherCountries = COUNTRIES.filter(country => !popularSet.has(country));
+  
+  return {
+    popular: [...POPULAR_COUNTRIES],
+    other: otherCountries
+  };
 };
