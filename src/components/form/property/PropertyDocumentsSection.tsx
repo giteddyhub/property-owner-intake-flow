@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { usePropertyForm } from './context/PropertyFormContext';
 import { Label } from '@/components/ui/label';
@@ -81,7 +80,7 @@ const PropertyDocumentsSection = () => {
                 checked={useRetrievalService}
                 onCheckedChange={handleRetrievalToggle}
               />
-              <span>Use document retrieval service (28 USD fee)</span>
+              <span>Use document retrieval service (+28,- USD fee)</span>
             </div>
           </Label>
           
