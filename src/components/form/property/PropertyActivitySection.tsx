@@ -12,35 +12,27 @@ import { RadioGroup } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { ActivityType } from '@/types/form';
 import { activityExplanations } from './propertyUtils';
+import { usePropertyForm } from './PropertyFormContext';
 
-interface PropertyActivitySectionProps {
-  activity: ActivityType;
-  onActivityChange: (value: ActivityType) => void;
-  purchaseDate: Date | null;
-  purchasePrice?: number;
-  saleDate: Date | null;
-  salePrice?: number;
-  onPurchaseDateChange: (date: Date | undefined) => void;
-  onSaleDateChange: (date: Date | undefined) => void;
-  onPriceChange: (name: string, value: string) => void;
-}
-
-const PropertyActivitySection: React.FC<PropertyActivitySectionProps> = ({
-  activity,
-  onActivityChange,
-  purchaseDate,
-  purchasePrice,
-  saleDate,
-  salePrice,
-  onPurchaseDateChange,
-  onSaleDateChange,
-  onPriceChange
-}) => {
+const PropertyActivitySection: React.FC = () => {
+  const { 
+    currentProperty, 
+    handleActivityTypeChange, 
+    handlePurchaseDateChange, 
+    handleSaleDateChange 
+  } = usePropertyForm();
+  
+  const { activity2024, purchaseDate, purchasePrice, saleDate, salePrice } = currentProperty;
+  
   const purchasePriceRef = useRef<HTMLInputElement>(null);
   const salePriceRef = useRef<HTMLInputElement>(null);
 
   const handlePriceChange = (name: string, value: string, inputRef: React.RefObject<HTMLInputElement>) => {
-    onPriceChange(name, value);
+    const numValue = value === '' ? undefined : Number(value);
+    
+    if (name === 'purchasePrice' || name === 'salePrice') {
+      usePropertyForm().setCurrentProperty(prev => ({ ...prev, [name]: numValue }));
+    }
     
     setTimeout(() => {
       if (inputRef.current) {
@@ -77,7 +69,7 @@ const PropertyActivitySection: React.FC<PropertyActivitySectionProps> = ({
           <Calendar
             mode="single"
             selected={purchaseDate || undefined}
-            onSelect={onPurchaseDateChange}
+            onSelect={handlePurchaseDateChange}
             initialFocus
           />
         </PopoverContent>
@@ -128,7 +120,7 @@ const PropertyActivitySection: React.FC<PropertyActivitySectionProps> = ({
           <Calendar
             mode="single"
             selected={saleDate || undefined}
-            onSelect={onSaleDateChange}
+            onSelect={handleSaleDateChange}
             initialFocus
           />
         </PopoverContent>
@@ -159,14 +151,14 @@ const PropertyActivitySection: React.FC<PropertyActivitySectionProps> = ({
     <div className="mt-6">
       <h4 className="text-md font-medium mb-3">Activity in 2024*</h4>
       <RadioGroup 
-        value={activity}
-        onValueChange={(value) => onActivityChange(value as ActivityType)}
+        value={activity2024}
+        onValueChange={(value) => handleActivityTypeChange(value as ActivityType)}
         className="flex flex-col space-y-3"
       >
         <CardRadioGroupItem 
           value="purchased" 
           id="purchased" 
-          checked={activity === 'purchased'}
+          checked={activity2024 === 'purchased'}
           title="Purchased Only"
           explanation={activityExplanations.purchased}
         >
@@ -179,7 +171,7 @@ const PropertyActivitySection: React.FC<PropertyActivitySectionProps> = ({
         <CardRadioGroupItem 
           value="sold" 
           id="sold" 
-          checked={activity === 'sold'}
+          checked={activity2024 === 'sold'}
           title="Sold Only"
           explanation={activityExplanations.sold}
         >
@@ -192,7 +184,7 @@ const PropertyActivitySection: React.FC<PropertyActivitySectionProps> = ({
         <CardRadioGroupItem 
           value="both" 
           id="both" 
-          checked={activity === 'both'}
+          checked={activity2024 === 'both'}
           title="Both Purchased & Sold"
           explanation={activityExplanations.both}
         >
@@ -214,7 +206,7 @@ const PropertyActivitySection: React.FC<PropertyActivitySectionProps> = ({
         <CardRadioGroupItem 
           value="owned_all_year" 
           id="owned_all_year" 
-          checked={activity === 'owned_all_year'}
+          checked={activity2024 === 'owned_all_year'}
           title="Owned All Year"
           explanation={activityExplanations.neither}
         >

@@ -9,21 +9,13 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { PropertyAddress } from '@/types/form';
+import { usePropertyForm } from './PropertyFormContext';
+import { PROVINCES } from './propertyUtils';
 
-interface PropertyAddressSectionProps {
-  address: PropertyAddress;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSelectChange: (name: string, value: string) => void;
-  provinces: string[];
-}
-
-const PropertyAddressSection: React.FC<PropertyAddressSectionProps> = ({ 
-  address, 
-  onInputChange, 
-  onSelectChange,
-  provinces
-}) => {
+const PropertyAddressSection: React.FC = () => {
+  const { currentProperty, handleInputChange, handleSelectChange } = usePropertyForm();
+  const { address } = currentProperty;
+  
   return (
     <div className="mt-6">
       <h4 className="text-md font-medium mb-3">Property Address*</h4>
@@ -35,7 +27,7 @@ const PropertyAddressSection: React.FC<PropertyAddressSectionProps> = ({
             name="address.comune" 
             placeholder="e.g. Roma, Milano, Firenze"
             value={address.comune} 
-            onChange={onInputChange}
+            onChange={handleInputChange}
             className="mt-1"
           />
         </div>
@@ -44,13 +36,13 @@ const PropertyAddressSection: React.FC<PropertyAddressSectionProps> = ({
           <Label htmlFor="address.province">Province*</Label>
           <Select 
             value={address.province} 
-            onValueChange={(value) => onSelectChange('address.province', value)}
+            onValueChange={(value) => handleSelectChange('address.province', value)}
           >
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="Select province" />
             </SelectTrigger>
             <SelectContent>
-              {provinces.map(province => (
+              {PROVINCES.map(province => (
                 <SelectItem key={province} value={province}>{province}</SelectItem>
               ))}
             </SelectContent>
@@ -64,7 +56,7 @@ const PropertyAddressSection: React.FC<PropertyAddressSectionProps> = ({
             name="address.street" 
             placeholder="e.g. Via Roma 123"
             value={address.street} 
-            onChange={onInputChange}
+            onChange={handleInputChange}
             className="mt-1"
           />
         </div>
@@ -76,7 +68,7 @@ const PropertyAddressSection: React.FC<PropertyAddressSectionProps> = ({
             name="address.zip" 
             placeholder="e.g. 00100"
             value={address.zip} 
-            onChange={onInputChange}
+            onChange={handleInputChange}
             className="mt-1"
           />
         </div>

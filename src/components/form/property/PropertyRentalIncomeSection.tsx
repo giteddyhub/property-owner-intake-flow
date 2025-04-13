@@ -2,16 +2,11 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Euro } from 'lucide-react';
+import { usePropertyForm } from './PropertyFormContext';
 
-interface PropertyRentalIncomeSectionProps {
-  rentalIncome?: number;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-const PropertyRentalIncomeSection: React.FC<PropertyRentalIncomeSectionProps> = ({ 
-  rentalIncome, 
-  onInputChange 
-}) => {
+const PropertyRentalIncomeSection: React.FC = () => {
+  const { currentProperty, handleInputChange } = usePropertyForm();
+  
   return (
     <div className="mt-6">
       <h4 className="font-medium mb-3">💸 2024 Rental Income*</h4>
@@ -23,8 +18,8 @@ const PropertyRentalIncomeSection: React.FC<PropertyRentalIncomeSectionProps> = 
           type="number"
           min="0"
           placeholder="Enter rental income"
-          value={rentalIncome || ''}
-          onChange={onInputChange}
+          value={currentProperty.rentalIncome || ''}
+          onChange={handleInputChange}
           className="pl-10"
         />
       </div>

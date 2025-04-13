@@ -15,30 +15,22 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { OccupancyStatus, Property } from '@/types/form';
+import { OccupancyStatus } from '@/types/form';
 import { occupancyExplanations } from './propertyUtils';
+import { usePropertyForm } from './PropertyFormContext';
 
-interface PropertyOccupancySectionProps {
-  occupancyMonths: Record<OccupancyStatus, number>;
-  activeStatuses: Set<OccupancyStatus>;
-  availableMonths: Record<OccupancyStatus, number[]>;
-  totalMonthsAllocated: number;
-  onOccupancyStatusChange: (status: OccupancyStatus) => void;
-  onOccupancyMonthsChange: (status: OccupancyStatus, months: number) => void;
-  onRemoveOccupancyStatus: (status: OccupancyStatus) => void;
-  currentProperty: Property;
-}
-
-const PropertyOccupancySection: React.FC<PropertyOccupancySectionProps> = ({
-  occupancyMonths,
-  activeStatuses,
-  availableMonths,
-  totalMonthsAllocated,
-  onOccupancyStatusChange,
-  onOccupancyMonthsChange,
-  onRemoveOccupancyStatus,
-  currentProperty
-}) => {
+const PropertyOccupancySection: React.FC = () => {
+  const { 
+    occupancyMonths,
+    activeStatuses,
+    availableMonths,
+    totalMonthsAllocated,
+    currentProperty,
+    handleOccupancyStatusChange,
+    handleOccupancyMonthsChange,
+    handleRemoveOccupancyStatus
+  } = usePropertyForm();
+  
   const monthsRemaining = 12 - totalMonthsAllocated;
   
   return (
@@ -79,9 +71,9 @@ const PropertyOccupancySection: React.FC<PropertyOccupancySectionProps> = ({
           months={occupancyMonths.LONG_TERM_RENT}
           availableMonths={availableMonths.LONG_TERM_RENT}
           explanation={occupancyExplanations.LONG_TERM_RENT}
-          onStatusChange={() => onOccupancyStatusChange('LONG_TERM_RENT')}
-          onMonthsChange={(months) => onOccupancyMonthsChange('LONG_TERM_RENT', months)}
-          onRemove={() => onRemoveOccupancyStatus('LONG_TERM_RENT')}
+          onStatusChange={() => handleOccupancyStatusChange('LONG_TERM_RENT')}
+          onMonthsChange={(months) => handleOccupancyMonthsChange('LONG_TERM_RENT', months)}
+          onRemove={() => handleRemoveOccupancyStatus('LONG_TERM_RENT')}
           currentProperty={currentProperty}
         />
         
@@ -92,9 +84,9 @@ const PropertyOccupancySection: React.FC<PropertyOccupancySectionProps> = ({
           months={occupancyMonths.SHORT_TERM_RENT}
           availableMonths={availableMonths.SHORT_TERM_RENT}
           explanation={occupancyExplanations.SHORT_TERM_RENT}
-          onStatusChange={() => onOccupancyStatusChange('SHORT_TERM_RENT')}
-          onMonthsChange={(months) => onOccupancyMonthsChange('SHORT_TERM_RENT', months)}
-          onRemove={() => onRemoveOccupancyStatus('SHORT_TERM_RENT')}
+          onStatusChange={() => handleOccupancyStatusChange('SHORT_TERM_RENT')}
+          onMonthsChange={(months) => handleOccupancyMonthsChange('SHORT_TERM_RENT', months)}
+          onRemove={() => handleRemoveOccupancyStatus('SHORT_TERM_RENT')}
           currentProperty={currentProperty}
         />
         
@@ -105,9 +97,9 @@ const PropertyOccupancySection: React.FC<PropertyOccupancySectionProps> = ({
           months={occupancyMonths.PERSONAL_USE}
           availableMonths={availableMonths.PERSONAL_USE}
           explanation={occupancyExplanations.PERSONAL_USE}
-          onStatusChange={() => onOccupancyStatusChange('PERSONAL_USE')}
-          onMonthsChange={(months) => onOccupancyMonthsChange('PERSONAL_USE', months)}
-          onRemove={() => onRemoveOccupancyStatus('PERSONAL_USE')}
+          onStatusChange={() => handleOccupancyStatusChange('PERSONAL_USE')}
+          onMonthsChange={(months) => handleOccupancyMonthsChange('PERSONAL_USE', months)}
+          onRemove={() => handleRemoveOccupancyStatus('PERSONAL_USE')}
           currentProperty={currentProperty}
         />
       </div>
