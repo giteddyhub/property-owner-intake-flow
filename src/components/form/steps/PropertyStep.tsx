@@ -10,7 +10,8 @@ import {
 } from '@/types/form';
 import { 
   createEmptyProperty, 
-  getInitialOccupancyMonths 
+  getInitialOccupancyMonths,
+  normalizeActivityType
 } from '../property/propertyUtils';
 import PropertyHeader from '../property/PropertyHeader';
 import PropertyList from '../property/PropertyList';
@@ -25,11 +26,11 @@ const PropertyStep: React.FC = () => {
   const [showForm, setShowForm] = useState(properties.length === 0);
 
   const handleEdit = (index: number) => {
-    const property = properties[index];
+    const property = { ...properties[index] };
     
     // Handle the case of legacy 'neither' value
     if (property.activity2024 === 'neither') {
-      property.activity2024 = 'owned_all_year';
+      property.activity2024 = normalizeActivityType('neither');
     }
     
     const { initialOccupancyMonths, newActiveStatuses } = getInitialOccupancyMonths(property);

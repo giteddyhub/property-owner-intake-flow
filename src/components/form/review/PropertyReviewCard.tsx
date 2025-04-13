@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { 
@@ -8,6 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ActivityType, OccupancyStatus, OccupancyAllocation, Property } from '@/types/form';
+import { formatOccupancyStatuses, formatOccupancyStatus } from '../property/propertyUtils';
 
 interface PropertyReviewCardProps {
   property: Property;
@@ -27,29 +27,6 @@ export const formatActivity = (activity: ActivityType) => {
     default:
       return activity;
   }
-};
-
-export const formatOccupancyStatus = (status: OccupancyStatus) => {
-  switch (status) {
-    case 'PERSONAL_USE':
-      return 'Personal Use';
-    case 'LONG_TERM_RENT':
-      return 'Long-term Rental';
-    case 'SHORT_TERM_RENT':
-      return 'Short-term Rental';
-    default:
-      return status;
-  }
-};
-
-export const formatOccupancyStatuses = (allocations: OccupancyAllocation[]) => {
-  if (allocations.length === 1) {
-    return `${formatOccupancyStatus(allocations[0].status)} (${allocations[0].months} months)`;
-  }
-  
-  return allocations.map(allocation => 
-    `${formatOccupancyStatus(allocation.status)} (${allocation.months} months)`
-  ).join(', ');
 };
 
 export const hasRentalStatus = (property: Property) => {
