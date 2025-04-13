@@ -28,8 +28,9 @@ import {
 } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { 
-  ActivityType, 
-  OccupancyStatus, 
+  ActivityType,
+  OccupancyStatus,
+  OccupancyAllocation,
   Property, 
   PropertyAddress, 
   PropertyType 
@@ -68,8 +69,9 @@ const createEmptyProperty = (): Property => ({
   activity2024: 'neither',
   propertyType: 'RESIDENTIAL',
   remodeling: false,
-  occupancyStatuses: ['LONG_TERM_RENT'] as OccupancyStatus[],
-  monthsOccupied: 12,
+  occupancyStatuses: [
+    { status: 'LONG_TERM_RENT', months: 12 }
+  ],
   rentalIncome: 0
 });
 
@@ -123,6 +125,23 @@ const PropertyStep: React.FC = () => {
     });
     
     setAvailableMonths(newAvailableMonths);
+  }, [occupancyMonths]);
+
+  useEffect(() => {
+    const newOccupancyStatuses: OccupancyAllocation[] = [];
+    
+    (Object.entries(occupancyMonths) as [OccupancyStatus, number][]).forEach(([status, months]) => {
+      if (months > 0) {
+        newOccupancyStatuses.push({ status, months });
+      }
+    });
+    
+    if (newOccupancyStatuses.length > 0) {
+      setCurrentProperty(prev => ({
+        ...prev,
+        occupancyStatuses: newOccupancyStatuses
+      }));
+    }
   }, [occupancyMonths]);
 
   const activityExplanations = {
@@ -231,11 +250,6 @@ const PropertyStep: React.FC = () => {
         return newStatuses;
       });
       
-      setCurrentProperty(prev => ({
-        ...prev,
-        occupancyStatuses: prev.occupancyStatuses.filter(s => s !== status)
-      }));
-      
       return;
     }
     
@@ -244,13 +258,6 @@ const PropertyStep: React.FC = () => {
       newStatuses.add(status);
       return newStatuses;
     });
-    
-    if (!currentProperty.occupancyStatuses.includes(status)) {
-      setCurrentProperty(prev => ({
-        ...prev,
-        occupancyStatuses: [...prev.occupancyStatuses, status]
-      }));
-    }
   };
 
   const handleOccupancyMonthsChange = (status: OccupancyStatus, months: number) => {
@@ -269,11 +276,6 @@ const PropertyStep: React.FC = () => {
   };
 
   const handleRemoveOccupancyStatus = (status: OccupancyStatus) => {
-    setCurrentProperty(prev => ({
-      ...prev,
-      occupancyStatuses: prev.occupancyStatuses.filter(s => s !== status)
-    }));
-    
     setOccupancyMonths(prev => ({
       ...prev,
       [status]: 0
@@ -347,7 +349,7 @@ const PropertyStep: React.FC = () => {
     }
     
     const hasRentalStatus = currentProperty.occupancyStatuses.some(
-      status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
+      allocation => allocation.status === 'LONG_TERM_RENT' || allocation.status === 'SHORT_TERM_RENT'
     );
     
     if (hasRentalStatus) {
@@ -363,16 +365,16 @@ const PropertyStep: React.FC = () => {
       return;
     }
 
-    const activeOccupancyStatuses = Object.entries(occupancyMonths)
+    const activeOccupancyStatuses: OccupancyAllocation[] = Object.entries(occupancyMonths)
       .filter(([_, months]) => months > 0)
-      .map(([status]) => status as OccupancyStatus);
+      .map(([status, months]) => ({ 
+        status: status as OccupancyStatus, 
+        months 
+      }));
 
     const finalProperty = {
       ...currentProperty,
-      occupancyStatuses: activeOccupancyStatuses,
-      monthsOccupied: activeOccupancyStatuses.length > 0 
-        ? occupancyMonths[activeOccupancyStatuses[0]] 
-        : 12
+      occupancyStatuses: activeOccupancyStatuses
     };
 
     if (editingIndex !== null) {
@@ -396,18 +398,8 @@ const PropertyStep: React.FC = () => {
 
   const handleEdit = (index: number) => {
     const property = properties[index];
-    const updatedProperty = {
-      ...property,
-      occupancyStatuses: Array.isArray(property.occupancyStatuses) 
-        ? property.occupancyStatuses 
-        : ['LONG_TERM_RENT' as OccupancyStatus]
-    };
     
-    setCurrentProperty(updatedProperty);
-    setEditingIndex(index);
-    setShowForm(true);
-    
-    const initialOccupancyMonths = {
+    let initialOccupancyMonths = {
       PERSONAL_USE: 0,
       LONG_TERM_RENT: 0,
       SHORT_TERM_RENT: 0,
@@ -415,16 +407,22 @@ const PropertyStep: React.FC = () => {
     
     const newActiveStatuses = new Set<OccupancyStatus>();
     
-    if (updatedProperty.occupancyStatuses.length > 0) {
-      updatedProperty.occupancyStatuses.forEach((status, idx) => {
-        initialOccupancyMonths[status] = idx === 0 ? (updatedProperty.monthsOccupied || 12) : 1;
-        newActiveStatuses.add(status);
+    if (Array.isArray(property.occupancyStatuses)) {
+      property.occupancyStatuses.forEach(allocation => {
+        if ('status' in allocation && 'months' in allocation) {
+          initialOccupancyMonths[allocation.status] = allocation.months;
+          newActiveStatuses.add(allocation.status);
+        } else {
+          const status = allocation as unknown as OccupancyStatus;
+          initialOccupancyMonths[status] = 12 / property.occupancyStatuses.length;
+          newActiveStatuses.add(status);
+        }
       });
-    } else {
-      initialOccupancyMonths.PERSONAL_USE = 12;
-      newActiveStatuses.add('PERSONAL_USE');
     }
     
+    setCurrentProperty(property);
+    setEditingIndex(index);
+    setShowForm(true);
     setOccupancyMonths(initialOccupancyMonths);
     setActiveStatuses(newActiveStatuses);
   };
@@ -454,14 +452,24 @@ const PropertyStep: React.FC = () => {
     return true;
   };
 
-  const formatOccupancyStatuses = (statuses: OccupancyStatus[]) => {
+  const formatOccupancyStatuses = (allocations: OccupancyAllocation[] | OccupancyStatus[]) => {
     const statusMap = {
       PERSONAL_USE: 'Personal Use',
       LONG_TERM_RENT: 'Long-term Rental',
       SHORT_TERM_RENT: 'Short-term Rental'
     };
     
-    return statuses.map(status => statusMap[status]).join(', ');
+    if (allocations.length === 0) return 'Not specified';
+    
+    if (typeof allocations[0] === 'object' && 'status' in allocations[0]) {
+      return (allocations as OccupancyAllocation[])
+        .map(allocation => `${statusMap[allocation.status]} (${allocation.months} months)`)
+        .join(', ');
+    }
+    
+    return (allocations as OccupancyStatus[])
+      .map(status => statusMap[status])
+      .join(', ');
   };
 
   const PurchaseDateCalendar = () => (
@@ -568,7 +576,7 @@ const PropertyStep: React.FC = () => {
 
   const shouldShowRentalIncome = () => {
     return currentProperty.occupancyStatuses.some(
-      status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
+      allocation => allocation.status === 'LONG_TERM_RENT' || allocation.status === 'SHORT_TERM_RENT'
     ) || activeStatuses.has('LONG_TERM_RENT') || activeStatuses.has('SHORT_TERM_RENT') ||
     occupancyMonths.LONG_TERM_RENT > 0 || occupancyMonths.SHORT_TERM_RENT > 0;
   };

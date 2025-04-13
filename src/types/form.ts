@@ -36,6 +36,12 @@ export type ActivityType = 'purchased' | 'sold' | 'both' | 'neither';
 export type PropertyType = 'RESIDENTIAL' | 'B&B' | 'COMMERCIAL' | 'LAND' | 'OTHER';
 export type OccupancyStatus = 'LONG_TERM_RENT' | 'SHORT_TERM_RENT' | 'PERSONAL_USE';
 
+// New type for occupancy data with months
+export interface OccupancyAllocation {
+  status: OccupancyStatus;
+  months: number;
+}
+
 export interface PropertyAddress {
   comune: string;
   province: string;
@@ -54,8 +60,7 @@ export interface Property {
   salePrice?: number;
   propertyType: PropertyType;
   remodeling: boolean;
-  occupancyStatuses: OccupancyStatus[]; // Changed from single status to array
-  monthsOccupied?: number;
+  occupancyStatuses: OccupancyAllocation[]; // Changed to include months per status
   rentalIncome?: number; // Added rental income field
 }
 
