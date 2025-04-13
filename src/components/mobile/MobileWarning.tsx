@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ const MobileWarning: React.FC = () => {
         />
       </div>
       
-      <div className="w-11/12 max-w-md bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+      <div className="max-w-md bg-white p-8 rounded-lg shadow-lg border border-gray-200">
         <div className="flex justify-center mb-6">
           <div className="bg-yellow-100 p-3 rounded-full">
             <AlertTriangle className="h-10 w-10 text-yellow-600" />
