@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import FormNavigation from '@/components/form/FormNavigation';
@@ -28,10 +27,8 @@ const PropertyStep: React.FC = () => {
   const handleEdit = (index: number) => {
     const property = { ...properties[index] };
     
-    // Handle the case of legacy 'neither' value
-    if (property.activity2024 === 'neither') {
-      property.activity2024 = normalizeActivityType('neither');
-    }
+    // Use normalizeActivityType to ensure we have a valid ActivityType
+    property.activity2024 = normalizeActivityType(property.activity2024);
     
     const { initialOccupancyMonths, newActiveStatuses } = getInitialOccupancyMonths(property);
     

@@ -9,7 +9,7 @@ import {
 } from '@/types/form';
 
 // Normalize legacy 'neither' value to 'owned_all_year'
-export const normalizeActivityType = (activity: string): ActivityType => {
+export const normalizeActivityType = (activity: string | ActivityType): ActivityType => {
   if (activity === 'neither') {
     return 'owned_all_year';
   }
@@ -27,7 +27,7 @@ export const createEmptyProperty = (): Property => {
       street: '',
       zip: ''
     },
-    activity2024: 'owned_all_year', // Updated from 'neither'
+    activity2024: 'owned_all_year', 
     propertyType: 'RESIDENTIAL',
     remodeling: false,
     occupancyStatuses: [

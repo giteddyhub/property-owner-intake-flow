@@ -1,3 +1,4 @@
+
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -97,8 +98,8 @@ export const submitFormData = async (
         allocation => `${allocation.status}:${allocation.months}`
       );
       
-      // Handle the case where old data might have 'neither' as the activity
-      const activity2024 = property.activity2024 === 'neither' ? 'owned_all_year' : property.activity2024;
+      // Convert any legacy 'neither' values to 'owned_all_year'
+      const activity2024 = property.activity2024 === 'owned_all_year' ? 'owned_all_year' : property.activity2024;
       
       const { data: propertyData, error: propertyError } = await supabase
         .from('properties')
