@@ -1,8 +1,8 @@
 
-import { toast as sonnerToast, ToastT, Toast } from "sonner";
+import { toast as sonnerToast, ToastT, type ExternalToast } from "sonner";
 import React from "react";
 
-export type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>;
+export type ToastProps = React.ComponentPropsWithoutRef<typeof sonnerToast>;
 
 export function toast({
   type,
@@ -52,6 +52,13 @@ export function toast({
 export const useToast = () => {
   return {
     toast,
-    toasts: sonnerToast
+    dismiss: sonnerToast.dismiss,
+    error: sonnerToast.error,
+    success: sonnerToast.success,
+    info: sonnerToast.info,
+    warning: sonnerToast.warning,
+    promise: sonnerToast.promise,
+    loading: sonnerToast.loading,
+    custom: sonnerToast
   };
 };
