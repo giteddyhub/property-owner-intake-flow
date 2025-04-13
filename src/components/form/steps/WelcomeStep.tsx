@@ -18,8 +18,6 @@ const WelcomeStep: React.FC = () => {
       <h2 className="text-xl text-form-300 mb-6">for property owners</h2>
       
       <div className="mb-10 text-left bg-form-200 p-6 rounded-lg">
-        <h2 className="text-xl font-semibold mb-4 text-center">Welcome to the Intake Process</h2>
-        
         <p className="mb-4">
           This form will guide you through the process of registering property ownership information 
           for tax purposes in Italy. Please have the following information ready:
