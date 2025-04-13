@@ -1,51 +1,39 @@
 
-import { toast as sonnerToast, ToastT, type ExternalToast } from "sonner";
+import { toast as sonnerToast, type ToastT, type ExternalToast } from "sonner";
 import React from "react";
 
 export type ToastProps = React.ComponentPropsWithoutRef<typeof sonnerToast>;
 
+// Modified toast function to handle the id requirement
 export function toast({
   type,
   title,
   description,
   action,
   ...props
-}: ToastT & {
+}: Omit<ToastT, 'id'> & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: React.ReactNode
 }) {
+  // Create a common props object that includes everything passed
+  const toastProps = {
+    description,
+    action,
+    ...props,
+  };
+
   switch (type) {
     case "success":
-      return sonnerToast.success(title, {
-        description,
-        action,
-        ...props,
-      });
+      return sonnerToast.success(title, toastProps);
     case "info":
-      return sonnerToast.info(title, {
-        description,
-        action,
-        ...props,
-      });
+      return sonnerToast.info(title, toastProps);
     case "warning":
-      return sonnerToast.warning(title, {
-        description,
-        action,
-        ...props,
-      });
+      return sonnerToast.warning(title, toastProps);
     case "error":
-      return sonnerToast.error(title, {
-        description,
-        action,
-        ...props,
-      });
+      return sonnerToast.error(title, toastProps);
     default:
-      return sonnerToast(title, {
-        description,
-        action,
-        ...props,
-      });
+      return sonnerToast(title, toastProps);
   }
 }
 

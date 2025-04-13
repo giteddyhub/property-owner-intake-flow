@@ -1,4 +1,3 @@
-
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -198,7 +197,6 @@ export const submitFormData = async (
       duration: 5000,
     });
     
-    // Redirect to Italian Taxes website after successful submission
     window.location.href = 'https://www.italiantaxes.com/';
     
   } catch (error) {

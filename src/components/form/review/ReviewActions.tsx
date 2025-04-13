@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,7 @@ const ReviewActions: React.FC<ReviewActionsProps> = ({
   assignments
 }) => {
   const handleDownloadSummary = () => {
+    
     const formData = {
       owners,
       properties,
@@ -42,6 +42,7 @@ const ReviewActions: React.FC<ReviewActionsProps> = ({
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
+    
     toast({
       title: "Success",
       description: "Summary downloaded successfully",
@@ -49,6 +50,7 @@ const ReviewActions: React.FC<ReviewActionsProps> = ({
     });
   };
 
+  
   return (
     <div className="flex flex-col-reverse sm:flex-row justify-between gap-4">
       <Button 
