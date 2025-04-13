@@ -7,15 +7,14 @@ import PropertyStep from './steps/PropertyStep';
 import AssignmentStep from './steps/AssignmentStep';
 import ReviewStep from './steps/ReviewStep';
 import { cn } from '@/lib/utils';
-import { Check, Circle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
 
 const STEPS = [
-  { id: 0, name: 'Welcome' },
-  { id: 1, name: 'Owners' },
-  { id: 2, name: 'Properties' },
-  { id: 3, name: 'Assignments' },
-  { id: 4, name: 'Review' }
+  { id: 0, name: 'Welcome', description: 'Get started' },
+  { id: 1, name: 'Owners', description: 'Add property owners' },
+  { id: 2, name: 'Properties', description: 'Add your properties' },
+  { id: 3, name: 'Assignments', description: 'Assign properties' },
+  { id: 4, name: 'Review', description: 'Complete submission' }
 ];
 
 const FormLayout: React.FC = () => {
@@ -45,12 +44,12 @@ const FormLayout: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <div className="bg-white shadow-lg rounded-lg overflow-hidden">
             {/* Progress Stepper */}
-            <div className="p-6 bg-form-100 border-b">
+            <div className="p-6 bg-white border-b">
               <div className="w-full max-w-3xl mx-auto px-4 md:px-8">
                 {/* New Progress Stepper */}
                 <div className="relative">
-                  {/* Progress Line */}
-                  <div className="absolute top-5 left-0 w-full h-[2px]">
+                  {/* Progress Line - Extended Edge to Edge */}
+                  <div className="absolute top-5 left-0 right-0 w-full h-[2px]">
                     <div className="w-full h-full bg-gray-200"></div>
                     <div 
                       className="absolute top-0 left-0 h-full bg-[#9b87f5] transition-all duration-500 ease-in-out"
@@ -63,14 +62,12 @@ const FormLayout: React.FC = () => {
                     {STEPS.map((step, index) => {
                       const isCompleted = step.id < currentStep;
                       const isCurrent = step.id === currentStep;
-                      const isUpcoming = step.id > currentStep;
                       
                       return (
                         <div key={step.id} className="flex flex-col items-center">
                           {/* Circle Indicator */}
                           <button
                             onClick={() => {
-                              // Allow navigation to previous steps, but don't skip ahead
                               if (step.id <= currentStep) {
                                 goToStep(step.id);
                               }
@@ -115,10 +112,7 @@ const FormLayout: React.FC = () => {
                               isCompleted || isCurrent ? "text-gray-600" : "text-gray-400"
                             )}
                           >
-                            {index === 0 ? "Get started" : 
-                             index === 1 ? "Add property owners" :
-                             index === 2 ? "Add your properties" :
-                             index === 3 ? "Assign properties" : "Complete submission"}
+                            {step.description}
                           </span>
                         </div>
                       );
