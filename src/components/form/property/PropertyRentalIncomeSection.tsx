@@ -23,7 +23,7 @@ const PropertyRentalIncomeSection: React.FC = () => {
               <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
             </TooltipTrigger>
             <TooltipContent className="w-80 p-4">
-              <p>Enter the rental income for this specific property only. If you have multiple rental properties, input the income for each property separately.</p>
+              <p>Enter the rental income for this specific property only. If you have multiple rental properties, input the income for each property separately, by adding another property.</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
