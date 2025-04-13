@@ -15,7 +15,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { OccupancyStatus } from '@/types/form';
+import { OccupancyStatus, Property } from '@/types/form';
 import { occupancyExplanations } from './propertyUtils';
 import { usePropertyForm } from './PropertyFormContext';
 
