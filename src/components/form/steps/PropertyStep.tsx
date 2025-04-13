@@ -10,9 +10,9 @@ import {
 } from '@/types/form';
 import { 
   createEmptyProperty, 
-  getInitialOccupancyMonths,
+  initializeOccupancyData,
   normalizeActivityType
-} from '../property/utils';  // Updated import
+} from '../property/utils';  // Updated import to use the renamed function
 import PropertyHeader from '../property/PropertyHeader';
 import PropertyList from '../property/PropertyList';
 import PropertyForm from '../property/PropertyForm';
@@ -31,7 +31,7 @@ const PropertyStep: React.FC = () => {
     // Use normalizeActivityType to ensure we have a valid ActivityType
     property.activity2024 = normalizeActivityType(property.activity2024);
     
-    const { initialOccupancyMonths, newActiveStatuses } = getInitialOccupancyMonths(property);
+    const { initialOccupancyMonths, newActiveStatuses } = initializeOccupancyData(property);
     
     setCurrentProperty(property);
     setEditingIndex(index);

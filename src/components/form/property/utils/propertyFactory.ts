@@ -1,3 +1,4 @@
+
 import { Property, PropertyAddress, ActivityType, OccupancyAllocation } from '@/types/form';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -22,7 +23,8 @@ export const createEmptyProperty = (): Property => {
   };
 };
 
-export const getInitialOccupancyMonths = (property: Property): { initialOccupancyMonths: Record<string, number>, newActiveStatuses: Set<string> } => {
+// Renamed from getInitialOccupancyMonths to initializeOccupancyData to avoid conflict
+export const initializeOccupancyData = (property: Property): { initialOccupancyMonths: Record<string, number>, newActiveStatuses: Set<string> } => {
   const initialOccupancyMonths: Record<string, number> = {
     PERSONAL_USE: 0,
     LONG_TERM_RENT: 0,
