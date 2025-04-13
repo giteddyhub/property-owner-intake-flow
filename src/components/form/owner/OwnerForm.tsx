@@ -35,6 +35,11 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
   onDaysInItalyChange,
   hideCancel = false
 }) => {
+  const handleSubmit = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    onSubmit();
+  };
+
   return (
     <div className="border rounded-lg p-6 bg-gray-50">
       <h3 className="text-lg font-semibold mb-4">
@@ -73,7 +78,7 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
         )}
         <Button 
           type="button" 
-          onClick={onSubmit}
+          onClick={handleSubmit}
           className="bg-form-300 hover:bg-form-400 text-white"
         >
           {editingIndex !== null ? 'Update Owner' : 'Add Owner'}

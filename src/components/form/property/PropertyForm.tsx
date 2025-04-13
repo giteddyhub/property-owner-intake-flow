@@ -35,6 +35,10 @@ const PropertyFormContent: React.FC<PropertyFormProps> = ({
     shouldShowRentalIncome 
   } = usePropertyForm();
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSubmit = () => {
     const validationError = validatePropertySubmission(currentProperty, totalMonthsAllocated);
     
@@ -43,6 +47,7 @@ const PropertyFormContent: React.FC<PropertyFormProps> = ({
       return;
     }
 
+    scrollToTop();
     onSubmit(currentProperty, occupancyMonths);
   };
 
