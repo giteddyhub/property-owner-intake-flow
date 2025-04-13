@@ -32,7 +32,7 @@ const PropertyRentalIncomeSection: React.FC = () => {
         Enter the total rental income received in 2024 for this property
       </p>
       <div className="relative mt-1">
-        <Euro className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-500" />
+        <Euro className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-purple-500" />
         <Input 
           id="rentalIncome" 
           name="rentalIncome" 
@@ -41,7 +41,8 @@ const PropertyRentalIncomeSection: React.FC = () => {
           placeholder="Enter rental income"
           value={currentProperty.rentalIncome || ''}
           onChange={handleInputChange}
-          className="pl-12 py-6 text-lg font-medium border-purple-200 focus-visible:ring-purple-500"
+          className="pl-14 py-7 text-xl font-semibold border-purple-200 focus-visible:ring-purple-500 
+                     placeholder:text-base placeholder:text-gray-400"
         />
       </div>
     </div>
