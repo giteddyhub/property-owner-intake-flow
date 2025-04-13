@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { RadioGroup } from '@/components/ui/radio-group';
 import { ActivityType } from '@/types/form';
-import { activityExplanations } from './utils/propertyTypes';  // Updated import
+import { activityExplanations } from './utils/propertyTypes';
 import { usePropertyForm } from './context/PropertyFormContext';
 import PurchaseDateCalendar from './activity/PurchaseDateCalendar';
 import SaleDateCalendar from './activity/SaleDateCalendar';
@@ -14,7 +14,8 @@ const PropertyActivitySection: React.FC = () => {
     currentProperty, 
     handleActivityTypeChange, 
     handlePurchaseDateChange, 
-    handleSaleDateChange 
+    handleSaleDateChange,
+    setCurrentProperty
   } = usePropertyForm();
   
   const { activity2024, purchaseDate, purchasePrice, saleDate, salePrice } = currentProperty;
@@ -23,7 +24,7 @@ const PropertyActivitySection: React.FC = () => {
     const numValue = value === '' ? undefined : Number(value);
     
     if (name === 'purchasePrice' || name === 'salePrice') {
-      usePropertyForm().setCurrentProperty(prev => ({ ...prev, [name]: numValue }));
+      setCurrentProperty(prev => ({ ...prev, [name]: numValue }));
     }
     
     setTimeout(() => {
