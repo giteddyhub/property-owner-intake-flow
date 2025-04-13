@@ -6,6 +6,14 @@ import { Button } from '@/components/ui/button';
 const MobileWarning: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 text-center">
+      <div className="mb-6">
+        <img 
+          src="/lovable-uploads/0238892b-5e5d-4225-b73a-1b6ebff56d4e.png" 
+          alt="ItalianTaxes.com Logo" 
+          className="h-16 w-auto mx-auto mb-4 object-contain"
+        />
+      </div>
+      
       <div className="max-w-md bg-white p-8 rounded-lg shadow-lg border border-gray-200">
         <div className="flex justify-center mb-6">
           <div className="bg-yellow-100 p-3 rounded-full">
