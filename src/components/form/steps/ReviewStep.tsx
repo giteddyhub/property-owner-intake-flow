@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { ActivityType, OccupancyStatus, Owner, Property } from '@/types/form';
+import { ActivityType, OccupancyStatus, OccupancyAllocation, Owner, Property } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 import ContactInfoDialog from '../ContactInfoDialog';
 
@@ -142,7 +142,6 @@ const ReviewStep: React.FC = () => {
             property_type: property.propertyType,
             remodeling: property.remodeling,
             occupancy_statuses: property.occupancyStatuses,
-            months_occupied: property.monthsOccupied,
             rental_income: property.rentalIncome,
             contact_id: contactId
           })
@@ -303,19 +302,19 @@ const ReviewStep: React.FC = () => {
     }
   };
   
-  const formatOccupancyStatuses = (statuses: OccupancyStatus[], monthsOccupied?: number) => {
-    if (statuses.length === 1) {
-      return `${formatOccupancyStatus(statuses[0])} (${monthsOccupied || 0} months)`;
+  const formatOccupancyStatuses = (allocations: OccupancyAllocation[]) => {
+    if (allocations.length === 1) {
+      return `${formatOccupancyStatus(allocations[0].status)} (${allocations[0].months} months)`;
     }
     
-    return statuses.map(status => 
-      `${formatOccupancyStatus(status)}`
-    ).join(', ') + ` (${monthsOccupied || 0} months total)`;
+    return allocations.map(allocation => 
+      `${formatOccupancyStatus(allocation.status)} (${allocation.months} months)`
+    ).join(', ');
   };
 
   const hasRentalStatus = (property: Property) => {
     return property.occupancyStatuses.some(
-      status => status === 'LONG_TERM_RENT' || status === 'SHORT_TERM_RENT'
+      allocation => allocation.status === 'LONG_TERM_RENT' || allocation.status === 'SHORT_TERM_RENT'
     );
   };
 
@@ -504,7 +503,7 @@ const ReviewStep: React.FC = () => {
                       <p className="font-medium">Rental Status</p>
                       <p>{
                         Array.isArray(property.occupancyStatuses) 
-                          ? formatOccupancyStatuses(property.occupancyStatuses, property.monthsOccupied) 
+                          ? formatOccupancyStatuses(property.occupancyStatuses) 
                           : 'Not specified'
                       }</p>
                     </div>

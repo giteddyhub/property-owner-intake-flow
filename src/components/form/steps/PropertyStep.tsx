@@ -636,10 +636,11 @@ const PropertyStep: React.FC = () => {
                       Array.isArray(property.occupancyStatuses) 
                         ? formatOccupancyStatuses(property.occupancyStatuses)
                         : 'Not specified'
-                    } ({property.monthsOccupied} months)
+                    }
                   </p>
-                  {(property.occupancyStatuses.includes('LONG_TERM_RENT') || 
-                    property.occupancyStatuses.includes('SHORT_TERM_RENT')) && (
+                  {property.occupancyStatuses.some(allocation => 
+                    allocation.status === 'LONG_TERM_RENT' || allocation.status === 'SHORT_TERM_RENT'
+                  ) && (
                     <p className="text-sm text-gray-600 mt-2">
                       <strong>💸 2024 Rental Income:</strong> €{property.rentalIncome?.toLocaleString() || '0'}
                     </p>
