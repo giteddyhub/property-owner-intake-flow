@@ -9,11 +9,11 @@ import ReviewStep from './steps/ReviewStep';
 import { cn } from '@/lib/utils';
 
 const STEPS = [
-  { id: 0, name: 'Welcome', subtext: 'Getting started' },
-  { id: 1, name: 'Owners', subtext: 'Personal info' },
-  { id: 2, name: 'Properties', subtext: 'Property details' },
-  { id: 3, name: 'Assignments', subtext: 'Link properties' },
-  { id: 4, name: 'Review', subtext: 'Submit form' }
+  { id: 0, name: 'Welcome' },
+  { id: 1, name: 'Owners' },
+  { id: 2, name: 'Properties' },
+  { id: 3, name: 'Assignments' },
+  { id: 4, name: 'Review' }
 ];
 
 const FormLayout: React.FC = () => {
@@ -43,8 +43,8 @@ const FormLayout: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <div className="bg-white shadow-lg rounded-lg overflow-hidden">
             {/* Progress Stepper */}
-            <div className="p-6 bg-form-100 border-b relative">
-              <div className="flex justify-between relative z-10">
+            <div className="p-4 bg-form-100 border-b">
+              <div className="flex justify-between">
                 {STEPS.map((step) => (
                   <div key={step.id} className="flex flex-col items-center">
                     <button 
@@ -66,22 +66,17 @@ const FormLayout: React.FC = () => {
                     >
                       {step.id < currentStep ? '✓' : step.id + 1}
                     </button>
-                    <div className="flex flex-col items-center mt-1">
-                      <span className="text-xs font-medium text-gray-700 hidden sm:block">{step.name}</span>
-                      <span className="text-[10px] text-gray-500 hidden sm:block">{step.subtext}</span>
-                    </div>
+                    <span className="text-xs mt-1 hidden sm:block">{step.name}</span>
                   </div>
                 ))}
               </div>
-              
-              {/* Background line that extends edge to edge */}
-              <div className="absolute top-10 left-0 right-0 h-0.5 bg-gray-200"></div>
-              
-              {/* Progress line */}
-              <div 
-                className="absolute top-10 left-0 h-0.5 bg-form-300 transition-all" 
-                style={{ width: `${(currentStep) * 25}%` }}
-              ></div>
+              <div className="relative mt-2">
+                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2"></div>
+                <div 
+                  className="absolute top-1/2 left-0 h-0.5 bg-form-300 -translate-y-1/2 transition-all" 
+                  style={{ width: `${(currentStep) * 25}%` }}
+                ></div>
+              </div>
             </div>
 
             {/* Form Content */}
