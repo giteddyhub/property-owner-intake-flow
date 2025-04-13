@@ -916,8 +916,12 @@ const PropertyStep: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
-                      {currentProperty.occupancyStatuses.includes('LONG_TERM_RENT') && 
-                      occupancyMonths.LONG_TERM_RENT > 0 && (
+                      {currentProperty.occupancyStatuses.some(allocation => 
+                        typeof allocation === 'object' && 
+                        'status' in allocation && 
+                        allocation.status === 'LONG_TERM_RENT' && 
+                        occupancyMonths.LONG_TERM_RENT > 0
+                      ) && (
                         <Button
                           type="button"
                           variant="outline"
@@ -980,8 +984,12 @@ const PropertyStep: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
-                      {currentProperty.occupancyStatuses.includes('SHORT_TERM_RENT') && 
-                      occupancyMonths.SHORT_TERM_RENT > 0 && (
+                      {currentProperty.occupancyStatuses.some(allocation => 
+                        typeof allocation === 'object' && 
+                        'status' in allocation && 
+                        allocation.status === 'SHORT_TERM_RENT' && 
+                        occupancyMonths.SHORT_TERM_RENT > 0
+                      ) && (
                         <Button
                           type="button"
                           variant="outline"
@@ -1044,8 +1052,12 @@ const PropertyStep: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
-                      {currentProperty.occupancyStatuses.includes('PERSONAL_USE') && 
-                      occupancyMonths.PERSONAL_USE > 0 && (
+                      {currentProperty.occupancyStatuses.some(allocation => 
+                        typeof allocation === 'object' && 
+                        'status' in allocation && 
+                        allocation.status === 'PERSONAL_USE' && 
+                        occupancyMonths.PERSONAL_USE > 0
+                      ) && (
                         <Button
                           type="button"
                           variant="outline"
