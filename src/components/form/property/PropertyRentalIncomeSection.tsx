@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Euro, InfoIcon } from 'lucide-react';
+import { Euro, HelpCircle } from 'lucide-react';
 import { usePropertyForm } from './context/PropertyFormContext';
 import { 
   Tooltip, 
@@ -15,19 +15,15 @@ const PropertyRentalIncomeSection: React.FC = () => {
   
   return (
     <div className="mt-6">
-      <div className="flex items-center space-x-2 mb-3">
-        <h4 className="font-medium">💸 2024 Rental Income*</h4>
-        <TooltipProvider>
+      <div className="flex items-center">
+        <h4 className="font-medium mr-2">💸 2024 Rental Income*</h4>
+        <TooltipProvider delayDuration={100}>
           <Tooltip>
-            <TooltipTrigger>
-              <InfoIcon className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+            <TooltipTrigger asChild>
+              <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p>
-                Enter the rental income for this specific property only. 
-                If you have multiple rental properties, input the income 
-                for each property separately.
-              </p>
+            <TooltipContent className="w-80 p-4">
+              <p>Enter the rental income for this specific property only. If you have multiple rental properties, input the income for each property separately.</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
