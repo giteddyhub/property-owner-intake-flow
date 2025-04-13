@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useFormContext } from '@/contexts/FormContext';
-import { ArrowRight, Home, Calendar, Euro, Percent, FileText, BadgePercent } from 'lucide-react';
+import { ArrowRight, Home, Calendar, Euro, Percent, FileText, ScanFace } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 const WelcomeStep: React.FC = () => {
@@ -65,7 +65,7 @@ const WelcomeStep: React.FC = () => {
             </li>
             <li className="flex items-start group transition-all duration-300 hover:translate-x-1">
               <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-form-300/10 text-form-300 rounded-full mr-3 group-hover:bg-form-300 group-hover:text-white transition-all duration-300">
-                <BadgePercent className="h-3.5 w-3.5" />
+                <ScanFace className="h-3.5 w-3.5" />
               </span>
               <span className="text-form-400/90">Italian tax codes (mandatory)</span>
             </li>
