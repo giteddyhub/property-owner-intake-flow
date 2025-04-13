@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { usePropertyForm } from './PropertyFormContext';
+import { usePropertyForm } from './context/PropertyFormContext';
 
 const PropertyRemodelingSection: React.FC = () => {
   const { currentProperty, handleRemodelingChange } = usePropertyForm();

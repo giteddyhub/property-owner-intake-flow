@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { occupancyExplanations } from './propertyUtils';
-import { usePropertyForm } from './PropertyFormContext';
+import { usePropertyForm } from './context/PropertyFormContext';
 import OccupancyStatusItem from './occupancy/OccupancyStatusItem';
 import OccupancyProgressBar from './occupancy/OccupancyProgressBar';
+import { Property } from '@/types/form';
 
 const PropertyOccupancySection: React.FC = () => {
   const { 

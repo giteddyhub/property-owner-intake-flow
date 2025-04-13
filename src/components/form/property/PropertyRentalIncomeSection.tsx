@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Euro } from 'lucide-react';
-import { usePropertyForm } from './PropertyFormContext';
+import { usePropertyForm } from './context/PropertyFormContext';
 
 const PropertyRentalIncomeSection: React.FC = () => {
   const { currentProperty, handleInputChange } = usePropertyForm();

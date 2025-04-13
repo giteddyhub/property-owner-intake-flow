@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { usePropertyForm } from './PropertyFormContext';
+import { usePropertyForm } from './context/PropertyFormContext';
 
 const PropertyFormHeader: React.FC<{ editingIndex: number | null }> = ({ editingIndex }) => {
   const { currentProperty, handleInputChange } = usePropertyForm();

@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Property, OccupancyStatus } from '@/types/form';
 import FormNavigation from '@/components/form/FormNavigation';
 import { validatePropertySubmission } from './PropertyFormValidation';
 import { toast } from 'sonner';
-import { PropertyFormProvider, usePropertyForm } from './PropertyFormContext';
+import { PropertyFormProvider, usePropertyForm } from './context/PropertyFormContext';
 import PropertyFormHeader from './PropertyFormHeader';
 import PropertyAddressSection from './PropertyAddressSection';
 import PropertyTypeSection from './PropertyTypeSection';

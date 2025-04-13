@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { 
@@ -9,7 +8,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { PropertyType } from '@/types/form';
-import { usePropertyForm } from './PropertyFormContext';
+import { usePropertyForm } from './context/PropertyFormContext';
 
 const PropertyTypeSection: React.FC = () => {
   const { currentProperty, handleSelectChange } = usePropertyForm();
