@@ -17,11 +17,16 @@ const ReviewActions: React.FC<ReviewActionsProps> = ({
   onSubmitButtonClick, 
   isSubmitting
 }) => {
+  const handlePrevStep = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    prevStep();
+  };
+
   return (
     <div className="flex flex-col-reverse sm:flex-row justify-between gap-4">
       <Button 
         variant="outline" 
-        onClick={prevStep}
+        onClick={handlePrevStep}
         className="w-full sm:w-auto"
       >
         Back
@@ -39,4 +44,3 @@ const ReviewActions: React.FC<ReviewActionsProps> = ({
 };
 
 export default ReviewActions;
-
