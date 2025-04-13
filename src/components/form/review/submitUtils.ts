@@ -97,6 +97,9 @@ export const submitFormData = async (
         allocation => `${allocation.status}:${allocation.months}`
       );
       
+      // Handle the case where old data might have 'neither' as the activity
+      const activity2024 = property.activity2024 === 'neither' ? 'owned_all_year' : property.activity2024;
+      
       const { data: propertyData, error: propertyError } = await supabase
         .from('properties')
         .insert({
@@ -105,7 +108,7 @@ export const submitFormData = async (
           address_province: property.address.province,
           address_street: property.address.street,
           address_zip: property.address.zip,
-          activity_2024: property.activity2024,
+          activity_2024: activity2024,
           purchase_date: property.purchaseDate ? property.purchaseDate.toISOString().split('T')[0] : null,
           purchase_price: property.purchasePrice,
           sale_date: property.saleDate ? property.saleDate.toISOString().split('T')[0] : null,

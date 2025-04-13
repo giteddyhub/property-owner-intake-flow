@@ -212,9 +212,9 @@ const PropertyActivitySection: React.FC<PropertyActivitySectionProps> = ({
         </CardRadioGroupItem>
         
         <CardRadioGroupItem 
-          value="neither" 
-          id="neither" 
-          checked={activity === 'neither'}
+          value="owned_all_year" 
+          id="owned_all_year" 
+          checked={activity === 'owned_all_year'}
           title="Owned All Year"
           explanation={activityExplanations.neither}
         >

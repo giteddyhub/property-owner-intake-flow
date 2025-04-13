@@ -26,6 +26,12 @@ const PropertyStep: React.FC = () => {
 
   const handleEdit = (index: number) => {
     const property = properties[index];
+    
+    // Handle the case of legacy 'neither' value
+    if (property.activity2024 === 'neither') {
+      property.activity2024 = 'owned_all_year';
+    }
+    
     const { initialOccupancyMonths, newActiveStatuses } = getInitialOccupancyMonths(property);
     
     setCurrentProperty(property);

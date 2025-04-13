@@ -28,7 +28,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ properties, onEdit, onDelet
               {property.activity2024 === 'purchased' && ' Purchased in 2024'}
               {property.activity2024 === 'sold' && ' Sold in 2024'}
               {property.activity2024 === 'both' && ' Purchased & Sold in 2024'}
-              {property.activity2024 === 'neither' && ' Owned all year'}
+              {property.activity2024 === 'owned_all_year' && ' Owned all year'}
             </CardDescription>
           </CardHeader>
           <CardContent>

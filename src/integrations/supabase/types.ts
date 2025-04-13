@@ -191,7 +191,6 @@ export type Database = {
           created_at: string
           id: string
           label: string
-          months_occupied: number | null
           occupancy_statuses: string[]
           property_type: string
           purchase_date: string | null
@@ -212,7 +211,6 @@ export type Database = {
           created_at?: string
           id?: string
           label: string
-          months_occupied?: number | null
           occupancy_statuses: string[]
           property_type: string
           purchase_date?: string | null
@@ -233,7 +231,6 @@ export type Database = {
           created_at?: string
           id?: string
           label?: string
-          months_occupied?: number | null
           occupancy_statuses?: string[]
           property_type?: string
           purchase_date?: string | null

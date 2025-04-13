@@ -22,7 +22,7 @@ export const formatActivity = (activity: ActivityType) => {
       return 'Sold in 2024';
     case 'both':
       return 'Purchased & Sold in 2024';
-    case 'neither':
+    case 'owned_all_year':
       return 'Owned all year';
     default:
       return activity;

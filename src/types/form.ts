@@ -14,7 +14,7 @@ export interface ItalianResidenceDetails {
   street: string;  // Italian address fields
   city: string;    // Italian address fields
   zip: string;     // Italian address fields
-  spentOver182Days?: boolean; // NEW: Track if resident spent more than 182 days in Italy in 2024
+  spentOver182Days?: boolean; // Track if resident spent more than 182 days in Italy in 2024
 }
 
 export interface Owner {
@@ -32,7 +32,7 @@ export interface Owner {
 }
 
 // Property types
-export type ActivityType = 'purchased' | 'sold' | 'both' | 'neither';
+export type ActivityType = 'purchased' | 'sold' | 'both' | 'owned_all_year';
 export type PropertyType = 'RESIDENTIAL' | 'B&B' | 'COMMERCIAL' | 'LAND' | 'OTHER';
 export type OccupancyStatus = 'LONG_TERM_RENT' | 'SHORT_TERM_RENT' | 'PERSONAL_USE';
 
