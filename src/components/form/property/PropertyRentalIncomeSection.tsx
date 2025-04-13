@@ -14,9 +14,9 @@ const PropertyRentalIncomeSection: React.FC = () => {
   const { currentProperty, handleInputChange } = usePropertyForm();
   
   return (
-    <div className="mt-6">
+    <div className="mt-8 p-5 bg-purple-50 rounded-lg border border-purple-100">
       <div className="flex items-center">
-        <h4 className="font-medium mr-2">💸 2024 Rental Income*</h4>
+        <h4 className="text-lg font-medium mr-2">💸 2024 Rental Income*</h4>
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -28,8 +28,11 @@ const PropertyRentalIncomeSection: React.FC = () => {
           </Tooltip>
         </TooltipProvider>
       </div>
+      <p className="text-sm text-gray-500 mt-1 mb-3">
+        Enter the total rental income received in 2024 for this property
+      </p>
       <div className="relative mt-1">
-        <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Euro className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-500" />
         <Input 
           id="rentalIncome" 
           name="rentalIncome" 
@@ -38,7 +41,7 @@ const PropertyRentalIncomeSection: React.FC = () => {
           placeholder="Enter rental income"
           value={currentProperty.rentalIncome || ''}
           onChange={handleInputChange}
-          className="pl-10"
+          className="pl-12 py-6 text-lg font-medium border-purple-200 focus-visible:ring-purple-500"
         />
       </div>
     </div>
