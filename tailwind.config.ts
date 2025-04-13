@@ -67,10 +67,10 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				form: {
-					100: '#F0F7FF',
-					200: '#E6F0FF',
-					300: '#2563EB',
-					400: '#1E40AF',
+					100: '#F5F3FF', // Light purple bg (was blue bg)
+					200: '#EDE9FE', // Light purple accent (was light blue)
+					300: '#8B5CF6', // Medium purple (was blue)
+					400: '#7C3AED', // Dark purple (was dark blue)
 				}
 			},
 			borderRadius: {
