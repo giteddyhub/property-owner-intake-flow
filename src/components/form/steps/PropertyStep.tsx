@@ -409,13 +409,12 @@ const PropertyStep: React.FC = () => {
     
     if (Array.isArray(property.occupancyStatuses)) {
       property.occupancyStatuses.forEach(allocation => {
-        if ('status' in allocation && 'months' in allocation) {
+        if (typeof allocation === 'object' && 'status' in allocation && 'months' in allocation) {
           initialOccupancyMonths[allocation.status] = allocation.months;
           newActiveStatuses.add(allocation.status);
-        } else {
-          const status = allocation as unknown as OccupancyStatus;
-          initialOccupancyMonths[status] = 12 / property.occupancyStatuses.length;
-          newActiveStatuses.add(status);
+        } else if (typeof allocation === 'string') {
+          initialOccupancyMonths[allocation as OccupancyStatus] = 12 / property.occupancyStatuses.length;
+          newActiveStatuses.add(allocation as OccupancyStatus);
         }
       });
     }
@@ -467,7 +466,7 @@ const PropertyStep: React.FC = () => {
         .join(', ');
     }
     
-    return (allocations as OccupancyStatus[])
+    return (allocations as unknown as OccupancyStatus[])
       .map(status => statusMap[status])
       .join(', ');
   };

@@ -126,6 +126,12 @@ const ReviewStep: React.FC = () => {
       for (const property of properties) {
         console.log("Saving property:", property.label);
         
+        // Convert OccupancyAllocation[] to string[] for database
+        // Each string will have the format "STATUS:MONTHS", which we'll parse later if needed
+        const occupancyStatusStrings = property.occupancyStatuses.map(
+          allocation => `${allocation.status}:${allocation.months}`
+        );
+        
         const { data: propertyData, error: propertyError } = await supabase
           .from('properties')
           .insert({
@@ -141,7 +147,7 @@ const ReviewStep: React.FC = () => {
             sale_price: property.salePrice,
             property_type: property.propertyType,
             remodeling: property.remodeling,
-            occupancy_statuses: property.occupancyStatuses,
+            occupancy_statuses: occupancyStatusStrings,
             rental_income: property.rentalIncome,
             contact_id: contactId
           })
