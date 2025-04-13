@@ -1,5 +1,5 @@
 
-import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
+import { Owner, Property, OwnerPropertyAssignment, PropertyDocument } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -101,6 +101,18 @@ export const submitFormData = async (
       // Convert any legacy 'neither' values to 'owned_all_year'
       const activity2024 = property.activity2024 === 'owned_all_year' ? 'owned_all_year' : property.activity2024;
       
+      // Format document information for storage in the database
+      // We'll store as JSON strings in a documents array
+      const documentStrings = property.documents ? property.documents.map(doc => 
+        JSON.stringify({
+          id: doc.id,
+          name: doc.name,
+          type: doc.type,
+          size: doc.size,
+          uploadDate: doc.uploadDate.toISOString()
+        })
+      ) : [];
+      
       const { data: propertyData, error: propertyError } = await supabase
         .from('properties')
         .insert({
@@ -118,7 +130,9 @@ export const submitFormData = async (
           remodeling: property.remodeling,
           occupancy_statuses: occupancyStatusStrings,
           rental_income: property.rentalIncome,
-          contact_id: contactId
+          contact_id: contactId,
+          use_document_retrieval_service: property.useDocumentRetrievalService || false,
+          documents: documentStrings.length > 0 ? documentStrings : null
         })
         .select();
         
