@@ -1,4 +1,3 @@
-
 import { Owner, Property, OwnerPropertyAssignment, PropertyDocument } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -112,6 +111,9 @@ export const submitFormData = async (
           uploadDate: doc.uploadDate.toISOString()
         })
       ) : [];
+      
+      console.log("Document strings prepared for Supabase:", documentStrings);
+      console.log("Use document retrieval service:", property.useDocumentRetrievalService);
       
       const { data: propertyData, error: propertyError } = await supabase
         .from('properties')

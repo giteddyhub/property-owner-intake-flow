@@ -189,6 +189,7 @@ export type Database = {
           address_zip: string
           contact_id: string | null
           created_at: string
+          documents: string[] | null
           id: string
           label: string
           occupancy_statuses: string[]
@@ -200,6 +201,7 @@ export type Database = {
           sale_date: string | null
           sale_price: number | null
           updated_at: string
+          use_document_retrieval_service: boolean | null
         }
         Insert: {
           activity_2024: string
@@ -209,6 +211,7 @@ export type Database = {
           address_zip: string
           contact_id?: string | null
           created_at?: string
+          documents?: string[] | null
           id?: string
           label: string
           occupancy_statuses: string[]
@@ -220,6 +223,7 @@ export type Database = {
           sale_date?: string | null
           sale_price?: number | null
           updated_at?: string
+          use_document_retrieval_service?: boolean | null
         }
         Update: {
           activity_2024?: string
@@ -229,6 +233,7 @@ export type Database = {
           address_zip?: string
           contact_id?: string | null
           created_at?: string
+          documents?: string[] | null
           id?: string
           label?: string
           occupancy_statuses?: string[]
@@ -240,6 +245,7 @@ export type Database = {
           sale_date?: string | null
           sale_price?: number | null
           updated_at?: string
+          use_document_retrieval_service?: boolean | null
         }
         Relationships: [
           {
