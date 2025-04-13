@@ -3,8 +3,8 @@ import React from 'react';
 import { Property } from '@/types/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
-import { formatOccupancyStatuses } from './propertyUtils';
+import { Trash2, FileText, UploadCloud } from 'lucide-react';
+import { formatOccupancyStatuses } from './utils/occupancyUtils';
 
 interface PropertyListProps {
   properties: Property[];
@@ -49,6 +49,24 @@ const PropertyList: React.FC<PropertyListProps> = ({ properties, onEdit, onDelet
                 <strong>💸 2024 Rental Income:</strong> €{property.rentalIncome?.toLocaleString() || '0'}
               </p>
             )}
+            
+            {/* Document indicator */}
+            <div className="text-sm text-gray-600 mt-2 flex items-center">
+              <strong>Documents:</strong>
+              {property.useDocumentRetrievalService ? (
+                <span className="flex items-center ml-1 text-form-400">
+                  <UploadCloud className="h-4 w-4 mr-1" />
+                  Retrieval service
+                </span>
+              ) : property.documents && property.documents.length > 0 ? (
+                <span className="flex items-center ml-1 text-form-400">
+                  <FileText className="h-4 w-4 mr-1" />
+                  {property.documents.length} file(s)
+                </span>
+              ) : (
+                <span className="ml-1 text-gray-400">None</span>
+              )}
+            </div>
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
             <Button 

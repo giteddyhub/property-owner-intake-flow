@@ -31,6 +31,16 @@ export interface Owner {
   italianResidenceDetails?: ItalianResidenceDetails;
 }
 
+// Property document type
+export interface PropertyDocument {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  uploadDate: Date;
+  url?: string;
+}
+
 // Property types
 export type ActivityType = 'purchased' | 'sold' | 'both' | 'owned_all_year';
 export type PropertyType = 'RESIDENTIAL' | 'B&B' | 'COMMERCIAL' | 'LAND' | 'OTHER';
@@ -62,6 +72,8 @@ export interface Property {
   remodeling: boolean;
   occupancyStatuses: OccupancyAllocation[]; // Changed to include months per status
   rentalIncome?: number; // Added rental income field
+  documents?: PropertyDocument[]; // Documents related to the property
+  useDocumentRetrievalService?: boolean; // Option to use the document retrieval service
 }
 
 // Owner-Property assignments

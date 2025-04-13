@@ -12,6 +12,7 @@ import PropertyActivitySection from './PropertyActivitySection';
 import PropertyRemodelingSection from './PropertyRemodelingSection';
 import PropertyOccupancySection from './PropertyOccupancySection';
 import PropertyRentalIncomeSection from './PropertyRentalIncomeSection';
+import PropertyDocumentsSection from './PropertyDocumentsSection';
 
 interface PropertyFormProps {
   property: Property;
@@ -55,6 +56,8 @@ const PropertyFormContent: React.FC<PropertyFormProps> = ({
       <PropertyOccupancySection />
       
       {shouldShowRentalIncome && <PropertyRentalIncomeSection />}
+      
+      <PropertyDocumentsSection />
       
       <FormNavigation 
         isFormMode={true} 

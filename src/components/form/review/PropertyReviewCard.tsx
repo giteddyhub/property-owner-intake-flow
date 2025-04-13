@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { format } from 'date-fns';
 import { 
@@ -8,6 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { ActivityType, OccupancyStatus, OccupancyAllocation, Property } from '@/types/form';
 import { formatOccupancyStatuses, formatOccupancyStatus } from '../property/utils/occupancyUtils';
+import { FileText, UploadCloud } from 'lucide-react';
 
 interface PropertyReviewCardProps {
   property: Property;
@@ -116,6 +118,28 @@ const PropertyReviewCard: React.FC<PropertyReviewCardProps> = ({ property, onEdi
               </p>
             </div>
           )}
+          
+          {/* Documents Section */}
+          <div className="border-t pt-2 mt-2">
+            <p className="font-medium">Property Documents</p>
+            {property.useDocumentRetrievalService ? (
+              <div className="flex items-center mt-1">
+                <UploadCloud className="h-4 w-4 mr-2 text-form-300" />
+                <span>Document retrieval service ($28 USD)</span>
+              </div>
+            ) : property.documents && property.documents.length > 0 ? (
+              <div className="mt-1">
+                {property.documents.map(doc => (
+                  <div key={doc.id} className="flex items-center mb-1">
+                    <FileText className="h-4 w-4 mr-2 text-form-300" />
+                    <span>{doc.name}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No documents uploaded</p>
+            )}
+          </div>
         </div>
       </AccordionContent>
     </AccordionItem>
