@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useFormContext } from '@/contexts/FormContext';
@@ -18,7 +17,6 @@ const WelcomeStep: React.FC = () => {
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-form-400 mb-2 relative inline-block">
           Italian 🇮🇹 Tax Profile
-          <div className="absolute -top-1 -right-6 w-5 h-5 bg-form-300 rounded-full opacity-30 animate-pulse"></div>
         </h1>
         <h2 className="text-xl text-form-300 font-medium">for property owners</h2>
       </div>
