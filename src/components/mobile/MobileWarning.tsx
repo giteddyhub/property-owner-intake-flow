@@ -10,7 +10,7 @@ const MobileWarning: React.FC = () => {
         <img 
           src="/lovable-uploads/0238892b-5e5d-4225-b73a-1b6ebff56d4e.png" 
           alt="ItalianTaxes.com Logo" 
-          className="h-16 w-auto mx-auto mb-4 object-contain"
+          className="h-16 w-auto mx-auto mb-4 object-contain max-w-[200px]"
         />
       </div>
       
@@ -59,3 +59,4 @@ const MobileWarning: React.FC = () => {
 };
 
 export default MobileWarning;
+
