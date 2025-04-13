@@ -14,6 +14,9 @@ interface PriceInputProps {
 const PriceInput: React.FC<PriceInputProps> = ({ id, label, value, onChange }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Convert undefined value to empty string for the input
+  const displayValue = value === undefined || value === 0 ? '' : value;
+
   return (
     <div>
       <Label htmlFor={id}>{label}</Label>
@@ -24,7 +27,7 @@ const PriceInput: React.FC<PriceInputProps> = ({ id, label, value, onChange }) =
           type="number"
           min="0"
           placeholder={`Enter ${id.toLowerCase().includes("purchase") ? "purchase" : "sale"} price`}
-          value={value || ''}
+          value={displayValue}
           onChange={(e) => onChange(id, e.target.value, inputRef)}
           className="pl-10"
           ref={inputRef}
