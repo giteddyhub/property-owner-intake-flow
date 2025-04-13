@@ -80,7 +80,7 @@ const FormLayout: React.FC = () => {
               {/* Progress line */}
               <div 
                 className="absolute top-10 left-0 h-0.5 bg-form-300 transition-all" 
-                style={{ width: `${(currentStep) * 25}%` }}
+                style={{ width: `${((currentStep + 1) * 25)}%` }}
               ></div>
             </div>
 
