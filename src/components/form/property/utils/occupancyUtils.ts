@@ -30,8 +30,8 @@ export const formatOccupancyStatus = (status: OccupancyStatus): string => {
   }
 };
 
-// Function to get initial occupancy months based on existing property data
-export const getInitialOccupancyMonths = (property: Property) => {
+// Renamed from getInitialOccupancyMonths to getOccupancyData to avoid conflicts
+export const getOccupancyData = (property: Property) => {
   const initialOccupancyMonths: Record<OccupancyStatus, number> = {
     PERSONAL_USE: 0,
     LONG_TERM_RENT: 0,

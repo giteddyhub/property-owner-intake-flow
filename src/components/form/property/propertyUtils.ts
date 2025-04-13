@@ -6,3 +6,7 @@ export * from './utils/propertyTypes';
 export * from './utils/activityUtils';
 export * from './utils/occupancyUtils';
 export * from './utils/propertyFactory';
+
+// Note: getInitialOccupancyMonths has been renamed to:
+// - initializeOccupancyData in propertyFactory.ts
+// - getOccupancyData in occupancyUtils.ts
