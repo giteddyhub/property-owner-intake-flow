@@ -49,52 +49,57 @@ const FormLayout: React.FC = () => {
           <div className="bg-white shadow-lg rounded-lg overflow-hidden">
             {/* Progress Stepper */}
             <div className="p-6 bg-form-100 border-b">
-              <div className="flex justify-between mb-2 relative">
-                {STEPS.map((step) => (
-                  <div 
-                    key={step.id} 
-                    className="flex flex-col items-center relative z-10 flex-1"
-                    style={{ 
-                      // Ensure even spacing
-                      width: `${100 / (STEPS.length - 1)}%`,
-                      maxWidth: `${100 / (STEPS.length - 1)}%`
-                    }}
-                  >
-                    <button 
-                      className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 border-2",
-                        step.id === currentStep 
-                          ? "bg-form-300 text-white border-form-300 shadow-md" 
-                          : step.id < currentStep 
-                            ? "bg-green-500 text-white border-green-500 shadow-sm" 
-                            : "bg-white text-gray-400 border-gray-200"
-                      )}
-                      onClick={() => {
-                        // Allow navigation to previous steps, but don't skip ahead
-                        if (step.id <= currentStep) {
-                          goToStep(step.id);
-                        }
+              <div className="flex justify-between mb-4 relative">
+                {STEPS.map((step, index) => {
+                  // Calculate the position percentage for perfect alignment
+                  const position = index / (STEPS.length - 1) * 100;
+                  return (
+                    <div 
+                      key={step.id} 
+                      className="flex flex-col items-center relative z-10"
+                      style={{ 
+                        position: 'absolute',
+                        left: `${position}%`,
+                        transform: 'translateX(-50%)',
+                        width: 'auto'
                       }}
-                      disabled={step.id > currentStep}
                     >
-                      {step.id < currentStep ? <Check className="h-5 w-5" /> : step.id + 1}
-                    </button>
-                    <span className={cn(
-                      "text-xs mt-2 font-medium transition-colors duration-300 text-center w-full",
-                      step.id === currentStep 
-                        ? "text-form-400" 
-                        : step.id < currentStep 
-                          ? "text-green-600" 
-                          : "text-gray-400"
-                    )}>
-                      {step.name}
-                    </span>
-                  </div>
-                ))}
+                      <button 
+                        className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 border-2",
+                          step.id === currentStep 
+                            ? "bg-form-300 text-white border-form-300 shadow-md" 
+                            : step.id < currentStep 
+                              ? "bg-green-500 text-white border-green-500 shadow-sm" 
+                              : "bg-white text-gray-400 border-gray-200"
+                        )}
+                        onClick={() => {
+                          // Allow navigation to previous steps, but don't skip ahead
+                          if (step.id <= currentStep) {
+                            goToStep(step.id);
+                          }
+                        }}
+                        disabled={step.id > currentStep}
+                      >
+                        {step.id < currentStep ? <Check className="h-5 w-5" /> : step.id + 1}
+                      </button>
+                      <span className={cn(
+                        "text-xs mt-2 font-medium transition-colors duration-300 text-center whitespace-nowrap",
+                        step.id === currentStep 
+                          ? "text-form-400" 
+                          : step.id < currentStep 
+                            ? "text-green-600" 
+                            : "text-gray-400"
+                      )}>
+                        {step.name}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Progress bar */}
-              <div className="relative mt-4 pt-2">
+              {/* Progress bar - Now has height to provide spacing for the step buttons */}
+              <div className="relative mt-12 pt-2">
                 <Progress 
                   value={progressPercent} 
                   className="h-1 bg-transparent"
@@ -103,8 +108,8 @@ const FormLayout: React.FC = () => {
                   )}
                 />
                 
-                {/* Step indicators on progress bar */}
-                <div className="absolute top-0 left-0 right-0 flex justify-between pointer-events-none">
+                {/* Step indicators on progress bar - Now perfectly aligned with buttons above */}
+                <div className="absolute top-0 left-0 right-0 pointer-events-none">
                   {STEPS.map((step, index) => {
                     const isCompleted = step.id < currentStep;
                     const isCurrent = step.id === currentStep;
