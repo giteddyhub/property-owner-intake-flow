@@ -74,7 +74,7 @@ const FormLayout: React.FC = () => {
                 <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2"></div>
                 <div 
                   className="absolute top-1/2 left-0 h-0.5 bg-form-300 -translate-y-1/2 transition-all" 
-                  style={{ width: `${(currentStep) * 25}%` }}
+                  style={{ width: `${(currentStep + 1) * 25}%` }}
                 ></div>
               </div>
             </div>

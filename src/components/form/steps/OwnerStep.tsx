@@ -273,6 +273,10 @@ const OwnerStep: React.FC = () => {
     toast.success('Owner removed successfully');
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const validateAndProceed = () => {
     if (owners.length === 0) {
       toast.error('Please add at least one owner before proceeding');
@@ -294,6 +298,7 @@ const OwnerStep: React.FC = () => {
                 setCurrentOwner(createEmptyOwner());
                 setEditingIndex(null);
                 setShowForm(true);
+                scrollToTop();
               }}
               className="bg-form-300 hover:bg-form-400 text-white"
               size="sm"
@@ -699,6 +704,7 @@ const OwnerStep: React.FC = () => {
             onClick={() => {
               setShowForm(true);
               setCurrentOwner(createEmptyOwner());
+              scrollToTop();
             }}
             className="bg-form-300 hover:bg-form-400 text-white"
           >

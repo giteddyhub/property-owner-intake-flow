@@ -25,6 +25,10 @@ const PropertyStep: React.FC = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(properties.length === 0);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleEdit = (index: number) => {
     const property = { ...properties[index] };
     
@@ -36,6 +40,7 @@ const PropertyStep: React.FC = () => {
     setCurrentProperty(property);
     setEditingIndex(index);
     setShowForm(true);
+    scrollToTop();
   };
 
   const handleDelete = (index: number) => {
@@ -83,6 +88,7 @@ const PropertyStep: React.FC = () => {
               setCurrentProperty(createEmptyProperty());
               setEditingIndex(null);
               setShowForm(true);
+              scrollToTop();
             }} 
           />
           
