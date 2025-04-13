@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { occupancyExplanations } from './propertyUtils';
+import { occupancyExplanations } from './utils/propertyTypes';  // Updated import
 import { usePropertyForm } from './context/PropertyFormContext';
 import OccupancyStatusItem from './occupancy/OccupancyStatusItem';
 import OccupancyProgressBar from './occupancy/OccupancyProgressBar';

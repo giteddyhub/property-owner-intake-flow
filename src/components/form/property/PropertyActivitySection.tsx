@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { RadioGroup } from '@/components/ui/radio-group';
 import { ActivityType } from '@/types/form';
-import { activityExplanations } from './propertyUtils';
+import { activityExplanations } from './utils/propertyTypes';  // Updated import
 import { usePropertyForm } from './context/PropertyFormContext';
 import PurchaseDateCalendar from './activity/PurchaseDateCalendar';
 import SaleDateCalendar from './activity/SaleDateCalendar';

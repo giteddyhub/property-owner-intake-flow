@@ -1,11 +1,10 @@
-
 import React, { useCallback } from 'react';
 import { 
   Property, 
   OccupancyStatus,
   ActivityType 
 } from '@/types/form';
-import { handleActivityChange } from '../propertyUtils';
+import { handleActivityChange } from '../utils/activityUtils';
 
 export function usePropertyFormHandlers(
   currentProperty: Property,

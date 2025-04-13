@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ActivityType, OccupancyStatus, OccupancyAllocation, Property } from '@/types/form';
-import { formatOccupancyStatuses, formatOccupancyStatus } from '../property/propertyUtils';
+import { formatOccupancyStatuses, formatOccupancyStatus } from '../property/utils/occupancyUtils';
 
 interface PropertyReviewCardProps {
   property: Property;

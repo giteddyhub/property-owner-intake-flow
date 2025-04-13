@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import FormNavigation from '@/components/form/FormNavigation';
@@ -11,7 +12,7 @@ import {
   createEmptyProperty, 
   getInitialOccupancyMonths,
   normalizeActivityType
-} from '../property/propertyUtils';
+} from '../property/utils';  // Updated import
 import PropertyHeader from '../property/PropertyHeader';
 import PropertyList from '../property/PropertyList';
 import PropertyForm from '../property/PropertyForm';
