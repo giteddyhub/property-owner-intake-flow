@@ -8,6 +8,7 @@ import PaymentConfirmation from '@/components/success/PaymentConfirmation';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { useCheckout } from '@/hooks/useCheckout';
 import { toast } from 'sonner';
+import ConsultationBooking from '@/components/success/ConsultationBooking';
 
 const SuccessPage = () => {
   const [searchParams] = useSearchParams();
@@ -65,6 +66,9 @@ const SuccessPage = () => {
             hasDocumentRetrieval={hasDocumentRetrieval} 
           />
         )}
+        
+        {/* Consultation Booking Section */}
+        <ConsultationBooking />
         
         <div className="text-center">
           <Link to="/">
