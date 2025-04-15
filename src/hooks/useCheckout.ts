@@ -48,8 +48,11 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
       console.log('Redirecting to Stripe checkout:', data.url);
       toast.success('Redirecting to secure payment page...');
       
-      // Directly redirect to Stripe checkout without delay
-      window.location.href = data.url;
+      // Small delay to allow toast to be seen
+      setTimeout(() => {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      }, 500);
     } catch (error) {
       console.error('Error creating checkout session:', error);
       toast.error('Unable to initiate checkout. Please try again later.');
