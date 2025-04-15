@@ -14,49 +14,24 @@ const ConsultationBooking = () => {
       script.id = 'calendly-script';
       script.src = 'https://assets.calendly.com/assets/external/widget.js';
       script.async = true;
-      script.onload = () => {
-        setIsCalendlyLoaded(true);
-        // Initialize Calendly widgets after script loads
-        if (window.Calendly && typeof window.Calendly.initInlineWidget === 'function') {
-          const widgets = document.querySelectorAll('.calendly-inline-widget');
-          widgets.forEach(widget => {
-            window.Calendly.initInlineWidget({
-              url: widget.getAttribute('data-url'),
-              parentElement: widget,
-              prefill: {},
-              utm: {}
-            });
-          });
-        }
-      };
+      script.onload = () => setIsCalendlyLoaded(true);
       document.body.appendChild(script);
     } else {
       setIsCalendlyLoaded(true);
     }
 
-    // Cleanup function
+    // Cleanup function to remove script on component unmount
     return () => {
       // We don't remove the script as other components might be using it
     };
   }, []);
 
-  // Handle tab change
+  // Force rerender of Calendly widgets when tab changes
   const handleTabChange = (value: string) => {
     // Slight delay to ensure the DOM is updated
     setTimeout(() => {
-      if (window.Calendly && typeof window.Calendly.initInlineWidget === 'function') {
-        const activeTab = document.querySelector(`[data-state="active"][data-value="${value}"]`);
-        if (activeTab) {
-          const widget = activeTab.querySelector('.calendly-inline-widget');
-          if (widget) {
-            window.Calendly.initInlineWidget({
-              url: widget.getAttribute('data-url'),
-              parentElement: widget,
-              prefill: {},
-              utm: {}
-            });
-          }
-        }
+      if (window.Calendly) {
+        window.Calendly.initInlineWidgets();
       }
     }, 100);
   };
