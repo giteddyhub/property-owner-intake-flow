@@ -144,10 +144,105 @@ serve(async (req) => {
         font,
       });
       yPosition -= 20;
+      
+      // Add property type
+      page.drawText(`   Type: ${formatPropertyType(property.property_type)}`, {
+        x: 50,
+        y: yPosition,
+        size: 10,
+        font,
+      });
+      yPosition -= 20;
+      
+      // Add activity in 2024
+      page.drawText(`   Activity in 2024: ${formatActivityType(property.activity_2024)}`, {
+        x: 50,
+        y: yPosition,
+        size: 10,
+        font,
+      });
+      yPosition -= 20;
+      
+      // Add purchase/sale information if applicable
+      if (property.activity_2024 === 'purchased' || property.activity_2024 === 'both') {
+        if (property.purchase_date) {
+          page.drawText(`   Purchase Date: ${formatDate(property.purchase_date)}`, {
+            x: 50,
+            y: yPosition,
+            size: 10,
+            font,
+          });
+          yPosition -= 15;
+        }
+        
+        if (property.purchase_price) {
+          page.drawText(`   Purchase Price: €${formatNumber(property.purchase_price)}`, {
+            x: 50,
+            y: yPosition,
+            size: 10,
+            font,
+          });
+          yPosition -= 15;
+        }
+      }
+      
+      if (property.activity_2024 === 'sold' || property.activity_2024 === 'both') {
+        if (property.sale_date) {
+          page.drawText(`   Sale Date: ${formatDate(property.sale_date)}`, {
+            x: 50,
+            y: yPosition,
+            size: 10,
+            font,
+          });
+          yPosition -= 15;
+        }
+        
+        if (property.sale_price) {
+          page.drawText(`   Sale Price: €${formatNumber(property.sale_price)}`, {
+            x: 50,
+            y: yPosition,
+            size: 10,
+            font,
+          });
+          yPosition -= 15;
+        }
+      }
+      
+      // Add occupancy information
+      if (property.occupancy_statuses && property.occupancy_statuses.length > 0) {
+        page.drawText(`   Occupancy: ${formatOccupancyStatuses(property.occupancy_statuses)}`, {
+          x: 50,
+          y: yPosition,
+          size: 10,
+          font,
+        });
+        yPosition -= 15;
+      }
+      
+      // Add rental income if applicable
+      if (property.rental_income) {
+        page.drawText(`   Rental Income: €${formatNumber(property.rental_income)}`, {
+          x: 50,
+          y: yPosition,
+          size: 10,
+          font,
+          color: rgb(0.2, 0.4, 0.6),
+        });
+        yPosition -= 15;
+      }
+      
+      // Add remodeling information
+      page.drawText(`   Remodeling in 2024: ${property.remodeling ? 'Yes' : 'No'}`, {
+        x: 50,
+        y: yPosition,
+        size: 10,
+        font,
+      });
+      
+      yPosition -= 30; // Add extra space between properties
     });
 
     // Add owners information
-    yPosition -= 20;
     page.drawText("Owners:", {
       x: 50,
       y: yPosition,
@@ -165,14 +260,213 @@ serve(async (req) => {
         font,
       });
       yPosition -= 20;
-      page.drawText(`   Tax Code: ${owner.italian_tax_code}`, {
+      
+      // Add birth information
+      if (owner.date_of_birth) {
+        page.drawText(`   Born: ${formatDate(owner.date_of_birth)} in ${owner.country_of_birth}`, {
+          x: 50,
+          y: yPosition,
+          size: 10,
+          font,
+        });
+        yPosition -= 15;
+      }
+      
+      // Add citizenship
+      page.drawText(`   Citizenship: ${owner.citizenship}`, {
         x: 50,
         y: yPosition,
         size: 10,
         font,
       });
-      yPosition -= 20;
+      yPosition -= 15;
+      
+      // Add tax code
+      page.drawText(`   Italian Tax Code: ${owner.italian_tax_code}`, {
+        x: 50,
+        y: yPosition,
+        size: 10,
+        font,
+      });
+      yPosition -= 15;
+      
+      // Add address
+      page.drawText(`   Address: ${owner.address_street}, ${owner.address_city}, ${owner.address_zip}, ${owner.address_country}`, {
+        x: 50,
+        y: yPosition,
+        size: 10,
+        font,
+      });
+      yPosition -= 15;
+      
+      // Add marital status
+      page.drawText(`   Marital Status: ${formatMaritalStatus(owner.marital_status)}`, {
+        x: 50,
+        y: yPosition,
+        size: 10,
+        font,
+      });
+      yPosition -= 15;
+      
+      // Add Italian residency information
+      page.drawText(`   Italian Resident: ${owner.is_resident_in_italy ? 'Yes' : 'No'}`, {
+        x: 50,
+        y: yPosition,
+        size: 10,
+        font,
+      });
+      yPosition -= 15;
+      
+      if (owner.is_resident_in_italy) {
+        if (owner.italian_residence_comune_name) {
+          page.drawText(`   Residence Location: ${owner.italian_residence_comune_name}`, {
+            x: 50,
+            y: yPosition,
+            size: 10,
+            font,
+          });
+          yPosition -= 15;
+        }
+        
+        if (owner.italian_residence_street) {
+          page.drawText(`   Italian Address: ${owner.italian_residence_street}, ${owner.italian_residence_city || ''}, ${owner.italian_residence_zip || ''}`, {
+            x: 50,
+            y: yPosition,
+            size: 10,
+            font,
+          });
+          yPosition -= 15;
+        }
+        
+        if (owner.spent_over_182_days !== null) {
+          page.drawText(`   Spent over 182 days in Italy: ${owner.spent_over_182_days ? 'Yes' : 'No'}`, {
+            x: 50,
+            y: yPosition,
+            size: 10,
+            font,
+          });
+          yPosition -= 15;
+        }
+      }
+      
+      yPosition -= 10; // Add extra space between owners
     });
+
+    // Check if we need a new page for assignments
+    if (yPosition < 200 && assignments.length > 0) {
+      page = pdfDoc.addPage();
+      yPosition = height - 50;
+    }
+
+    // Add owner-property assignments
+    if (assignments.length > 0) {
+      page.drawText("Property Ownership:", {
+        x: 50,
+        y: yPosition,
+        size: 14,
+        font: boldFont,
+        color: rgb(0.2, 0.4, 0.6),
+      });
+      
+      yPosition -= 20;
+      
+      // Group assignments by property
+      const propertiesByID = {};
+      properties.forEach(prop => {
+        propertiesByID[prop.id] = prop;
+      });
+      
+      const ownersByID = {};
+      owners.forEach(own => {
+        ownersByID[own.id] = own;
+      });
+      
+      // Group assignments by property
+      const assignmentsByProperty = {};
+      assignments.forEach(assignment => {
+        if (!assignmentsByProperty[assignment.property_id]) {
+          assignmentsByProperty[assignment.property_id] = [];
+        }
+        assignmentsByProperty[assignment.property_id].push(assignment);
+      });
+      
+      // Print each property with its owners
+      Object.keys(assignmentsByProperty).forEach(propertyId => {
+        const property = propertiesByID[propertyId];
+        if (!property) return;
+        
+        page.drawText(`Property: ${property.label || property.address_comune}`, {
+          x: 50,
+          y: yPosition,
+          size: 11,
+          font: boldFont,
+        });
+        yPosition -= 20;
+        
+        // Calculate total percentage
+        const totalPercentage = assignmentsByProperty[propertyId].reduce(
+          (sum, assignment) => sum + Number(assignment.ownership_percentage),
+          0
+        );
+        
+        page.drawText(`Total Ownership: ${totalPercentage}%`, {
+          x: 50,
+          y: yPosition,
+          size: 10,
+          font,
+        });
+        yPosition -= 15;
+        
+        // List each owner for this property
+        assignmentsByProperty[propertyId].forEach(assignment => {
+          const owner = ownersByID[assignment.owner_id];
+          if (!owner) return;
+          
+          page.drawText(`   • ${owner.first_name} ${owner.last_name}: ${assignment.ownership_percentage}%${assignment.resident_at_property ? ' (Resident)' : ''}`, {
+            x: 50,
+            y: yPosition,
+            size: 10,
+            font,
+          });
+          yPosition -= 15;
+          
+          // Add residence date range if applicable
+          if (assignment.resident_at_property && (assignment.resident_from_date || assignment.resident_to_date)) {
+            let residencePeriod = "    Residence period: ";
+            if (assignment.resident_from_date) {
+              residencePeriod += formatDate(assignment.resident_from_date);
+            }
+            if (assignment.resident_from_date && assignment.resident_to_date) {
+              residencePeriod += " to ";
+            }
+            if (assignment.resident_to_date) {
+              residencePeriod += formatDate(assignment.resident_to_date);
+            }
+            
+            page.drawText(residencePeriod, {
+              x: 50,
+              y: yPosition,
+              size: 10,
+              font,
+            });
+            yPosition -= 15;
+          }
+          
+          // Add tax credits if applicable
+          if (assignment.tax_credits) {
+            page.drawText(`    Tax Credits: €${formatNumber(assignment.tax_credits)}`, {
+              x: 50,
+              y: yPosition,
+              size: 10,
+              font,
+            });
+            yPosition -= 15;
+          }
+        });
+        
+        yPosition -= 10; // Add extra space between properties
+      });
+    }
 
     // Add CTA
     const ctaPage = pdfDoc.addPage();
@@ -264,3 +558,94 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to format property type
+function formatPropertyType(propertyType) {
+  if (!propertyType) return "N/A";
+  
+  const types = {
+    "RESIDENTIAL": "Residential",
+    "B&B": "B&B",
+    "COMMERCIAL": "Commercial",
+    "LAND": "Land",
+    "OTHER": "Other"
+  };
+  
+  return types[propertyType] || propertyType;
+}
+
+// Helper function to format activity type
+function formatActivityType(activityType) {
+  if (!activityType) return "N/A";
+  
+  const activities = {
+    "purchased": "Purchased in 2024",
+    "sold": "Sold in 2024",
+    "both": "Purchased & Sold in 2024",
+    "owned_all_year": "Owned all year"
+  };
+  
+  return activities[activityType] || activityType;
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+  if (!dateString) return "N/A";
+  
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+// Helper function to format number with commas
+function formatNumber(num) {
+  if (num === null || num === undefined) return "N/A";
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Helper function to format marital status
+function formatMaritalStatus(status) {
+  if (!status) return "N/A";
+  
+  const statuses = {
+    "UNMARRIED": "Unmarried",
+    "MARRIED": "Married",
+    "DIVORCED": "Divorced",
+    "WIDOWED": "Widowed"
+  };
+  
+  return statuses[status] || status;
+}
+
+// Helper function to format occupancy statuses
+function formatOccupancyStatuses(statuses) {
+  if (!statuses || !Array.isArray(statuses) || statuses.length === 0) {
+    return "Not specified";
+  }
+  
+  return statuses.map(status => {
+    if (typeof status === 'string') {
+      return formatOccupancyStatus(status);
+    } else if (status && typeof status === 'object' && 'status' in status && 'months' in status) {
+      return `${formatOccupancyStatus(status.status)} (${status.months} months)`;
+    }
+    return "Unknown";
+  }).join(", ");
+}
+
+// Helper function to format occupancy status
+function formatOccupancyStatus(status) {
+  if (!status) return "N/A";
+  
+  const statuses = {
+    "PERSONAL_USE": "Personal Use",
+    "LONG_TERM_RENT": "Long-term Rental",
+    "SHORT_TERM_RENT": "Short-term Rental"
+  };
+  
+  return statuses[status] || status;
+}
+
