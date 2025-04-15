@@ -9,6 +9,7 @@ import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { useCheckout } from '@/hooks/useCheckout';
 import { toast } from 'sonner';
 import ConsultationBooking from '@/components/success/ConsultationBooking';
+import Footer from '@/components/layout/Footer';
 
 const SuccessPage = () => {
   const [searchParams] = useSearchParams();
@@ -45,39 +46,44 @@ const SuccessPage = () => {
   const isLoading = verifyLoading || checkoutLoading;
   
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <SuccessHeader />
-        
-        {/* Premium Service Offer Card */}
-        {!sessionId && !paymentStatus && (
-          <PremiumServiceCard
-            basePrice={basePrice}
-            documentRetrievalFee={documentRetrievalFee}
-            hasDocumentRetrieval={hasDocumentRetrieval}
-            loading={isLoading}
-            onCheckout={handleCheckout}
-          />
-        )}
-        
-        {/* Payment confirmation section */}
-        {paymentStatus === 'paid' && (
-          <PaymentConfirmation 
-            hasDocumentRetrieval={hasDocumentRetrieval} 
-          />
-        )}
-        
-        {/* Consultation Booking Section */}
-        <ConsultationBooking />
-        
-        <div className="text-center">
-          <Link to="/">
-            <Button variant="outline" className="mt-4">
-              Return to Home
-            </Button>
-          </Link>
+    <div className="flex flex-col min-h-screen">
+      <div className="flex-grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <SuccessHeader />
+          
+          {/* Premium Service Offer Card */}
+          {!sessionId && !paymentStatus && (
+            <PremiumServiceCard
+              basePrice={basePrice}
+              documentRetrievalFee={documentRetrievalFee}
+              hasDocumentRetrieval={hasDocumentRetrieval}
+              loading={isLoading}
+              onCheckout={handleCheckout}
+            />
+          )}
+          
+          {/* Payment confirmation section */}
+          {paymentStatus === 'paid' && (
+            <PaymentConfirmation 
+              hasDocumentRetrieval={hasDocumentRetrieval} 
+            />
+          )}
+          
+          {/* Consultation Booking Section */}
+          <ConsultationBooking />
+          
+          <div className="text-center">
+            <Link to="/">
+              <Button variant="outline" className="mt-4">
+                Return to Home
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
