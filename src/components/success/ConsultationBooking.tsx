@@ -14,26 +14,76 @@ const ConsultationBooking = () => {
       script.id = 'calendly-script';
       script.src = 'https://assets.calendly.com/assets/external/widget.js';
       script.async = true;
-      script.onload = () => setIsCalendlyLoaded(true);
+      script.onload = () => {
+        setIsCalendlyLoaded(true);
+        // Initialize all widgets after script loads
+        if (window.Calendly) {
+          setTimeout(() => {
+            window.Calendly.initInlineWidget({
+              url: 'https://calendly.com/n-metta/30min-consult-nm?primary_color=4e2d92',
+              parentElement: document.querySelector('.standard-calendly-widget'),
+              prefill: {},
+              utm: {}
+            });
+            window.Calendly.initInlineWidget({
+              url: 'https://calendly.com/n-metta/30min-prime-consultation-nm?primary_color=4e2d92',
+              parentElement: document.querySelector('.prime-calendly-widget'),
+              prefill: {},
+              utm: {}
+            });
+          }, 300);
+        }
+      };
       document.body.appendChild(script);
     } else {
       setIsCalendlyLoaded(true);
+      // If script is already loaded, initialize the widgets
+      if (window.Calendly) {
+        setTimeout(() => {
+          window.Calendly.initInlineWidget({
+            url: 'https://calendly.com/n-metta/30min-consult-nm?primary_color=4e2d92',
+            parentElement: document.querySelector('.standard-calendly-widget'),
+            prefill: {},
+            utm: {}
+          });
+          window.Calendly.initInlineWidget({
+            url: 'https://calendly.com/n-metta/30min-prime-consultation-nm?primary_color=4e2d92',
+            parentElement: document.querySelector('.prime-calendly-widget'),
+            prefill: {},
+            utm: {}
+          });
+        }, 300);
+      }
     }
 
-    // Cleanup function to remove script on component unmount
+    // Cleanup function
     return () => {
       // We don't remove the script as other components might be using it
     };
   }, []);
 
-  // Force rerender of Calendly widgets when tab changes
+  // Handle tab change - reinitialize the selected widget
   const handleTabChange = (value: string) => {
     // Slight delay to ensure the DOM is updated
     setTimeout(() => {
       if (window.Calendly) {
-        window.Calendly.initInlineWidgets();
+        if (value === 'standard') {
+          window.Calendly.initInlineWidget({
+            url: 'https://calendly.com/n-metta/30min-consult-nm?primary_color=4e2d92',
+            parentElement: document.querySelector('.standard-calendly-widget'),
+            prefill: {},
+            utm: {}
+          });
+        } else if (value === 'prime') {
+          window.Calendly.initInlineWidget({
+            url: 'https://calendly.com/n-metta/30min-prime-consultation-nm?primary_color=4e2d92',
+            parentElement: document.querySelector('.prime-calendly-widget'),
+            prefill: {},
+            utm: {}
+          });
+        }
       }
-    }, 100);
+    }, 300);
   };
 
   return (
@@ -71,7 +121,7 @@ const ConsultationBooking = () => {
                   Standard consultation times are perfect for general tax questions and planning.
                 </div>
                 <div 
-                  className="calendly-inline-widget" 
+                  className="standard-calendly-widget" 
                   data-url="https://calendly.com/n-metta/30min-consult-nm?primary_color=4e2d92" 
                   style={{ minWidth: '320px', height: '630px' }}
                 />
@@ -84,7 +134,7 @@ const ConsultationBooking = () => {
                   Prime consultation times are reserved for urgent matters that need immediate attention.
                 </div>
                 <div 
-                  className="calendly-inline-widget" 
+                  className="prime-calendly-widget" 
                   data-url="https://calendly.com/n-metta/30min-prime-consultation-nm?primary_color=4e2d92" 
                   style={{ minWidth: '320px', height: '630px' }}
                 />
