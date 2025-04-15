@@ -12,6 +12,7 @@ import SectionHeader from '../review/SectionHeader';
 import ReviewActions from '../review/ReviewActions';
 import { submitFormData } from '../review/submitUtils';
 import type { ContactInfo } from '../review/utils/types';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 import {
   Accordion
 } from "@/components/ui/accordion";
@@ -64,6 +65,8 @@ const ReviewStep: React.FC = () => {
 
   return (
     <div>
+      {isSubmitting && <LoadingOverlay message="Submitting your information..." />}
+      
       <h2 className="text-2xl font-bold mb-6 text-form-400">Review & Submit</h2>
       
       <p className="mb-6 text-gray-600">

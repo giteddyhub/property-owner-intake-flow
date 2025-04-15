@@ -41,8 +41,11 @@ export const submitFormData = async (
     // Step 4: Save owner-property assignments
     await saveAssignments(assignments, propertyIdMap, ownerIdMap, contactId);
     
-    // Success notification and redirect
+    // Success notification
     toast.success("Form submitted successfully! Thank you for completing the property owner intake process.");
+    
+    // Add a brief delay before redirecting to ensure loading state is visible
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // Redirect to the success page
     window.location.href = '/success';
