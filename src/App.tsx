@@ -9,13 +9,21 @@ import NotFound from "./pages/NotFound";
 import SuccessPage from "./pages/SuccessPage";
 import PaymentCancelled from "./pages/PaymentCancelled";
 
-const queryClient = new QueryClient();
+// Create a new QueryClient with sensible defaults
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
+      <Sonner position="top-right" closeButton />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />

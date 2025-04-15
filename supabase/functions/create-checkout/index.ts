@@ -15,7 +15,14 @@ serve(async (req) => {
   }
 
   try {
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    // Check if stripe key is set
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      console.error("STRIPE_SECRET_KEY is not set in environment variables");
+      throw new Error("Stripe API key not configured");
+    }
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2023-10-16",
     });
 
@@ -29,8 +36,14 @@ serve(async (req) => {
     console.log("Processing checkout for contact:", contactId, "with document retrieval:", hasDocumentRetrievalService);
 
     // Create a Supabase client with the Auth context of the logged in user
-    const supabaseUrl = "https://ijwwnaqprojdczfppxkf.supabase.co";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Supabase URL or service key not set");
+      throw new Error("Database configuration error");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch contact information to use in the checkout
@@ -83,15 +96,18 @@ serve(async (req) => {
     }
 
     console.log("Creating Stripe checkout session");
-
+    
+    // Get origin with a fallback
+    const origin = req.headers.get("origin") || "http://localhost:5173";
+    
     // Set up the checkout session with Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
       customer_email: contactData.email,
-      success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/payment-cancelled`,
+      success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/payment-cancelled`,
       metadata: {
         contact_id: contactId,
         has_document_retrieval: hasDocumentRetrievalService ? "true" : "false",
