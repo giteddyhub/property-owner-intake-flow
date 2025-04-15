@@ -4,6 +4,11 @@
 // Add Calendly type declarations
 interface Window {
   Calendly?: {
-    initInlineWidgets: () => void;
+    initInlineWidget: (options: {
+      url: string | null;
+      parentElement: Element;
+      prefill?: Record<string, any>;
+      utm?: Record<string, any>;
+    }) => void;
   }
 }
