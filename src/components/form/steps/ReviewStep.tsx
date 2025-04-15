@@ -10,7 +10,8 @@ import AssignmentReviewCard from '../review/AssignmentReviewCard';
 import SubmissionSummary from '../review/SubmissionSummary';
 import SectionHeader from '../review/SectionHeader';
 import ReviewActions from '../review/ReviewActions';
-import { submitFormData, ContactInfo } from '../review/submitUtils';
+import { submitFormData } from '../review/submitUtils';
+import type { ContactInfo } from '../review/utils/types';
 import {
   Accordion
 } from "@/components/ui/accordion";

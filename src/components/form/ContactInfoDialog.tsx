@@ -3,59 +3,40 @@ import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import type { ContactInfo } from './review/utils/types';
 
-// Define the schema with proper types
+// Contact form schema with validation
 const contactFormSchema = z.object({
-  fullName: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
+  fullName: z.string().min(2, { message: 'Full name must be at least 2 characters' }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
   termsAccepted: z.boolean().refine(val => val === true, {
-    message: "You must accept the terms and conditions.",
+    message: 'You must accept the terms and conditions',
   }),
   privacyAccepted: z.boolean().refine(val => val === true, {
-    message: "You must accept the privacy policy.",
+    message: 'You must accept the privacy policy',
   }),
 });
-
-type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 interface ContactInfoDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: ContactFormValues) => void;
+  onSubmit: (contactInfo: ContactInfo) => void;
   isSubmitting: boolean;
 }
 
 const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({ 
   open, 
   onClose, 
-  onSubmit,
-  isSubmitting
+  onSubmit, 
+  isSubmitting 
 }) => {
-  const form = useForm<ContactFormValues>({
+  const form = useForm<ContactInfo>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
       fullName: '',
@@ -65,19 +46,20 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
     },
   });
 
-  const handleSubmit = (data: ContactFormValues) => {
+  const handleSubmit = (data: ContactInfo) => {
     onSubmit(data);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={isSubmitting ? undefined : onClose}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Complete Your Submission</DialogTitle>
+          <DialogTitle>Contact Information</DialogTitle>
           <DialogDescription>
-            Please provide your contact information to complete your submission.
+            Please provide your contact details to complete the submission.
           </DialogDescription>
         </DialogHeader>
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
@@ -93,83 +75,64 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
                 </FormItem>
               )}
             />
+            
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your email address" type="email" {...field} />
+                    <Input placeholder="Enter your email address" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <div className="space-y-3 pt-2">
-              <FormField
-                control={form.control}
-                name="termsAccepted"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox 
-                        checked={field.value} 
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-sm font-normal">
-                        I agree to the{' '}
-                        <a 
-                          href="https://www.italiantaxes.com/terms-and-conditions" 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="text-form-300 hover:text-form-400 hover:underline inline-flex items-center"
-                        >
-                          Terms and Conditions
-                          <ExternalLink className="ml-1 h-3 w-3" />
-                        </a>
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="privacyAccepted"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox 
-                        checked={field.value} 
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-sm font-normal">
-                        I agree to the{' '}
-                        <a 
-                          href="https://www.italiantaxes.com/privacy-policy" 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="text-form-300 hover:text-form-400 hover:underline inline-flex items-center"
-                        >
-                          Privacy Policy
-                          <ExternalLink className="ml-1 h-3 w-3" />
-                        </a>
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="termsAccepted"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox 
+                      checked={field.value} 
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      I accept the <a href="#" className="text-blue-600 hover:underline">Terms and Conditions</a>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
             
-            <DialogFooter className="pt-4">
+            <FormField
+              control={form.control}
+              name="privacyAccepted"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox 
+                      checked={field.value} 
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      I accept the <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+            
+            <div className="flex justify-end space-x-3 pt-4">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -179,13 +142,20 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
                 Cancel
               </Button>
               <Button 
-                type="submit"
-                className="bg-form-300 hover:bg-form-400 text-white"
+                type="submit" 
                 disabled={isSubmitting}
+                className="bg-form-300 hover:bg-form-400 text-white"
               >
-                {isSubmitting ? "Submitting..." : "Submit"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit'
+                )}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </DialogContent>

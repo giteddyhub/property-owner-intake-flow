@@ -1,6 +1,6 @@
 
 import { toast } from 'sonner';
-import { SubmissionData } from './types';
+import type { SubmissionData } from './types';
 import { saveContactInfo } from './contactService';
 import { saveOwners } from './ownerService';
 import { saveProperties } from './propertyService';
