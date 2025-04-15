@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -58,8 +59,8 @@ const PremiumServiceCard = ({
           <div className="flex items-baseline justify-between">
             <div>
               <div className="flex items-center">
-                <span className="text-3xl font-bold text-gray-900">€{basePrice}</span>
-                <span className="ml-2 text-sm text-gray-500 line-through">€285</span>
+                <span className="text-3xl font-bold text-gray-900">${basePrice}</span>
+                <span className="ml-2 text-sm text-gray-500 line-through">$285</span>
                 <span className="ml-2 text-xs px-1.5 py-0.5 bg-green-100 text-green-800 rounded">Early Access</span>
               </div>
               <p className="text-sm text-gray-500">one-time fee</p>
@@ -70,7 +71,7 @@ const PremiumServiceCard = ({
                 <FileSearch className="h-5 w-5 text-blue-500 mr-2" />
                 <div>
                   <p className="text-sm font-medium text-blue-800">Document Retrieval</p>
-                  <p className="text-xs text-blue-600">+€{documentRetrievalFee}</p>
+                  <p className="text-xs text-blue-600">+${documentRetrievalFee}</p>
                 </div>
               </div>
             )}
@@ -78,7 +79,7 @@ const PremiumServiceCard = ({
           
           {hasDocumentRetrieval && (
             <div className="mt-2 text-right text-sm font-medium text-gray-900">
-              Total: €{totalPrice}
+              Total: ${totalPrice}
             </div>
           )}
           
@@ -87,7 +88,7 @@ const PremiumServiceCard = ({
             disabled={loading}
             className="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md flex items-center justify-center"
           >
-            {loading ? "Processing..." : `Purchase Full Service · €${totalPrice}`}
+            {loading ? "Processing..." : `Purchase Full Service · $${totalPrice}`}
             {!loading && <ChevronRight className="ml-2 h-4 w-4" />}
           </Button>
           

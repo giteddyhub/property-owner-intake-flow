@@ -48,18 +48,18 @@ serve(async (req) => {
     console.log("Found contact:", contactData.email);
 
     // Calculate the total amount
-    const basePrice = 24500; // €245.00 in cents
-    const documentRetrievalFee = 2800; // €28.00 in cents
+    const basePrice = 24500; // $245.00 in cents
+    const documentRetrievalFee = 2800; // $28.00 in cents
     const totalAmount = hasDocumentRetrievalService ? basePrice + documentRetrievalFee : basePrice;
 
     // Define line items based on services
     const lineItems = [
       {
         price_data: {
-          currency: "eur",
+          currency: "usd",
           product_data: {
             name: "Tax Filing Service - Early Access",
-            description: "Professional tax filing service for your Italian property (discounted from €285)",
+            description: "Professional tax filing service for your Italian property (discounted from $285)",
           },
           unit_amount: basePrice,
         },
@@ -71,7 +71,7 @@ serve(async (req) => {
     if (hasDocumentRetrievalService) {
       lineItems.push({
         price_data: {
-          currency: "eur",
+          currency: "usd",
           product_data: {
             name: "Document Retrieval Service",
             description: "Retrieval of property documents from Italian registry",
@@ -107,7 +107,7 @@ serve(async (req) => {
         .insert([
           {
             contact_id: contactId,
-            amount: totalAmount / 100, // Convert cents to euros
+            amount: totalAmount / 100, // Convert cents to dollars
             stripe_session_id: session.id,
             payment_status: "pending",
             has_document_retrieval: hasDocumentRetrievalService, // Use the correct column name
