@@ -1,4 +1,3 @@
-
 import { Owner, Property, OwnerPropertyAssignment, PropertyDocument } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -214,21 +213,14 @@ export const submitFormData = async (
       }
     }
     
-    toast({
-      title: "Success",
-      description: "Form submitted successfully! Thank you for completing the property owner intake process.",
-    });
+    toast.success("Form submitted successfully! Thank you for completing the property owner intake process.");
     
     // Redirect to the success page instead of external URL
     window.location.href = '/success';
     
   } catch (error) {
     console.error('Error submitting form:', error);
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : 'Please try again later',
-      variant: "destructive",
-    });
+    toast.error(error instanceof Error ? error.message : 'Please try again later');
     throw error;
   }
 };
