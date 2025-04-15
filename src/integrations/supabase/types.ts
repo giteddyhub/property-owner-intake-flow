@@ -12,25 +12,34 @@ export type Database = {
       contacts: {
         Row: {
           created_at: string
+          custom_checkout_link: string | null
           email: string
           full_name: string
           id: string
+          pdf_generated: boolean | null
+          pdf_url: string | null
           submitted_at: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          custom_checkout_link?: string | null
           email: string
           full_name: string
           id?: string
+          pdf_generated?: boolean | null
+          pdf_url?: string | null
           submitted_at?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          custom_checkout_link?: string | null
           email?: string
           full_name?: string
           id?: string
+          pdf_generated?: boolean | null
+          pdf_url?: string | null
           submitted_at?: string
           updated_at?: string
         }
