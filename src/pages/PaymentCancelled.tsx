@@ -1,10 +1,13 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 
 const PaymentCancelled = () => {
+  const handleReturnHome = () => {
+    window.location.href = 'https://www.italiantaxes.com/';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
@@ -64,17 +67,19 @@ const PaymentCancelled = () => {
         </div>
         
         <div className="text-center">
-          <Link to="/success">
-            <Button className="mr-4 bg-form-300 hover:bg-form-400 text-white">
-              Return to Success Page
-            </Button>
-          </Link>
+          <Button 
+            className="mr-4 bg-form-300 hover:bg-form-400 text-white"
+            onClick={() => window.location.href = '/success'}
+          >
+            Return to Success Page
+          </Button>
           
-          <Link to="/">
-            <Button variant="outline">
-              Go to Home
-            </Button>
-          </Link>
+          <Button 
+            variant="outline"
+            onClick={handleReturnHome}
+          >
+            Go to Home
+          </Button>
         </div>
       </div>
     </div>
@@ -82,3 +87,4 @@ const PaymentCancelled = () => {
 };
 
 export default PaymentCancelled;
+

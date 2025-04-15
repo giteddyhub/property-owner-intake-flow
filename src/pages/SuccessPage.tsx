@@ -1,13 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import SuccessHeader from '@/components/success/SuccessHeader';
 import PremiumServiceCard from '@/components/success/PremiumServiceCard';
 import PaymentConfirmation from '@/components/success/PaymentConfirmation';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { useCheckout } from '@/hooks/useCheckout';
-import { toast } from 'sonner';
 import ConsultationBooking from '@/components/success/ConsultationBooking';
 import Footer from '@/components/layout/Footer';
 
@@ -45,6 +44,10 @@ const SuccessPage = () => {
   // Determine if we're loading anything
   const isLoading = verifyLoading || checkoutLoading;
   
+  const handleReturnHome = () => {
+    window.location.href = 'https://www.italiantaxes.com/';
+  };
+  
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -73,11 +76,13 @@ const SuccessPage = () => {
           <ConsultationBooking />
           
           <div className="text-center">
-            <Link to="/">
-              <Button variant="outline" className="mt-4">
-                Return to Home
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={handleReturnHome}
+            >
+              Return to Home
+            </Button>
           </div>
         </div>
       </div>
@@ -89,3 +94,4 @@ const SuccessPage = () => {
 };
 
 export default SuccessPage;
+
