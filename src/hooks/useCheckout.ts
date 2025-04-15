@@ -22,6 +22,7 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
         return;
       }
       
+      toast.info('Preparing your checkout...');
       console.log('Initiating checkout with:', { contactId, hasDocumentRetrieval });
       
       const { data, error } = await supabase.functions.invoke('create-checkout', {
@@ -33,20 +34,28 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
       
       if (error) {
         console.error('Checkout error:', error);
+        toast.error(`Checkout error: ${error.message}`);
         throw error;
       }
       
       if (!data?.url) {
-        throw new Error('No checkout URL returned from server');
+        const errorMsg = 'No checkout URL returned from server';
+        console.error(errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       console.log('Redirecting to Stripe checkout:', data.url);
+      toast.success('Redirecting to secure payment page...');
       
-      // Redirect to Stripe checkout
-      window.location.href = data.url;
+      // Small delay to allow toast to be seen
+      setTimeout(() => {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      }, 500);
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      toast.error('Unable to initiate checkout. Please try again.');
+      toast.error('Unable to initiate checkout. Please try again later.');
     } finally {
       setLoading(false);
     }

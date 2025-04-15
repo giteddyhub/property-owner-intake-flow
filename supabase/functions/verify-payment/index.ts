@@ -26,6 +26,8 @@ serve(async (req) => {
       throw new Error("Session ID is required");
     }
 
+    console.log("Verifying payment for session:", sessionId);
+
     // Retrieve the session to check its status
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
@@ -39,19 +41,24 @@ serve(async (req) => {
       // Get the document retrieval status from metadata
       const hasDocumentRetrieval = session.metadata?.has_document_retrieval === "true";
       
-      // Update the purchase record
+      console.log("Payment is paid, updating purchase record");
+      
+      // Update the purchase record with the correct column name
       const { error: updateError } = await supabase
         .from("purchases")
         .update({
           payment_status: "paid",
           stripe_payment_id: session.payment_intent as string,
-          includes_document_retrieval: hasDocumentRetrieval,
+          has_document_retrieval: hasDocumentRetrieval,
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_session_id", sessionId);
 
       if (updateError) {
+        console.error("Error updating purchase record:", updateError);
         throw new Error(`Error updating purchase: ${updateError.message}`);
+      } else {
+        console.log("Purchase record updated successfully");
       }
     }
 

@@ -26,6 +26,8 @@ serve(async (req) => {
       throw new Error("Contact ID is required");
     }
 
+    console.log("Processing checkout for contact:", contactId, "with document retrieval:", hasDocumentRetrievalService);
+
     // Create a Supabase client with the Auth context of the logged in user
     const supabaseUrl = "https://ijwwnaqprojdczfppxkf.supabase.co";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -39,8 +41,11 @@ serve(async (req) => {
       .single();
 
     if (contactError || !contactData) {
+      console.error("Error fetching contact:", contactError);
       throw new Error(`Error fetching contact: ${contactError?.message || "Contact not found"}`);
     }
+
+    console.log("Found contact:", contactData.email);
 
     // Calculate the total amount
     const basePrice = 24500; // €245.00 in cents
@@ -77,6 +82,8 @@ serve(async (req) => {
       });
     }
 
+    console.log("Creating Stripe checkout session");
+
     // Set up the checkout session with Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -91,6 +98,8 @@ serve(async (req) => {
       },
     });
 
+    console.log("Stripe session created:", session.id);
+
     // Record the pending purchase in our database
     try {
       const { data: purchaseData, error: purchaseError } = await supabase
@@ -101,13 +110,15 @@ serve(async (req) => {
             amount: totalAmount / 100, // Convert cents to euros
             stripe_session_id: session.id,
             payment_status: "pending",
-            has_document_retrieval: hasDocumentRetrievalService, // Use correct column name
+            has_document_retrieval: hasDocumentRetrievalService, // Use the correct column name
           },
         ])
         .select();
 
       if (purchaseError) {
         console.error("Error creating purchase record:", purchaseError);
+      } else {
+        console.log("Purchase record created successfully");
       }
     } catch (dbError) {
       // Log but don't fail if database record creation fails

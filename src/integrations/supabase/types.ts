@@ -263,6 +263,7 @@ export type Database = {
           contact_id: string
           created_at: string
           currency: string
+          has_document_retrieval: boolean | null
           id: string
           payment_status: string
           stripe_payment_id: string | null
@@ -274,6 +275,7 @@ export type Database = {
           contact_id: string
           created_at?: string
           currency?: string
+          has_document_retrieval?: boolean | null
           id?: string
           payment_status?: string
           stripe_payment_id?: string | null
@@ -285,6 +287,7 @@ export type Database = {
           contact_id?: string
           created_at?: string
           currency?: string
+          has_document_retrieval?: boolean | null
           id?: string
           payment_status?: string
           stripe_payment_id?: string | null
