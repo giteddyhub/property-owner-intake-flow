@@ -1,5 +1,5 @@
 
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import type { SubmissionData } from './types';
 import { saveContactInfo } from './contactService';
 import { saveOwners } from './ownerService';
