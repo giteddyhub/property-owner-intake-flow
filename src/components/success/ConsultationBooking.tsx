@@ -121,7 +121,9 @@ const ConsultationBooking = () => {
         <div className="flex flex-col space-y-4">
           <div className="flex items-center space-x-2 bg-purple-50 p-3 rounded-md">
             <Video className="h-5 w-5 text-purple-600" />
-            <span className="text-sm text-purple-800">All consultations are conducted via Zoom video call</span>
+            <span className="text-sm text-purple-800">
+              All consultations are conducted via Zoom, Teams, Phone call, or WhatsApp
+            </span>
           </div>
 
           <Tabs defaultValue="standard" onValueChange={handleTabChange}>
