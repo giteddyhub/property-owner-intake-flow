@@ -28,8 +28,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Create custom checkout link
-    const checkoutLink = `${req.headers.get("origin")}/payment-success?contact=${contactId}`;
+    // Create custom checkout link with the custom subdomain
+    const customDomain = "https://ittax.siedwebs.com";
+    const checkoutLink = `${customDomain}/payment-success?contact=${contactId}`;
 
     // Update contact with custom checkout link
     const { error: updateError } = await supabase
