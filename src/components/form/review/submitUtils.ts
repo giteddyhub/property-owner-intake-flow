@@ -1,6 +1,7 @@
+
 import { Owner, Property, OwnerPropertyAssignment, PropertyDocument } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export interface ContactInfo {
   fullName: string;
@@ -46,6 +47,9 @@ export const submitFormData = async (
       console.error("Contact was saved but no ID was returned");
       throw new Error("Failed to get database ID for contact");
     }
+    
+    // Store contact ID in session storage for the success page
+    sessionStorage.setItem('contactId', contactId);
     
     for (const owner of owners) {
       console.log("Saving owner:", owner.firstName, owner.lastName);
@@ -213,18 +217,17 @@ export const submitFormData = async (
     toast({
       title: "Success",
       description: "Form submitted successfully! Thank you for completing the property owner intake process.",
-      type: "success",
-      duration: 5000,
     });
     
-    window.location.href = 'https://www.italiantaxes.com/';
+    // Redirect to the success page instead of external URL
+    window.location.href = '/success';
     
   } catch (error) {
     console.error('Error submitting form:', error);
     toast({
       title: "Error",
       description: error instanceof Error ? error.message : 'Please try again later',
-      type: "error",
+      variant: "destructive",
     });
     throw error;
   }
