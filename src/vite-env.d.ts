@@ -11,5 +11,6 @@ interface Window {
       prefill?: Record<string, any>;
       utm?: Record<string, any>;
     }) => void;
+    destroyInlineWidgets?: () => void;
   }
 }
