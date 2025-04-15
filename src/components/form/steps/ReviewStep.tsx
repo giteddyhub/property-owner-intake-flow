@@ -29,6 +29,17 @@ const ReviewStep: React.FC = () => {
   const handleSubmit = async (contactInfo: ContactInfo) => {
     try {
       setIsSubmitting(true);
+      
+      // Check if any property has document retrieval service
+      const hasDocumentRetrievalService = properties.some(
+        property => property.useDocumentRetrievalService
+      );
+      
+      // Store in session storage for the success page
+      sessionStorage.setItem('hasDocumentRetrievalService', 
+        JSON.stringify(hasDocumentRetrievalService)
+      );
+      
       await submitFormData(owners, properties, assignments, contactInfo);
     } catch (error) {
       console.error('Error during submission:', error);

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { CheckCircle, ChevronRight, FileText, ShieldCheck } from 'lucide-react';
+import { CheckCircle, ChevronRight, FileText, ShieldCheck, FileSearch } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -12,8 +12,17 @@ const SuccessPage = () => {
   const [loading, setLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [paymentVerified, setPaymentVerified] = useState(false);
+  const [hasDocumentRetrieval, setHasDocumentRetrieval] = useState(false);
   
   const sessionId = searchParams.get('session_id');
+  
+  // Check if user opted for document retrieval service
+  useEffect(() => {
+    const retrievalService = sessionStorage.getItem('hasDocumentRetrievalService');
+    if (retrievalService) {
+      setHasDocumentRetrieval(JSON.parse(retrievalService));
+    }
+  }, []);
   
   useEffect(() => {
     // Verify payment if we have a session ID from Stripe
@@ -29,6 +38,7 @@ const SuccessPage = () => {
           
           if (data.status === 'paid') {
             setPaymentStatus('paid');
+            setHasDocumentRetrieval(data.has_document_retrieval);
             toast.success('Payment successful! Thank you for your purchase.');
           } else {
             setPaymentStatus(data.status);
@@ -50,8 +60,7 @@ const SuccessPage = () => {
   const handleCheckout = async () => {
     try {
       setLoading(true);
-      // Get the contact ID from localStorage or session storage
-      // This should be saved after form submission
+      // Get the contact ID from sessionStorage
       const contactId = sessionStorage.getItem('contactId');
       
       if (!contactId) {
@@ -60,7 +69,10 @@ const SuccessPage = () => {
       }
       
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { contactId },
+        body: { 
+          contactId,
+          hasDocumentRetrievalService: hasDocumentRetrieval 
+        },
       });
       
       if (error) throw error;
@@ -74,6 +86,11 @@ const SuccessPage = () => {
       setLoading(false);
     }
   };
+
+  // Calculate total price
+  const basePrice = 245;
+  const documentRetrievalFee = 28;
+  const totalPrice = hasDocumentRetrieval ? basePrice + documentRetrievalFee : basePrice;
   
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -179,17 +196,39 @@ const SuccessPage = () => {
               </div>
               
               <div className="mt-8">
-                <div className="flex items-baseline text-gray-900">
-                  <span className="text-3xl font-bold">€299</span>
-                  <span className="ml-1 text-sm text-gray-500">one-time fee</span>
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <div className="flex items-center">
+                      <span className="text-3xl font-bold text-gray-900">€{basePrice}</span>
+                      <span className="ml-2 text-sm text-gray-500 line-through">€285</span>
+                      <span className="ml-2 text-xs px-1.5 py-0.5 bg-green-100 text-green-800 rounded">Early Access</span>
+                    </div>
+                    <p className="text-sm text-gray-500">one-time fee</p>
+                  </div>
+                  
+                  {hasDocumentRetrieval && (
+                    <div className="flex items-center bg-blue-50 px-3 py-2 rounded-md">
+                      <FileSearch className="h-5 w-5 text-blue-500 mr-2" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-800">Document Retrieval</p>
+                        <p className="text-xs text-blue-600">+€{documentRetrievalFee}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
+                
+                {hasDocumentRetrieval && (
+                  <div className="mt-2 text-right text-sm font-medium text-gray-900">
+                    Total: €{totalPrice}
+                  </div>
+                )}
                 
                 <Button
                   onClick={handleCheckout}
                   disabled={loading}
                   className="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md flex items-center justify-center"
                 >
-                  {loading ? "Processing..." : "Purchase Full Service"}
+                  {loading ? "Processing..." : `Purchase Full Service · €${totalPrice}`}
                   {!loading && <ChevronRight className="ml-2 h-4 w-4" />}
                 </Button>
                 
@@ -213,6 +252,18 @@ const SuccessPage = () => {
               Thank you for purchasing our full tax filing service! Our team will handle everything for you.
               You will receive a confirmation email with details shortly.
             </p>
+            
+            {hasDocumentRetrieval && (
+              <div className="mt-4 flex items-start bg-blue-50 p-3 rounded-md">
+                <FileSearch className="h-6 w-6 text-blue-500 mt-0.5 mr-2" />
+                <div>
+                  <p className="font-medium text-blue-800">Document Retrieval Service Included</p>
+                  <p className="text-sm text-blue-700">
+                    We'll retrieve all necessary property documents from the Italian registry on your behalf.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
         

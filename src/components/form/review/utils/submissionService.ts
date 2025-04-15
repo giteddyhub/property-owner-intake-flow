@@ -20,8 +20,17 @@ export const submitFormData = async (
       contactInfo
     });
     
+    // Check if any property has document retrieval service enabled
+    const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
+    
+    // Store this information in sessionStorage for the success page
+    sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
+    
     // Step 1: Save contact information
     const contactId = await saveContactInfo(contactInfo);
+    
+    // Store contact ID in sessionStorage
+    sessionStorage.setItem('contactId', contactId);
     
     // Step 2: Save owners and get ID mappings
     const ownerIdMap = await saveOwners(owners, contactId);

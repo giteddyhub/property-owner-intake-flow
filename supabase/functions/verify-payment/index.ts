@@ -36,12 +36,16 @@ serve(async (req) => {
 
     // Only proceed if payment was successful
     if (session.payment_status === "paid") {
+      // Get the document retrieval status from metadata
+      const hasDocumentRetrieval = session.metadata?.has_document_retrieval === "true";
+      
       // Update the purchase record
       const { error: updateError } = await supabase
         .from("purchases")
         .update({
           payment_status: "paid",
           stripe_payment_id: session.payment_intent as string,
+          includes_document_retrieval: hasDocumentRetrieval,
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_session_id", sessionId);
@@ -51,12 +55,13 @@ serve(async (req) => {
       }
     }
 
-    // Return the session status
+    // Return the session status and metadata
     return new Response(
       JSON.stringify({
         status: session.payment_status,
         customer_email: session.customer_details?.email,
         metadata: session.metadata,
+        has_document_retrieval: session.metadata?.has_document_retrieval === "true",
       }),
       { 
         headers: { 

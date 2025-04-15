@@ -20,7 +20,7 @@ serve(async (req) => {
     });
 
     const requestData = await req.json();
-    const { contactId } = requestData;
+    const { contactId, hasDocumentRetrievalService } = requestData;
 
     if (!contactId) {
       throw new Error("Contact ID is required");
@@ -42,28 +42,52 @@ serve(async (req) => {
       throw new Error(`Error fetching contact: ${contactError?.message || "Contact not found"}`);
     }
 
+    // Calculate the total amount
+    const basePrice = 24500; // €245.00 in cents
+    const documentRetrievalFee = 2800; // €28.00 in cents
+    const totalAmount = hasDocumentRetrievalService ? basePrice + documentRetrievalFee : basePrice;
+
+    // Define line items based on services
+    const lineItems = [
+      {
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: "Tax Filing Service - Early Access",
+            description: "Professional tax filing service for your Italian property (discounted from €285)",
+          },
+          unit_amount: basePrice,
+        },
+        quantity: 1,
+      },
+    ];
+
+    // Add document retrieval service if selected
+    if (hasDocumentRetrievalService) {
+      lineItems.push({
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: "Document Retrieval Service",
+            description: "Retrieval of property documents from Italian registry",
+          },
+          unit_amount: documentRetrievalFee,
+        },
+        quantity: 1,
+      });
+    }
+
     // Set up the checkout session with Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: "Complete Tax Filing Service",
-              description: "Professional tax filing service for your Italian property",
-            },
-            unit_amount: 29900, // €299.00
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       mode: "payment",
       customer_email: contactData.email,
       success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/payment-cancelled`,
       metadata: {
         contact_id: contactId,
+        has_document_retrieval: hasDocumentRetrievalService ? "true" : "false",
       },
     });
 
@@ -73,9 +97,10 @@ serve(async (req) => {
       .insert([
         {
           contact_id: contactId,
-          amount: 299,
+          amount: totalAmount / 100, // Convert cents to euros
           stripe_session_id: session.id,
           payment_status: "pending",
+          includes_document_retrieval: hasDocumentRetrievalService,
         },
       ])
       .select();

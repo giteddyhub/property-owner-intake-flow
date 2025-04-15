@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { usePropertyForm } from './context/PropertyFormContext';
 import { Label } from '@/components/ui/label';
@@ -80,7 +81,7 @@ const PropertyDocumentsSection = () => {
                 checked={useRetrievalService}
                 onCheckedChange={handleRetrievalToggle}
               />
-              <span>Use document retrieval service (+28,- USD fee)</span>
+              <span>Use document retrieval service (+€28 fee)</span>
             </div>
           </Label>
           
@@ -92,7 +93,7 @@ const PropertyDocumentsSection = () => {
                   <p className="font-medium">Document Retrieval Service</p>
                   <p className="text-sm text-gray-500">
                     We will retrieve all necessary documents from the property registry for you.
-                    This service costs $28 USD and will be charged upon submission.
+                    This service costs €28 and will be added to your total upon checkout.
                   </p>
                 </div>
               </div>
