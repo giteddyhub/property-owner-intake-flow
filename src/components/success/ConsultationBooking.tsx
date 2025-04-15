@@ -142,7 +142,7 @@ const ConsultationBooking = () => {
                 <div 
                   ref={standardWidgetRef}
                   className="standard-calendly-widget" 
-                  style={{ minWidth: '320px', height: '630px' }}
+                  style={{ minWidth: '320px', height: '750px' }}
                 />
               </div>
             </TabsContent>
@@ -155,7 +155,7 @@ const ConsultationBooking = () => {
                 <div 
                   ref={primeWidgetRef}
                   className="prime-calendly-widget" 
-                  style={{ minWidth: '320px', height: '630px' }}
+                  style={{ minWidth: '320px', height: '750px' }}
                 />
               </div>
             </TabsContent>
