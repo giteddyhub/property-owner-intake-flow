@@ -92,21 +92,26 @@ serve(async (req) => {
     });
 
     // Record the pending purchase in our database
-    const { data: purchaseData, error: purchaseError } = await supabase
-      .from("purchases")
-      .insert([
-        {
-          contact_id: contactId,
-          amount: totalAmount / 100, // Convert cents to euros
-          stripe_session_id: session.id,
-          payment_status: "pending",
-          includes_document_retrieval: hasDocumentRetrievalService,
-        },
-      ])
-      .select();
+    try {
+      const { data: purchaseData, error: purchaseError } = await supabase
+        .from("purchases")
+        .insert([
+          {
+            contact_id: contactId,
+            amount: totalAmount / 100, // Convert cents to euros
+            stripe_session_id: session.id,
+            payment_status: "pending",
+            has_document_retrieval: hasDocumentRetrievalService, // Use correct column name
+          },
+        ])
+        .select();
 
-    if (purchaseError) {
-      console.error("Error creating purchase record:", purchaseError);
+      if (purchaseError) {
+        console.error("Error creating purchase record:", purchaseError);
+      }
+    } catch (dbError) {
+      // Log but don't fail if database record creation fails
+      console.error("Database error:", dbError);
     }
 
     // Return the session URL to redirect the user to the Stripe checkout

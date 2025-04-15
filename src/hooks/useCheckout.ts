@@ -22,6 +22,8 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
         return;
       }
       
+      console.log('Initiating checkout with:', { contactId, hasDocumentRetrieval });
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
           contactId,
@@ -29,7 +31,16 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Checkout error:', error);
+        throw error;
+      }
+      
+      if (!data?.url) {
+        throw new Error('No checkout URL returned from server');
+      }
+      
+      console.log('Redirecting to Stripe checkout:', data.url);
       
       // Redirect to Stripe checkout
       window.location.href = data.url;
