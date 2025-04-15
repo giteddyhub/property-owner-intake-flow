@@ -8,29 +8,31 @@ const ConsultationBooking = () => {
   const [isCalendlyLoaded, setIsCalendlyLoaded] = useState(false);
   const standardWidgetRef = useRef<HTMLDivElement>(null);
   const primeWidgetRef = useRef<HTMLDivElement>(null);
-  const widgetInstancesRef = useRef<any[]>([]);
 
-  // Cleanup function to remove any existing Calendly widgets
+  // More thorough cleanup function to remove any existing Calendly widgets and popups
   const cleanupWidgets = () => {
-    // Remove any existing Calendly inline widgets
+    // Remove any existing Calendly inline widgets that aren't in our controlled containers
     const existingWidgets = document.querySelectorAll('.calendly-inline-widget');
     existingWidgets.forEach(widget => {
-      if (widget.parentNode && widget.parentNode.parentNode && 
-          !standardWidgetRef.current?.contains(widget) && 
-          !primeWidgetRef.current?.contains(widget)) {
+      const isInOurContainers = 
+        (standardWidgetRef.current && standardWidgetRef.current.contains(widget)) || 
+        (primeWidgetRef.current && primeWidgetRef.current.contains(widget));
+      
+      if (!isInOurContainers && widget.parentNode) {
         widget.parentNode.removeChild(widget);
       }
     });
     
-    // Also remove any script-injected elements outside our containers
-    const existingPopups = document.querySelectorAll('.calendly-overlay');
-    existingPopups.forEach(popup => {
-      document.body.removeChild(popup);
+    // Remove any Calendly popups and overlays
+    document.querySelectorAll('.calendly-overlay, .calendly-popup-content').forEach(el => {
+      if (el.parentNode) {
+        el.parentNode.removeChild(el);
+      }
     });
   };
 
   useEffect(() => {
-    // Check if Calendly script is already loaded
+    // Only add the script once
     if (!document.getElementById('calendly-script')) {
       const script = document.createElement('script');
       script.id = 'calendly-script';
@@ -46,7 +48,7 @@ const ConsultationBooking = () => {
       initializeWidgets();
     }
 
-    // Cleanup when component unmounts
+    // Run cleanup when component unmounts
     return () => {
       cleanupWidgets();
     };
@@ -55,25 +57,33 @@ const ConsultationBooking = () => {
   const initializeWidgets = () => {
     if (!window.Calendly) return;
     
+    // Clear any existing widgets first
     cleanupWidgets();
     
+    // Short delay to ensure DOM is ready
     setTimeout(() => {
       if (standardWidgetRef.current) {
-        window.Calendly.initInlineWidget({
-          url: 'https://calendly.com/n-metta/30min-consult-nm?primary_color=4e2d92',
-          parentElement: standardWidgetRef.current,
-          prefill: {},
-          utm: {}
-        });
+        // Only initialize if the container is empty
+        if (!standardWidgetRef.current.querySelector('.calendly-inline-widget')) {
+          window.Calendly.initInlineWidget({
+            url: 'https://calendly.com/n-metta/30min-consult-nm?primary_color=4e2d92',
+            parentElement: standardWidgetRef.current,
+            prefill: {},
+            utm: {}
+          });
+        }
       }
       
       if (primeWidgetRef.current) {
-        window.Calendly.initInlineWidget({
-          url: 'https://calendly.com/n-metta/30min-prime-consultation-nm?primary_color=4e2d92',
-          parentElement: primeWidgetRef.current,
-          prefill: {},
-          utm: {}
-        });
+        // Only initialize if the container is empty
+        if (!primeWidgetRef.current.querySelector('.calendly-inline-widget')) {
+          window.Calendly.initInlineWidget({
+            url: 'https://calendly.com/n-metta/30min-prime-consultation-nm?primary_color=4e2d92',
+            parentElement: primeWidgetRef.current,
+            prefill: {},
+            utm: {}
+          });
+        }
       }
     }, 300);
   };
@@ -87,19 +97,25 @@ const ConsultationBooking = () => {
     setTimeout(() => {
       if (window.Calendly) {
         if (value === 'standard' && standardWidgetRef.current) {
-          window.Calendly.initInlineWidget({
-            url: 'https://calendly.com/n-metta/30min-consult-nm?primary_color=4e2d92',
-            parentElement: standardWidgetRef.current,
-            prefill: {},
-            utm: {}
-          });
+          // Check if widget already exists in container
+          if (!standardWidgetRef.current.querySelector('.calendly-inline-widget')) {
+            window.Calendly.initInlineWidget({
+              url: 'https://calendly.com/n-metta/30min-consult-nm?primary_color=4e2d92',
+              parentElement: standardWidgetRef.current,
+              prefill: {},
+              utm: {}
+            });
+          }
         } else if (value === 'prime' && primeWidgetRef.current) {
-          window.Calendly.initInlineWidget({
-            url: 'https://calendly.com/n-metta/30min-prime-consultation-nm?primary_color=4e2d92',
-            parentElement: primeWidgetRef.current,
-            prefill: {},
-            utm: {}
-          });
+          // Check if widget already exists in container
+          if (!primeWidgetRef.current.querySelector('.calendly-inline-widget')) {
+            window.Calendly.initInlineWidget({
+              url: 'https://calendly.com/n-metta/30min-prime-consultation-nm?primary_color=4e2d92',
+              parentElement: primeWidgetRef.current,
+              prefill: {},
+              utm: {}
+            });
+          }
         }
       }
     }, 300);
