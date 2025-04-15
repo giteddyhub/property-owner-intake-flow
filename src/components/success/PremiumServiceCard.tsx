@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -26,7 +25,7 @@ const PremiumServiceCard = ({
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Need Expert Help?</h2>
+            <h2 className="text-xl font-bold text-gray-900">DFY Tax Filing</h2>
             <p className="mt-2 text-gray-700">
               Let our tax professionals handle everything for you
             </p>
