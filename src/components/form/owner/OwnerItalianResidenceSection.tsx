@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Owner } from '@/types/form';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { HelpCircle } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, StandardTooltipContent } from '@/components/ui/tooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -10,16 +9,12 @@ import ResidentContactDialog from './ResidentContactDialog';
 
 interface OwnerItalianResidenceSectionProps {
   owner: Owner;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onResidencyStatusChange: (value: string) => void;
-  onDaysInItalyChange: (value: string) => void;
 }
 
 const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> = ({ 
   owner, 
-  onInputChange, 
-  onResidencyStatusChange, 
-  onDaysInItalyChange 
+  onResidencyStatusChange
 }) => {
   const [showResidentDialog, setShowResidentDialog] = useState(false);
   
@@ -83,83 +78,6 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
         onOpenChange={setShowResidentDialog}
         onStatusChange={handleStatusChange}
       />
-      
-      {owner.isResidentInItaly === false && (
-        <div className="mt-4 border-t pt-4">
-          <h4 className="font-medium mb-3">Italian Address*</h4>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label htmlFor="comuneName">Comune Name*</Label>
-              <Input 
-                id="comuneName" 
-                name="comuneName" 
-                placeholder="Enter Italian comune name"
-                value={owner.italianResidenceDetails?.comuneName || ''} 
-                onChange={onInputChange}
-                className="mt-1"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="street">Street Address*</Label>
-              <Input 
-                id="street" 
-                name="street" 
-                placeholder="Enter street address in Italy"
-                value={owner.italianResidenceDetails?.street || ''} 
-                onChange={onInputChange}
-                className="mt-1"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="city">City*</Label>
-              <Input 
-                id="city" 
-                name="city" 
-                placeholder="Enter city name in Italy"
-                value={owner.italianResidenceDetails?.city || ''} 
-                onChange={onInputChange}
-                className="mt-1"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="zip">ZIP/Postal Code*</Label>
-              <Input 
-                id="zip" 
-                name="zip" 
-                placeholder="Enter ZIP/postal code in Italy"
-                value={owner.italianResidenceDetails?.zip || ''} 
-                onChange={onInputChange}
-                className="mt-1"
-              />
-            </div>
-          </div>
-          
-          <div className="mt-6">
-            <h4 className="font-medium mb-3">Time spent in Italy during 2024*</h4>
-            <div className="mt-2 space-y-2">
-              <ToggleGroup 
-                type="single" 
-                variant="purple"
-                value={owner.italianResidenceDetails?.spentOver182Days !== undefined 
-                  ? (owner.italianResidenceDetails.spentOver182Days ? 'over182' : 'under182') 
-                  : undefined}
-                onValueChange={onDaysInItalyChange}
-                className="flex justify-start space-x-2"
-              >
-                <ToggleGroupItem value="over182" className="px-4">
-                  More than 182 days
-                </ToggleGroupItem>
-                <ToggleGroupItem value="under182" className="px-4">
-                  Less than 182 days
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

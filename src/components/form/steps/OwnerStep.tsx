@@ -20,8 +20,6 @@ const OwnerStep: React.FC = () => {
     handleOwnerChange,
     handleDateChange,
     handleResidencyStatusChange,
-    handleResidencyDetailChange,
-    handleDaysInItalyChange,
     handleCountryChange,
     scrollToTop,
     addOwner,
@@ -73,8 +71,6 @@ const OwnerStep: React.FC = () => {
           onDateChange={handleDateChange}
           onInputChange={handleInputChange}
           onResidencyStatusChange={handleResidencyStatusChange}
-          onResidencyDetailChange={handleResidencyDetailChange}
-          onDaysInItalyChange={handleDaysInItalyChange}
           hideCancel={owners.length === 0 && editingIndex === null}
         />
       )}

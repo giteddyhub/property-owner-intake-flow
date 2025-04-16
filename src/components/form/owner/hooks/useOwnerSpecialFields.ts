@@ -1,5 +1,5 @@
 
-import { Owner, ItalianResidenceDetails } from '@/types/form';
+import { Owner } from '@/types/form';
 
 export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetStateAction<Owner>>) => {
   const handleDateChange = (date: Date | undefined) => {
@@ -26,48 +26,8 @@ export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetS
     setCurrentOwner(prev => ({ 
       ...prev, 
       isResidentInItaly: isResident,
-      italianResidenceDetails: isResident === false 
-        ? (prev.italianResidenceDetails || { 
-            comuneName: '', 
-            street: '',
-            city: '',
-            zip: '',
-            spentOver182Days: undefined
-          })
-        : undefined
-    }));
-  };
-
-  const handleResidencyDetailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCurrentOwner(prev => ({
-      ...prev,
-      italianResidenceDetails: {
-        ...(prev.italianResidenceDetails || { 
-          comuneName: '', 
-          street: '',
-          city: '',
-          zip: '',
-          spentOver182Days: undefined
-        }),
-        [name]: value
-      }
-    }));
-  };
-
-  const handleDaysInItalyChange = (value: string) => {
-    const spentOver182Days = value === 'over182';
-    setCurrentOwner(prev => ({
-      ...prev,
-      italianResidenceDetails: {
-        ...(prev.italianResidenceDetails || {
-          comuneName: '',
-          street: '',
-          city: '',
-          zip: '',
-        }),
-        spentOver182Days
-      }
+      // We're no longer collecting Italian residence details
+      italianResidenceDetails: undefined
     }));
   };
 
@@ -90,8 +50,6 @@ export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetS
   return {
     handleDateChange,
     handleResidencyStatusChange,
-    handleResidencyDetailChange,
-    handleDaysInItalyChange,
     handleCountryChange
   };
 };

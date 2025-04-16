@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Owner, ItalianResidenceDetails } from '@/types/form';
+import { Owner } from '@/types/form';
 import { format } from 'date-fns';
 import { Flag, FlagOff, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,9 +44,6 @@ const OwnerList: React.FC<OwnerListProps> = ({ owners, onAddOwner, onEditOwner, 
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Italian Tax Resident</p>
-                          {owner.italianResidenceDetails?.spentOver182Days !== undefined && (
-                            <p>{owner.italianResidenceDetails?.spentOver182Days ? 'More than' : 'Less than'} 182 days in Italy in 2024</p>
-                          )}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -75,18 +72,6 @@ const OwnerList: React.FC<OwnerListProps> = ({ owners, onAddOwner, onEditOwner, 
               <p className="text-sm text-gray-600">
                 <strong>Address:</strong> {owner.address.street}, {owner.address.city}, {owner.address.zip}, {owner.address.country}
               </p>
-              {owner.isResidentInItaly && owner.italianResidenceDetails && (
-                <>
-                  <p className="text-sm text-gray-600">
-                    <strong>Italian Residence:</strong> {owner.italianResidenceDetails.comuneName}, {owner.italianResidenceDetails.street}, {owner.italianResidenceDetails.city}, {owner.italianResidenceDetails.zip}
-                  </p>
-                  {owner.italianResidenceDetails.spentOver182Days !== undefined && (
-                    <p className="text-sm text-gray-600">
-                      <strong>Time in Italy (2024):</strong> {owner.italianResidenceDetails.spentOver182Days ? 'More than' : 'Less than'} 182 days
-                    </p>
-                  )}
-                </>
-              )}
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
               <Button 

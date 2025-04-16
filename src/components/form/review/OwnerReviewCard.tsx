@@ -39,16 +39,6 @@ const OwnerReviewCard: React.FC<OwnerReviewCardProps> = ({ owner }) => {
         <p className="mb-1">
           <span className="font-medium">Italian Resident:</span> {owner.isResidentInItaly ? 'Yes' : 'No'}
         </p>
-        {owner.isResidentInItaly && owner.italianResidenceDetails && (
-          <>
-            <p className="mb-1">
-              <span className="font-medium">Residency Details:</span> {owner.italianResidenceDetails.comuneName}
-            </p>
-            <p className="mb-1">
-              <span className="font-medium">Italian Address:</span> {owner.italianResidenceDetails.street}, {owner.italianResidenceDetails.city}, {owner.italianResidenceDetails.zip}
-            </p>
-          </>
-        )}
       </CardContent>
     </Card>
   );

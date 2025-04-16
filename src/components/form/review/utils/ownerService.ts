@@ -26,11 +26,12 @@ export const saveOwners = async (
         italian_tax_code: owner.italianTaxCode,
         marital_status: owner.maritalStatus,
         is_resident_in_italy: owner.isResidentInItaly,
-        spent_over_182_days: owner.italianResidenceDetails?.spentOver182Days,
-        italian_residence_comune_name: owner.italianResidenceDetails?.comuneName,
-        italian_residence_street: owner.italianResidenceDetails?.street,
-        italian_residence_city: owner.italianResidenceDetails?.city,
-        italian_residence_zip: owner.italianResidenceDetails?.zip,
+        // We still save these fields as null to maintain compatibility with the database schema
+        spent_over_182_days: null,
+        italian_residence_comune_name: null,
+        italian_residence_street: null,
+        italian_residence_city: null,
+        italian_residence_zip: null,
         contact_id: contactId
       })
       .select();
