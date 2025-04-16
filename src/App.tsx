@@ -1,12 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import Index from './pages';
+import Index from './pages/Index';
 import SuccessPage from './pages/SuccessPage';
 import PaymentCancelled from './pages/PaymentCancelled';
 import NotFound from './pages/NotFound';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
-import { ThemeProvider } from '@/components/theme-provider';
 import ResidentSuccessPage from './pages/ResidentSuccessPage';
 
 function App() {
@@ -27,13 +27,13 @@ function App() {
       toast({
         title: 'Payment Cancelled',
         description: 'Your payment was cancelled. Please try again.',
-        variant: 'destructive',
+        type: 'error',
       });
     }
   }, [location.search, toast]);
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-react-tailwind-theme">
+    <div className="min-h-screen bg-background">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/success" element={<SuccessPage />} />
@@ -42,7 +42,7 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
       <Toaster />
-    </ThemeProvider>
+    </div>
   );
 }
 
