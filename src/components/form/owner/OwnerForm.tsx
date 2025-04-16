@@ -1,10 +1,12 @@
 
 import React from 'react';
-import { Owner, ItalianResidenceDetails } from '@/types/form';
-import { Button } from '@/components/ui/button';
+import { Owner } from '@/types/form';
 import OwnerBasicInfoSection from './OwnerBasicInfoSection';
 import OwnerAddressSection from './OwnerAddressSection';
 import OwnerItalianResidenceSection from './OwnerItalianResidenceSection';
+import FormHeader from './FormHeader';
+import FormActions from './FormActions';
+import { useOwnerFormActions } from './hooks/useOwnerForm.actions';
 
 interface OwnerFormProps {
   owner: Owner;
@@ -35,16 +37,21 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
   onDaysInItalyChange,
   hideCancel = false
 }) => {
-  const handleSubmit = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    onSubmit();
-  };
+  const {
+    handleSubmit,
+    formTitle,
+    submitButtonText
+  } = useOwnerFormActions({
+    owner,
+    editingIndex,
+    onSubmit,
+    onCancel,
+    hideCancel
+  });
 
   return (
     <div className="border rounded-lg p-6 bg-gray-50">
-      <h3 className="text-lg font-semibold mb-4">
-        {editingIndex !== null ? 'Edit Owner' : 'Add New Owner'}
-      </h3>
+      <FormHeader title={formTitle} />
       
       <OwnerBasicInfoSection 
         owner={owner} 
@@ -66,24 +73,12 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
         onDaysInItalyChange={onDaysInItalyChange} 
       />
       
-      <div className="flex justify-end space-x-3 mt-6">
-        {!hideCancel && (
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-        )}
-        <Button 
-          type="button" 
-          onClick={handleSubmit}
-          className="bg-form-300 hover:bg-form-400 text-white"
-        >
-          {editingIndex !== null ? 'Update Owner' : 'Add Owner'}
-        </Button>
-      </div>
+      <FormActions 
+        onSubmit={handleSubmit}
+        onCancel={onCancel}
+        submitText={submitButtonText}
+        hideCancel={hideCancel}
+      />
     </div>
   );
 };
