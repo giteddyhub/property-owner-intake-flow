@@ -40,6 +40,23 @@ export const validateOwner = (owner: Owner): boolean => {
   }
   
   if (owner.isResidentInItaly === true) {
+    if (!owner.italianResidenceDetails) {
+      toast.error('Please complete your Italian residence details');
+      return false;
+    }
+    
+    const { comuneName, street, city, zip, spentOver182Days } = owner.italianResidenceDetails;
+    
+    if (!comuneName || !street || !city || !zip) {
+      toast.error('Please complete all Italian residence address fields');
+      return false;
+    }
+    
+    if (spentOver182Days === undefined) {
+      toast.error('Please specify if you spent more than 182 days in Italy in 2024');
+      return false;
+    }
+    
     toast.error('Italian residents need to use our specialized service. Please select "No" or "Not sure"');
     return false;
   }

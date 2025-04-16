@@ -26,8 +26,47 @@ export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetS
     setCurrentOwner(prev => ({ 
       ...prev, 
       isResidentInItaly: isResident,
-      // We're no longer collecting Italian residence details
-      italianResidenceDetails: undefined
+      // Initialize residence details if selecting 'yes'
+      italianResidenceDetails: isResident === true ? 
+        (prev.italianResidenceDetails || {
+          comuneName: '',
+          street: '',
+          city: '',
+          zip: '',
+          spentOver182Days: undefined
+        }) : undefined
+    }));
+  };
+
+  const handleResidencyDetailChange = (field: string, value: string) => {
+    setCurrentOwner(prev => ({
+      ...prev,
+      italianResidenceDetails: {
+        ...(prev.italianResidenceDetails || {
+          comuneName: '',
+          street: '',
+          city: '',
+          zip: '',
+          spentOver182Days: undefined
+        }),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleDaysInItalyChange = (value: boolean) => {
+    setCurrentOwner(prev => ({
+      ...prev,
+      italianResidenceDetails: {
+        ...(prev.italianResidenceDetails || {
+          comuneName: '',
+          street: '',
+          city: '',
+          zip: '',
+          spentOver182Days: undefined
+        }),
+        spentOver182Days: value
+      }
     }));
   };
 
@@ -50,6 +89,8 @@ export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetS
   return {
     handleDateChange,
     handleResidencyStatusChange,
+    handleResidencyDetailChange,
+    handleDaysInItalyChange,
     handleCountryChange
   };
 };

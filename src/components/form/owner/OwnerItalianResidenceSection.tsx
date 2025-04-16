@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Owner } from '@/types/form';
 import { Label } from '@/components/ui/label';
@@ -9,11 +10,15 @@ import ResidentContactDialog from './ResidentContactDialog';
 interface OwnerItalianResidenceSectionProps {
   owner: Owner;
   onResidencyStatusChange: (value: string) => void;
+  onResidencyDetailChange?: (field: string, value: string) => void;
+  onDaysInItalyChange?: (value: boolean) => void;
 }
 
 const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> = ({ 
   owner, 
-  onResidencyStatusChange
+  onResidencyStatusChange,
+  onResidencyDetailChange,
+  onDaysInItalyChange
 }) => {
   const [showResidentDialog, setShowResidentDialog] = useState(false);
   
@@ -98,6 +103,9 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
         open={showResidentDialog} 
         onOpenChange={handleDialogOpenChange}
         onStatusChange={handleStatusChange}
+        italianResidenceDetails={owner.italianResidenceDetails}
+        onResidenceDetailChange={onResidencyDetailChange}
+        onDaysInItalyChange={onDaysInItalyChange}
       />
     </div>
   );
