@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, ArrowRight, Home, HelpCircle, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ type AssessmentStep = {
   options: {
     id: string;
     label: string;
+    description?: string;
     nextStep?: string;
     resultStrength?: number;
     resultStatus?: 'likely-resident' | 'likely-non-resident' | 'continue-assess';
@@ -193,13 +193,11 @@ const ResidencyAssessmentForm: React.FC<ResidencyAssessmentFormProps> = ({ onBac
     const option = currentStep.options.find(opt => opt.id === optionId);
     if (!option) return;
 
-    // Save the selected option
     setSelectedOptions(prev => ({
       ...prev,
       [currentStep.id]: optionId
     }));
 
-    // If this option leads to a result, set the result
     if (option.resultStatus) {
       let recommendations: string[] = [];
       
@@ -231,7 +229,6 @@ const ResidencyAssessmentForm: React.FC<ResidencyAssessmentFormProps> = ({ onBac
       return;
     }
 
-    // If this option leads to another step, update the current step
     if (option.nextStep) {
       setStepHistory(prev => [...prev, currentStepId]);
       setCurrentStepId(option.nextStep);
