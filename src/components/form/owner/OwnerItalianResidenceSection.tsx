@@ -55,6 +55,12 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
 
   const handleDialogOpenChange = (open: boolean) => {
     setShowResidentDialog(open);
+    
+    // If they close the dialog but their selection is still 'yes',
+    // we need to reopen it since they haven't changed their status
+    if (!open && currentValue === 'yes') {
+      setTimeout(() => setShowResidentDialog(true), 100);
+    }
   };
 
   return (
