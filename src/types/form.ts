@@ -8,11 +8,9 @@ export interface Address {
   country: string;
 }
 
+// Simplified ItalianResidenceDetails interface without address fields
 export interface ItalianResidenceDetails {
-  comuneName: string;
-  street: string;
-  city: string;
-  zip: string;
+  // All address fields have been removed
 }
 
 export interface Owner {

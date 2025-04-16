@@ -33,15 +33,9 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
   open,
   onOpenChange,
   onStatusChange,
-  italianResidenceDetails = {
-    comuneName: '',
-    street: '',
-    city: '',
-    zip: ''
-  },
+  italianResidenceDetails = {},
   onResidencyDetailChange,
 }) => {
-  const [formData, setFormData] = useState(italianResidenceDetails);
   const [contact, setContact] = useState<ResidentContact>({
     firstName: '',
     lastName: '',
@@ -49,14 +43,6 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isContactSubmitted, setIsContactSubmitted] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (onResidencyDetailChange) {
-      onResidencyDetailChange(name, value);
-    }
-  };
 
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -173,50 +159,7 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="comuneName">Comune of Residence</Label>
-                  <Input 
-                    id="comuneName" 
-                    name="comuneName" 
-                    value={formData.comuneName}
-                    onChange={handleInputChange}
-                    placeholder="Your Italian comune of residence"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="street">Address in Italy</Label>
-                  <Input 
-                    id="street" 
-                    name="street" 
-                    value={formData.street}
-                    onChange={handleInputChange}
-                    placeholder="Street address"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input 
-                      id="city" 
-                      name="city" 
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      placeholder="City"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zip">Postal Code</Label>
-                    <Input 
-                      id="zip" 
-                      name="zip" 
-                      value={formData.zip}
-                      onChange={handleInputChange}
-                      placeholder="Postal code"
-                    />
-                  </div>
-                </div>
+                {/* Address fields have been removed */}
               </div>
               
               <div className="flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0 justify-end mt-2">
