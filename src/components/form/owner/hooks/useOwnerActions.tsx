@@ -17,13 +17,17 @@ export const useOwnerActions = (
   removeOwner: (index: number) => void,
   scrollToTop: () => void
 ) => {
+  // State to track if we should show the residency dialog
+  const [showResidencyDialog, setShowResidencyDialog] = useState(false);
+  
   const handleSubmit = () => {
+    // Check if the owner is an Italian resident first
+    if (currentOwner.isResidentInItaly === true) {
+      setShowResidencyDialog(true);
+      return;
+    }
+    
     if (!validateOwner(currentOwner)) {
-      // If they're an Italian resident, the dialog should appear when validation fails
-      if (currentOwner.isResidentInItaly === true) {
-        // The residence dialog will appear through the validation check
-        return;
-      }
       return;
     }
 
@@ -53,6 +57,14 @@ export const useOwnerActions = (
   };
 
   const validateAndProceed = () => {
+    // Check if any owner is an Italian resident
+    const hasItalianResident = owners.some(owner => owner.isResidentInItaly === true);
+    
+    if (hasItalianResident) {
+      setShowResidencyDialog(true);
+      return false;
+    }
+    
     return validateHasOwners(owners);
   };
 
@@ -75,6 +87,8 @@ export const useOwnerActions = (
     handleDelete,
     validateAndProceed,
     handleAddOwner,
-    handleCancel
+    handleCancel,
+    showResidencyDialog,
+    setShowResidencyDialog
   };
 };

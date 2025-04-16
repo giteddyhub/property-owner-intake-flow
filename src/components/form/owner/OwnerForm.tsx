@@ -19,6 +19,8 @@ interface OwnerFormProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onResidencyStatusChange: (value: string) => void;
   onResidencyDetailChange?: (field: string, value: string) => void;
+  showResidencyDialog?: boolean;
+  setShowResidencyDialog?: (show: boolean) => void;
   hideCancel?: boolean;
 }
 
@@ -33,6 +35,8 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
   onInputChange, 
   onResidencyStatusChange, 
   onResidencyDetailChange,
+  showResidencyDialog,
+  setShowResidencyDialog,
   hideCancel = false
 }) => {
   const {
@@ -68,6 +72,8 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
         owner={owner} 
         onResidencyStatusChange={onResidencyStatusChange}
         onResidencyDetailChange={onResidencyDetailChange}
+        forceShowDialog={showResidencyDialog}
+        onDialogVisibilityChange={setShowResidencyDialog}
       />
       
       <FormActions 

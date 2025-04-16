@@ -40,9 +40,9 @@ export const validateOwner = (owner: Owner): boolean => {
   }
   
   if (owner.isResidentInItaly === true) {
-    // For Italian residents, just verify they've been informed about redirection
-    // This will not prevent them from closing the dialog temporarily,
-    // but it will appear again when they try to proceed
+    // For Italian residents, we want to show the dialog
+    // We don't return false immediately as we want the dialog to handle this case
+    // We'll return false from the validateAndProceed function in useOwnerActions
     toast.error('Italian residents need to use our specialized service. Please select "No" or "Not sure"');
     return false;
   }
@@ -55,5 +55,14 @@ export const validateHasOwners = (owners: Owner[]): boolean => {
     toast.error('Please add at least one owner before proceeding');
     return false;
   }
+  
+  // Check if any owner is an Italian resident
+  const hasItalianResident = owners.some(owner => owner.isResidentInItaly === true);
+  
+  if (hasItalianResident) {
+    toast.error('One or more owners are Italian residents. Please change their status or use our specialized service.');
+    return false;
+  }
+  
   return true;
 };

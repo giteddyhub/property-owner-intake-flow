@@ -34,7 +34,9 @@ const OwnerStep: React.FC = () => {
     handleDelete,
     validateAndProceed,
     handleAddOwner,
-    handleCancel
+    handleCancel,
+    showResidencyDialog,
+    setShowResidencyDialog
   } = useOwnerActions(
     owners,
     currentOwner,
@@ -73,6 +75,8 @@ const OwnerStep: React.FC = () => {
           onInputChange={handleInputChange}
           onResidencyStatusChange={handleResidencyStatusChange}
           onResidencyDetailChange={handleResidencyDetailChange}
+          showResidencyDialog={showResidencyDialog}
+          setShowResidencyDialog={setShowResidencyDialog}
           hideCancel={owners.length === 0 && editingIndex === null}
         />
       )}

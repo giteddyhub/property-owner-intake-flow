@@ -11,12 +11,16 @@ interface OwnerItalianResidenceSectionProps {
   owner: Owner;
   onResidencyStatusChange: (value: string) => void;
   onResidencyDetailChange?: (field: string, value: string) => void;
+  forceShowDialog?: boolean;
+  onDialogVisibilityChange?: (show: boolean) => void;
 }
 
 const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> = ({ 
   owner, 
   onResidencyStatusChange,
-  onResidencyDetailChange
+  onResidencyDetailChange,
+  forceShowDialog,
+  onDialogVisibilityChange
 }) => {
   const [showResidentDialog, setShowResidentDialog] = useState(false);
   
@@ -28,6 +32,17 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
       : 'not-sure'
   );
 
+  // Effect to handle forced dialog display from parent components
+  useEffect(() => {
+    if (forceShowDialog && owner.isResidentInItaly === true) {
+      setShowResidentDialog(true);
+      // Reset the force flag after showing the dialog
+      if (onDialogVisibilityChange) {
+        onDialogVisibilityChange(false);
+      }
+    }
+  }, [forceShowDialog, owner.isResidentInItaly, onDialogVisibilityChange]);
+  
   const handleResidencyChange = (value: string) => {
     setCurrentValue(value);
     
