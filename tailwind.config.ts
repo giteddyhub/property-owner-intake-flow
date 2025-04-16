@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -102,12 +101,21 @@ export default {
 					'50%': {
 						opacity: '0.8'
 					}
+				},
+				'pulse-border': {
+					'0%, 100%': { 
+						borderColor: 'rgba(245, 158, 11, 0.3)' // Amber color with low opacity
+					},
+					'50%': { 
+						borderColor: 'rgba(245, 158, 11, 0.7)' // Amber color with higher opacity
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'pulse-border': 'pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
 			}
 		}
 	},

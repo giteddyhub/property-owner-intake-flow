@@ -113,7 +113,11 @@ const ResidencyAssessmentPage: React.FC = () => {
                   </p>
                   <Button 
                     onClick={() => setShowAssessment(true)}
-                    className="w-full md:w-auto flex items-center justify-center gap-2"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 relative 
+                      animate-pulse-border 
+                      hover:animate-none 
+                      border-2 border-amber-500/50 
+                      hover:border-amber-500"
                   >
                     Begin Detailed Assessment <ArrowRight className="h-4 w-4" />
                   </Button>
