@@ -25,8 +25,6 @@ export const useOwnerForm = () => {
   const {
     handleDateChange,
     handleResidencyStatusChange,
-    handleResidencyDetailChange,
-    handleDaysInItalyChange,
     handleCountryChange
   } = useOwnerSpecialFields(setCurrentOwner);
 
@@ -47,8 +45,6 @@ export const useOwnerForm = () => {
     handleSelectChange,
     handleDateChange,
     handleResidencyStatusChange,
-    handleResidencyDetailChange,
-    handleDaysInItalyChange,
     handleCountryChange,
     scrollToTop,
     addOwner,
