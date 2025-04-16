@@ -31,6 +31,14 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
     setShowResidentDialog(false);
   };
 
+  // Determine the current value for the ToggleGroup
+  const currentValue = 
+    owner.isResidentInItaly === true 
+      ? 'yes' 
+      : owner.isResidentInItaly === false 
+      ? 'no' 
+      : 'not-sure';
+
   return (
     <div className="mt-6">
       <div className="flex items-center space-x-2">
@@ -57,7 +65,7 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
         <ToggleGroup 
           type="single" 
           variant="purple"
-          value={owner.isResidentInItaly ? 'yes' : owner.isResidentInItaly === false ? 'no' : undefined}
+          value={currentValue}
           onValueChange={handleResidencyChange}
           className="flex justify-start space-x-2"
         >
