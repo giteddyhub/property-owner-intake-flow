@@ -40,10 +40,9 @@ export const validateOwner = (owner: Owner): boolean => {
   }
   
   if (owner.isResidentInItaly === true) {
-    // For Italian residents, just verify the popup has been shown
-    // They will be redirected to a different service
-    // The address fields check has been removed since we no longer collect this information
-    
+    // For Italian residents, just verify they've been informed about redirection
+    // This will not prevent them from closing the dialog temporarily,
+    // but it will appear again when they try to proceed
     toast.error('Italian residents need to use our specialized service. Please select "No" or "Not sure"');
     return false;
   }

@@ -18,7 +18,14 @@ export const useOwnerActions = (
   scrollToTop: () => void
 ) => {
   const handleSubmit = () => {
-    if (!validateOwner(currentOwner)) return;
+    if (!validateOwner(currentOwner)) {
+      // If they're an Italian resident, the dialog should appear when validation fails
+      if (currentOwner.isResidentInItaly === true) {
+        // The residence dialog will appear through the validation check
+        return;
+      }
+      return;
+    }
 
     if (editingIndex !== null) {
       updateOwner(editingIndex, currentOwner);

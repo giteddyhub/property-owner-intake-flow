@@ -28,12 +28,6 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
       : 'not-sure'
   );
 
-  useEffect(() => {
-    if (currentValue === 'yes' && owner.isResidentInItaly === true) {
-      setShowResidentDialog(true);
-    }
-  }, [currentValue, owner.isResidentInItaly]);
-  
   const handleResidencyChange = (value: string) => {
     setCurrentValue(value);
     
@@ -54,11 +48,8 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
   const handleDialogOpenChange = (open: boolean) => {
     setShowResidentDialog(open);
     
-    // If they close the dialog but their selection is still 'yes',
-    // we need to reopen it since they haven't changed their status
-    if (!open && currentValue === 'yes') {
-      setTimeout(() => setShowResidentDialog(true), 100);
-    }
+    // We no longer force the dialog to reopen if they close it
+    // Let it remain closed until they try to navigate
   };
 
   return (

@@ -6,6 +6,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogClose
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -158,8 +159,6 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
                     placeholder="Your email address"
                   />
                 </div>
-                
-                {/* Address fields have been removed */}
               </div>
               
               <div className="flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0 justify-end mt-2">
