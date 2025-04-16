@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Owner } from '@/types/form';
 import { Label } from '@/components/ui/label';
@@ -90,18 +91,29 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
       <div className="mt-2">
         <ToggleGroup 
           type="single" 
-          variant="outline"
           value={currentValue}
           onValueChange={handleResidencyChange}
           className="flex justify-start space-x-2"
         >
-          <ToggleGroupItem value="yes" className="px-4">
+          <ToggleGroupItem 
+            value="yes" 
+            className="px-4"
+            variant={currentValue === 'yes' ? 'purple' : 'outline'}
+          >
             Yes
           </ToggleGroupItem>
-          <ToggleGroupItem value="no" className="px-4">
+          <ToggleGroupItem 
+            value="no" 
+            className="px-4"
+            variant={currentValue === 'no' ? 'purple' : 'outline'}
+          >
             No
           </ToggleGroupItem>
-          <ToggleGroupItem value="not-sure" className="px-4">
+          <ToggleGroupItem 
+            value="not-sure" 
+            className="px-4"
+            variant={currentValue === 'not-sure' ? 'purple' : 'outline'}
+          >
             Not sure
           </ToggleGroupItem>
         </ToggleGroup>
