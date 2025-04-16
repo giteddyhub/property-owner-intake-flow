@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Owner } from '@/types/form';
 import { Label } from '@/components/ui/label';
@@ -32,11 +31,9 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
       : 'not-sure'
   );
 
-  // Effect to handle forced dialog display from parent components
   useEffect(() => {
     if (forceShowDialog && owner.isResidentInItaly === true) {
       setShowResidentDialog(true);
-      // Reset the force flag after showing the dialog
       if (onDialogVisibilityChange) {
         onDialogVisibilityChange(false);
       }
@@ -63,8 +60,9 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
   const handleDialogOpenChange = (open: boolean) => {
     setShowResidentDialog(open);
     
-    // We no longer force the dialog to reopen if they close it
-    // Let it remain closed until they try to navigate
+    if (onDialogVisibilityChange) {
+      onDialogVisibilityChange(false);
+    }
   };
 
   return (
@@ -92,7 +90,7 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
       <div className="mt-2">
         <ToggleGroup 
           type="single" 
-          variant="purple"
+          variant="outline"
           value={currentValue}
           onValueChange={handleResidencyChange}
           className="flex justify-start space-x-2"
