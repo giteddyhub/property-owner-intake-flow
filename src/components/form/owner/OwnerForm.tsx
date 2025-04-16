@@ -19,7 +19,6 @@ interface OwnerFormProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onResidencyStatusChange: (value: string) => void;
   onResidencyDetailChange?: (field: string, value: string) => void;
-  onDaysInItalyChange?: (value: boolean) => void;
   hideCancel?: boolean;
 }
 
@@ -34,7 +33,6 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
   onInputChange, 
   onResidencyStatusChange, 
   onResidencyDetailChange,
-  onDaysInItalyChange,
   hideCancel = false
 }) => {
   const {
@@ -70,7 +68,6 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
         owner={owner} 
         onResidencyStatusChange={onResidencyStatusChange}
         onResidencyDetailChange={onResidencyDetailChange}
-        onDaysInItalyChange={onDaysInItalyChange}
       />
       
       <FormActions 

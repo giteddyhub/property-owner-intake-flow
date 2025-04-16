@@ -32,8 +32,7 @@ export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetS
           comuneName: '',
           street: '',
           city: '',
-          zip: '',
-          spentOver182Days: undefined
+          zip: ''
         }) : undefined
     }));
   };
@@ -46,8 +45,7 @@ export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetS
           comuneName: '',
           street: '',
           city: '',
-          zip: '',
-          spentOver182Days: undefined
+          zip: ''
         }),
         [field]: value
       }

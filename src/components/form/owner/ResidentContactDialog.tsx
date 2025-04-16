@@ -37,8 +37,7 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
     comuneName: '',
     street: '',
     city: '',
-    zip: '',
-    spentOver182Days: undefined
+    zip: ''
   },
   onResidencyDetailChange,
 }) => {
