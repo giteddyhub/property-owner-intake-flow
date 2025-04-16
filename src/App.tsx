@@ -8,6 +8,7 @@ import NotFound from './pages/NotFound';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import ResidentSuccessPage from './pages/ResidentSuccessPage';
+import ResidencyAssessmentPage from './pages/ResidencyAssessmentPage';
 
 function App() {
   const { toast } = useToast();
@@ -39,6 +40,7 @@ function App() {
               <Route path="/success" element={<SuccessPage />} />
               <Route path="/ResidentSuccessPage" element={<ResidentSuccessPage />} />
               <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+              <Route path="/residency-assessment" element={<ResidencyAssessmentPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
       <Toaster />

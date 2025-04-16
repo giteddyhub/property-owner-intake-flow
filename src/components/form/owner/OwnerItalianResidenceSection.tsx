@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Owner } from '@/types/form';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, ExternalLink } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, StandardTooltipContent } from '@/components/ui/tooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import ResidentContactDialog from './ResidentContactDialog';
@@ -44,6 +45,10 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
     
     if (value === 'yes') {
       setShowResidentDialog(true);
+      onResidencyStatusChange(value);
+    } else if (value === 'not-sure') {
+      // Open the residency assessment page in a new tab
+      window.open('/residency-assessment', '_blank');
       onResidencyStatusChange(value);
     } else {
       onResidencyStatusChange(value);
@@ -109,10 +114,10 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
           </ToggleGroupItem>
           <ToggleGroupItem 
             value="not-sure" 
-            className="px-4"
+            className="px-4 flex items-center gap-1"
             variant={currentValue === 'not-sure' ? 'purple' : 'outline'}
           >
-            Not sure
+            Not sure <ExternalLink className="h-3 w-3 ml-0.5" />
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
