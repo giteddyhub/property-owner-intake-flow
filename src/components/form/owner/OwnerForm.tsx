@@ -4,8 +4,8 @@ import { Owner } from '@/types/form';
 import OwnerBasicInfoSection from './OwnerBasicInfoSection';
 import OwnerAddressSection from './OwnerAddressSection';
 import OwnerItalianResidenceSection from './OwnerItalianResidenceSection';
-import FormHeader from './FormHeader';
-import FormActions from './FormActions';
+import FormHeader from './form/FormHeader';
+import FormActions from './form/FormActions';
 import { useOwnerFormActions } from './hooks/useOwnerForm.actions';
 
 interface OwnerFormProps {
