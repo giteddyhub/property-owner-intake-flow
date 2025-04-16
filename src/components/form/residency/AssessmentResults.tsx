@@ -7,6 +7,7 @@ import ResultStatusHeader from './components/ResultStatusHeader';
 import RecommendationsList from './components/RecommendationsList';
 import DisclaimerNote from './components/DisclaimerNote';
 import ResultActions from './components/ResultActions';
+import ConsultationBooking from '@/components/success/ConsultationBooking';
 
 interface AssessmentResultsProps {
   result: AssessmentResult;
@@ -44,6 +45,16 @@ const AssessmentResults: React.FC<AssessmentResultsProps> = ({ result, onBack, o
           <ResultActions onRestart={onRestart} />
         </CardFooter>
       </Card>
+      
+      {/* Add consultation booking component */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Speak With a Tax Professional</h2>
+        <p className="text-gray-600 mb-6">
+          For personalized advice about your tax residency status and obligations, 
+          schedule a consultation with one of our expert tax advisors.
+        </p>
+        <ConsultationBooking />
+      </div>
     </div>
   );
 };
