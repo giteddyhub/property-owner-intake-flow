@@ -68,6 +68,7 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
 
   return (
     <div className="mt-6">
+      <h4 className="text-md font-medium mb-3">Are you a registered resident in Italy?*</h4>
       <div className="flex items-center space-x-2">
         <Label htmlFor="isResidentInItaly">Are you a registered resident in Italy?</Label>
         <TooltipProvider delayDuration={100}>
