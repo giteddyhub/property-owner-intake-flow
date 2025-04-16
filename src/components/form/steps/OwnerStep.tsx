@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { toast } from 'sonner';
@@ -121,6 +120,38 @@ const OwnerStep: React.FC = () => {
     }));
   };
 
+  const handleResidencyStatusChange = (value: string) => {
+    let isResident: boolean | null = null;
+    
+    switch(value) {
+      case 'yes':
+        isResident = true;
+        break;
+      case 'no':
+        isResident = false;
+        break;
+      case 'not-sure':
+        isResident = null;
+        break;
+      default:
+        isResident = null;
+    }
+    
+    setCurrentOwner(prev => ({ 
+      ...prev, 
+      isResidentInItaly: isResident,
+      italianResidenceDetails: isResident === false 
+        ? (prev.italianResidenceDetails || { 
+            comuneName: '', 
+            street: '',
+            city: '',
+            zip: '',
+            spentOver182Days: undefined
+          })
+        : undefined
+    }));
+  };
+
   const handleResidencyDetailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCurrentOwner(prev => ({
@@ -202,7 +233,12 @@ const OwnerStep: React.FC = () => {
       return false;
     }
     
-    if (currentOwner.isResidentInItaly) {
+    if (currentOwner.isResidentInItaly === null) {
+      toast.error('Please specify if you are a registered resident in Italy');
+      return false;
+    }
+    
+    if (currentOwner.isResidentInItaly === false) {
       if (!currentOwner.italianResidenceDetails?.comuneName) {
         toast.error('Please enter comune name for Italian residence');
         return false;
@@ -300,7 +336,7 @@ const OwnerStep: React.FC = () => {
           onCountryChange={handleCountryChange}
           onDateChange={handleDateChange}
           onInputChange={handleInputChange}
-          onSwitchChange={handleSwitchChange}
+          onResidencyStatusChange={handleResidencyStatusChange}
           onResidencyDetailChange={handleResidencyDetailChange}
           onDaysInItalyChange={handleDaysInItalyChange}
           hideCancel={owners.length === 0 && editingIndex === null}

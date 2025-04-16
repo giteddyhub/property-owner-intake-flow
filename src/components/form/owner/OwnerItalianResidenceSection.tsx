@@ -1,35 +1,45 @@
 
-import React from 'react';
-import { Owner, ItalianResidenceDetails } from '@/types/form';
+import React, { useState } from 'react';
+import { Owner } from '@/types/form';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { HelpCircle } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, StandardTooltipContent } from '@/components/ui/tooltip';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import ResidentContactDialog from './ResidentContactDialog';
 
 interface OwnerItalianResidenceSectionProps {
   owner: Owner;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSwitchChange: (checked: boolean) => void;
+  onResidencyStatusChange: (value: string) => void;
   onDaysInItalyChange: (value: string) => void;
 }
 
 const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> = ({ 
   owner, 
   onInputChange, 
-  onSwitchChange, 
+  onResidencyStatusChange, 
   onDaysInItalyChange 
 }) => {
+  const [showResidentDialog, setShowResidentDialog] = useState(false);
+  
+  const handleResidencyChange = (value: string) => {
+    if (value === 'yes') {
+      setShowResidentDialog(true);
+    } else {
+      onResidencyStatusChange(value);
+    }
+  };
+  
+  const handleStatusChange = () => {
+    onResidencyStatusChange('no');
+    setShowResidentDialog(false);
+  };
+
   return (
     <div className="mt-6">
       <div className="flex items-center space-x-2">
-        <Switch 
-          id="isResidentInItaly" 
-          checked={owner.isResidentInItaly}
-          onCheckedChange={onSwitchChange}
-        />
-        <Label htmlFor="isResidentInItaly">Resident in Italy?</Label>
+        <Label htmlFor="isResidentInItaly">Are you a registered resident in Italy?</Label>
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -48,7 +58,33 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
         </TooltipProvider>
       </div>
       
-      {owner.isResidentInItaly && (
+      <div className="mt-2">
+        <ToggleGroup 
+          type="single" 
+          variant="purple"
+          value={owner.isResidentInItaly ? 'yes' : owner.isResidentInItaly === false ? 'no' : undefined}
+          onValueChange={handleResidencyChange}
+          className="flex justify-start space-x-2"
+        >
+          <ToggleGroupItem value="yes" className="px-4">
+            Yes
+          </ToggleGroupItem>
+          <ToggleGroupItem value="no" className="px-4">
+            No
+          </ToggleGroupItem>
+          <ToggleGroupItem value="not-sure" className="px-4">
+            Not sure
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+      
+      <ResidentContactDialog 
+        open={showResidentDialog} 
+        onOpenChange={setShowResidentDialog}
+        onStatusChange={handleStatusChange}
+      />
+      
+      {owner.isResidentInItaly === false && (
         <div className="mt-4 border-t pt-4">
           <h4 className="font-medium mb-3">Italian Address*</h4>
           <div className="grid gap-4 md:grid-cols-2">
@@ -103,23 +139,23 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
           
           <div className="mt-6">
             <h4 className="font-medium mb-3">Time spent in Italy during 2024*</h4>
-            <div className="mt-2">
-              <RadioGroup 
+            <div className="mt-2 space-y-2">
+              <ToggleGroup 
+                type="single" 
+                variant="purple"
                 value={owner.italianResidenceDetails?.spentOver182Days !== undefined 
                   ? (owner.italianResidenceDetails.spentOver182Days ? 'over182' : 'under182') 
                   : undefined}
                 onValueChange={onDaysInItalyChange}
-                className="flex flex-col gap-3"
+                className="flex justify-start space-x-2"
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="over182" id="over182" />
-                  <Label htmlFor="over182" className="cursor-pointer">More than 182 days</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="under182" id="under182" />
-                  <Label htmlFor="under182" className="cursor-pointer">Less than 182 days</Label>
-                </div>
-              </RadioGroup>
+                <ToggleGroupItem value="over182" className="px-4">
+                  More than 182 days
+                </ToggleGroupItem>
+                <ToggleGroupItem value="under182" className="px-4">
+                  Less than 182 days
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
           </div>
         </div>

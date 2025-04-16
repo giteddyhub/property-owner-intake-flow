@@ -15,7 +15,7 @@ interface OwnerFormProps {
   onCountryChange: (field: string, value: string) => void;
   onDateChange: (date: Date | undefined) => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSwitchChange: (checked: boolean) => void;
+  onResidencyStatusChange: (value: string) => void;
   onResidencyDetailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDaysInItalyChange: (value: string) => void;
   hideCancel?: boolean;
@@ -30,7 +30,7 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
   onCountryChange, 
   onDateChange, 
   onInputChange, 
-  onSwitchChange, 
+  onResidencyStatusChange, 
   onResidencyDetailChange, 
   onDaysInItalyChange,
   hideCancel = false
@@ -62,7 +62,7 @@ const OwnerForm: React.FC<OwnerFormProps> = ({
       <OwnerItalianResidenceSection 
         owner={owner} 
         onInputChange={onResidencyDetailChange} 
-        onSwitchChange={onSwitchChange} 
+        onResidencyStatusChange={onResidencyStatusChange} 
         onDaysInItalyChange={onDaysInItalyChange} 
       />
       
