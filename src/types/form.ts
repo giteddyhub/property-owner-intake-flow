@@ -1,4 +1,3 @@
-
 // Owner types
 export type MaritalStatus = 'UNMARRIED' | 'MARRIED' | 'DIVORCED' | 'WIDOWED';
 
@@ -11,10 +10,9 @@ export interface Address {
 
 export interface ItalianResidenceDetails {
   comuneName: string;
-  street: string;  // Italian address fields
-  city: string;    // Italian address fields
-  zip: string;     // Italian address fields
-  spentOver182Days?: boolean; // Track if resident spent more than 182 days in Italy in 2024
+  street: string;
+  city: string;
+  zip: string;
 }
 
 export interface Owner {

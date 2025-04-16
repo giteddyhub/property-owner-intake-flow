@@ -1,4 +1,3 @@
-
 import { Owner } from '@/types/form';
 import { toast } from 'sonner';
 
@@ -48,15 +47,10 @@ export const validateOwner = (owner: Owner): boolean => {
       return false;
     }
     
-    const { comuneName, street, city, zip, spentOver182Days } = owner.italianResidenceDetails;
+    const { comuneName, street, city, zip } = owner.italianResidenceDetails;
     
     if (!comuneName || !street || !city || !zip) {
       toast.error('Please complete all Italian residence address fields');
-      return false;
-    }
-    
-    if (spentOver182Days === undefined) {
-      toast.error('Please specify if you spent more than 182 days in Italy in 2024');
       return false;
     }
     

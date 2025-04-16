@@ -10,7 +10,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ItalianResidenceDetails } from '@/types/form';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,8 +20,7 @@ interface ResidentContactDialogProps {
   onOpenChange: (open: boolean) => void;
   onStatusChange: () => void;
   italianResidenceDetails?: ItalianResidenceDetails;
-  onResidenceDetailChange?: (field: string, value: string) => void;
-  onDaysInItalyChange?: (value: boolean) => void;
+  onResidencyDetailChange?: (field: string, value: string) => void;
 }
 
 interface ResidentContact {
@@ -42,8 +40,7 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
     zip: '',
     spentOver182Days: undefined
   },
-  onResidenceDetailChange,
-  onDaysInItalyChange
+  onResidencyDetailChange,
 }) => {
   const [formData, setFormData] = useState(italianResidenceDetails);
   const [contact, setContact] = useState<ResidentContact>({
@@ -57,22 +54,14 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (onResidenceDetailChange) {
-      onResidenceDetailChange(name, value);
+    if (onResidencyDetailChange) {
+      onResidencyDetailChange(name, value);
     }
   };
 
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setContact(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleRadioChange = (value: string) => {
-    const spentOver182Days = value === 'yes';
-    setFormData(prev => ({ ...prev, spentOver182Days }));
-    if (onDaysInItalyChange) {
-      onDaysInItalyChange(spentOver182Days);
-    }
   };
   
   const validateContact = () => {
@@ -228,24 +217,6 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
                       placeholder="Postal code"
                     />
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Did you spend more than 182 days in Italy in 2024?</Label>
-                  <RadioGroup 
-                    value={formData.spentOver182Days === undefined ? '' : formData.spentOver182Days ? 'yes' : 'no'} 
-                    onValueChange={handleRadioChange}
-                    className="flex flex-col space-y-1"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="r1" />
-                      <Label htmlFor="r1">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="r2" />
-                      <Label htmlFor="r2">No</Label>
-                    </div>
-                  </RadioGroup>
                 </div>
               </div>
               

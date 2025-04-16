@@ -54,22 +54,6 @@ export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetS
     }));
   };
 
-  const handleDaysInItalyChange = (value: boolean) => {
-    setCurrentOwner(prev => ({
-      ...prev,
-      italianResidenceDetails: {
-        ...(prev.italianResidenceDetails || {
-          comuneName: '',
-          street: '',
-          city: '',
-          zip: '',
-          spentOver182Days: undefined
-        }),
-        spentOver182Days: value
-      }
-    }));
-  };
-
   const handleCountryChange = (field: string, value: string) => {
     if (field === 'countryOfBirth') {
       setCurrentOwner(prev => ({ ...prev, countryOfBirth: value }));
@@ -90,7 +74,6 @@ export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetS
     handleDateChange,
     handleResidencyStatusChange,
     handleResidencyDetailChange,
-    handleDaysInItalyChange,
     handleCountryChange
   };
 };

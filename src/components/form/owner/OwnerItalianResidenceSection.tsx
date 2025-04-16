@@ -11,14 +11,12 @@ interface OwnerItalianResidenceSectionProps {
   owner: Owner;
   onResidencyStatusChange: (value: string) => void;
   onResidencyDetailChange?: (field: string, value: string) => void;
-  onDaysInItalyChange?: (value: boolean) => void;
 }
 
 const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> = ({ 
   owner, 
   onResidencyStatusChange,
-  onResidencyDetailChange,
-  onDaysInItalyChange
+  onResidencyDetailChange
 }) => {
   const [showResidentDialog, setShowResidentDialog] = useState(false);
   
@@ -110,8 +108,7 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
         onOpenChange={handleDialogOpenChange}
         onStatusChange={handleStatusChange}
         italianResidenceDetails={owner.italianResidenceDetails}
-        onResidenceDetailChange={onResidencyDetailChange}
-        onDaysInItalyChange={onDaysInItalyChange}
+        onResidencyDetailChange={onResidencyDetailChange}
       />
     </div>
   );
