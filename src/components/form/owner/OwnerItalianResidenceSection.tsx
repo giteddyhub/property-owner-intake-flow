@@ -68,9 +68,8 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
 
   return (
     <div className="mt-6">
-      <h4 className="text-md font-medium mb-3">Are you a registered resident in Italy?*</h4>
-      <div className="flex items-center space-x-2">
-        <Label htmlFor="isResidentInItaly">Are you a registered resident in Italy?</Label>
+      <div className="flex items-center space-x-2 mb-3">
+        <h4 className="text-md font-medium">Are you a registered resident in Italy?*</h4>
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -88,6 +87,8 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
           </Tooltip>
         </TooltipProvider>
       </div>
+      
+      <p className="text-sm text-gray-600 mb-2">Select the most accurate option</p>
       
       <div className="mt-2">
         <ToggleGroup 
