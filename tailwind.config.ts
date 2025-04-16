@@ -104,10 +104,10 @@ export default {
 				},
 				'pulse-border': {
 					'0%, 100%': { 
-						borderColor: 'rgba(245, 158, 11, 0.3)' // Amber color with low opacity
+						borderColor: 'rgba(214, 188, 250, 0.3)' // Soft Purple with low opacity
 					},
 					'50%': { 
-						borderColor: 'rgba(245, 158, 11, 0.7)' // Amber color with higher opacity
+						borderColor: 'rgba(214, 188, 250, 0.7)' // Soft Purple with higher opacity
 					}
 				}
 			},

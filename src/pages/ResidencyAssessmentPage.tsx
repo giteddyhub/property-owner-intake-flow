@@ -116,8 +116,8 @@ const ResidencyAssessmentPage: React.FC = () => {
                     className="w-full md:w-auto flex items-center justify-center gap-2 relative 
                       animate-pulse-border 
                       hover:animate-none 
-                      border-2 border-amber-500/50 
-                      hover:border-amber-500"
+                      border-2 border-purple-300/50 
+                      hover:border-purple-500"
                   >
                     Begin Detailed Assessment <ArrowRight className="h-4 w-4" />
                   </Button>
