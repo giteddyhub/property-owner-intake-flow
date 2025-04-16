@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
 import { Owner } from '@/types/form';
-import { Label } from '@/components/ui/label';
 import { HelpCircle } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, StandardTooltipContent } from '@/components/ui/tooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -87,8 +85,6 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
           </Tooltip>
         </TooltipProvider>
       </div>
-      
-      <p className="text-sm text-gray-600 mb-2">Select the most accurate option</p>
       
       <div className="mt-2">
         <ToggleGroup 
