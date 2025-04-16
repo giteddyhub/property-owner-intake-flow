@@ -39,6 +39,11 @@ export const validateOwner = (owner: Owner): boolean => {
     return false;
   }
   
+  if (owner.isResidentInItaly === true) {
+    toast.error('Italian residents need to use our specialized service. Please select "No" or "Not sure"');
+    return false;
+  }
+  
   return true;
 };
 

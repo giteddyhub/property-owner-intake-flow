@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Owner } from '@/types/form';
 import { Label } from '@/components/ui/label';
 import { HelpCircle } from 'lucide-react';
@@ -18,26 +17,40 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
 }) => {
   const [showResidentDialog, setShowResidentDialog] = useState(false);
   
+  const [currentValue, setCurrentValue] = useState<string>(
+    owner.isResidentInItaly === true 
+      ? 'yes' 
+      : owner.isResidentInItaly === false 
+      ? 'no' 
+      : 'not-sure'
+  );
+
+  useEffect(() => {
+    if (currentValue === 'yes' && owner.isResidentInItaly === true) {
+      setShowResidentDialog(true);
+    }
+  }, [currentValue, owner.isResidentInItaly]);
+  
   const handleResidencyChange = (value: string) => {
+    setCurrentValue(value);
+    
     if (value === 'yes') {
       setShowResidentDialog(true);
+      onResidencyStatusChange(value);
     } else {
       onResidencyStatusChange(value);
     }
   };
   
   const handleStatusChange = () => {
+    setCurrentValue('no');
     onResidencyStatusChange('no');
     setShowResidentDialog(false);
   };
 
-  // Determine the current value for the ToggleGroup
-  const currentValue = 
-    owner.isResidentInItaly === true 
-      ? 'yes' 
-      : owner.isResidentInItaly === false 
-      ? 'no' 
-      : 'not-sure';
+  const handleDialogOpenChange = (open: boolean) => {
+    setShowResidentDialog(open);
+  };
 
   return (
     <div className="mt-6">
@@ -83,7 +96,7 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
       
       <ResidentContactDialog 
         open={showResidentDialog} 
-        onOpenChange={setShowResidentDialog}
+        onOpenChange={handleDialogOpenChange}
         onStatusChange={handleStatusChange}
       />
     </div>
