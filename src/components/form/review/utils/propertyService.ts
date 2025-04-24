@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Property, PropertyDocument } from '@/types/form';
 
@@ -26,7 +25,8 @@ export const saveProperties = async (
         name: doc.name,
         type: doc.type,
         size: doc.size,
-        uploadDate: doc.uploadDate.toISOString()
+        uploadDate: doc.uploadDate.toISOString(),
+        url: doc.url
       })
     ) : [];
     

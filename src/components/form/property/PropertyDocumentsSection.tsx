@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { usePropertyForm } from './context/PropertyFormContext';
 import { Label } from '@/components/ui/label';
@@ -7,29 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { UploadCloud, FileText, Euro } from 'lucide-react';
 import { toast } from 'sonner';
+import { uploadPropertyDocument } from './utils/fileUploadUtils';
 
 const PropertyDocumentsSection = () => {
   const { currentProperty, setCurrentProperty } = usePropertyForm();
   const [useRetrievalService, setUseRetrievalService] = useState(false);
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploadingDocument(true);
       
-      // Simulate upload process
-      setTimeout(() => {
+      try {
         const newDocuments = [...(currentProperty.documents || [])];
         
-        for (let i = 0; i < e.target.files!.length; i++) {
-          const file = e.target.files![i];
-          newDocuments.push({
-            id: `doc-${Date.now()}-${i}`,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            uploadDate: new Date()
-          });
+        for (let i = 0; i < e.target.files.length; i++) {
+          const file = e.target.files[i];
+          const uploadedDoc = await uploadPropertyDocument(file);
+          newDocuments.push(uploadedDoc);
         }
         
         setCurrentProperty(prev => ({
@@ -37,9 +31,13 @@ const PropertyDocumentsSection = () => {
           documents: newDocuments
         }));
         
-        setIsUploadingDocument(false);
         toast.success('Documents uploaded successfully');
-      }, 1000);
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error('Failed to upload documents');
+      } finally {
+        setIsUploadingDocument(false);
+      }
     }
   };
   
