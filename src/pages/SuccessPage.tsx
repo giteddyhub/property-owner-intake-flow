@@ -55,8 +55,6 @@ const SuccessPage = () => {
         <div className="max-w-3xl mx-auto">
           <SuccessHeader />
           
-          <LawFirmPartnership />
-          
           {/* Premium Service Offer Card */}
           {!sessionId && !paymentStatus && (
             <PremiumServiceCard
@@ -67,6 +65,8 @@ const SuccessPage = () => {
               onCheckout={handleCheckout}
             />
           )}
+          
+          <LawFirmPartnership />
           
           {/* Payment confirmation section */}
           {paymentStatus === 'paid' && (
