@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import SuccessHeader from '@/components/success/SuccessHeader';
 import PremiumServiceCard from '@/components/success/PremiumServiceCard';
 import PaymentConfirmation from '@/components/success/PaymentConfirmation';
+import LawFirmPartnership from '@/components/success/LawFirmPartnership';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { useCheckout } from '@/hooks/useCheckout';
 import ConsultationBooking from '@/components/success/ConsultationBooking';
@@ -54,6 +55,8 @@ const SuccessPage = () => {
         <div className="max-w-3xl mx-auto">
           <SuccessHeader />
           
+          <LawFirmPartnership />
+          
           {/* Premium Service Offer Card */}
           {!sessionId && !paymentStatus && (
             <PremiumServiceCard
@@ -94,4 +97,3 @@ const SuccessPage = () => {
 };
 
 export default SuccessPage;
-
