@@ -109,10 +109,10 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Important Notice for Italian Residents</DialogTitle>
+          <DialogTitle>Important Notice for Italian Tax Residents</DialogTitle>
           <DialogDescription className="pt-4">
-            If you are a registered resident in Italy, you need to complete a different form.
-            We'll contact you with information about our specialized service for Italian residents.
+            If you are a registered tax resident in Italy, you need to complete a different form.
+            We'll contact you with information about our specialized service for Italian tax residents.
           </DialogDescription>
         </DialogHeader>
         
@@ -120,8 +120,8 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
           {!isContactSubmitted ? (
             <>
               <p className="text-sm text-gray-600">
-                Our regular service is designed for non-residents who own property in Italy.
-                Residents have different tax obligations and filing requirements.
+                Our regular service is designed for non-tax residents who own property in Italy.
+                Tax residents have different tax obligations and filing requirements.
               </p>
 
               <div className="space-y-4">
@@ -193,7 +193,7 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
               <div className="bg-green-50 border border-green-200 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-green-800">Thank You!</h3>
                 <p className="mt-2 text-sm text-green-600">
-                  We've received your information and will contact you when our specialized service for Italian residents is available.
+                  We've received your information and will contact you when our specialized service for Italian tax residents is available.
                 </p>
               </div>
               
@@ -215,3 +215,4 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
 };
 
 export default ResidentContactDialog;
+
