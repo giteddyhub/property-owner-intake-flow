@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Owner } from '@/types/form';
 import { HelpCircle, ExternalLink } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, StandardTooltipContent } from '@/components/ui/tooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import ResidentContactDialog from './ResidentContactDialog';
+import { Link } from 'react-router-dom';
 
 interface OwnerItalianResidenceSectionProps {
   owner: Owner;
@@ -47,7 +47,6 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
       setShowResidentDialog(true);
       onResidencyStatusChange(value);
     } else if (value === 'not-sure') {
-      // Open the residency assessment page in a new tab
       window.open('/residency-assessment', '_blank');
       onResidencyStatusChange(value);
     } else {
@@ -67,6 +66,11 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
     if (onDialogVisibilityChange) {
       onDialogVisibilityChange(false);
     }
+  };
+
+  const handleNotSureClick = () => {
+    window.open('/residency-assessment', '_blank');
+    onResidencyStatusChange('not-sure');
   };
 
   return (
@@ -112,13 +116,12 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
           >
             No
           </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="not-sure" 
-            className="px-4 flex items-center gap-1"
-            variant={currentValue === 'not-sure' ? 'purple' : 'outline'}
+          <span 
+            onClick={handleNotSureClick}
+            className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1"
           >
             Not sure <ExternalLink className="h-3 w-3 ml-0.5" />
-          </ToggleGroupItem>
+          </span>
         </ToggleGroup>
       </div>
       
@@ -134,4 +137,3 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
 };
 
 export default OwnerItalianResidenceSection;
-
