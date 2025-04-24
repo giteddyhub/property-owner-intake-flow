@@ -16,7 +16,7 @@ const LawFirmPartnership = () => {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="h-5 w-5 text-form-400" />
-            <h3 className="text-xl font-semibold text-gray-900">Official Legal Partnership</h3>
+            <h3 className="text-xl font-semibold text-gray-900">Studio Legale Metta</h3>
           </div>
           <p className="text-gray-600 mb-4">
             We are proud to partner with Studio Legale Metta, a highly respected Italian law firm with 
