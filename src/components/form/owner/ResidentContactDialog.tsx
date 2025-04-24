@@ -168,7 +168,7 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
                   onClick={() => onStatusChange()}
                   disabled={isSubmitting}
                 >
-                  Change my status to non-resident
+                  Change status to non-tax-resident
                 </Button>
                 <Button 
                   type="button"
