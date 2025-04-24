@@ -72,7 +72,7 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
   return (
     <div className="mt-6">
       <div className="flex items-center space-x-2 mb-3">
-        <h4 className="text-md font-medium">Are you a registered resident in Italy?*</h4>
+        <h4 className="text-md font-medium">Are you an Italian tax resident?*</h4>
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -134,3 +134,4 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
 };
 
 export default OwnerItalianResidenceSection;
+
