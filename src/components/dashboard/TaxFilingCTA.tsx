@@ -20,21 +20,24 @@ export const TaxFilingCTA: React.FC<TaxFilingCTAProps> = ({ userId }) => {
   };
   
   return (
-    <Card className="border-0 shadow-sm bg-amber-50 border-amber-200">
+    <Card className="border-0 shadow-sm bg-amber-50 border-amber-200 h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium text-amber-800">Tax Filing Service</CardTitle>
+        <CardTitle className="text-base font-medium text-amber-800 flex items-center">
+          <FileText className="h-4 w-4 mr-2" />
+          Tax Filing Service
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col h-full">
           <div>
             <div className="text-lg font-medium">Complete your tax filings</div>
-            <p className="text-sm text-amber-700 mt-1">
+            <p className="text-sm text-amber-700 mt-1 mb-4">
               Let our experts handle your Italian property taxes
             </p>
           </div>
           <Button 
             onClick={handleGetTaxFilings}
-            className="bg-amber-500 hover:bg-amber-600 text-white"
+            className="bg-amber-500 hover:bg-amber-600 text-white w-full mt-auto"
           >
             Get Started
             <ArrowRight className="h-4 w-4 ml-1" />

@@ -18,7 +18,7 @@ const StatsSummaryCard: React.FC<StatsSummaryCardProps> = ({
   chartColor
 }) => {
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-medium text-gray-500">{title}</CardTitle>
       </CardHeader>
@@ -50,11 +50,19 @@ export const StatsSummaryCards: React.FC<StatsSummaryCardsProps> = ({
   userId
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <StatsSummaryCard title="Properties" value={propertiesCount} percentChange={2.4} chartColor="#22C55E" />
-      <StatsSummaryCard title="Owners" value={ownersCount} percentChange={6.2} chartColor="#3B82F6" />
-      <StatsSummaryCard title="Assignments" value={assignmentsCount} percentChange={4.7} chartColor="#F59E0B" />
-      <TaxFilingCTA userId={userId} />
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
+      <div className="md:col-span-3">
+        <StatsSummaryCard title="Properties" value={propertiesCount} percentChange={2.4} chartColor="#22C55E" />
+      </div>
+      <div className="md:col-span-3">
+        <StatsSummaryCard title="Owners" value={ownersCount} percentChange={6.2} chartColor="#3B82F6" />
+      </div>
+      <div className="md:col-span-3">
+        <StatsSummaryCard title="Assignments" value={assignmentsCount} percentChange={4.7} chartColor="#F59E0B" />
+      </div>
+      <div className="md:col-span-3 lg:col-span-3">
+        <TaxFilingCTA userId={userId} />
+      </div>
     </div>
   );
 };
