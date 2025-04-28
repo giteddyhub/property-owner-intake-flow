@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sheet,
   SheetContent,
@@ -33,6 +33,14 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResidencyDialog, setShowResidencyDialog] = useState(false);
+  
+  // Ensure clean up on unmount or when drawer closes
+  useEffect(() => {
+    return () => {
+      // This will run when the component unmounts or when isOpen changes to false
+      document.body.style.pointerEvents = '';
+    };
+  }, [isOpen]);
   
   const handleSubmit = async () => {
     if (showResidencyDialog) {
@@ -96,7 +104,7 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
         toast.success('Owner added successfully');
       }
 
-      onClose();
+      handleClose();
       onSuccess();
     } catch (error) {
       console.error('Error saving owner:', error);
@@ -151,10 +159,17 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
       }
     }));
   };
+
+  // Handle clean close to ensure no stray elements block interaction
+  const handleClose = () => {
+    // Remove any pointer-events blocking that might have been applied
+    document.body.style.pointerEvents = '';
+    onClose();
+  };
   
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] p-0">
+    <Sheet open={isOpen} onOpenChange={handleClose}>
+      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl p-0">
         <ScrollArea className="h-full">
           <div className="p-6">
             <SheetHeader className="relative">
@@ -169,7 +184,10 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
                   </SheetDescription>
                 </div>
                 <SheetClose asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" onClick={() => {
+                    // Ensure pointer-events are enabled when closing via button
+                    document.body.style.pointerEvents = '';
+                  }}>
                     <X className="h-4 w-4" />
                   </Button>
                 </SheetClose>
@@ -181,7 +199,7 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
                 owner={currentOwner}
                 editingIndex={owner ? 0 : null}
                 onSubmit={handleSubmit}
-                onCancel={onClose}
+                onCancel={handleClose}
                 onOwnerChange={handleOwnerChange}
                 onCountryChange={handleCountryChange}
                 onDateChange={handleDateChange}
@@ -196,7 +214,10 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
 
             <SheetFooter className="pt-4">
               <SheetClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" onClick={() => {
+                  // Ensure pointer-events are enabled when closing via button
+                  document.body.style.pointerEvents = '';
+                }}>Cancel</Button>
               </SheetClose>
             </SheetFooter>
           </div>
