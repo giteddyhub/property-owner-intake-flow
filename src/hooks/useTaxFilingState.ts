@@ -42,13 +42,18 @@ export const useTaxFilingState = () => {
         // Use the new contact ID
         const contactId = newContact.id;
         
+        // Define a default amount for the purchase entry
+        // This will be updated during checkout with the final amount
+        const defaultAmount = 0;
+        
         // Create a purchase entry to track this session
         const { data: purchase, error: purchaseError } = await supabase
           .from('purchases')
           .insert({
             contact_id: contactId,
             payment_status: 'pending',
-            has_document_retrieval: null // Will be set during checkout
+            has_document_retrieval: null, // Will be set during checkout
+            amount: defaultAmount // Add the mandatory amount field
           })
           .select('id')
           .single();
@@ -60,13 +65,18 @@ export const useTaxFilingState = () => {
         // Use the existing contact ID
         const contactId = contactData.id;
         
+        // Define a default amount for the purchase entry
+        // This will be updated during checkout with the final amount
+        const defaultAmount = 0;
+        
         // Create a purchase entry to track this session
         const { data: purchase, error: purchaseError } = await supabase
           .from('purchases')
           .insert({
             contact_id: contactId,
             payment_status: 'pending',
-            has_document_retrieval: null // Will be set during checkout
+            has_document_retrieval: null, // Will be set during checkout
+            amount: defaultAmount // Add the mandatory amount field
           })
           .select('id')
           .single();
