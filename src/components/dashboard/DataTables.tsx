@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { 
   Owner, 
   Property, 
-  OwnerPropertyAssignment
-} from '@/types/form';
+  OwnerPropertyAssignment,
+  ActivityType
+} from '@/components/dashboard/types';
 
 // Helper function to determine badge variant based on activity
 const getActivityBadgeVariant = (activity: string): "default" | "secondary" | "destructive" | "outline" => {

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,8 +8,14 @@ import { toast } from 'sonner';
 import { 
   Owner, 
   Property, 
-  OwnerPropertyAssignment
-} from '@/types/form';
+  OwnerPropertyAssignment,
+  MaritalStatus,
+  PropertyDocument,
+  OccupancyAllocation,
+  OccupancyStatus,
+  ActivityType,
+  PropertyType
+} from '@/components/dashboard/types';
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { StatsSummaryCards } from '@/components/dashboard/StatsSummaryCards';
