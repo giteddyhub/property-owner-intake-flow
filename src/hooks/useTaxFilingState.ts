@@ -17,14 +17,16 @@ export const useTaxFilingState = () => {
       // Store session data in localStorage for persistence
       localStorage.setItem('taxFilingSession', sessionId);
       
-      // Optionally store in database for server-side tracking
+      // We'll use the purchases table instead of creating a new tax_filing_sessions table
+      // This table already exists and can store the necessary information
       const { error } = await supabase
-        .from('tax_filing_sessions')
+        .from('purchases')
         .insert({
           id: sessionId,
-          user_id: userId,
-          created_at: new Date().toISOString(),
-          status: 'initiated'
+          contact_id: userId,
+          amount: 0, // Initial amount, will be updated during checkout
+          payment_status: 'initiated',
+          created_at: new Date().toISOString()
         });
       
       if (error) {

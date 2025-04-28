@@ -45,17 +45,21 @@ const TaxFilingServicePage = () => {
             setHasDocumentRetrieval(JSON.parse(retrievalService));
           }
         } else {
-          // If not in local storage, verify from database
+          // If not in local storage, verify from database using purchases table
           const { data, error } = await supabase
-            .from('tax_filing_sessions')
+            .from('purchases')
             .select('*')
             .eq('id', sessionId)
-            .eq('user_id', user.id)
+            .eq('contact_id', user.id)
             .single();
           
           if (data) {
             setSessionValid(true);
             localStorage.setItem('taxFilingSession', sessionId);
+            // If the purchase has document retrieval info already stored
+            if (data.has_document_retrieval !== null) {
+              setHasDocumentRetrieval(data.has_document_retrieval);
+            }
           } else {
             setSessionValid(false);
             navigate('/dashboard');
