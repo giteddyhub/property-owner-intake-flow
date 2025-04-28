@@ -6,6 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Trash2, FileText, UploadCloud } from 'lucide-react';
 import { formatOccupancyStatuses } from './utils/occupancyUtils';
 
+// Helper function to format activity type
+const formatActivityType = (activity: string): string => {
+  if (activity === 'owned_all_year') {
+    return 'Owned all year';
+  }
+  if (activity === 'purchased') {
+    return 'Purchased in 2024';
+  }
+  if (activity === 'sold') {
+    return 'Sold in 2024';
+  }
+  if (activity === 'both') {
+    return 'Purchased & Sold in 2024';
+  }
+  return activity.replace(/_/g, ' ');
+};
+
 interface PropertyListProps {
   properties: Property[];
   onEdit: (index: number) => void;
@@ -25,10 +42,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ properties, onEdit, onDelet
             </CardTitle>
             <CardDescription>
               {property.propertyType.charAt(0) + property.propertyType.slice(1).toLowerCase()} • 
-              {property.activity2024 === 'purchased' && ' Purchased in 2024'}
-              {property.activity2024 === 'sold' && ' Sold in 2024'}
-              {property.activity2024 === 'both' && ' Purchased & Sold in 2024'}
-              {property.activity2024 === 'owned_all_year' && ' Owned all year'}
+              {formatActivityType(property.activity2024)}
             </CardDescription>
           </CardHeader>
           <CardContent>

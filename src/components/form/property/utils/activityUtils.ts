@@ -9,6 +9,22 @@ export const normalizeActivityType = (activity: string | ActivityType): Activity
   return activity as ActivityType;
 };
 
+// Function to format activity types for display
+export const formatActivityType = (activity: string): string => {
+  switch (activity) {
+    case 'owned_all_year':
+      return 'Owned all year';
+    case 'purchased':
+      return 'Purchased in 2024';
+    case 'sold':
+      return 'Sold in 2024';
+    case 'both':
+      return 'Purchased & Sold in 2024';
+    default:
+      return activity.charAt(0).toUpperCase() + activity.slice(1).replace(/_/g, ' ');
+  }
+};
+
 // Function to handle activity type changes
 export const handleActivityChange = (property: Property, newActivity: ActivityType): Property => {
   const updatedProperty = { ...property, activity2024: newActivity };

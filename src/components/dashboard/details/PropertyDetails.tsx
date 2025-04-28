@@ -10,6 +10,15 @@ import {
   HoverCardContent
 } from '@/components/ui/hover-card';
 
+// Helper function to format activity type
+const formatActivityType = (activity: string): string => {
+  if (activity === 'owned_all_year') {
+    return 'Owned all year';
+  }
+  // Format other activity types by capitalizing first letter
+  return activity.charAt(0).toUpperCase() + activity.slice(1).replace('_', ' ');
+};
+
 interface PropertyDetailsProps {
   property: Property;
 }
@@ -36,7 +45,7 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property }) =>
 
         <div className="space-y-1">
           <p className="text-sm font-medium">Activity (2024)</p>
-          <p className="text-sm">{property.activity2024}</p>
+          <p className="text-sm">{formatActivityType(property.activity2024)}</p>
         </div>
       </div>
 
@@ -104,7 +113,11 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property }) =>
             <ul className="space-y-2">
               {property.occupancyStatuses.map((status, index) => (
                 <li key={index} className="flex justify-between items-center">
-                  <span>{status.status ? status.status.replace('_', ' ') : 'Unknown'}</span>
+                  <span>
+                    {status.status 
+                      ? status.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                      : 'Unknown'}
+                  </span>
                   <Badge variant="outline">{status.months} months</Badge>
                 </li>
               ))}
