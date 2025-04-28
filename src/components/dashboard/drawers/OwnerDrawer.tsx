@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import { 
-  Drawer, 
-  DrawerContent, 
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerClose
-} from '@/components/ui/drawer';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import OwnerForm from '@/components/form/owner/OwnerForm';
@@ -152,54 +152,52 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
   };
   
   return (
-    <Drawer open={isOpen} onOpenChange={onClose} shouldScaleBackground>
-      <DrawerContent className="h-[90vh] overflow-auto">
-        <div className="mx-auto max-w-4xl w-full p-6">
-          <DrawerHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <DrawerTitle>{owner ? 'Edit Owner' : 'Add New Owner'}</DrawerTitle>
-                <DrawerDescription>
-                  {owner 
-                    ? 'Update the owner details below'
-                    : 'Fill in the details to add a new owner'
-                  }
-                </DrawerDescription>
-              </div>
-              <DrawerClose asChild>
-                <Button variant="ghost" size="icon">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DrawerClose>
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] overflow-y-auto">
+        <SheetHeader className="relative">
+          <div className="flex justify-between items-center">
+            <div>
+              <SheetTitle>{owner ? 'Edit Owner' : 'Add New Owner'}</SheetTitle>
+              <SheetDescription>
+                {owner 
+                  ? 'Update the owner details below'
+                  : 'Fill in the details to add a new owner'
+                }
+              </SheetDescription>
             </div>
-          </DrawerHeader>
-          
-          <div className="mt-4">
-            <OwnerForm
-              owner={currentOwner}
-              editingIndex={owner ? 0 : null}
-              onSubmit={handleSubmit}
-              onCancel={onClose}
-              onOwnerChange={handleOwnerChange}
-              onCountryChange={handleCountryChange}
-              onDateChange={handleDateChange}
-              onInputChange={handleInputChange}
-              onResidencyStatusChange={handleResidencyStatusChange}
-              onResidencyDetailChange={handleResidencyDetailChange}
-              showResidencyDialog={showResidencyDialog}
-              setShowResidencyDialog={setShowResidencyDialog}
-              hideCancel={true}
-            />
+            <SheetClose asChild>
+              <Button variant="ghost" size="icon">
+                <X className="h-4 w-4" />
+              </Button>
+            </SheetClose>
           </div>
-
-          <DrawerFooter>
-            <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
-          </DrawerFooter>
+        </SheetHeader>
+        
+        <div className="mt-6 pr-6">
+          <OwnerForm
+            owner={currentOwner}
+            editingIndex={owner ? 0 : null}
+            onSubmit={handleSubmit}
+            onCancel={onClose}
+            onOwnerChange={handleOwnerChange}
+            onCountryChange={handleCountryChange}
+            onDateChange={handleDateChange}
+            onInputChange={handleInputChange}
+            onResidencyStatusChange={handleResidencyStatusChange}
+            onResidencyDetailChange={handleResidencyDetailChange}
+            showResidencyDialog={showResidencyDialog}
+            setShowResidencyDialog={setShowResidencyDialog}
+            hideCancel={true}
+          />
         </div>
-      </DrawerContent>
-    </Drawer>
+
+        <SheetFooter className="pt-4">
+          <SheetClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 };
 
