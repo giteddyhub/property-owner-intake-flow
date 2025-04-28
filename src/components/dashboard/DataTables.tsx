@@ -25,9 +25,6 @@ export const DataTables: React.FC<DataTablesProps> = ({
   // Render the appropriate table based on the activeFilter
   return (
     <div className="w-full">
-      {activeFilter === 'all' && (
-        <PropertiesTable properties={properties} />
-      )}
       {activeFilter === 'properties' && (
         <PropertiesTable properties={properties} />
       )}

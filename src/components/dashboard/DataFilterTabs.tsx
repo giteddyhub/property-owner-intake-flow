@@ -13,12 +13,6 @@ export const DataFilterTabs: React.FC<DataFilterTabsProps> = ({
   return (
     <div className="bg-gray-50 p-0.5 rounded-lg inline-flex mb-4">
       <button 
-        className={`px-4 py-2 text-sm ${activeFilter === 'all' ? 'bg-white shadow-sm rounded-md' : ''}`}
-        onClick={() => setActiveFilter('all')}
-      >
-        All data
-      </button>
-      <button 
         className={`px-4 py-2 text-sm ${activeFilter === 'properties' ? 'bg-white shadow-sm rounded-md' : ''}`}
         onClick={() => setActiveFilter('properties')}
       >
