@@ -25,6 +25,8 @@ import { ActionButtons, AddButton } from '@/components/dashboard/tables/ActionBu
 import { format } from 'date-fns';
 import AssignmentDrawer from '@/components/dashboard/drawers/AssignmentDrawer';
 import { Badge } from '@/components/ui/badge';
+import { DetailsPopover } from '@/components/dashboard/details/DetailsPopover';
+import { AssignmentDetails } from '@/components/dashboard/details/AssignmentDetails';
 
 interface AssignmentsTableProps {
   assignments: OwnerPropertyAssignment[];
@@ -43,6 +45,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   const [selectedAssignment, setSelectedAssignment] = useState<OwnerPropertyAssignment | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   
   const getOwnerById = (id: string): Owner | undefined => {
     return owners.find(owner => owner.id === id);
@@ -88,6 +91,11 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
     if (onRefresh) onRefresh();
   };
   
+  const handleRowClick = (assignment: OwnerPropertyAssignment) => {
+    setSelectedAssignment(assignment);
+    setDetailsOpen(true);
+  };
+  
   return (
     <>
       <div className="flex justify-between mb-4">
@@ -120,7 +128,17 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                 const owner = getOwnerById(assignment.ownerId);
                 
                 return (
-                  <TableRow key={assignment.id || `${assignment.ownerId}-${assignment.propertyId}`}>
+                  <TableRow 
+                    key={assignment.id || `${assignment.ownerId}-${assignment.propertyId}`}
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      // Prevent row click when action buttons are clicked
+                      if ((e.target as HTMLElement).closest('.action-buttons')) {
+                        return;
+                      }
+                      handleRowClick(assignment);
+                    }}
+                  >
                     <TableCell>
                       {property ? property.label : 'Unknown Property'}
                     </TableCell>
@@ -151,13 +169,15 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                         : '-'}
                     </TableCell>
                     <TableCell>
-                      <ActionButtons
-                        onEdit={() => handleEdit(assignment)}
-                        onDelete={() => {
-                          setSelectedAssignment(assignment);
-                          setDeleteDialogOpen(true);
-                        }}
-                      />
+                      <div className="action-buttons">
+                        <ActionButtons
+                          onEdit={() => handleEdit(assignment)}
+                          onDelete={() => {
+                            setSelectedAssignment(assignment);
+                            setDeleteDialogOpen(true);
+                          }}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -166,6 +186,21 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
           </TableBody>
         </Table>
       </div>
+      
+      {/* Details Popover */}
+      {selectedAssignment && (
+        <DetailsPopover
+          trigger={<div />} // Hidden trigger, we control open state programmatically
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        >
+          <AssignmentDetails 
+            assignment={selectedAssignment} 
+            owner={getOwnerById(selectedAssignment.ownerId)} 
+            property={getPropertyById(selectedAssignment.propertyId)} 
+          />
+        </DetailsPopover>
+      )}
       
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

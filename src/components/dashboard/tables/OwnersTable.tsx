@@ -24,6 +24,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ActionButtons, AddButton } from '@/components/dashboard/tables/ActionButtons';
 import OwnerDrawer from '@/components/dashboard/drawers/OwnerDrawer';
+import { DetailsPopover } from '@/components/dashboard/details/DetailsPopover';
+import { OwnerDetails } from '@/components/dashboard/details/OwnerDetails';
 
 interface OwnersTableProps {
   owners: Owner[];
@@ -35,6 +37,7 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({ owners, onRefresh }) =
   const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   
   const handleEdit = (owner: Owner) => {
     setSelectedOwner(owner);
@@ -84,6 +87,11 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({ owners, onRefresh }) =
     if (onRefresh) onRefresh();
   };
   
+  const handleRowClick = (owner: Owner) => {
+    setSelectedOwner(owner);
+    setDetailsOpen(true);
+  };
+  
   return (
     <>
       <div className="flex justify-between mb-4">
@@ -111,19 +119,31 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({ owners, onRefresh }) =
               </TableRow>
             ) : (
               owners.map((owner) => (
-                <TableRow key={owner.id}>
+                <TableRow 
+                  key={owner.id}
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    // Prevent row click when action buttons are clicked
+                    if ((e.target as HTMLElement).closest('.action-buttons')) {
+                      return;
+                    }
+                    handleRowClick(owner);
+                  }}  
+                >
                   <TableCell className="font-medium">{owner.firstName} {owner.lastName}</TableCell>
                   <TableCell>{owner.italianTaxCode}</TableCell>
                   <TableCell>{owner.citizenship}</TableCell>
                   <TableCell>{owner.isResidentInItaly ? 'Yes' : 'No'}</TableCell>
                   <TableCell>
-                    <ActionButtons
-                      onEdit={() => handleEdit(owner)}
-                      onDelete={() => {
-                        setSelectedOwner(owner);
-                        setDeleteDialogOpen(true);
-                      }}
-                    />
+                    <div className="action-buttons">
+                      <ActionButtons
+                        onEdit={() => handleEdit(owner)}
+                        onDelete={() => {
+                          setSelectedOwner(owner);
+                          setDeleteDialogOpen(true);
+                        }}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -131,6 +151,17 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({ owners, onRefresh }) =
           </TableBody>
         </Table>
       </div>
+      
+      {/* Details Popover */}
+      {selectedOwner && (
+        <DetailsPopover
+          trigger={<div />} // Hidden trigger, we control open state programmatically
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        >
+          <OwnerDetails owner={selectedOwner} />
+        </DetailsPopover>
+      )}
       
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

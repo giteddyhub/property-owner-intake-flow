@@ -24,6 +24,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ActionButtons, AddButton } from '@/components/dashboard/tables/ActionButtons';
 import PropertyDrawer from '@/components/dashboard/drawers/PropertyDrawer';
+import { DetailsPopover } from '@/components/dashboard/details/DetailsPopover';
+import { PropertyDetails } from '@/components/dashboard/details/PropertyDetails';
 
 interface PropertiesTableProps {
   properties: Property[];
@@ -35,6 +37,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   
   const handleEdit = (property: Property) => {
     setSelectedProperty(property);
@@ -83,6 +86,11 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
   const handlePropertySaved = () => {
     if (onRefresh) onRefresh();
   };
+  
+  const handleRowClick = (property: Property) => {
+    setSelectedProperty(property);
+    setDetailsOpen(true);
+  };
 
   return (
     <>
@@ -111,7 +119,17 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
               </TableRow>
             ) : (
               properties.map((property) => (
-                <TableRow key={property.id}>
+                <TableRow 
+                  key={property.id}
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    // Prevent row click when action buttons are clicked
+                    if ((e.target as HTMLElement).closest('.action-buttons')) {
+                      return;
+                    }
+                    handleRowClick(property);
+                  }}
+                >
                   <TableCell className="font-medium">{property.label}</TableCell>
                   <TableCell>
                     {property.address.street}, {property.address.comune}, {property.address.province}
@@ -123,13 +141,15 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
                     {formatOccupancyStatuses(property.occupancyStatuses)}
                   </TableCell>
                   <TableCell>
-                    <ActionButtons
-                      onEdit={() => handleEdit(property)}
-                      onDelete={() => {
-                        setSelectedProperty(property);
-                        setDeleteDialogOpen(true);
-                      }}
-                    />
+                    <div className="action-buttons">
+                      <ActionButtons
+                        onEdit={() => handleEdit(property)}
+                        onDelete={() => {
+                          setSelectedProperty(property);
+                          setDeleteDialogOpen(true);
+                        }}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -137,6 +157,17 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
           </TableBody>
         </Table>
       </div>
+      
+      {/* Details Popover */}
+      {selectedProperty && (
+        <DetailsPopover
+          trigger={<div />} // Hidden trigger, we control open state programmatically
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        >
+          <PropertyDetails property={selectedProperty} />
+        </DetailsPopover>
+      )}
       
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
