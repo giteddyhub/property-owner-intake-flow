@@ -12,6 +12,10 @@ interface AssignmentsTableProps {
 }
 
 export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({ assignments, owners, properties }) => {
+  console.log("Assignments in AssignmentsTable:", assignments);
+  console.log("Owners in AssignmentsTable:", owners);
+  console.log("Properties in AssignmentsTable:", properties);
+
   return (
     <div>
       <div className="bg-white rounded-lg overflow-hidden border border-gray-100">

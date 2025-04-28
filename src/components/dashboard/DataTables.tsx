@@ -22,6 +22,8 @@ export const DataTables: React.FC<DataTablesProps> = ({
   assignments,
   activeFilter
 }) => {
+  console.log("Assignments data in DataTables:", assignments);
+  
   // Render the appropriate table based on the activeFilter
   return (
     <div className="w-full">
