@@ -17,7 +17,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   onSuccess,
   redirectAfterAuth = false
 }) => {
-  const { signUp } = useAuth();
+  const { signUp, user } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -41,13 +41,18 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     setIsSubmitting(true);
     
     try {
-      const { error } = await signUp(email, password, fullName);
+      const { error, data } = await signUp(email, password, fullName);
       
       if (error) {
         toast.error(error.message);
       } else {
         toast.success('Account created successfully!');
         setIsSignedUp(true);
+        
+        // Store the userId in sessionStorage for use after email verification
+        if (data?.user?.id) {
+          sessionStorage.setItem('pendingUserId', data.user.id);
+        }
         
         // Only call onSuccess if redirectAfterAuth is false
         if (onSuccess && !redirectAfterAuth) {
