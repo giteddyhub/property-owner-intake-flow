@@ -25,9 +25,7 @@ const StatsSummaryCard: React.FC<StatsSummaryCardProps> = ({
               +{percentChange}% <ArrowRight className="h-3 w-3 ml-1" />
             </div>
           </div>
-          <div className="h-12 w-24">
-            
-          </div>
+          
         </div>
       </CardContent>
     </Card>;
