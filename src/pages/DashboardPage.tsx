@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
+import { Owner, Property, OwnerPropertyAssignment, Address, PropertyAddress, ActivityType, PropertyType, OccupancyAllocation, MaritalStatus } from '@/types/form';
 
 const DashboardPage = () => {
   const { user, signOut } = useAuth();
@@ -44,7 +44,6 @@ const DashboardPage = () => {
         if (propertiesError) throw propertiesError;
         
         // Fetch assignments
-        // Note: This is just a stub - we'd need to properly map database columns to our types
         const { data: assignmentsData, error: assignmentsError } = await supabase
           .from('owner_property_assignments')
           .select('*')
@@ -52,10 +51,63 @@ const DashboardPage = () => {
 
         if (assignmentsError) throw assignmentsError;
         
-        // Set the data
-        setOwners(ownersData as Owner[]);
-        setProperties(propertiesData as Property[]);
-        setAssignments(assignmentsData as OwnerPropertyAssignment[]);
+        // Map database fields to our application types
+        const mappedOwners: Owner[] = ownersData.map(dbOwner => ({
+          id: dbOwner.id,
+          firstName: dbOwner.first_name,
+          lastName: dbOwner.last_name,
+          dateOfBirth: dbOwner.date_of_birth ? new Date(dbOwner.date_of_birth) : null,
+          countryOfBirth: dbOwner.country_of_birth,
+          citizenship: dbOwner.citizenship,
+          address: {
+            street: dbOwner.address_street,
+            city: dbOwner.address_city,
+            zip: dbOwner.address_zip,
+            country: dbOwner.address_country
+          },
+          italianTaxCode: dbOwner.italian_tax_code,
+          maritalStatus: dbOwner.marital_status as MaritalStatus,
+          isResidentInItaly: dbOwner.is_resident_in_italy
+        }));
+        
+        const mappedProperties: Property[] = propertiesData.map(dbProperty => ({
+          id: dbProperty.id,
+          label: dbProperty.label,
+          address: {
+            comune: dbProperty.address_comune,
+            province: dbProperty.address_province,
+            street: dbProperty.address_street,
+            zip: dbProperty.address_zip
+          },
+          activity2024: dbProperty.activity_2024 as ActivityType,
+          purchaseDate: dbProperty.purchase_date ? new Date(dbProperty.purchase_date) : null,
+          purchasePrice: dbProperty.purchase_price ? Number(dbProperty.purchase_price) : undefined,
+          saleDate: dbProperty.sale_date ? new Date(dbProperty.sale_date) : null,
+          salePrice: dbProperty.sale_price ? Number(dbProperty.sale_price) : undefined,
+          propertyType: dbProperty.property_type as PropertyType,
+          remodeling: dbProperty.remodeling,
+          occupancyStatuses: dbProperty.occupancy_statuses as OccupancyAllocation[] || [],
+          rentalIncome: dbProperty.rental_income ? Number(dbProperty.rental_income) : undefined,
+          documents: dbProperty.documents || [],
+          useDocumentRetrievalService: dbProperty.use_document_retrieval_service
+        }));
+        
+        const mappedAssignments: OwnerPropertyAssignment[] = assignmentsData.map(dbAssignment => ({
+          propertyId: dbAssignment.property_id,
+          ownerId: dbAssignment.owner_id,
+          ownershipPercentage: Number(dbAssignment.ownership_percentage),
+          residentAtProperty: dbAssignment.resident_at_property,
+          residentDateRange: dbAssignment.resident_from_date ? {
+            from: new Date(dbAssignment.resident_from_date),
+            to: dbAssignment.resident_to_date ? new Date(dbAssignment.resident_to_date) : null
+          } : undefined,
+          taxCredits: dbAssignment.tax_credits ? Number(dbAssignment.tax_credits) : undefined
+        }));
+        
+        // Set the mapped data
+        setOwners(mappedOwners);
+        setProperties(mappedProperties);
+        setAssignments(mappedAssignments);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         toast.error('Failed to load your data. Please try again later.');
