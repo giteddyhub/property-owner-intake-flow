@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -11,8 +11,14 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('properties');
   
+  const [refreshFlag, setRefreshFlag] = useState(0);
+  const refreshData = useCallback(() => {
+    setRefreshFlag(prev => prev + 1);
+  }, []);
+  
   const { loading, owners, properties, assignments } = useDashboardData({ 
-    userId: user?.id 
+    userId: user?.id,
+    refreshFlag 
   });
 
   React.useEffect(() => {
@@ -38,6 +44,7 @@ const DashboardPage = () => {
       onSignOut={handleSignOut}
       activeFilter={activeFilter}
       setActiveFilter={setActiveFilter}
+      onRefresh={refreshData}
     />
   );
 };

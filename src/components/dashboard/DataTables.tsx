@@ -14,13 +14,15 @@ interface DataTablesProps {
   owners: Owner[];
   assignments: OwnerPropertyAssignment[];
   activeFilter: string;
+  onRefresh: () => void;
 }
 
 export const DataTables: React.FC<DataTablesProps> = ({ 
   properties, 
   owners, 
   assignments,
-  activeFilter
+  activeFilter,
+  onRefresh
 }) => {
   console.log("Assignments data in DataTables:", assignments);
   
@@ -28,13 +30,18 @@ export const DataTables: React.FC<DataTablesProps> = ({
   return (
     <div className="w-full">
       {activeFilter === 'properties' && (
-        <PropertiesTable properties={properties} />
+        <PropertiesTable properties={properties} onRefresh={onRefresh} />
       )}
       {activeFilter === 'owners' && (
-        <OwnersTable owners={owners} />
+        <OwnersTable owners={owners} onRefresh={onRefresh} />
       )}
       {activeFilter === 'assignments' && (
-        <AssignmentsTable assignments={assignments} owners={owners} properties={properties} />
+        <AssignmentsTable 
+          assignments={assignments} 
+          owners={owners} 
+          properties={properties}
+          onRefresh={onRefresh} 
+        />
       )}
     </div>
   );

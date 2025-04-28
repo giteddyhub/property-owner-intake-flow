@@ -16,6 +16,7 @@ import {
 
 interface UseDashboardDataProps {
   userId: string | undefined;
+  refreshFlag?: number;
 }
 
 interface UseDashboardDataReturn {
@@ -25,7 +26,7 @@ interface UseDashboardDataReturn {
   assignments: OwnerPropertyAssignment[];
 }
 
-export const useDashboardData = ({ userId }: UseDashboardDataProps): UseDashboardDataReturn => {
+export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataProps): UseDashboardDataReturn => {
   const [loading, setLoading] = useState(true);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -54,7 +55,7 @@ export const useDashboardData = ({ userId }: UseDashboardDataProps): UseDashboar
         const { data: assignmentsData, error: assignmentsError } = await supabase
           .from('owner_property_assignments')
           .select('*')
-          .in('owner_id', ownersData.map(o => o.id));
+          .in('owner_id', ownersData.length > 0 ? ownersData.map(o => o.id) : ['none']);
 
         if (assignmentsError) throw assignmentsError;
         
@@ -73,7 +74,12 @@ export const useDashboardData = ({ userId }: UseDashboardDataProps): UseDashboar
           },
           italianTaxCode: dbOwner.italian_tax_code,
           maritalStatus: dbOwner.marital_status as MaritalStatus,
-          isResidentInItaly: dbOwner.is_resident_in_italy
+          isResidentInItaly: dbOwner.is_resident_in_italy,
+          italianResidenceDetails: dbOwner.is_resident_in_italy ? {
+            street: dbOwner.italian_residence_street,
+            city: dbOwner.italian_residence_city,
+            zip: dbOwner.italian_residence_zip
+          } : undefined
         }));
         
         const mappedProperties: Property[] = propertiesData.map(dbProperty => {
@@ -82,7 +88,10 @@ export const useDashboardData = ({ userId }: UseDashboardDataProps): UseDashboar
             try {
               parsedDocuments = dbProperty.documents.map(docString => {
                 try {
-                  return JSON.parse(docString);
+                  if (typeof docString === 'string') {
+                    return JSON.parse(docString);
+                  }
+                  return docString;
                 } catch (e) {
                   return {
                     id: 'unknown',
@@ -143,6 +152,7 @@ export const useDashboardData = ({ userId }: UseDashboardDataProps): UseDashboar
         });
         
         const mappedAssignments: OwnerPropertyAssignment[] = assignmentsData.map(dbAssignment => ({
+          id: dbAssignment.id, // Make sure this is included
           propertyId: dbAssignment.property_id,
           ownerId: dbAssignment.owner_id,
           ownershipPercentage: Number(dbAssignment.ownership_percentage),
@@ -166,7 +176,7 @@ export const useDashboardData = ({ userId }: UseDashboardDataProps): UseDashboar
     };
 
     fetchUserData();
-  }, [userId]);
+  }, [userId, refreshFlag]);
 
   return { loading, owners, properties, assignments };
 };

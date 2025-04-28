@@ -1,136 +1,162 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Owner } from '@/components/dashboard/types';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { ActionButtons, AddButton } from '@/components/dashboard/tables/ActionButtons';
+import OwnerDrawer from '@/components/dashboard/drawers/OwnerDrawer';
 
 interface OwnersTableProps {
   owners: Owner[];
+  onRefresh?: () => void;
 }
 
-export const OwnersTable: React.FC<OwnersTableProps> = ({ owners }) => {
+export const OwnersTable: React.FC<OwnersTableProps> = ({ owners, onRefresh }) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   
-  const openOwnerDialog = (owner: Owner) => {
+  const handleEdit = (owner: Owner) => {
     setSelectedOwner(owner);
+    setIsCreating(false);
+    setDrawerOpen(true);
   };
   
-  const closeOwnerDialog = () => {
-    setSelectedOwner(null);
+  const handleDelete = async () => {
+    if (!selectedOwner) return;
+    
+    try {
+      // First check if the owner has any assignments
+      const { data: assignments } = await supabase
+        .from('owner_property_assignments')
+        .select('id')
+        .eq('owner_id', selectedOwner.id);
+        
+      if (assignments && assignments.length > 0) {
+        toast.error('Cannot delete owner with existing property assignments. Remove assignments first.');
+        setDeleteDialogOpen(false);
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('owners')
+        .delete()
+        .eq('id', selectedOwner.id);
+      
+      if (error) throw error;
+      
+      toast.success('Owner deleted successfully');
+      setDeleteDialogOpen(false);
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error deleting owner:', error);
+      toast.error('Failed to delete owner');
+    }
   };
-
+  
+  const handleAdd = () => {
+    setSelectedOwner(null);
+    setIsCreating(true);
+    setDrawerOpen(true);
+  };
+  
+  const handleOwnerSaved = () => {
+    if (onRefresh) onRefresh();
+  };
+  
   return (
-    <div>
-      <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
+    <>
+      <div className="flex justify-between mb-4">
+        <h2 className="text-lg font-medium">Owners</h2>
+        <AddButton onClick={handleAdd} label="Add Owner" />
+      </div>
+
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-white">
-              <TableHead className="text-xs font-medium text-gray-500">Name</TableHead>
-              <TableHead className="text-xs font-medium text-gray-500">Citizenship</TableHead>
-              <TableHead className="text-xs font-medium text-gray-500">Tax Code</TableHead>
-              <TableHead className="text-xs font-medium text-gray-500">Resident in Italy</TableHead>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Tax Code</TableHead>
+              <TableHead>Citizenship</TableHead>
+              <TableHead>Resident in Italy</TableHead>
+              <TableHead className="w-16"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {owners.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                   No owners found.
                 </TableCell>
               </TableRow>
             ) : (
               owners.map((owner) => (
-                <TableRow 
-                  key={owner.id} 
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => openOwnerDialog(owner)}
-                >
-                  <TableCell className="font-medium">{`${owner.firstName} ${owner.lastName}`}</TableCell>
+                <TableRow key={owner.id}>
+                  <TableCell className="font-medium">{owner.firstName} {owner.lastName}</TableCell>
+                  <TableCell>{owner.italianTaxCode}</TableCell>
                   <TableCell>{owner.citizenship}</TableCell>
-                  <TableCell>{owner.italianTaxCode || 'N/A'}</TableCell>
                   <TableCell>{owner.isResidentInItaly ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>
+                    <ActionButtons
+                      onEdit={() => handleEdit(owner)}
+                      onDelete={() => {
+                        setSelectedOwner(owner);
+                        setDeleteDialogOpen(true);
+                      }}
+                    />
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
-
-      {owners.length > 0 && (
-        <div className="flex items-center justify-between mt-4 text-sm">
-          <div className="text-gray-500">
-            Showing {Math.min(owners.length, 5)} of {owners.length} owners
-          </div>
-          <div className="flex space-x-1">
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0 bg-blue-50 border-blue-200 text-blue-700">
-              1
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Owner Detail Dialog */}
-      <Dialog open={selectedOwner !== null} onOpenChange={() => closeOwnerDialog()}>
-        <DialogContent className="max-w-2xl">
-          {selectedOwner && (
-            <>
-              <DialogHeader>
-                <div className="flex items-center space-x-2">
-                  <Info className="h-5 w-5 text-blue-500" />
-                  <DialogTitle>{`${selectedOwner.firstName} ${selectedOwner.lastName}`}</DialogTitle>
-                </div>
-                <DialogDescription>
-                  Owner details
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-medium text-sm">Personal Information</h3>
-                    <div className="mt-2 space-y-2">
-                      <p className="text-sm"><span className="font-medium">Full Name:</span> {`${selectedOwner.firstName} ${selectedOwner.lastName}`}</p>
-                      <p className="text-sm">
-                        <span className="font-medium">Date of Birth:</span> {selectedOwner.dateOfBirth ? format(selectedOwner.dateOfBirth, 'MMM d, yyyy') : 'N/A'}
-                      </p>
-                      <p className="text-sm"><span className="font-medium">Country of Birth:</span> {selectedOwner.countryOfBirth}</p>
-                      <p className="text-sm"><span className="font-medium">Citizenship:</span> {selectedOwner.citizenship}</p>
-                      <p className="text-sm"><span className="font-medium">Marital Status:</span> {selectedOwner.maritalStatus}</p>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-medium text-sm">Address</h3>
-                    <div className="mt-2 space-y-2">
-                      <p className="text-sm"><span className="font-medium">Street:</span> {selectedOwner.address.street}</p>
-                      <p className="text-sm"><span className="font-medium">City:</span> {selectedOwner.address.city}</p>
-                      <p className="text-sm"><span className="font-medium">ZIP:</span> {selectedOwner.address.zip}</p>
-                      <p className="text-sm"><span className="font-medium">Country:</span> {selectedOwner.address.country}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border-t pt-4">
-                  <h3 className="font-medium text-sm">Tax Information</h3>
-                  <div className="mt-2 space-y-2">
-                    <p className="text-sm"><span className="font-medium">Italian Tax Code:</span> {selectedOwner.italianTaxCode || 'N/A'}</p>
-                    <p className="text-sm"><span className="font-medium">Resident in Italy:</span> {selectedOwner.isResidentInItaly ? 'Yes' : 'No'}</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this owner?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the owner and all of its data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Owner Drawer for Edit/Create */}
+      <OwnerDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        owner={isCreating ? undefined : selectedOwner || undefined}
+        onSuccess={handleOwnerSaved}
+      />
+    </>
   );
 };

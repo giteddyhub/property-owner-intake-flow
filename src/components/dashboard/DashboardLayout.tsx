@@ -19,6 +19,7 @@ interface DashboardLayoutProps {
   onSignOut: () => Promise<void>;
   activeFilter: string;
   setActiveFilter: (filter: string) => void;
+  onRefresh: () => void;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -27,7 +28,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   assignments,
   onSignOut,
   activeFilter,
-  setActiveFilter
+  setActiveFilter,
+  onRefresh
 }) => {
   const navigate = useNavigate();
 
@@ -59,6 +61,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               owners={owners} 
               assignments={assignments} 
               activeFilter={activeFilter}
+              onRefresh={onRefresh}
             />
           </div>
         </div>
