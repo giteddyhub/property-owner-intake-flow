@@ -56,7 +56,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <StatsSummaryCards 
           ownersCount={owners.length} 
           propertiesCount={properties.length} 
-          assignmentsCount={assignments.length} 
+          assignmentsCount={assignments.length}
+          userId={user?.id || ''}
         />
 
         <div className="bg-white rounded-xl mb-8">

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import ResidentSuccessPage from './pages/ResidentSuccessPage';
 import ResidencyAssessmentPage from './pages/ResidencyAssessmentPage';
 import DashboardPage from './pages/DashboardPage';
+import TaxFilingServicePage from './pages/TaxFilingServicePage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Protected route component
@@ -62,6 +63,11 @@ const AppRoutes = () => {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <DashboardPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/tax-filing-service/:sessionId" element={
+        <ProtectedRoute>
+          <TaxFilingServicePage />
         </ProtectedRoute>
       } />
       <Route path="*" element={<NotFound />} />
