@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Drawer, 
-  DrawerContent, 
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerClose,
-  DrawerFooter
-} from '@/components/ui/drawer';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import PropertyForm from '@/components/form/property/PropertyForm';
@@ -92,7 +92,7 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
         toast.success('Property added successfully');
       }
 
-      onClose();
+      handleClose();
       onSuccess();
     } catch (error) {
       console.error('Error saving property:', error);
@@ -110,31 +110,31 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
   };
   
   return (
-    <Drawer open={isOpen} onOpenChange={handleClose} shouldScaleBackground>
-      <DrawerContent className="h-[90vh] max-h-[90vh] p-0">
+    <Sheet open={isOpen} onOpenChange={handleClose}>
+      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl p-0">
         <ScrollArea className="h-full">
           <div className="p-6">
-            <DrawerHeader className="sticky top-0 z-10 bg-background">
+            <SheetHeader className="relative">
               <div className="flex justify-between items-center">
                 <div>
-                  <DrawerTitle>{property ? 'Edit Property' : 'Add New Property'}</DrawerTitle>
-                  <DrawerDescription>
+                  <SheetTitle>{property ? 'Edit Property' : 'Add New Property'}</SheetTitle>
+                  <SheetDescription>
                     {property 
                       ? 'Update the property details below'
                       : 'Fill in the details to add a new property'
                     }
-                  </DrawerDescription>
+                  </SheetDescription>
                 </div>
-                <DrawerClose asChild>
+                <SheetClose asChild>
                   <Button variant="ghost" size="icon" onClick={() => {
                     // Ensure pointer-events are enabled when closing via button
                     document.body.style.pointerEvents = '';
                   }}>
                     <X className="h-4 w-4" />
                   </Button>
-                </DrawerClose>
+                </SheetClose>
               </div>
-            </DrawerHeader>
+            </SheetHeader>
             
             <div className="pt-2">
               <PropertyForm
@@ -160,21 +160,18 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
               />
             </div>
 
-            {/* Non-sticky footer at the bottom */}
-            <div className="mt-4 border-t">
-              <DrawerFooter>
-                <DrawerClose asChild>
-                  <Button variant="outline" onClick={() => {
-                    // Ensure pointer-events are enabled when closing via button
-                    document.body.style.pointerEvents = '';
-                  }}>Cancel</Button>
-                </DrawerClose>
-              </DrawerFooter>
-            </div>
+            <SheetFooter className="pt-4">
+              <SheetClose asChild>
+                <Button variant="outline" onClick={() => {
+                  // Ensure pointer-events are enabled when closing via button
+                  document.body.style.pointerEvents = '';
+                }}>Cancel</Button>
+              </SheetClose>
+            </SheetFooter>
           </div>
         </ScrollArea>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 };
 
