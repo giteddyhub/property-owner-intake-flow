@@ -95,9 +95,9 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
   
   return (
     <Drawer open={isOpen} onOpenChange={onClose} shouldScaleBackground>
-      <DrawerContent className="h-[90vh] overflow-auto">
-        <div className="mx-auto max-w-4xl w-full p-6">
-          <DrawerHeader>
+      <DrawerContent className="h-[90vh] max-h-[90vh]">
+        <div className="mx-auto w-full max-w-4xl overflow-auto h-full pb-24">
+          <DrawerHeader className="sticky top-0 z-10 bg-background">
             <div className="flex justify-between items-center">
               <div>
                 <DrawerTitle>{property ? 'Edit Property' : 'Add New Property'}</DrawerTitle>
@@ -116,7 +116,7 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
             </div>
           </DrawerHeader>
           
-          <div className="mt-4">
+          <div className="p-6 pt-2">
             <PropertyForm
               property={property || {
                 id: '',
@@ -140,7 +140,7 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
             />
           </div>
 
-          <DrawerFooter>
+          <DrawerFooter className="sticky bottom-0 z-10 bg-background mt-auto">
             <DrawerClose asChild>
               <Button variant="outline">Cancel</Button>
             </DrawerClose>
