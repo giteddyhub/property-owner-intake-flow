@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check, Mail } from 'lucide-react';
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -23,6 +23,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSignedUp, setIsSignedUp] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,9 +46,15 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success('Account created successfully! Please check your email to confirm your account.');
-        if (onSuccess) {
-          onSuccess();
+        toast.success('Account created successfully!');
+        setIsSignedUp(true);
+        
+        // Only call onSuccess if redirectAfterAuth is false
+        if (onSuccess && !redirectAfterAuth) {
+          // Small delay to show the confirmation message
+          setTimeout(() => {
+            onSuccess();
+          }, 2000);
         }
         
         if (redirectAfterAuth) {
@@ -61,6 +68,33 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  // Success state after signing up
+  if (isSignedUp) {
+    return (
+      <div className="flex flex-col items-center text-center space-y-4 py-4">
+        <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+          <Check className="h-6 w-6 text-green-600" />
+        </div>
+        <h3 className="text-lg font-semibold">Account Created!</h3>
+        <div className="text-sm text-gray-600 max-w-xs">
+          <p className="mb-3">Please check your email to verify your account.</p>
+          <div className="flex items-center justify-center gap-2 text-blue-600">
+            <Mail className="h-4 w-4" />
+            <span>{email}</span>
+          </div>
+        </div>
+        {!redirectAfterAuth && onSuccess && (
+          <Button
+            onClick={onSuccess}
+            className="mt-4 w-full bg-form-400 hover:bg-form-500"
+          >
+            Continue with Submission
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

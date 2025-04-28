@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
-import AuthContactInfoDialog from '../AuthContactInfoDialog';
 import { Owner } from '@/types/form';
 import OwnerReviewCard from '../review/OwnerReviewCard';
 import PropertyReviewCard from '../review/PropertyReviewCard';
@@ -11,9 +10,10 @@ import SubmissionSummary from '../review/SubmissionSummary';
 import SectionHeader from '../review/SectionHeader';
 import ReviewActions from '../review/ReviewActions';
 import { submitFormData } from '../review/utils/submitUtils';
-import type { ContactInfo } from '../review/utils/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import { useAuth } from '@/contexts/AuthContext';
+import { AuthModal } from '../../auth/AuthModal';
+import { toast } from 'sonner';
 import {
   Accordion
 } from "@/components/ui/accordion";
@@ -22,14 +22,32 @@ const ReviewStep: React.FC = () => {
   const { state, goToStep, prevStep } = useFormContext();
   const { owners, properties, assignments } = state;
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showContactDialog, setShowContactDialog] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
   
   const handleSubmitButtonClick = () => {
-    setShowContactDialog(true);
+    if (!user) {
+      // If not logged in, show auth modal
+      setShowAuthModal(true);
+    } else {
+      // If logged in, proceed with submission directly
+      handleSubmit();
+    }
   };
   
-  const handleSubmit = async (contactInfo: ContactInfo) => {
+  const handleAuthSuccess = () => {
+    // Close the auth modal
+    setShowAuthModal(false);
+    // Short timeout to ensure auth state is updated
+    setTimeout(() => {
+      // If user is authenticated after modal closes, submit the form
+      if (user) {
+        handleSubmit();
+      }
+    }, 500);
+  };
+  
+  const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
       
@@ -43,12 +61,20 @@ const ReviewStep: React.FC = () => {
         JSON.stringify(hasDocumentRetrievalService)
       );
       
+      // Get user information to populate contact info
+      const contactInfo = {
+        fullName: user?.user_metadata?.full_name || '',
+        email: user?.email || '',
+        termsAccepted: true,
+        privacyAccepted: true
+      };
+      
       await submitFormData(owners, properties, assignments, contactInfo, user?.id || null);
     } catch (error) {
       console.error('Error during submission:', error);
+      toast.error('There was an error submitting your information. Please try again.');
     } finally {
       setIsSubmitting(false);
-      setShowContactDialog(false);
     }
   };
   
@@ -139,11 +165,13 @@ const ReviewStep: React.FC = () => {
         assignments={assignments}
       />
       
-      <AuthContactInfoDialog 
-        open={showContactDialog} 
-        onClose={() => setShowContactDialog(false)}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
+      <AuthModal 
+        open={showAuthModal} 
+        onOpenChange={setShowAuthModal}
+        onSuccess={handleAuthSuccess}
+        title="Create an Account to Submit"
+        description="Creating an account allows you to access your submission later and receive updates."
+        defaultTab="sign-up"
       />
     </div>
   );
