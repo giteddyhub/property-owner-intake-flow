@@ -136,6 +136,7 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
               onSubmit={handleSubmit}
               onCancel={onClose}
               hideCancel={true}
+              standalone={true}
             />
           </div>
 

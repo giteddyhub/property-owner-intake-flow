@@ -20,13 +20,15 @@ interface PropertyFormProps {
   onSubmit: (property: Property, occupancyMonths: Record<OccupancyStatus, number>) => void;
   onCancel: () => void;
   hideCancel?: boolean;
+  standalone?: boolean; // Added for standalone mode
 }
 
 const PropertyFormContent: React.FC<PropertyFormProps> = ({ 
   editingIndex, 
   onSubmit, 
   onCancel,
-  hideCancel = false 
+  hideCancel = false,
+  standalone = false 
 }) => {
   const { 
     currentProperty, 
@@ -71,6 +73,7 @@ const PropertyFormContent: React.FC<PropertyFormProps> = ({
         cancelText="Cancel" 
         submitButtonText={editingIndex !== null ? "Update Property" : "Add Property"}
         hideCancel={hideCancel}
+        standalone={standalone}
       />
     </div>
   );

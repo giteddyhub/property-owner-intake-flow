@@ -15,6 +15,7 @@ interface FormNavigationProps {
   submitButtonText?: string; // Added for custom submit button text
   isFormMode?: boolean; // Added to determine if we're in a form editing mode
   hideCancel?: boolean; // Added to hide cancel button in specific cases
+  standalone?: boolean; // Added for usage outside FormProvider
 }
 
 const FormNavigation: React.FC<FormNavigationProps> = ({
@@ -28,11 +29,11 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   submitButtonText = 'Save',
   isFormMode = false,
   hideCancel = false,
+  standalone = false,
 }) => {
-  const { state, nextStep, prevStep } = useFormContext();
-  const { currentStep } = state;
-  const isLastStep = currentStep === 4;
-
+  // Only try to use form context if not in standalone mode
+  const formContext = !standalone ? useFormContextSafely() : null;
+  
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -42,12 +43,16 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
       const canProceed = onNext();
       if (!canProceed) return;
     }
-    nextStep();
+    if (formContext) {
+      formContext.nextStep();
+    }
     scrollToTop();
   };
 
   const handlePrev = () => {
-    prevStep();
+    if (formContext) {
+      formContext.prevStep();
+    }
     scrollToTop();
   };
 
@@ -82,6 +87,9 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   }
 
   // Standard navigation mode
+  const isLastStep = formContext?.state.currentStep === 4;
+  const currentStep = formContext?.state.currentStep || 0;
+  
   return (
     <div className="flex justify-between mt-8">
       {showBack && currentStep > 0 ? (
@@ -115,5 +123,14 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
     </div>
   );
 };
+
+// Helper function to safely use form context
+function useFormContextSafely() {
+  try {
+    return useFormContext();
+  } catch (error) {
+    return null;
+  }
+}
 
 export default FormNavigation;
