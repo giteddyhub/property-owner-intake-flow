@@ -3,13 +3,11 @@ import React from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { useResidentContactForm } from '@/hooks/useResidentContactForm';
 import { ResidentContactForm } from './contact/ResidentContactForm';
 import { ResidentContactSuccess } from './contact/ResidentContactSuccess';
+import { ResidentDialogHeader } from './contact/ResidentDialogHeader';
 import { ItalianResidenceDetails } from '@/types/form';
 
 interface ResidentContactDialogProps {
@@ -38,14 +36,7 @@ const ResidentContactDialog: React.FC<ResidentContactDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Important Notice for Italian Tax Residents</DialogTitle>
-          <DialogDescription className="pt-4">
-            If you are a registered tax resident in Italy, you need to complete a different form.
-            We'll contact you with information about our specialized service for Italian tax residents.
-          </DialogDescription>
-        </DialogHeader>
-        
+        <ResidentDialogHeader />
         <div className="mt-4 flex flex-col space-y-4">
           {!isContactSubmitted ? (
             <ResidentContactForm

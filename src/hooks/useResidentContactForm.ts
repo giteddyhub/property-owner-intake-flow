@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { validateResidentContact } from '@/components/form/owner/validation/residentContactValidation';
 
 export interface ResidentContact {
   firstName: string;
@@ -22,29 +22,9 @@ export const useResidentContactForm = () => {
     const { name, value } = e.target;
     setContact(prev => ({ ...prev, [name]: value }));
   };
-  
-  const validateContact = () => {
-    if (!contact.firstName.trim() || !contact.lastName.trim()) {
-      toast.error("Please enter your first and last name");
-      return false;
-    }
-    
-    if (!contact.email.trim()) {
-      toast.error("Please enter your email address");
-      return false;
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(contact.email)) {
-      toast.error("Please enter a valid email address");
-      return false;
-    }
-    
-    return true;
-  };
 
   const saveResidentContact = async () => {
-    if (!validateContact()) return;
+    if (!validateResidentContact(contact)) return;
     
     setIsSubmitting(true);
     
