@@ -31,14 +31,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onSignOut }) =
           <span className="font-semibold text-gray-900">Property Dashboard</span>
         </div>
 
-        <div className="hidden md:flex items-center space-x-8">
-          <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Home</a>
-          <a href="#" className="text-gray-900 font-medium text-sm">Dashboard</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Properties</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Documents</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Reports</a>
-        </div>
-
         <div className="flex items-center space-x-4">
           <button className="text-gray-500 hover:text-gray-900">
             <Search className="h-5 w-5" />
