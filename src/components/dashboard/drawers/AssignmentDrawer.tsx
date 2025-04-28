@@ -1,13 +1,14 @@
+
 import React, { useState } from 'react';
 import { 
-  Drawer, 
-  DrawerContent, 
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerClose
-} from '@/components/ui/drawer';
+  Sheet, 
+  SheetContent, 
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { Owner, Property, OwnerPropertyAssignment } from '@/components/dashboard/types';
@@ -144,29 +145,38 @@ const AssignmentDrawer: React.FC<AssignmentDrawerProps> = ({
     }
   };
 
+  // Custom close handler to ensure cleanup
+  const handleClose = () => {
+    // Clean up any potential lingering elements
+    document.body.style.pointerEvents = '';
+    
+    // Call the original onClose function
+    onClose();
+  };
+
   return (
-    <Drawer open={isOpen} onOpenChange={onClose} shouldScaleBackground>
-      <DrawerContent className="p-0 h-[90vh]">
+    <Sheet open={isOpen} onOpenChange={handleClose}>
+      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl p-0">
         <ScrollArea className="h-full">
           <div className="p-6">
-            <DrawerHeader>
+            <SheetHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <DrawerTitle>{assignment ? 'Edit Assignment' : 'Add New Assignment'}</DrawerTitle>
-                  <DrawerDescription>
+                  <SheetTitle>{assignment ? 'Edit Assignment' : 'Add New Assignment'}</SheetTitle>
+                  <SheetDescription>
                     {assignment 
                       ? 'Update the property-owner assignment details'
                       : 'Assign an owner to a property and set ownership details'
                     }
-                  </DrawerDescription>
+                  </SheetDescription>
                 </div>
-                <DrawerClose asChild>
+                <SheetClose asChild>
                   <Button variant="ghost" size="icon">
                     <X className="h-4 w-4" />
                   </Button>
-                </DrawerClose>
+                </SheetClose>
               </div>
-            </DrawerHeader>
+            </SheetHeader>
             
             <div className="mt-6">
               <Form {...form}>
@@ -391,7 +401,7 @@ const AssignmentDrawer: React.FC<AssignmentDrawerProps> = ({
                   <div className="flex justify-end gap-4">
                     <Button 
                       variant="outline" 
-                      onClick={onClose}
+                      onClick={handleClose}
                       type="button"
                     >
                       Cancel
@@ -408,8 +418,8 @@ const AssignmentDrawer: React.FC<AssignmentDrawerProps> = ({
             </div>
           </div>
         </ScrollArea>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 };
 

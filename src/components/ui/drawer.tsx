@@ -14,15 +14,33 @@ const Drawer = ({
     if (!open) {
       // Clean up when drawer closes
       document.body.style.pointerEvents = '';
+      
       // Remove any lingering overlay elements
-      setTimeout(() => {
-        const elements = document.querySelectorAll('.vaul-overlay[data-state="closed"]');
-        elements.forEach(element => {
-          if (element.parentNode) {
-            element.parentNode.removeChild(element);
-          }
+      const cleanup = () => {
+        // Target various possible overlay elements
+        const selectors = [
+          '.vaul-overlay[data-state="closed"]',
+          '[data-state="closed"][data-radix-portal]',
+          '[role="dialog"][aria-hidden="true"]'
+        ];
+        
+        selectors.forEach(selector => {
+          document.querySelectorAll(selector).forEach(element => {
+            if (element.parentNode) {
+              console.log('Removing lingering element:', element);
+              element.parentNode.removeChild(element);
+            }
+          });
         });
-      }, 300); // Wait for animation to complete
+        
+        // Reset any body styles that might have been added
+        document.body.style.pointerEvents = '';
+        document.body.style.overflow = '';
+      };
+      
+      // Execute cleanup immediately and after animation completes
+      cleanup();
+      setTimeout(cleanup, 500);
     }
     
     // Call the original onOpenChange if provided
@@ -38,7 +56,7 @@ const Drawer = ({
       {...props}
     />
   );
-}
+};
 Drawer.displayName = "Drawer"
 
 const DrawerTrigger = DrawerPrimitive.Trigger
