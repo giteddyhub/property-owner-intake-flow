@@ -59,7 +59,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   };
   
   const handleDelete = async () => {
-    if (!selectedAssignment) return;
+    if (!selectedAssignment || !selectedAssignment.id) return;
     
     try {
       const { error } = await supabase
@@ -120,7 +120,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                 const owner = getOwnerById(assignment.ownerId);
                 
                 return (
-                  <TableRow key={assignment.id}>
+                  <TableRow key={assignment.id || `${assignment.ownerId}-${assignment.propertyId}`}>
                     <TableCell>
                       {property ? property.label : 'Unknown Property'}
                     </TableCell>

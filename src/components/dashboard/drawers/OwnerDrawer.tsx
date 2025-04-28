@@ -48,7 +48,7 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
           .update({
             first_name: owner.firstName,
             last_name: owner.lastName,
-            date_of_birth: owner.dateOfBirth,
+            date_of_birth: owner.dateOfBirth ? owner.dateOfBirth.toISOString().split('T')[0] : null,
             country_of_birth: owner.countryOfBirth,
             citizenship: owner.citizenship,
             address_street: owner.address.street,
@@ -58,10 +58,10 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
             italian_tax_code: owner.italianTaxCode,
             marital_status: owner.maritalStatus,
             is_resident_in_italy: owner.isResidentInItaly,
-            italian_residence_street: owner.italianResidenceDetails?.street,
-            italian_residence_city: owner.italianResidenceDetails?.city,
-            italian_residence_zip: owner.italianResidenceDetails?.zip,
-            updated_at: new Date()
+            italian_residence_street: owner.italianResidenceDetails?.street || null,
+            italian_residence_city: owner.italianResidenceDetails?.city || null,
+            italian_residence_zip: owner.italianResidenceDetails?.zip || null,
+            updated_at: new Date().toISOString()
           })
           .eq('id', owner.id);
           
@@ -74,7 +74,7 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
           .insert({
             first_name: owner.firstName,
             last_name: owner.lastName,
-            date_of_birth: owner.dateOfBirth,
+            date_of_birth: owner.dateOfBirth ? owner.dateOfBirth.toISOString().split('T')[0] : null,
             country_of_birth: owner.countryOfBirth,
             citizenship: owner.citizenship,
             address_street: owner.address.street,
@@ -84,9 +84,9 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
             italian_tax_code: owner.italianTaxCode,
             marital_status: owner.maritalStatus,
             is_resident_in_italy: owner.isResidentInItaly,
-            italian_residence_street: owner.italianResidenceDetails?.street,
-            italian_residence_city: owner.italianResidenceDetails?.city,
-            italian_residence_zip: owner.italianResidenceDetails?.zip
+            italian_residence_street: owner.italianResidenceDetails?.street || null,
+            italian_residence_city: owner.italianResidenceDetails?.city || null,
+            italian_residence_zip: owner.italianResidenceDetails?.zip || null
           });
           
         if (error) throw error;

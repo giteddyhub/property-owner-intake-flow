@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Drawer, 
@@ -89,10 +88,14 @@ const AssignmentDrawer: React.FC<AssignmentDrawerProps> = ({
         owner_id: values.ownerId,
         ownership_percentage: values.ownershipPercentage,
         resident_at_property: values.residentAtProperty,
-        resident_from_date: values.residentAtProperty ? values.residentFromDate : null,
-        resident_to_date: values.residentAtProperty ? values.residentToDate : null,
+        resident_from_date: values.residentAtProperty && values.residentFromDate 
+          ? values.residentFromDate.toISOString().split('T')[0]
+          : null,
+        resident_to_date: values.residentAtProperty && values.residentToDate
+          ? values.residentToDate.toISOString().split('T')[0]
+          : null,
         tax_credits: values.taxCredits || null,
-        updated_at: new Date()
+        updated_at: new Date().toISOString()
       };
       
       // Check if this combination already exists
@@ -111,12 +114,12 @@ const AssignmentDrawer: React.FC<AssignmentDrawerProps> = ({
         }
       }
       
-      if (assignment) {
+      if (assignment?.id) {
         // Update existing assignment
         const { error } = await supabase
           .from('owner_property_assignments')
           .update(assignmentData)
-          .eq('id', assignment.id || '');
+          .eq('id', assignment.id);
           
         if (error) throw error;
         toast.success('Assignment updated successfully');

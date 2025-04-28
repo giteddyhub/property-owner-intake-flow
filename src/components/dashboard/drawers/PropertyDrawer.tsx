@@ -35,29 +35,32 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Convert dates and complex objects to string format for database
+      const propertyData = {
+        label: newProperty.label,
+        address_comune: newProperty.address.comune,
+        address_province: newProperty.address.province,
+        address_street: newProperty.address.street,
+        address_zip: newProperty.address.zip,
+        activity_2024: newProperty.activity2024,
+        purchase_date: newProperty.purchaseDate ? newProperty.purchaseDate.toISOString().split('T')[0] : null,
+        purchase_price: newProperty.purchasePrice,
+        sale_date: newProperty.saleDate ? newProperty.saleDate.toISOString().split('T')[0] : null,
+        sale_price: newProperty.salePrice,
+        property_type: newProperty.propertyType,
+        remodeling: newProperty.remodeling,
+        occupancy_statuses: JSON.stringify(newProperty.occupancyStatuses),
+        rental_income: newProperty.rentalIncome,
+        documents: newProperty.documents ? JSON.stringify(newProperty.documents) : null,
+        use_document_retrieval_service: newProperty.useDocumentRetrievalService,
+        updated_at: new Date().toISOString()
+      };
+      
       if (property?.id) {
         // Update existing property
         const { error } = await supabase
           .from('properties')
-          .update({
-            label: newProperty.label,
-            address_comune: newProperty.address.comune,
-            address_province: newProperty.address.province,
-            address_street: newProperty.address.street,
-            address_zip: newProperty.address.zip,
-            activity_2024: newProperty.activity2024,
-            purchase_date: newProperty.purchaseDate,
-            purchase_price: newProperty.purchasePrice,
-            sale_date: newProperty.saleDate,
-            sale_price: newProperty.salePrice,
-            property_type: newProperty.propertyType,
-            remodeling: newProperty.remodeling,
-            occupancy_statuses: newProperty.occupancyStatuses,
-            rental_income: newProperty.rentalIncome,
-            documents: newProperty.documents,
-            use_document_retrieval_service: newProperty.useDocumentRetrievalService,
-            updated_at: new Date()
-          })
+          .update(propertyData)
           .eq('id', property.id);
           
         if (error) throw error;
@@ -66,24 +69,7 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
         // Create new property
         const { error } = await supabase
           .from('properties')
-          .insert({
-            label: newProperty.label,
-            address_comune: newProperty.address.comune,
-            address_province: newProperty.address.province,
-            address_street: newProperty.address.street,
-            address_zip: newProperty.address.zip,
-            activity_2024: newProperty.activity2024,
-            purchase_date: newProperty.purchaseDate,
-            purchase_price: newProperty.purchasePrice,
-            sale_date: newProperty.saleDate,
-            sale_price: newProperty.salePrice,
-            property_type: newProperty.propertyType,
-            remodeling: newProperty.remodeling,
-            occupancy_statuses: newProperty.occupancyStatuses,
-            rental_income: newProperty.rentalIncome,
-            documents: newProperty.documents,
-            use_document_retrieval_service: newProperty.useDocumentRetrievalService
-          });
+          .insert(propertyData);
           
         if (error) throw error;
         toast.success('Property added successfully');

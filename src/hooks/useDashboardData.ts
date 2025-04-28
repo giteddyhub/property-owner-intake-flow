@@ -152,7 +152,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         });
         
         const mappedAssignments: OwnerPropertyAssignment[] = assignmentsData.map(dbAssignment => ({
-          id: dbAssignment.id, // Make sure this is included
+          id: dbAssignment.id, // This is crucial to include the ID
           propertyId: dbAssignment.property_id,
           ownerId: dbAssignment.owner_id,
           ownershipPercentage: Number(dbAssignment.ownership_percentage),
