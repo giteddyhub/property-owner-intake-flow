@@ -3,6 +3,7 @@ import React from 'react';
 import { Search, Settings } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { Euro } from 'lucide-react';
 
 interface DashboardHeaderProps {
   onSignOut: () => Promise<void>;
@@ -24,11 +25,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onSignOut }) =
   return (
     <header className="border-b border-gray-100 bg-white">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-            <span className="text-white font-semibold">UI</span>
+        <div className="flex items-center space-x-3">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center">
+            <Euro className="h-6 w-6 text-white" />
           </div>
-          <span className="font-semibold text-gray-900">Property Dashboard</span>
+          <span className="font-semibold text-xl text-gray-900">ItalianTaxes.com</span>
         </div>
 
         <div className="flex items-center space-x-4">
