@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { ActivityType, OccupancyStatus, OccupancyAllocation, Property } from '@/types/form';
 import { formatOccupancyStatuses, formatOccupancyStatus } from '../property/utils/occupancyUtils';
-import { FileText, UploadCloud } from 'lucide-react';
+import { FileText, UploadCloud, Euro } from 'lucide-react';
 
 interface PropertyReviewCardProps {
   property: Property;
@@ -124,8 +124,8 @@ const PropertyReviewCard: React.FC<PropertyReviewCardProps> = ({ property, onEdi
             <p className="font-medium">Property Documents</p>
             {property.useDocumentRetrievalService ? (
               <div className="flex items-center mt-1">
-                <UploadCloud className="h-4 w-4 mr-2 text-form-300" />
-                <span>Document retrieval service ($28 USD)</span>
+                <Euro className="h-4 w-4 mr-2 text-blue-500" />
+                <span>Document retrieval service (€28 fee)</span>
               </div>
             ) : property.documents && property.documents.length > 0 ? (
               <div className="mt-1">

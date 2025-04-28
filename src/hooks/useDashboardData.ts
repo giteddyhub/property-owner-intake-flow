@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -147,12 +146,12 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
             occupancyStatuses: parsedOccupancyStatuses,
             rentalIncome: dbProperty.rental_income ? Number(dbProperty.rental_income) : undefined,
             documents: parsedDocuments,
-            useDocumentRetrievalService: dbProperty.use_document_retrieval_service
+            useDocumentRetrievalService: Boolean(dbProperty.use_document_retrieval_service)
           };
         });
         
         const mappedAssignments: OwnerPropertyAssignment[] = assignmentsData.map(dbAssignment => ({
-          id: dbAssignment.id, // This is crucial to include the ID
+          id: dbAssignment.id,
           propertyId: dbAssignment.property_id,
           ownerId: dbAssignment.owner_id,
           ownershipPercentage: Number(dbAssignment.ownership_percentage),

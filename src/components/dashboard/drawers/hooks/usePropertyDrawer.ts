@@ -58,6 +58,8 @@ export const usePropertyDrawer = ({
         updated_at: new Date().toISOString()
       };
       
+      console.log("Saving property with document retrieval:", newProperty.useDocumentRetrievalService);
+      
       if (property?.id) {
         // Update existing property
         const { error } = await supabase

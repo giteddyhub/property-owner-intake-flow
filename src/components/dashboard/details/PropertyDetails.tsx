@@ -9,6 +9,7 @@ import {
   HoverCardTrigger,
   HoverCardContent
 } from '@/components/ui/hover-card';
+import { Euro, FileText } from 'lucide-react';
 
 // Helper function to format activity type
 const formatActivityType = (activity: string): string => {
@@ -97,6 +98,12 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property }) =>
               Rental Income: €{property.rentalIncome.toLocaleString()}
             </Badge>
           )}
+          
+          {property.useDocumentRetrievalService && (
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+              <Euro className="h-3 w-3 mr-1" /> Document Retrieval
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -126,23 +133,32 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property }) =>
         </HoverCard>
       </div>
 
-      {property.documents && property.documents.length > 0 && (
-        <div className="border-t pt-2">
-          <p className="text-sm font-medium">Documents ({property.documents.length})</p>
-          <ul className="mt-1 space-y-1">
-            {property.documents.slice(0, 3).map((doc, index) => (
-              <li key={index} className="text-sm truncate">
-                {doc.name}
-              </li>
-            ))}
-            {property.documents.length > 3 && (
-              <li className="text-sm text-muted-foreground">
-                + {property.documents.length - 3} more
-              </li>
-            )}
-          </ul>
+      <div className="border-t pt-2">
+        <p className="text-sm font-medium">Documents</p>
+        <div className="mt-1">
+          {property.useDocumentRetrievalService ? (
+            <div className="flex items-center text-sm text-blue-600">
+              <Euro className="h-4 w-4 mr-2" />
+              <span>Document retrieval service enabled</span>
+            </div>
+          ) : property.documents && property.documents.length > 0 ? (
+            <ul className="mt-1 space-y-1">
+              {property.documents.slice(0, 3).map((doc, index) => (
+                <li key={index} className="text-sm truncate flex items-center">
+                  <FileText className="h-3 w-3 mr-1 text-gray-500" /> {doc.name}
+                </li>
+              ))}
+              {property.documents.length > 3 && (
+                <li className="text-sm text-muted-foreground">
+                  + {property.documents.length - 3} more
+                </li>
+              )}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No documents provided</p>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

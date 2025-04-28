@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { usePropertyForm } from './context/PropertyFormContext';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -10,8 +11,13 @@ import { uploadPropertyDocument } from './utils/fileUploadUtils';
 
 const PropertyDocumentsSection = () => {
   const { currentProperty, setCurrentProperty } = usePropertyForm();
-  const [useRetrievalService, setUseRetrievalService] = useState(false);
+  const [useRetrievalService, setUseRetrievalService] = useState(currentProperty.useDocumentRetrievalService || false);
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+
+  // Update internal state when currentProperty changes (like when editing an existing property)
+  useEffect(() => {
+    setUseRetrievalService(currentProperty.useDocumentRetrievalService || false);
+  }, [currentProperty.useDocumentRetrievalService]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -52,17 +58,15 @@ const PropertyDocumentsSection = () => {
   const handleRetrievalToggle = (checked: boolean) => {
     setUseRetrievalService(checked);
     
+    setCurrentProperty(prev => ({
+      ...prev,
+      useDocumentRetrievalService: checked
+    }));
+    
     if (checked) {
-      setCurrentProperty(prev => ({
-        ...prev,
-        useDocumentRetrievalService: true
-      }));
       toast.success('Document retrieval service selected');
     } else {
-      setCurrentProperty(prev => ({
-        ...prev,
-        useDocumentRetrievalService: false
-      }));
+      toast.info('Document retrieval service deselected');
     }
   };
 
