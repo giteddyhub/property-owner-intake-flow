@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,9 +6,12 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, FileText } from 'lucide-react';
 import SuccessHeader from '@/components/success/SuccessHeader';
 import PremiumServiceCard from '@/components/success/PremiumServiceCard';
+import LawFirmPartnership from '@/components/success/LawFirmPartnership';
+import ConsultationBooking from '@/components/success/ConsultationBooking';
 import { useCheckout } from '@/hooks/useCheckout';
 import Footer from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
+
 const TaxFilingServicePage = () => {
   const {
     sessionId
@@ -61,6 +65,21 @@ const TaxFilingServicePage = () => {
             // If the purchase has document retrieval info already stored
             if (data.has_document_retrieval !== null) {
               setHasDocumentRetrieval(data.has_document_retrieval);
+            } else {
+              // Check if user has any properties with document retrieval service
+              const { data: propertiesData } = await supabase
+                .from('properties')
+                .select('use_document_retrieval_service')
+                .eq('user_id', user.id);
+                
+              if (propertiesData && propertiesData.length > 0) {
+                // If any property has document retrieval enabled, suggest it here
+                const hasAnyDocRetrieval = propertiesData.some(
+                  property => property.use_document_retrieval_service === true
+                );
+                setHasDocumentRetrieval(hasAnyDocRetrieval);
+                localStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasAnyDocRetrieval));
+              }
             }
           } else {
             setSessionValid(false);
@@ -76,10 +95,12 @@ const TaxFilingServicePage = () => {
     };
     verifySession();
   }, [sessionId, user, navigate]);
+  
   const handleToggleDocumentRetrieval = () => {
     setHasDocumentRetrieval(!hasDocumentRetrieval);
     localStorage.setItem('hasDocumentRetrievalService', JSON.stringify(!hasDocumentRetrieval));
   };
+  
   const handleProceedToCheckout = async () => {
     // Save contact ID in session storage for the checkout process
     if (user) {
@@ -89,14 +110,17 @@ const TaxFilingServicePage = () => {
     // Proceed to checkout using the hook
     await handleCheckout();
   };
+  
   const handleReturnToDashboard = () => {
     navigate('/dashboard');
   };
+  
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>;
   }
+  
   if (!sessionValid) {
     return <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Invalid Session</h1>
@@ -104,14 +128,19 @@ const TaxFilingServicePage = () => {
         <Button onClick={handleReturnToDashboard}>Return to Dashboard</Button>
       </div>;
   }
+  
   return <div className="flex flex-col min-h-screen">
       <div className="flex-grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <SuccessHeader />
           
-          
-          
-          <PremiumServiceCard basePrice={basePrice} documentRetrievalFee={documentRetrievalFee} hasDocumentRetrieval={hasDocumentRetrieval} loading={checkoutLoading} onCheckout={handleProceedToCheckout} />
+          <PremiumServiceCard 
+            basePrice={basePrice} 
+            documentRetrievalFee={documentRetrievalFee} 
+            hasDocumentRetrieval={hasDocumentRetrieval} 
+            loading={checkoutLoading} 
+            onCheckout={handleProceedToCheckout} 
+          />
           
           {/* Document Retrieval Toggle */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -130,6 +159,12 @@ const TaxFilingServicePage = () => {
             </div>
           </div>
           
+          {/* Law Firm Partnership Section */}
+          <LawFirmPartnership />
+          
+          {/* Consultation Booking Calendar */}
+          <ConsultationBooking />
+          
           <div className="text-center mt-8">
             <Button variant="outline" onClick={handleReturnToDashboard}>
               Return to Dashboard
@@ -141,4 +176,5 @@ const TaxFilingServicePage = () => {
       <Footer />
     </div>;
 };
+
 export default TaxFilingServicePage;
