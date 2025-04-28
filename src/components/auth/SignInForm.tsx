@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,8 +13,7 @@ interface SignInFormProps {
 }
 
 export const SignInForm: React.FC<SignInFormProps> = ({ 
-  onSuccess,
-  redirectAfterAuth = false
+  onSuccess
 }) => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -44,9 +42,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({
           onSuccess();
         }
         
-        if (redirectAfterAuth) {
-          navigate('/dashboard');
-        }
+        // Always redirect to dashboard after successful login
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('Error signing in:', error);

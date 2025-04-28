@@ -28,7 +28,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   title = 'Create an Account or Sign In',
   description = 'Create an account to save your information and continue with your submission.',
   onSuccess,
-  redirectAfterAuth = false,
+  // We no longer need redirectAfterAuth since we always redirect to dashboard after auth
 }) => {
   const [activeTab, setActiveTab] = useState<'sign-in' | 'sign-up'>(defaultTab);
 
@@ -52,10 +52,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <TabsTrigger value="sign-up">Create Account</TabsTrigger>
             </TabsList>
             <TabsContent value="sign-in">
-              <SignInForm onSuccess={onSuccess} redirectAfterAuth={redirectAfterAuth} />
+              <SignInForm onSuccess={onSuccess} />
             </TabsContent>
             <TabsContent value="sign-up">
-              <SignUpForm onSuccess={onSuccess} redirectAfterAuth={redirectAfterAuth} />
+              <SignUpForm onSuccess={onSuccess} />
             </TabsContent>
           </Tabs>
         </div>

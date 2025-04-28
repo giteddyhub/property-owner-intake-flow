@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { 
   Owner, 
@@ -62,16 +61,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               activeFilter={activeFilter}
             />
           </div>
-        </div>
-        
-        <div className="flex justify-center mt-8 mb-4">
-          <Button 
-            onClick={() => navigate('/')}
-            className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-            variant="outline"
-          >
-            Start New Submission
-          </Button>
         </div>
       </main>
     </div>
