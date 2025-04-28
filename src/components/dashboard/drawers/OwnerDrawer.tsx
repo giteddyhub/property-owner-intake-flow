@@ -58,6 +58,7 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
             italian_tax_code: owner.italianTaxCode,
             marital_status: owner.maritalStatus,
             is_resident_in_italy: owner.isResidentInItaly,
+            // Only access ItalianResidenceDetails properties if they exist
             italian_residence_street: owner.italianResidenceDetails?.street || null,
             italian_residence_city: owner.italianResidenceDetails?.city || null,
             italian_residence_zip: owner.italianResidenceDetails?.zip || null,
@@ -84,6 +85,7 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
             italian_tax_code: owner.italianTaxCode,
             marital_status: owner.maritalStatus,
             is_resident_in_italy: owner.isResidentInItaly,
+            // Only access ItalianResidenceDetails properties if they exist
             italian_residence_street: owner.italianResidenceDetails?.street || null,
             italian_residence_city: owner.italianResidenceDetails?.city || null,
             italian_residence_zip: owner.italianResidenceDetails?.zip || null

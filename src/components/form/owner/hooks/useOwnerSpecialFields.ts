@@ -27,17 +27,20 @@ export const useOwnerSpecialFields = (setCurrentOwner: React.Dispatch<React.SetS
       ...prev, 
       isResidentInItaly: isResident,
       // Initialize empty residence details if selecting 'yes'
-      italianResidenceDetails: isResident === true ? {} : undefined
+      italianResidenceDetails: isResident === true ? {
+        street: '',
+        city: '',
+        zip: ''
+      } : undefined
     }));
   };
 
-  // This function is simplified as there are no more residence detail fields
   const handleResidencyDetailChange = (field: string, value: string) => {
-    // No longer needed but kept for compatibility with existing code
     setCurrentOwner(prev => ({
       ...prev,
       italianResidenceDetails: {
-        ...(prev.italianResidenceDetails || {})
+        ...(prev.italianResidenceDetails || {}),
+        [field]: value
       }
     }));
   };

@@ -49,8 +49,10 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
         sale_price: newProperty.salePrice,
         property_type: newProperty.propertyType,
         remodeling: newProperty.remodeling,
+        // Ensure objects are properly stringified
         occupancy_statuses: JSON.stringify(newProperty.occupancyStatuses),
         rental_income: newProperty.rentalIncome,
+        // Ensure documents is properly handled as a string array
         documents: newProperty.documents ? JSON.stringify(newProperty.documents) : null,
         use_document_retrieval_service: newProperty.useDocumentRetrievalService,
         updated_at: new Date().toISOString()

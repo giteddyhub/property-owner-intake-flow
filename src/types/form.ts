@@ -1,3 +1,4 @@
+
 // Owner types
 export type MaritalStatus = 'UNMARRIED' | 'MARRIED' | 'DIVORCED' | 'WIDOWED';
 
@@ -8,9 +9,11 @@ export interface Address {
   country: string;
 }
 
-// Simplified ItalianResidenceDetails interface without address fields
+// Updated ItalianResidenceDetails interface to include address fields
 export interface ItalianResidenceDetails {
-  // All address fields have been removed
+  street?: string;
+  city?: string;
+  zip?: string;
 }
 
 export interface Owner {
