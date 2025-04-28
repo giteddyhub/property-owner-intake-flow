@@ -61,7 +61,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
             <DataFilterTabs activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
-            <DataTables properties={properties} owners={owners} assignments={assignments} />
+            <DataTables 
+              properties={properties} 
+              owners={owners} 
+              assignments={assignments} 
+              activeFilter={activeFilter}
+            />
           </div>
         </div>
         
