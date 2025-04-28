@@ -35,7 +35,15 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Convert dates and complex objects to string format for database
+      // Convert occupancy statuses to JSON string
+      const occupancyStatusesJson = JSON.stringify(newProperty.occupancyStatuses);
+      
+      // Process documents - convert PropertyDocument objects to array of strings
+      const documentStrings = newProperty.documents && newProperty.documents.length > 0
+        ? newProperty.documents.map(doc => JSON.stringify(doc))
+        : [];
+      
+      // Prepare property data for the database
       const propertyData = {
         label: newProperty.label,
         address_comune: newProperty.address.comune,
@@ -49,11 +57,9 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
         sale_price: newProperty.salePrice,
         property_type: newProperty.propertyType,
         remodeling: newProperty.remodeling,
-        // Ensure objects are properly stringified
-        occupancy_statuses: JSON.stringify(newProperty.occupancyStatuses),
+        occupancy_statuses: [occupancyStatusesJson], // Send as a string array
         rental_income: newProperty.rentalIncome,
-        // Ensure documents is properly handled as a string array
-        documents: newProperty.documents ? JSON.stringify(newProperty.documents) : null,
+        documents: documentStrings, // Send as string array
         use_document_retrieval_service: newProperty.useDocumentRetrievalService,
         updated_at: new Date().toISOString()
       };
