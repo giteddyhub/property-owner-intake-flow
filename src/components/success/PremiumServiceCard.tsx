@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CheckCircle, ChevronRight, FileText, ShieldCheck, FileSearch } from 'lucide-react';
-
 type PremiumServiceCardProps = {
   basePrice: number;
   documentRetrievalFee: number;
@@ -11,22 +9,19 @@ type PremiumServiceCardProps = {
   loading: boolean;
   onCheckout: () => Promise<void>;
 };
-
 const PremiumServiceCard = ({
   basePrice,
   documentRetrievalFee,
   hasDocumentRetrieval,
   loading,
-  onCheckout,
+  onCheckout
 }: PremiumServiceCardProps) => {
   const totalPrice = hasDocumentRetrieval ? basePrice + documentRetrievalFee : basePrice;
-
-  return (
-    <Card className="border-2 border-amber-200 bg-amber-50 mb-8">
+  return <Card className="border-2 border-amber-200 bg-amber-50 mb-8">
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">DFY Tax Filing</h2>
+            <h2 className="text-xl font-bold text-gray-900">Full Service Tax Filing</h2>
             <p className="mt-2 text-gray-700">
               Let our tax professionals handle everything for you
             </p>
@@ -66,28 +61,20 @@ const PremiumServiceCard = ({
               <p className="text-sm text-gray-500">one-time fee</p>
             </div>
             
-            {hasDocumentRetrieval && (
-              <div className="flex items-center bg-blue-50 px-3 py-2 rounded-md">
+            {hasDocumentRetrieval && <div className="flex items-center bg-blue-50 px-3 py-2 rounded-md">
                 <FileSearch className="h-5 w-5 text-blue-500 mr-2" />
                 <div>
                   <p className="text-sm font-medium text-blue-800">Document Retrieval</p>
                   <p className="text-xs text-blue-600">+${documentRetrievalFee}</p>
                 </div>
-              </div>
-            )}
+              </div>}
           </div>
           
-          {hasDocumentRetrieval && (
-            <div className="mt-2 text-right text-sm font-medium text-gray-900">
+          {hasDocumentRetrieval && <div className="mt-2 text-right text-sm font-medium text-gray-900">
               Total: ${totalPrice}
-            </div>
-          )}
+            </div>}
           
-          <Button
-            onClick={onCheckout}
-            disabled={loading}
-            className="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md flex items-center justify-center"
-          >
+          <Button onClick={onCheckout} disabled={loading} className="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md flex items-center justify-center">
             {loading ? "Processing..." : `Purchase Full Service · $${totalPrice}`}
             {!loading && <ChevronRight className="ml-2 h-4 w-4" />}
           </Button>
@@ -98,8 +85,6 @@ const PremiumServiceCard = ({
           </div>
         </div>
       </div>
-    </Card>
-  );
+    </Card>;
 };
-
 export default PremiumServiceCard;
