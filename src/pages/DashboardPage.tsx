@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowRight, BarChart, Calendar, Export, Filter, Search, Settings, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BarChart, Calendar, Download, Filter, Search, Settings, User } from 'lucide-react';
 import { 
   Owner, 
   Property, 
@@ -37,7 +36,6 @@ const DashboardPage = () => {
   const [timeRange, setTimeRange] = useState('12m');
 
   useEffect(() => {
-    // If not logged in, redirect to home
     if (!user) {
       navigate('/');
       return;
@@ -46,7 +44,6 @@ const DashboardPage = () => {
     const fetchUserData = async () => {
       setLoading(true);
       try {
-        // Fetch owners
         const { data: ownersData, error: ownersError } = await supabase
           .from('owners')
           .select('*')
@@ -54,7 +51,6 @@ const DashboardPage = () => {
 
         if (ownersError) throw ownersError;
         
-        // Fetch properties
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select('*')
@@ -62,7 +58,6 @@ const DashboardPage = () => {
 
         if (propertiesError) throw propertiesError;
         
-        // Fetch assignments
         const { data: assignmentsData, error: assignmentsError } = await supabase
           .from('owner_property_assignments')
           .select('*')
@@ -70,7 +65,6 @@ const DashboardPage = () => {
 
         if (assignmentsError) throw assignmentsError;
         
-        // Map database fields to our application types
         const mappedOwners: Owner[] = ownersData.map(dbOwner => ({
           id: dbOwner.id,
           firstName: dbOwner.first_name,
@@ -89,9 +83,7 @@ const DashboardPage = () => {
           isResidentInItaly: dbOwner.is_resident_in_italy
         }));
         
-        // Parse documents and occupancy statuses from database
         const mappedProperties: Property[] = propertiesData.map(dbProperty => {
-          // Convert string[] to PropertyDocument[]
           let parsedDocuments: PropertyDocument[] = [];
           if (dbProperty.documents && Array.isArray(dbProperty.documents)) {
             try {
@@ -113,20 +105,16 @@ const DashboardPage = () => {
             }
           }
 
-          // Parse occupancy statuses
           let parsedOccupancyStatuses: OccupancyAllocation[] = [];
           try {
             if (typeof dbProperty.occupancy_statuses === 'string') {
-              // If it's a JSON string, parse it
               parsedOccupancyStatuses = JSON.parse(dbProperty.occupancy_statuses);
             } else if (Array.isArray(dbProperty.occupancy_statuses)) {
-              // If it's already an array, map the items
               parsedOccupancyStatuses = dbProperty.occupancy_statuses.map(item => {
                 if (typeof item === 'string') {
                   try {
                     return JSON.parse(item);
                   } catch (e) {
-                    // Default fallback if parsing fails
                     return { status: 'PERSONAL_USE' as OccupancyStatus, months: 12 };
                   }
                 }
@@ -135,7 +123,6 @@ const DashboardPage = () => {
             }
           } catch (e) {
             console.error('Error parsing occupancy statuses:', e);
-            // Provide a default occupancy status
             parsedOccupancyStatuses = [{ status: 'PERSONAL_USE' as OccupancyStatus, months: 12 }];
           }
 
@@ -174,7 +161,6 @@ const DashboardPage = () => {
           taxCredits: dbAssignment.tax_credits ? Number(dbAssignment.tax_credits) : undefined
         }));
         
-        // Set the mapped data
         setOwners(mappedOwners);
         setProperties(mappedProperties);
         setAssignments(mappedAssignments);
@@ -194,7 +180,6 @@ const DashboardPage = () => {
     navigate('/');
   };
 
-  // Get the user initials for the avatar
   const getUserInitials = () => {
     if (!user || !user.user_metadata || !user.user_metadata.full_name) return 'U';
     const fullName = user.user_metadata.full_name;
@@ -205,14 +190,13 @@ const DashboardPage = () => {
     return nameParts[0][0] || 'U';
   };
 
-  // Format property activity for display
   const getActivityBadgeVariant = (activity: ActivityType): "default" | "secondary" | "destructive" | "outline" => {
     switch (activity) {
-      case 'PURCHASE':
+      case ActivityType.PURCHASE:
         return 'default';
-      case 'SALE':
+      case ActivityType.SALE:
         return 'destructive';
-      case 'OWNED':
+      case ActivityType.OWNED:
         return 'secondary';
       default:
         return 'outline';
@@ -285,7 +269,7 @@ const DashboardPage = () => {
               size="sm" 
               className="text-gray-600 border border-gray-200 hover:bg-gray-50"
             >
-              <Export className="h-4 w-4 mr-1" /> Export
+              <Download className="h-4 w-4 mr-1" /> Export
             </Button>
           </div>
         </div>
