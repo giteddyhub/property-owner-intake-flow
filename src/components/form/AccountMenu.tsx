@@ -10,39 +10,20 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Settings, UserPlus } from 'lucide-react';
+import { User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthModal } from '../auth/AuthModal';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export const AccountMenu = () => {
   const { user, signOut } = useAuth();
-  const [authModalOpen, setAuthModalOpen] = React.useState(false);
   
   const handleSignOut = async () => {
     await signOut();
   };
 
   if (!user) {
-    return (
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="outline" 
-          className="text-xs"
-          onClick={() => setAuthModalOpen(true)}
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Sign In
-        </Button>
-        
-        <AuthModal
-          open={authModalOpen}
-          onOpenChange={setAuthModalOpen}
-          defaultTab="sign-in"
-          redirectAfterAuth={false}
-        />
-      </div>
-    );
+    // Return null instead of the sign-in button
+    return null;
   }
   
   const initials = user.email
