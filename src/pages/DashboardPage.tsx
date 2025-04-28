@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -20,6 +20,53 @@ const DashboardPage = () => {
     userId: user?.id,
     refreshFlag 
   });
+
+  // Add a global cleanup handler
+  useEffect(() => {
+    // Initial cleanup on mount
+    const cleanupOverlays = () => {
+      const selectors = [
+        '[data-state="closed"][data-radix-portal]',
+        '.vaul-overlay[data-state="closed"]',
+        '[role="dialog"][aria-hidden="true"]',
+        '.fixed.inset-0.z-50:not([data-state="open"])'
+      ];
+      
+      selectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(element => {
+          if (element.parentNode) {
+            console.log('Global cleanup removing element:', element);
+            element.parentNode.removeChild(element);
+          }
+        });
+      });
+      
+      // Reset body styles
+      document.body.style.pointerEvents = '';
+      document.body.style.overflow = '';
+    };
+
+    // Cleanup on mount
+    cleanupOverlays();
+    
+    // Add global click handler to force cleanup overlays if any are stuck
+    const handleGlobalClick = () => {
+      // Check if there are any closed dialogs still in the DOM
+      const closedDialogs = document.querySelectorAll('[data-state="closed"][data-radix-portal]');
+      if (closedDialogs.length > 0) {
+        console.log('Found stray dialogs on click, cleaning up:', closedDialogs.length);
+        cleanupOverlays();
+      }
+    };
+    
+    document.addEventListener('click', handleGlobalClick);
+    
+    // Cleanup on unmount
+    return () => {
+      document.removeEventListener('click', handleGlobalClick);
+      cleanupOverlays();
+    };
+  }, []);
 
   React.useEffect(() => {
     if (!user) {

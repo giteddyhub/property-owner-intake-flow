@@ -6,7 +6,49 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Sheet = SheetPrimitive.Root
+const Sheet = ({ onOpenChange, ...props }: SheetPrimitive.DialogProps) => {
+  // Enhanced onOpenChange handler with better cleanup
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Enhanced cleanup when sheet closes
+      document.body.style.pointerEvents = '';
+      
+      // More aggressive cleanup of stray elements
+      const cleanupStrayElements = () => {
+        const selectors = [
+          '[data-state="closed"][data-radix-portal]',
+          '.fixed.inset-0.z-50:not([data-state="open"])',
+          '[role="dialog"][aria-hidden="true"]',
+          '.vaul-overlay[data-state="closed"]'
+        ];
+        
+        selectors.forEach(selector => {
+          document.querySelectorAll(selector).forEach(element => {
+            if (element.parentNode) {
+              console.log('Removing stray element in Sheet:', element);
+              element.parentNode.removeChild(element);
+            }
+          });
+        });
+        
+        // Reset any body styles
+        document.body.style.pointerEvents = '';
+        document.body.style.overflow = '';
+      };
+      
+      // Run cleanup immediately and after animation
+      cleanupStrayElements();
+      setTimeout(cleanupStrayElements, 500);
+    }
+    
+    // Call original handler if provided
+    if (onOpenChange) {
+      onOpenChange(open);
+    }
+  };
+
+  return <SheetPrimitive.Root {...props} onOpenChange={handleOpenChange} />;
+};
 
 const SheetTrigger = SheetPrimitive.Trigger
 
@@ -20,7 +62,7 @@ const SheetOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
