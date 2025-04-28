@@ -48,7 +48,6 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
     if (!selectedProperty) return;
     
     try {
-      // First check if the property has any assignments
       const { data: assignments } = await supabase
         .from('owner_property_assignments')
         .select('id')
@@ -93,7 +92,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
 
   return (
     <>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-start mb-4">
         <AddButton onClick={handleAdd} label="Add Property" />
       </div>
 
@@ -121,7 +120,6 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
                   key={property.id}
                   className="cursor-pointer"
                   onClick={(e) => {
-                    // Prevent row click when action buttons are clicked
                     if ((e.target as HTMLElement).closest('.action-buttons')) {
                       return;
                     }
@@ -156,10 +154,9 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
         </Table>
       </div>
       
-      {/* Details Popover */}
       {selectedProperty && (
         <DetailsPopover
-          trigger={<div />} // Hidden trigger, we control open state programmatically
+          trigger={<div />}
           open={detailsOpen}
           onOpenChange={setDetailsOpen}
         >
@@ -167,7 +164,6 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
         </DetailsPopover>
       )}
       
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -185,7 +181,6 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Property Drawer for Edit/Create */}
       <PropertyDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}

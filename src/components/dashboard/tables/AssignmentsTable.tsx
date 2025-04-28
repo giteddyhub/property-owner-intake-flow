@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Table,
@@ -97,7 +98,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   
   return (
     <>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-start mb-4">
         <AddButton onClick={handleAdd} label="Add Assignment" />
       </div>
 
