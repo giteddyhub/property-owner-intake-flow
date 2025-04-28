@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Search, Settings } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -33,13 +32,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onSignOut }) =
           <span className="font-semibold text-xl text-gray-900">ItalianTaxes.com</span>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <button className="text-gray-500 hover:text-gray-900">
-            <Search className="h-5 w-5" />
-          </button>
-          <button className="text-gray-500 hover:text-gray-900">
-            <Settings className="h-5 w-5" />
-          </button>
+        <div className="flex items-center">
           <div className="relative">
             <Avatar className="h-8 w-8 cursor-pointer" onClick={onSignOut}>
               <AvatarFallback className="bg-blue-100 text-blue-800">
