@@ -192,12 +192,14 @@ const DashboardPage = () => {
 
   const getActivityBadgeVariant = (activity: ActivityType): "default" | "secondary" | "destructive" | "outline" => {
     switch (activity) {
-      case ActivityType.PURCHASE:
+      case 'purchased':
         return 'default';
-      case ActivityType.SALE:
+      case 'sold':
         return 'destructive';
-      case ActivityType.OWNED:
+      case 'owned_all_year':
         return 'secondary';
+      case 'both':
+        return 'outline';
       default:
         return 'outline';
     }
