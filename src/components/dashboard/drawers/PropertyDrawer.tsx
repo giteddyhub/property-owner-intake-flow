@@ -6,8 +6,8 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-  DrawerFooter,
-  DrawerClose
+  DrawerClose,
+  DrawerFooter
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -158,14 +158,15 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
             />
           </div>
 
-          <DrawerFooter className="sticky bottom-0 z-10 bg-background mt-auto">
+          {/* Non-sticky footer at the bottom */}
+          <div className="p-4 bg-background mt-4 border-t">
             <DrawerClose asChild>
               <Button variant="outline" onClick={() => {
                 // Ensure pointer-events are enabled when closing via button
                 document.body.style.pointerEvents = '';
               }}>Cancel</Button>
             </DrawerClose>
-          </DrawerFooter>
+          </div>
         </div>
       </DrawerContent>
     </Drawer>
