@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -98,8 +97,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   
   return (
     <>
-      <div className="flex justify-between mb-4">
-        <h2 className="text-lg font-medium">Owner-Property Assignments</h2>
+      <div className="flex justify-end mb-4">
         <AddButton onClick={handleAdd} label="Add Assignment" />
       </div>
 
@@ -132,7 +130,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                     key={assignment.id || `${assignment.ownerId}-${assignment.propertyId}`}
                     className="cursor-pointer"
                     onClick={(e) => {
-                      // Prevent row click when action buttons are clicked
                       if ((e.target as HTMLElement).closest('.action-buttons')) {
                         return;
                       }
@@ -187,10 +184,9 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         </Table>
       </div>
       
-      {/* Details Popover */}
       {selectedAssignment && (
         <DetailsPopover
-          trigger={<div />} // Hidden trigger, we control open state programmatically
+          trigger={<div />}
           open={detailsOpen}
           onOpenChange={setDetailsOpen}
         >
@@ -202,7 +198,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         </DetailsPopover>
       )}
       
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -220,7 +215,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Assignment Drawer for Edit/Create */}
       <AssignmentDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}

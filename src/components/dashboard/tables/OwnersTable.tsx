@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -94,8 +93,7 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({ owners, onRefresh }) =
   
   return (
     <>
-      <div className="flex justify-between mb-4">
-        <h2 className="text-lg font-medium">Owners</h2>
+      <div className="flex justify-end mb-4">
         <AddButton onClick={handleAdd} label="Add Owner" />
       </div>
 

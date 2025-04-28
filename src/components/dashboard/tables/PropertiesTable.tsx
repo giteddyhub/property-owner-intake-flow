@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -94,8 +93,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
 
   return (
     <>
-      <div className="flex justify-between mb-4">
-        <h2 className="text-lg font-medium">Properties</h2>
+      <div className="flex justify-end mb-4">
         <AddButton onClick={handleAdd} label="Add Property" />
       </div>
 
