@@ -46,6 +46,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [isActionClick, setIsActionClick] = useState(false);
   
   const getOwnerById = (id: string): Owner | undefined => {
     return owners.find(owner => owner.id === id);
@@ -59,6 +60,9 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
     setSelectedAssignment(assignment);
     setIsCreating(false);
     setDrawerOpen(true);
+    // Ensure details popup doesn't show
+    setDetailsOpen(false);
+    setIsActionClick(false);
   };
   
   const handleDelete = async () => {
@@ -92,8 +96,14 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   };
   
   const handleRowClick = (assignment: OwnerPropertyAssignment) => {
-    setSelectedAssignment(assignment);
-    setDetailsOpen(true);
+    // Only show details if not clicking on action buttons
+    if (!isActionClick) {
+      setSelectedAssignment(assignment);
+      setDetailsOpen(true);
+    }
+    
+    // Reset the action click flag
+    setIsActionClick(false);
   };
   
   return (
@@ -130,12 +140,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                   <TableRow 
                     key={assignment.id || `${assignment.ownerId}-${assignment.propertyId}`}
                     className="cursor-pointer"
-                    onClick={(e) => {
-                      if ((e.target as HTMLElement).closest('.action-buttons')) {
-                        return;
-                      }
-                      handleRowClick(assignment);
-                    }}
+                    onClick={() => handleRowClick(assignment)}
                   >
                     <TableCell>
                       {property ? property.label : 'Unknown Property'}
@@ -167,7 +172,13 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                         : '-'}
                     </TableCell>
                     <TableCell>
-                      <div className="action-buttons">
+                      <div 
+                        className="action-buttons"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsActionClick(true);
+                        }}
+                      >
                         <ActionButtons
                           onEdit={() => handleEdit(assignment)}
                           onDelete={() => {
