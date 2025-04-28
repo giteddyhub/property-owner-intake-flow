@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -70,6 +71,13 @@ export default {
 					200: '#E6F0FF',
 					300: '#2563EB',
 					400: '#1E40AF',
+				},
+				dashboard: {
+					100: '#F9F9FB',
+					200: '#F5F5F7',
+					300: '#EAEAEC',
+					400: '#8E9196',
+					500: '#64748B',
 				}
 			},
 			borderRadius: {
