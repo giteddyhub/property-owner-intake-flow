@@ -115,24 +115,14 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
         <ScrollArea className="h-full">
           <div className="p-6">
             <SheetHeader className="relative">
-              <div className="flex justify-between items-center">
-                <div>
-                  <SheetTitle>{property ? 'Edit Property' : 'Add New Property'}</SheetTitle>
-                  <SheetDescription>
-                    {property 
-                      ? 'Update the property details below'
-                      : 'Fill in the details to add a new property'
-                    }
-                  </SheetDescription>
-                </div>
-                <SheetClose asChild>
-                  <Button variant="ghost" size="icon" onClick={() => {
-                    // Ensure pointer-events are enabled when closing via button
-                    document.body.style.pointerEvents = '';
-                  }}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </SheetClose>
+              <div>
+                <SheetTitle>{property ? 'Edit Property' : 'Add New Property'}</SheetTitle>
+                <SheetDescription>
+                  {property 
+                    ? 'Update the property details below'
+                    : 'Fill in the details to add a new property'
+                  }
+                </SheetDescription>
               </div>
             </SheetHeader>
             

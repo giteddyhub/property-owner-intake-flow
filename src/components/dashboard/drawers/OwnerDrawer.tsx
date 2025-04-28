@@ -10,7 +10,6 @@ import {
   SheetClose
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
 import OwnerForm from '@/components/form/owner/OwnerForm';
 import { Owner } from '@/components/dashboard/types';
 import { toast } from 'sonner';
@@ -173,24 +172,14 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
         <ScrollArea className="h-full">
           <div className="p-6">
             <SheetHeader className="relative">
-              <div className="flex justify-between items-center">
-                <div>
-                  <SheetTitle>{owner ? 'Edit Owner' : 'Add New Owner'}</SheetTitle>
-                  <SheetDescription>
-                    {owner 
-                      ? 'Update the owner details below'
-                      : 'Fill in the details to add a new owner'
-                    }
-                  </SheetDescription>
-                </div>
-                <SheetClose asChild>
-                  <Button variant="ghost" size="icon" onClick={() => {
-                    // Ensure pointer-events are enabled when closing via button
-                    document.body.style.pointerEvents = '';
-                  }}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </SheetClose>
+              <div>
+                <SheetTitle>{owner ? 'Edit Owner' : 'Add New Owner'}</SheetTitle>
+                <SheetDescription>
+                  {owner 
+                    ? 'Update the owner details below'
+                    : 'Fill in the details to add a new owner'
+                  }
+                </SheetDescription>
               </div>
             </SheetHeader>
             
