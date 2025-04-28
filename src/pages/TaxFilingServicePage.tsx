@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,15 +12,9 @@ import Footer from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
 
 const TaxFilingServicePage = () => {
-  const {
-    sessionId
-  } = useParams<{
-    sessionId: string;
-  }>();
+  const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [hasDocumentRetrieval, setHasDocumentRetrieval] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sessionValid, setSessionValid] = useState(false);
@@ -29,10 +22,7 @@ const TaxFilingServicePage = () => {
   // Calculate prices
   const basePrice = 245;
   const documentRetrievalFee = 28;
-  const {
-    loading: checkoutLoading,
-    handleCheckout
-  } = useCheckout(hasDocumentRetrieval);
+  const { loading: checkoutLoading, handleCheckout } = useCheckout(hasDocumentRetrieval);
 
   // Verify session exists and belongs to current user
   useEffect(() => {
@@ -44,48 +34,60 @@ const TaxFilingServicePage = () => {
       try {
         setLoading(true);
 
-        // Check local storage first for faster verification
-        const localSession = localStorage.getItem('taxFilingSession');
-        if (localSession === sessionId) {
-          setSessionValid(true);
-          // Load user's document retrieval preference if available
-          const retrievalService = localStorage.getItem('hasDocumentRetrievalService');
-          if (retrievalService) {
-            setHasDocumentRetrieval(JSON.parse(retrievalService));
-          }
+        // Check if purchase record exists and belongs to this user
+        const { data: purchaseData, error: purchaseError } = await supabase
+          .from('purchases')
+          .select('id, contact_id, has_document_retrieval')
+          .eq('id', sessionId)
+          .single();
+          
+        if (purchaseError || !purchaseData) {
+          setSessionValid(false);
+          navigate('/dashboard');
+          return;
+        }
+          
+        // Verify the purchase belongs to this user by checking contact table
+        const { data: contactData, error: contactError } = await supabase
+          .from('contacts')
+          .select('user_id')
+          .eq('id', purchaseData.contact_id)
+          .single();
+          
+        if (contactError || !contactData || contactData.user_id !== user.id) {
+          setSessionValid(false);
+          navigate('/dashboard');
+          return;
+        }
+        
+        // Purchase record is valid and belongs to this user
+        setSessionValid(true);
+        
+        // If the purchase has document retrieval preference already set, use it
+        if (purchaseData.has_document_retrieval !== null) {
+          setHasDocumentRetrieval(purchaseData.has_document_retrieval);
         } else {
-          // If not in local storage, verify from database using purchases table
-          const {
-            data,
-            error
-          } = await supabase.from('purchases').select('*').eq('id', sessionId).eq('contact_id', user.id).single();
-          if (data) {
-            setSessionValid(true);
-            localStorage.setItem('taxFilingSession', sessionId);
-            // If the purchase has document retrieval info already stored
-            if (data.has_document_retrieval !== null) {
-              setHasDocumentRetrieval(data.has_document_retrieval);
-            } else {
-              // Check if user has any properties with document retrieval service
-              const { data: propertiesData } = await supabase
-                .from('properties')
-                .select('use_document_retrieval_service')
-                .eq('user_id', user.id);
-                
-              if (propertiesData && propertiesData.length > 0) {
-                // If any property has document retrieval enabled, suggest it here
-                const hasAnyDocRetrieval = propertiesData.some(
-                  property => property.use_document_retrieval_service === true
-                );
-                setHasDocumentRetrieval(hasAnyDocRetrieval);
-                localStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasAnyDocRetrieval));
-              }
-            }
-          } else {
-            setSessionValid(false);
-            navigate('/dashboard');
+          // Otherwise check if any property has document retrieval service
+          const { data: propertiesData } = await supabase
+            .from('properties')
+            .select('use_document_retrieval_service')
+            .eq('user_id', user.id);
+            
+          if (propertiesData && propertiesData.length > 0) {
+            // If any property has document retrieval enabled, suggest it here
+            const hasAnyDocRetrieval = propertiesData.some(
+              property => property.use_document_retrieval_service === true
+            );
+            setHasDocumentRetrieval(hasAnyDocRetrieval);
+            
+            // Update purchase record with this preference
+            await supabase
+              .from('purchases')
+              .update({ has_document_retrieval: hasAnyDocRetrieval })
+              .eq('id', sessionId);
           }
         }
+
       } catch (error) {
         console.error('Error verifying session:', error);
         setSessionValid(false);
@@ -93,18 +95,30 @@ const TaxFilingServicePage = () => {
         setLoading(false);
       }
     };
+    
     verifySession();
   }, [sessionId, user, navigate]);
   
-  const handleToggleDocumentRetrieval = () => {
+  const handleToggleDocumentRetrieval = async () => {
     setHasDocumentRetrieval(!hasDocumentRetrieval);
-    localStorage.setItem('hasDocumentRetrievalService', JSON.stringify(!hasDocumentRetrieval));
+    
+    // Also update the purchase record with the new preference
+    if (sessionId && sessionValid) {
+      try {
+        await supabase
+          .from('purchases')
+          .update({ has_document_retrieval: !hasDocumentRetrieval })
+          .eq('id', sessionId);
+      } catch (error) {
+        console.error('Error updating document retrieval preference:', error);
+      }
+    }
   };
   
   const handleProceedToCheckout = async () => {
-    // Save contact ID in session storage for the checkout process
-    if (user) {
-      sessionStorage.setItem('contactId', user.id);
+    // Save session ID in session storage for the checkout process
+    if (sessionId) {
+      sessionStorage.setItem('purchaseId', sessionId);
     }
 
     // Proceed to checkout using the hook

@@ -1,44 +1,84 @@
 
 import { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const useTaxFilingState = () => {
   const [loading, setLoading] = useState(false);
   
-  const createTaxFilingSession = async (userId: string): Promise<string> => {
+  const createTaxFilingSession = async (userId: string) => {
     try {
       setLoading(true);
       
-      // Generate a unique session ID
-      const sessionId = uuidv4();
+      // Check if the user has a contact record first
+      const { data: contactData, error: contactError } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
       
-      // Store session data in localStorage for persistence
-      localStorage.setItem('taxFilingSession', sessionId);
-      
-      // We'll use the purchases table instead of creating a new tax_filing_sessions table
-      // This table already exists and can store the necessary information
-      const { error } = await supabase
-        .from('purchases')
-        .insert({
-          id: sessionId,
-          contact_id: userId,
-          amount: 0, // Initial amount, will be updated during checkout
-          payment_status: 'initiated',
-          created_at: new Date().toISOString()
-        });
-      
-      if (error) {
-        console.error('Error creating tax filing session:', error);
-        // Continue even if DB storage fails, since we have local storage
+      if (contactError || !contactData) {
+        // Create a contact record for this user if it doesn't exist
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) throw userError;
+        
+        // Create a contact entry for the user
+        const { data: newContact, error: createError } = await supabase
+          .from('contacts')
+          .insert({
+            user_id: userId,
+            full_name: userData.user?.user_metadata?.full_name || 'Unknown Name',
+            email: userData.user?.email || '',
+            terms_accepted: true,
+            privacy_accepted: true
+          })
+          .select('id')
+          .single();
+          
+        if (createError) throw createError;
+        
+        // Use the new contact ID
+        const contactId = newContact.id;
+        
+        // Create a purchase entry to track this session
+        const { data: purchase, error: purchaseError } = await supabase
+          .from('purchases')
+          .insert({
+            contact_id: contactId,
+            payment_status: 'pending',
+            has_document_retrieval: null // Will be set during checkout
+          })
+          .select('id')
+          .single();
+          
+        if (purchaseError) throw purchaseError;
+        
+        return purchase.id;
+      } else {
+        // Use the existing contact ID
+        const contactId = contactData.id;
+        
+        // Create a purchase entry to track this session
+        const { data: purchase, error: purchaseError } = await supabase
+          .from('purchases')
+          .insert({
+            contact_id: contactId,
+            payment_status: 'pending',
+            has_document_retrieval: null // Will be set during checkout
+          })
+          .select('id')
+          .single();
+          
+        if (purchaseError) throw purchaseError;
+        
+        return purchase.id;
       }
-      
-      return sessionId;
     } catch (error) {
-      console.error('Error in tax filing process:', error);
-      toast.error('Unable to start tax filing process. Please try again.');
-      return '';
+      console.error('Error creating tax filing session:', error);
+      toast.error('Failed to start tax filing service. Please try again.');
+      return null;
     } finally {
       setLoading(false);
     }

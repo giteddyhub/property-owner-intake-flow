@@ -20,24 +20,42 @@ serve(async (req) => {
     });
 
     const requestData = await req.json();
-    const { contactId, hasDocumentRetrievalService } = requestData;
+    const { purchaseId, hasDocumentRetrievalService } = requestData;
 
-    if (!contactId) {
-      throw new Error("Contact ID is required");
+    if (!purchaseId) {
+      throw new Error("Purchase ID is required");
     }
 
-    console.log("Processing checkout for contact:", contactId, "with document retrieval:", hasDocumentRetrievalService);
+    console.log("Processing checkout for purchase:", purchaseId, "with document retrieval:", hasDocumentRetrievalService);
 
     // Create a Supabase client with the Auth context of the logged in user
     const supabaseUrl = "https://ijwwnaqprojdczfppxkf.supabase.co";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Fetch purchase record and associated contact
+    const { data: purchaseData, error: purchaseError } = await supabase
+      .from("purchases")
+      .select("id, contact_id, has_document_retrieval")
+      .eq("id", purchaseId)
+      .single();
+
+    if (purchaseError || !purchaseData) {
+      console.error("Error fetching purchase:", purchaseError);
+      throw new Error(`Error fetching purchase: ${purchaseError?.message || "Purchase not found"}`);
+    }
+
+    // Update the document retrieval preference on the purchase
+    await supabase
+      .from("purchases")
+      .update({ has_document_retrieval: hasDocumentRetrievalService })
+      .eq("id", purchaseId);
+    
     // Fetch contact information to use in the checkout
     const { data: contactData, error: contactError } = await supabase
       .from("contacts")
       .select("full_name, email")
-      .eq("id", contactId)
+      .eq("id", purchaseData.contact_id)
       .single();
 
     if (contactError || !contactData) {
@@ -93,37 +111,23 @@ serve(async (req) => {
       success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/payment-cancelled`,
       metadata: {
-        contact_id: contactId,
+        purchase_id: purchaseId,
         has_document_retrieval: hasDocumentRetrievalService ? "true" : "false",
       },
     });
 
     console.log("Stripe session created:", session.id);
 
-    // Record the pending purchase in our database
-    try {
-      const { data: purchaseData, error: purchaseError } = await supabase
-        .from("purchases")
-        .insert([
-          {
-            contact_id: contactId,
-            amount: totalAmount / 100, // Convert cents to dollars
-            stripe_session_id: session.id,
-            payment_status: "pending",
-            has_document_retrieval: hasDocumentRetrievalService, // Use the correct column name
-          },
-        ])
-        .select();
-
-      if (purchaseError) {
-        console.error("Error creating purchase record:", purchaseError);
-      } else {
-        console.log("Purchase record created successfully");
-      }
-    } catch (dbError) {
-      // Log but don't fail if database record creation fails
-      console.error("Database error:", dbError);
-    }
+    // Update the purchase record with the Stripe session ID
+    await supabase
+      .from("purchases")
+      .update({ 
+        amount: totalAmount / 100, // Convert cents to dollars
+        stripe_session_id: session.id, 
+        payment_status: "pending",
+        has_document_retrieval: hasDocumentRetrievalService,
+      })
+      .eq("id", purchaseId);
 
     // Return the session URL to redirect the user to the Stripe checkout
     return new Response(

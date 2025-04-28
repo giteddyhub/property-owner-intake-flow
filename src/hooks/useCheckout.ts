@@ -14,20 +14,20 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
   const handleCheckout = async () => {
     try {
       setLoading(true);
-      // Get the contact ID from sessionStorage
-      const contactId = sessionStorage.getItem('contactId');
+      // Get the purchase ID from sessionStorage
+      const purchaseId = sessionStorage.getItem('purchaseId');
       
-      if (!contactId) {
-        toast.error('Contact information not found. Please try again or contact support.');
+      if (!purchaseId) {
+        toast.error('Purchase information not found. Please try again or contact support.');
         return;
       }
       
       toast.info('Preparing your checkout...');
-      console.log('Initiating checkout with:', { contactId, hasDocumentRetrieval });
+      console.log('Initiating checkout with:', { purchaseId, hasDocumentRetrieval });
       
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
-          contactId,
+          purchaseId,
           hasDocumentRetrievalService: hasDocumentRetrieval 
         },
       });
