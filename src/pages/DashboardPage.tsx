@@ -7,7 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { Owner, Property, OwnerPropertyAssignment, Address, PropertyAddress, ActivityType, PropertyType, OccupancyAllocation, MaritalStatus, PropertyDocument } from '@/types/form';
+import { 
+  Owner, 
+  Property, 
+  OwnerPropertyAssignment, 
+  Address, 
+  PropertyAddress, 
+  ActivityType, 
+  PropertyType, 
+  OccupancyAllocation, 
+  MaritalStatus, 
+  PropertyDocument,
+  OccupancyStatus 
+} from '@/types/form';
 
 const DashboardPage = () => {
   const { user, signOut } = useAuth();

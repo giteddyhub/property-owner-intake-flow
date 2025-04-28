@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Property } from '@/types/form';
+import { Property, OccupancyAllocation } from '@/types/form';
 
 export const saveProperties = async (
   properties: Property[], 
@@ -11,6 +11,14 @@ export const saveProperties = async (
   
   for (const property of properties) {
     console.log("Saving property:", property.label, "User ID:", userId);
+    
+    // Process documents - convert PropertyDocument objects to JSON strings
+    const documentStrings = property.documents 
+      ? property.documents.map(doc => JSON.stringify(doc)) 
+      : [];
+    
+    // Convert occupancy statuses to JSON string
+    const occupancyStatusesJson = JSON.stringify(property.occupancyStatuses);
     
     const { data: propertyData, error: propertyError } = await supabase
       .from('properties')
@@ -27,9 +35,9 @@ export const saveProperties = async (
         sale_price: property.salePrice,
         property_type: property.propertyType,
         remodeling: property.remodeling,
-        occupancy_statuses: JSON.stringify(property.occupancyStatuses),
+        occupancy_statuses: [occupancyStatusesJson], // Send as a string array
         rental_income: property.rentalIncome,
-        documents: property.documents ? property.documents.map(doc => JSON.stringify(doc)) : [],
+        documents: documentStrings, // Send as string array
         use_document_retrieval_service: property.useDocumentRetrievalService,
         contact_id: contactId,
         user_id: userId
