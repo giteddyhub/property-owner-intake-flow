@@ -15,6 +15,7 @@ import PropertyForm from '@/components/form/property/PropertyForm';
 import { Property } from '@/components/dashboard/types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface PropertyDrawerProps {
   isOpen: boolean;
@@ -110,64 +111,68 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
   
   return (
     <Drawer open={isOpen} onOpenChange={handleClose} shouldScaleBackground>
-      <DrawerContent className="h-[90vh] max-h-[90vh]">
-        <div className="mx-auto w-full max-w-4xl overflow-auto h-full pb-24">
-          <DrawerHeader className="sticky top-0 z-10 bg-background">
-            <div className="flex justify-between items-center">
-              <div>
-                <DrawerTitle>{property ? 'Edit Property' : 'Add New Property'}</DrawerTitle>
-                <DrawerDescription>
-                  {property 
-                    ? 'Update the property details below'
-                    : 'Fill in the details to add a new property'
-                  }
-                </DrawerDescription>
+      <DrawerContent className="h-[90vh] max-h-[90vh] p-0">
+        <ScrollArea className="h-full">
+          <div className="p-6">
+            <DrawerHeader className="sticky top-0 z-10 bg-background">
+              <div className="flex justify-between items-center">
+                <div>
+                  <DrawerTitle>{property ? 'Edit Property' : 'Add New Property'}</DrawerTitle>
+                  <DrawerDescription>
+                    {property 
+                      ? 'Update the property details below'
+                      : 'Fill in the details to add a new property'
+                    }
+                  </DrawerDescription>
+                </div>
+                <DrawerClose asChild>
+                  <Button variant="ghost" size="icon" onClick={() => {
+                    // Ensure pointer-events are enabled when closing via button
+                    document.body.style.pointerEvents = '';
+                  }}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </DrawerClose>
               </div>
-              <DrawerClose asChild>
-                <Button variant="ghost" size="icon" onClick={() => {
-                  // Ensure pointer-events are enabled when closing via button
-                  document.body.style.pointerEvents = '';
-                }}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </DrawerClose>
+            </DrawerHeader>
+            
+            <div className="pt-2">
+              <PropertyForm
+                property={property || {
+                  id: '',
+                  label: '',
+                  address: {
+                    comune: '',
+                    province: '',
+                    street: '',
+                    zip: ''
+                  },
+                  activity2024: 'owned_all_year',
+                  propertyType: 'RESIDENTIAL',
+                  remodeling: false,
+                  occupancyStatuses: [{ status: 'PERSONAL_USE', months: 12 }]
+                }}
+                editingIndex={property ? 0 : null}
+                onSubmit={handleSubmit}
+                onCancel={handleClose}
+                hideCancel={true}
+                standalone={true}
+              />
             </div>
-          </DrawerHeader>
-          
-          <div className="p-6 pt-2">
-            <PropertyForm
-              property={property || {
-                id: '',
-                label: '',
-                address: {
-                  comune: '',
-                  province: '',
-                  street: '',
-                  zip: ''
-                },
-                activity2024: 'owned_all_year',
-                propertyType: 'RESIDENTIAL',
-                remodeling: false,
-                occupancyStatuses: [{ status: 'PERSONAL_USE', months: 12 }]
-              }}
-              editingIndex={property ? 0 : null}
-              onSubmit={handleSubmit}
-              onCancel={handleClose}
-              hideCancel={true}
-              standalone={true}
-            />
-          </div>
 
-          {/* Non-sticky footer at the bottom */}
-          <div className="p-4 bg-background mt-4 border-t">
-            <DrawerClose asChild>
-              <Button variant="outline" onClick={() => {
-                // Ensure pointer-events are enabled when closing via button
-                document.body.style.pointerEvents = '';
-              }}>Cancel</Button>
-            </DrawerClose>
+            {/* Non-sticky footer at the bottom */}
+            <div className="mt-4 border-t">
+              <DrawerFooter>
+                <DrawerClose asChild>
+                  <Button variant="outline" onClick={() => {
+                    // Ensure pointer-events are enabled when closing via button
+                    document.body.style.pointerEvents = '';
+                  }}>Cancel</Button>
+                </DrawerClose>
+              </DrawerFooter>
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </DrawerContent>
     </Drawer>
   );

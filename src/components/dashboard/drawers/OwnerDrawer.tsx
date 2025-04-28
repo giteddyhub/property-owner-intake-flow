@@ -16,6 +16,7 @@ import { Owner } from '@/components/dashboard/types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createEmptyOwner } from '@/components/form/owner/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface OwnerDrawerProps {
   isOpen: boolean;
@@ -153,49 +154,53 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
   
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] overflow-y-auto">
-        <SheetHeader className="relative">
-          <div className="flex justify-between items-center">
-            <div>
-              <SheetTitle>{owner ? 'Edit Owner' : 'Add New Owner'}</SheetTitle>
-              <SheetDescription>
-                {owner 
-                  ? 'Update the owner details below'
-                  : 'Fill in the details to add a new owner'
-                }
-              </SheetDescription>
+      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] p-0">
+        <ScrollArea className="h-full">
+          <div className="p-6">
+            <SheetHeader className="relative">
+              <div className="flex justify-between items-center">
+                <div>
+                  <SheetTitle>{owner ? 'Edit Owner' : 'Add New Owner'}</SheetTitle>
+                  <SheetDescription>
+                    {owner 
+                      ? 'Update the owner details below'
+                      : 'Fill in the details to add a new owner'
+                    }
+                  </SheetDescription>
+                </div>
+                <SheetClose asChild>
+                  <Button variant="ghost" size="icon">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </SheetClose>
+              </div>
+            </SheetHeader>
+            
+            <div className="mt-6">
+              <OwnerForm
+                owner={currentOwner}
+                editingIndex={owner ? 0 : null}
+                onSubmit={handleSubmit}
+                onCancel={onClose}
+                onOwnerChange={handleOwnerChange}
+                onCountryChange={handleCountryChange}
+                onDateChange={handleDateChange}
+                onInputChange={handleInputChange}
+                onResidencyStatusChange={handleResidencyStatusChange}
+                onResidencyDetailChange={handleResidencyDetailChange}
+                showResidencyDialog={showResidencyDialog}
+                setShowResidencyDialog={setShowResidencyDialog}
+                hideCancel={true}
+              />
             </div>
-            <SheetClose asChild>
-              <Button variant="ghost" size="icon">
-                <X className="h-4 w-4" />
-              </Button>
-            </SheetClose>
-          </div>
-        </SheetHeader>
-        
-        <div className="mt-6 pr-6">
-          <OwnerForm
-            owner={currentOwner}
-            editingIndex={owner ? 0 : null}
-            onSubmit={handleSubmit}
-            onCancel={onClose}
-            onOwnerChange={handleOwnerChange}
-            onCountryChange={handleCountryChange}
-            onDateChange={handleDateChange}
-            onInputChange={handleInputChange}
-            onResidencyStatusChange={handleResidencyStatusChange}
-            onResidencyDetailChange={handleResidencyDetailChange}
-            showResidencyDialog={showResidencyDialog}
-            setShowResidencyDialog={setShowResidencyDialog}
-            hideCancel={true}
-          />
-        </div>
 
-        <SheetFooter className="pt-4">
-          <SheetClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </SheetClose>
-        </SheetFooter>
+            <SheetFooter className="pt-4">
+              <SheetClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </SheetClose>
+            </SheetFooter>
+          </div>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );

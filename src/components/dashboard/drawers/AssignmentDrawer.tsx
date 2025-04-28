@@ -36,6 +36,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AssignmentDrawerProps {
   isOpen: boolean;
@@ -145,266 +146,268 @@ const AssignmentDrawer: React.FC<AssignmentDrawerProps> = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose} shouldScaleBackground>
-      <DrawerContent>
-        <div className="mx-auto max-w-4xl w-full p-6">
-          <DrawerHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <DrawerTitle>{assignment ? 'Edit Assignment' : 'Add New Assignment'}</DrawerTitle>
-                <DrawerDescription>
-                  {assignment 
-                    ? 'Update the property-owner assignment details'
-                    : 'Assign an owner to a property and set ownership details'
-                  }
-                </DrawerDescription>
-              </div>
-              <DrawerClose asChild>
-                <Button variant="ghost" size="icon">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DrawerClose>
-            </div>
-          </DrawerHeader>
-          
-          <div className="mt-6">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="propertyId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Property</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={!!assignment}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a property" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {properties.map(property => (
-                            <SelectItem key={property.id} value={property.id}>
-                              {property.label} ({property.address.comune}, {property.address.province})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Select the property to assign
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="ownerId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Owner</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={!!assignment}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select an owner" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {owners.map(owner => (
-                            <SelectItem key={owner.id} value={owner.id}>
-                              {owner.firstName} {owner.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Select the owner for this property
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="ownershipPercentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ownership Percentage</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="100"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Percentage of ownership (1-100)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="residentAtProperty"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Resident at Property
-                        </FormLabel>
-                        <FormDescription>
-                          Does the owner reside at this property?
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                {residentAtProperty && (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="residentFromDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Resident From</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value || undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormDescription>
-                            When did the owner start residing at this property?
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="residentToDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Resident Until (Optional)</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value || undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormDescription>
-                            Leave blank if the owner currently resides at this property
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                )}
-                
-                <FormField
-                  control={form.control}
-                  name="taxCredits"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tax Credits (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0.00"
-                          {...field}
-                          onChange={(e) => field.onChange(
-                            e.target.value ? Number(e.target.value) : undefined
-                          )}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Any applicable tax credits in Euro
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex justify-end gap-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={onClose}
-                    type="button"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Saving...' : assignment ? 'Update Assignment' : 'Add Assignment'}
-                  </Button>
+      <DrawerContent className="p-0 h-[90vh]">
+        <ScrollArea className="h-full">
+          <div className="p-6">
+            <DrawerHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <DrawerTitle>{assignment ? 'Edit Assignment' : 'Add New Assignment'}</DrawerTitle>
+                  <DrawerDescription>
+                    {assignment 
+                      ? 'Update the property-owner assignment details'
+                      : 'Assign an owner to a property and set ownership details'
+                    }
+                  </DrawerDescription>
                 </div>
-              </form>
-            </Form>
+                <DrawerClose asChild>
+                  <Button variant="ghost" size="icon">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </DrawerClose>
+              </div>
+            </DrawerHeader>
+            
+            <div className="mt-6">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="propertyId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Property</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                          disabled={!!assignment}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a property" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {properties.map(property => (
+                              <SelectItem key={property.id} value={property.id}>
+                                {property.label} ({property.address.comune}, {property.address.province})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Select the property to assign
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="ownerId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Owner</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                          disabled={!!assignment}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an owner" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {owners.map(owner => (
+                              <SelectItem key={owner.id} value={owner.id}>
+                                {owner.firstName} {owner.lastName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Select the owner for this property
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="ownershipPercentage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ownership Percentage</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="100"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Percentage of ownership (1-100)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="residentAtProperty"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">
+                            Resident at Property
+                          </FormLabel>
+                          <FormDescription>
+                            Does the owner reside at this property?
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {residentAtProperty && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="residentFromDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Resident From</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value || undefined}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormDescription>
+                              When did the owner start residing at this property?
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="residentToDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Resident Until (Optional)</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value || undefined}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormDescription>
+                              Leave blank if the owner currently resides at this property
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+                  
+                  <FormField
+                    control={form.control}
+                    name="taxCredits"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tax Credits (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0.00"
+                            {...field}
+                            onChange={(e) => field.onChange(
+                              e.target.value ? Number(e.target.value) : undefined
+                            )}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Any applicable tax credits in Euro
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end gap-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={onClose}
+                      type="button"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Saving...' : assignment ? 'Update Assignment' : 'Add Assignment'}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </DrawerContent>
     </Drawer>
   );
