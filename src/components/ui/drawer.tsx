@@ -6,13 +6,39 @@ import { cn } from "@/lib/utils"
 
 const Drawer = ({
   shouldScaleBackground = true,
+  onOpenChange,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
-  <DrawerPrimitive.Root
-    shouldScaleBackground={shouldScaleBackground}
-    {...props}
-  />
-)
+}: React.ComponentProps<typeof DrawerPrimitive.Root>) => {
+  // Add cleanup when drawer closes
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Clean up when drawer closes
+      document.body.style.pointerEvents = '';
+      // Remove any lingering overlay elements
+      setTimeout(() => {
+        const elements = document.querySelectorAll('.vaul-overlay[data-state="closed"]');
+        elements.forEach(element => {
+          if (element.parentNode) {
+            element.parentNode.removeChild(element);
+          }
+        });
+      }, 300); // Wait for animation to complete
+    }
+    
+    // Call the original onOpenChange if provided
+    if (onOpenChange) {
+      onOpenChange(open);
+    }
+  };
+
+  return (
+    <DrawerPrimitive.Root
+      shouldScaleBackground={shouldScaleBackground}
+      onOpenChange={handleOpenChange}
+      {...props}
+    />
+  );
+}
 Drawer.displayName = "Drawer"
 
 const DrawerTrigger = DrawerPrimitive.Trigger
