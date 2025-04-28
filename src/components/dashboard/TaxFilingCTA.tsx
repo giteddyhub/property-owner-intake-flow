@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { FileText, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useTaxFilingState } from '@/hooks/useTaxFilingState';
+import { toast } from 'sonner';
 
 interface TaxFilingCTAProps {
   userId: string;
@@ -12,11 +13,29 @@ interface TaxFilingCTAProps {
 
 export const TaxFilingCTA: React.FC<TaxFilingCTAProps> = ({ userId }) => {
   const navigate = useNavigate();
-  const { createTaxFilingSession } = useTaxFilingState();
+  const { createTaxFilingSession, loading } = useTaxFilingState();
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const handleGetTaxFilings = async () => {
-    const sessionId = await createTaxFilingSession(userId);
-    navigate(`/tax-filing-service/${sessionId}`);
+    try {
+      setIsProcessing(true);
+      
+      toast.info('Preparing your tax filing service...');
+      
+      const sessionId = await createTaxFilingSession(userId);
+      
+      if (!sessionId) {
+        toast.error('Unable to start tax filing service. Please try again later.');
+        return;
+      }
+      
+      navigate(`/tax-filing-service/${sessionId}`);
+    } catch (error) {
+      console.error('Error navigating to tax filing service:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   return (
@@ -38,9 +57,19 @@ export const TaxFilingCTA: React.FC<TaxFilingCTAProps> = ({ userId }) => {
           <Button 
             onClick={handleGetTaxFilings}
             className="bg-amber-500 hover:bg-amber-600 text-white w-full mt-auto"
+            disabled={isProcessing || loading}
           >
-            Get Started
-            <ArrowRight className="h-4 w-4 ml-1" />
+            {(isProcessing || loading) ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                Processing...
+              </>
+            ) : (
+              <>
+                Get Started
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </>
+            )}
           </Button>
         </div>
       </CardContent>

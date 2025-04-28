@@ -10,6 +10,7 @@ export const useTaxFilingState = () => {
   const createTaxFilingSession = async (userId: string) => {
     try {
       setLoading(true);
+      console.log('Creating tax filing session for user:', userId);
       
       // Check if the user has a contact record first
       const { data: contactData, error: contactError } = await supabase
@@ -18,11 +19,21 @@ export const useTaxFilingState = () => {
         .eq('user_id', userId)
         .single();
       
-      if (contactError || !contactData) {
+      if (contactError) {
+        console.log('Contact lookup error:', contactError);
+        
+        if (contactError.code !== 'PGRST116') { // Not found error
+          throw contactError;
+        }
+        
         // Create a contact record for this user if it doesn't exist
+        console.log('No contact found, creating new contact');
         const { data: userData, error: userError } = await supabase.auth.getUser();
         
-        if (userError) throw userError;
+        if (userError) {
+          console.error('Failed to get user data:', userError);
+          throw userError;
+        }
         
         // Create a contact entry for the user
         const { data: newContact, error: createError } = await supabase
@@ -37,10 +48,14 @@ export const useTaxFilingState = () => {
           .select('id')
           .single();
           
-        if (createError) throw createError;
+        if (createError) {
+          console.error('Failed to create contact:', createError);
+          throw createError;
+        }
         
         // Use the new contact ID
         const contactId = newContact.id;
+        console.log('Created new contact with ID:', contactId);
         
         // Define a default amount for the purchase entry
         // This will be updated during checkout with the final amount
@@ -58,12 +73,17 @@ export const useTaxFilingState = () => {
           .select('id')
           .single();
           
-        if (purchaseError) throw purchaseError;
+        if (purchaseError) {
+          console.error('Failed to create purchase:', purchaseError);
+          throw purchaseError;
+        }
         
+        console.log('Created purchase with ID:', purchase.id);
         return purchase.id;
       } else {
         // Use the existing contact ID
         const contactId = contactData.id;
+        console.log('Using existing contact with ID:', contactId);
         
         // Define a default amount for the purchase entry
         // This will be updated during checkout with the final amount
@@ -81,8 +101,12 @@ export const useTaxFilingState = () => {
           .select('id')
           .single();
           
-        if (purchaseError) throw purchaseError;
+        if (purchaseError) {
+          console.error('Failed to create purchase:', purchaseError);
+          throw purchaseError;
+        }
         
+        console.log('Created purchase with ID:', purchase.id);
         return purchase.id;
       }
     } catch (error) {
