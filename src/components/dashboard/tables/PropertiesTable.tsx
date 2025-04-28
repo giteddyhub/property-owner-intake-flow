@@ -2,7 +2,6 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,7 @@ interface PropertiesTableProps {
 
 export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties }) => {
   return (
-    <TabsContent value="properties" className="mt-0">
+    <div className="mt-0">
       <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
         <Table>
           <TableHeader>
@@ -88,6 +87,6 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties }) 
           </div>
         </div>
       )}
-    </TabsContent>
+    </div>
   );
 };

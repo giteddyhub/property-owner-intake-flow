@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Owner, Property, OwnerPropertyAssignment } from '@/components/dashboard/types';
@@ -14,7 +13,7 @@ interface AssignmentsTableProps {
 
 export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({ assignments, owners, properties }) => {
   return (
-    <TabsContent value="assignments">
+    <div>
       <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
         <Table>
           <TableHeader>
@@ -75,6 +74,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({ assignments,
           </div>
         </div>
       )}
-    </TabsContent>
+    </div>
   );
 };

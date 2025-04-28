@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Owner } from '@/components/dashboard/types';
@@ -12,7 +11,7 @@ interface OwnersTableProps {
 
 export const OwnersTable: React.FC<OwnersTableProps> = ({ owners }) => {
   return (
-    <TabsContent value="owners">
+    <div>
       <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
         <Table>
           <TableHeader>
@@ -62,6 +61,6 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({ owners }) => {
           </div>
         </div>
       )}
-    </TabsContent>
+    </div>
   );
 };
