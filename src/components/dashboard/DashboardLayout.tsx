@@ -9,7 +9,6 @@ import {
 } from '@/components/dashboard/types';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { StatsSummaryCards } from '@/components/dashboard/StatsSummaryCards';
-import { TimeRangeSelector } from '@/components/dashboard/TimeRangeSelector';
 import { DataFilterTabs } from '@/components/dashboard/DataFilterTabs';
 import { DataTables } from '@/components/dashboard/DataTables';
 import { ActionsToolbar } from '@/components/dashboard/ActionsToolbar';
@@ -20,8 +19,6 @@ interface DashboardLayoutProps {
   assignments: OwnerPropertyAssignment[];
   onSignOut: () => Promise<void>;
   activeFilter: string;
-  timeRange: string;
-  setTimeRange: (range: string) => void;
   setActiveFilter: (filter: string) => void;
 }
 
@@ -31,8 +28,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   assignments,
   onSignOut,
   activeFilter,
-  timeRange,
-  setTimeRange,
   setActiveFilter
 }) => {
   const navigate = useNavigate();
@@ -56,7 +51,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <div className="bg-white rounded-xl mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-gray-900">Overview</h2>
-            <TimeRangeSelector timeRange={timeRange} setTimeRange={setTimeRange} />
           </div>
 
           <div className="bg-gray-50 rounded-xl p-4 mb-4">

@@ -10,7 +10,6 @@ const DashboardPage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('properties');
-  const [timeRange, setTimeRange] = useState('12m');
   
   const { loading, owners, properties, assignments } = useDashboardData({ 
     userId: user?.id 
@@ -38,8 +37,6 @@ const DashboardPage = () => {
       assignments={assignments}
       onSignOut={handleSignOut}
       activeFilter={activeFilter}
-      timeRange={timeRange}
-      setTimeRange={setTimeRange}
       setActiveFilter={setActiveFilter}
     />
   );
