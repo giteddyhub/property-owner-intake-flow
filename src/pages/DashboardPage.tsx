@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { Owner, Property, OwnerPropertyAssignment, Address, PropertyAddress, ActivityType, PropertyType, OccupancyAllocation, MaritalStatus } from '@/types/form';
+import { Owner, Property, OwnerPropertyAssignment, Address, PropertyAddress, ActivityType, PropertyType, OccupancyAllocation, MaritalStatus, PropertyDocument } from '@/types/form';
 
 const DashboardPage = () => {
   const { user, signOut } = useAuth();
@@ -70,27 +70,80 @@ const DashboardPage = () => {
           isResidentInItaly: dbOwner.is_resident_in_italy
         }));
         
-        const mappedProperties: Property[] = propertiesData.map(dbProperty => ({
-          id: dbProperty.id,
-          label: dbProperty.label,
-          address: {
-            comune: dbProperty.address_comune,
-            province: dbProperty.address_province,
-            street: dbProperty.address_street,
-            zip: dbProperty.address_zip
-          },
-          activity2024: dbProperty.activity_2024 as ActivityType,
-          purchaseDate: dbProperty.purchase_date ? new Date(dbProperty.purchase_date) : null,
-          purchasePrice: dbProperty.purchase_price ? Number(dbProperty.purchase_price) : undefined,
-          saleDate: dbProperty.sale_date ? new Date(dbProperty.sale_date) : null,
-          salePrice: dbProperty.sale_price ? Number(dbProperty.sale_price) : undefined,
-          propertyType: dbProperty.property_type as PropertyType,
-          remodeling: dbProperty.remodeling,
-          occupancyStatuses: dbProperty.occupancy_statuses as OccupancyAllocation[] || [],
-          rentalIncome: dbProperty.rental_income ? Number(dbProperty.rental_income) : undefined,
-          documents: dbProperty.documents || [],
-          useDocumentRetrievalService: dbProperty.use_document_retrieval_service
-        }));
+        // Parse documents and occupancy statuses from database
+        const mappedProperties: Property[] = propertiesData.map(dbProperty => {
+          // Convert string[] to PropertyDocument[]
+          let parsedDocuments: PropertyDocument[] = [];
+          if (dbProperty.documents && Array.isArray(dbProperty.documents)) {
+            try {
+              // Try to parse each document string to PropertyDocument
+              parsedDocuments = dbProperty.documents.map(docString => {
+                try {
+                  return JSON.parse(docString);
+                } catch (e) {
+                  // If parsing fails, create a minimal document object
+                  return {
+                    id: 'unknown',
+                    name: docString,
+                    type: 'unknown',
+                    size: 0,
+                    uploadDate: new Date()
+                  };
+                }
+              });
+            } catch (e) {
+              console.error('Error parsing documents:', e);
+            }
+          }
+
+          // Parse occupancy statuses
+          let parsedOccupancyStatuses: OccupancyAllocation[] = [];
+          try {
+            if (typeof dbProperty.occupancy_statuses === 'string') {
+              // If it's a JSON string, parse it
+              parsedOccupancyStatuses = JSON.parse(dbProperty.occupancy_statuses);
+            } else if (Array.isArray(dbProperty.occupancy_statuses)) {
+              // If it's already an array, map the items
+              parsedOccupancyStatuses = dbProperty.occupancy_statuses.map(item => {
+                if (typeof item === 'string') {
+                  try {
+                    return JSON.parse(item);
+                  } catch (e) {
+                    // Default fallback if parsing fails
+                    return { status: 'PERSONAL_USE' as OccupancyStatus, months: 12 };
+                  }
+                }
+                return item as OccupancyAllocation;
+              });
+            }
+          } catch (e) {
+            console.error('Error parsing occupancy statuses:', e);
+            // Provide a default occupancy status
+            parsedOccupancyStatuses = [{ status: 'PERSONAL_USE' as OccupancyStatus, months: 12 }];
+          }
+
+          return {
+            id: dbProperty.id,
+            label: dbProperty.label,
+            address: {
+              comune: dbProperty.address_comune,
+              province: dbProperty.address_province,
+              street: dbProperty.address_street,
+              zip: dbProperty.address_zip
+            },
+            activity2024: dbProperty.activity_2024 as ActivityType,
+            purchaseDate: dbProperty.purchase_date ? new Date(dbProperty.purchase_date) : null,
+            purchasePrice: dbProperty.purchase_price ? Number(dbProperty.purchase_price) : undefined,
+            saleDate: dbProperty.sale_date ? new Date(dbProperty.sale_date) : null,
+            salePrice: dbProperty.sale_price ? Number(dbProperty.sale_price) : undefined,
+            propertyType: dbProperty.property_type as PropertyType,
+            remodeling: dbProperty.remodeling,
+            occupancyStatuses: parsedOccupancyStatuses,
+            rentalIncome: dbProperty.rental_income ? Number(dbProperty.rental_income) : undefined,
+            documents: parsedDocuments,
+            useDocumentRetrievalService: dbProperty.use_document_retrieval_service
+          };
+        });
         
         const mappedAssignments: OwnerPropertyAssignment[] = assignmentsData.map(dbAssignment => ({
           propertyId: dbAssignment.property_id,

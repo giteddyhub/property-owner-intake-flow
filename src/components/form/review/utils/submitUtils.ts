@@ -5,8 +5,6 @@ import { saveContactInfo } from './contactService';
 import { saveOwners } from './ownerService';
 import { saveProperties } from './propertyService';
 import { saveAssignments } from './assignmentService';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 
 export const submitFormData = async (
   owners: Owner[],

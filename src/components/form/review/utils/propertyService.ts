@@ -27,9 +27,9 @@ export const saveProperties = async (
         sale_price: property.salePrice,
         property_type: property.propertyType,
         remodeling: property.remodeling,
-        occupancy_statuses: property.occupancyStatuses,
+        occupancy_statuses: JSON.stringify(property.occupancyStatuses),
         rental_income: property.rentalIncome,
-        documents: property.documents,
+        documents: property.documents ? property.documents.map(doc => JSON.stringify(doc)) : [],
         use_document_retrieval_service: property.useDocumentRetrievalService,
         contact_id: contactId,
         user_id: userId
