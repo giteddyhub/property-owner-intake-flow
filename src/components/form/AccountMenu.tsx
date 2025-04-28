@@ -1,0 +1,82 @@
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { User, LogOut, Settings, UserPlus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthModal } from '../auth/AuthModal';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+
+export const AccountMenu = () => {
+  const { user, signOut } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = React.useState(false);
+  
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  if (!user) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="outline" 
+          className="text-xs"
+          onClick={() => setAuthModalOpen(true)}
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Sign In
+        </Button>
+        
+        <AuthModal
+          open={authModalOpen}
+          onOpenChange={setAuthModalOpen}
+          defaultTab="sign-in"
+          redirectAfterAuth={false}
+        />
+      </div>
+    );
+  }
+  
+  const initials = user.email
+    ? user.email.substring(0, 2).toUpperCase()
+    : "U";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuItem>
+          <User className="mr-2 h-4 w-4" />
+          <span>{user.email}</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/dashboard">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Dashboard</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Sign out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};

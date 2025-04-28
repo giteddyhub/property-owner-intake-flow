@@ -2,24 +2,27 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ContactInfo } from './types';
 
-export const saveContactInfo = async (contactInfo: ContactInfo): Promise<string> => {
-  console.log("Saving contact information:", contactInfo);
+export const saveContactInfo = async (contactInfo: ContactInfo, userId: string | null = null): Promise<string> => {
+  console.log("Saving contact information:", contactInfo, "User ID:", userId);
   
-  const { data: contactData, error: contactError } = await supabase
+  const contactData = {
+    full_name: contactInfo.fullName,
+    email: contactInfo.email,
+    submitted_at: new Date().toISOString(),
+    user_id: userId
+  };
+  
+  const { data, error } = await supabase
     .from('contacts')
-    .insert({
-      full_name: contactInfo.fullName,
-      email: contactInfo.email,
-      submitted_at: new Date().toISOString()
-    })
+    .insert(contactData)
     .select();
     
-  if (contactError) {
-    console.error("Error saving contact:", contactError);
-    throw new Error(`Error saving contact: ${contactError.message}`);
+  if (error) {
+    console.error("Error saving contact:", error);
+    throw new Error(`Error saving contact: ${error.message}`);
   }
   
-  const contactId = contactData?.[0]?.id;
+  const contactId = data?.[0]?.id;
   if (!contactId) {
     console.error("Contact was saved but no ID was returned");
     throw new Error("Failed to get database ID for contact");

@@ -5,19 +5,22 @@ import { saveContactInfo } from './contactService';
 import { saveOwners } from './ownerService';
 import { saveProperties } from './propertyService';
 import { saveAssignments } from './assignmentService';
+import { supabase } from '@/integrations/supabase/client';
 
 export const submitFormData = async (
   owners,
   properties,
   assignments,
-  contactInfo
+  contactInfo,
+  userId = null
 ) => {
   try {
     console.log("Starting submission process with:", {
       ownersCount: owners.length,
       propertiesCount: properties.length,
       assignmentsCount: assignments.length,
-      contactInfo
+      contactInfo,
+      userId
     });
     
     // Check if any property has document retrieval service enabled
@@ -27,16 +30,16 @@ export const submitFormData = async (
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
     // Step 1: Save contact information
-    const contactId = await saveContactInfo(contactInfo);
+    const contactId = await saveContactInfo(contactInfo, userId);
     
     // Store contact ID in sessionStorage
     sessionStorage.setItem('contactId', contactId);
     
     // Step 2: Save owners and get ID mappings
-    const ownerIdMap = await saveOwners(owners, contactId);
+    const ownerIdMap = await saveOwners(owners, contactId, userId);
     
     // Step 3: Save properties and get ID mappings
-    const propertyIdMap = await saveProperties(properties, contactId);
+    const propertyIdMap = await saveProperties(properties, contactId, userId);
     
     // Step 4: Save owner-property assignments
     await saveAssignments(assignments, propertyIdMap, ownerIdMap, contactId);

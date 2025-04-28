@@ -1,14 +1,16 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Property, PropertyDocument } from '@/types/form';
 
 export const saveProperties = async (
   properties: Property[], 
-  contactId: string
+  contactId: string,
+  userId: string | null = null
 ): Promise<Map<string, string>> => {
   const propertyIdMap = new Map<string, string>();
   
   for (const property of properties) {
-    console.log("Saving property:", property.label);
+    console.log("Saving property:", property.label, "User ID:", userId);
     
     // Convert OccupancyAllocation[] to string[] for database
     const occupancyStatusStrings = property.occupancyStatuses.map(
@@ -52,7 +54,8 @@ export const saveProperties = async (
         rental_income: property.rentalIncome,
         contact_id: contactId,
         use_document_retrieval_service: property.useDocumentRetrievalService || false,
-        documents: documentStrings.length > 0 ? documentStrings : null
+        documents: documentStrings.length > 0 ? documentStrings : null,
+        user_id: userId
       })
       .select();
       

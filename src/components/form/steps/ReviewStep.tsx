@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
-import ContactInfoDialog from '../ContactInfoDialog';
+import AuthContactInfoDialog from '../AuthContactInfoDialog';
 import { Owner } from '@/types/form';
 import OwnerReviewCard from '../review/OwnerReviewCard';
 import PropertyReviewCard from '../review/PropertyReviewCard';
@@ -10,9 +10,10 @@ import AssignmentReviewCard from '../review/AssignmentReviewCard';
 import SubmissionSummary from '../review/SubmissionSummary';
 import SectionHeader from '../review/SectionHeader';
 import ReviewActions from '../review/ReviewActions';
-import { submitFormData } from '../review/submitUtils';
+import { submitFormData } from '../review/utils/submitUtils';
 import type { ContactInfo } from '../review/utils/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Accordion
 } from "@/components/ui/accordion";
@@ -22,6 +23,7 @@ const ReviewStep: React.FC = () => {
   const { owners, properties, assignments } = state;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showContactDialog, setShowContactDialog] = useState(false);
+  const { user } = useAuth();
   
   const handleSubmitButtonClick = () => {
     setShowContactDialog(true);
@@ -41,7 +43,7 @@ const ReviewStep: React.FC = () => {
         JSON.stringify(hasDocumentRetrievalService)
       );
       
-      await submitFormData(owners, properties, assignments, contactInfo);
+      await submitFormData(owners, properties, assignments, contactInfo, user?.id || null);
     } catch (error) {
       console.error('Error during submission:', error);
     } finally {
@@ -137,7 +139,7 @@ const ReviewStep: React.FC = () => {
         assignments={assignments}
       />
       
-      <ContactInfoDialog 
+      <AuthContactInfoDialog 
         open={showContactDialog} 
         onClose={() => setShowContactDialog(false)}
         onSubmit={handleSubmit}

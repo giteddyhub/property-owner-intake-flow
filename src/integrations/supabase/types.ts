@@ -58,6 +58,7 @@ export type Database = {
           state: string
           submitted_at: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           accountant_id?: number | null
@@ -71,6 +72,7 @@ export type Database = {
           state?: string
           submitted_at?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           accountant_id?: number | null
@@ -84,6 +86,7 @@ export type Database = {
           state?: string
           submitted_at?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -343,6 +346,7 @@ export type Database = {
           marital_status: string
           spent_over_182_days: boolean | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           address_city: string
@@ -366,6 +370,7 @@ export type Database = {
           marital_status: string
           spent_over_182_days?: boolean | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           address_city?: string
@@ -389,6 +394,7 @@ export type Database = {
           marital_status?: string
           spent_over_182_days?: boolean | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -442,6 +448,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           activity_2024: string
@@ -464,6 +494,7 @@ export type Database = {
           sale_price: number | null
           updated_at: string
           use_document_retrieval_service: boolean | null
+          user_id: string | null
         }
         Insert: {
           activity_2024: string
@@ -486,6 +517,7 @@ export type Database = {
           sale_price?: number | null
           updated_at?: string
           use_document_retrieval_service?: boolean | null
+          user_id?: string | null
         }
         Update: {
           activity_2024?: string
@@ -508,6 +540,7 @@ export type Database = {
           sale_price?: number | null
           updated_at?: string
           use_document_retrieval_service?: boolean | null
+          user_id?: string | null
         }
         Relationships: [
           {

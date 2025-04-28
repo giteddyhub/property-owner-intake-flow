@@ -4,12 +4,13 @@ import { Owner } from '@/types/form';
 
 export const saveOwners = async (
   owners: Owner[], 
-  contactId: string
+  contactId: string,
+  userId: string | null = null
 ): Promise<Map<string, string>> => {
   const ownerIdMap = new Map<string, string>();
   
   for (const owner of owners) {
-    console.log("Saving owner:", owner.firstName, owner.lastName);
+    console.log("Saving owner:", owner.firstName, owner.lastName, "User ID:", userId);
     
     const { data: ownerData, error: ownerError } = await supabase
       .from('owners')
@@ -31,7 +32,8 @@ export const saveOwners = async (
         italian_residence_street: null,
         italian_residence_city: null,
         italian_residence_zip: null,
-        contact_id: contactId
+        contact_id: contactId,
+        user_id: userId
       })
       .select();
       

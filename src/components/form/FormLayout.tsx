@@ -6,6 +6,7 @@ import OwnerStep from './steps/OwnerStep';
 import PropertyStep from './steps/PropertyStep';
 import AssignmentStep from './steps/AssignmentStep';
 import ReviewStep from './steps/ReviewStep';
+import { AccountMenu } from './AccountMenu';
 import { cn } from '@/lib/utils';
 
 const STEPS = [
@@ -41,6 +42,10 @@ const FormLayout: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto py-8 px-4 md:px-6">
         <div className="max-w-4xl mx-auto">
+          <div className="flex justify-end mb-2">
+            <AccountMenu />
+          </div>
+          
           <div className="bg-white shadow-lg rounded-lg overflow-hidden">
             {/* Progress Stepper */}
             <div className="p-4 bg-form-100 border-b">
