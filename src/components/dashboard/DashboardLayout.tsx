@@ -11,6 +11,7 @@ import { StatsSummaryCards } from '@/components/dashboard/StatsSummaryCards';
 import { DataFilterTabs } from '@/components/dashboard/DataFilterTabs';
 import { DataTables } from '@/components/dashboard/DataTables';
 import { ActionsToolbar } from '@/components/dashboard/ActionsToolbar';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardLayoutProps {
   owners: Owner[];
@@ -32,6 +33,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onRefresh
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Get user's name from user metadata
+  const getUserName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name.split(' ')[0];
+    }
+    return 'there';
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -39,7 +49,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Your Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Welcome back, {getUserName()}!</h1>
           <ActionsToolbar />
         </div>
 
