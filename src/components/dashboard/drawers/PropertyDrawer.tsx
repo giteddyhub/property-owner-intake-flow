@@ -31,6 +31,14 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Ensure clean up on unmount or when drawer closes
+  useEffect(() => {
+    return () => {
+      // This will run when the component unmounts or when isOpen changes to false
+      document.body.style.pointerEvents = '';
+    };
+  }, [isOpen]);
+  
   const handleSubmit = async (newProperty: Property, occupancyMonths: Record<string, number>) => {
     setIsSubmitting(true);
     
@@ -93,8 +101,15 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
     }
   };
   
+  // Handle clean close to ensure no stray elements block interaction
+  const handleClose = () => {
+    // Remove any pointer-events blocking that might have been applied
+    document.body.style.pointerEvents = '';
+    onClose();
+  };
+  
   return (
-    <Drawer open={isOpen} onOpenChange={onClose} shouldScaleBackground>
+    <Drawer open={isOpen} onOpenChange={handleClose} shouldScaleBackground>
       <DrawerContent className="h-[90vh] max-h-[90vh]">
         <div className="mx-auto w-full max-w-4xl overflow-auto h-full pb-24">
           <DrawerHeader className="sticky top-0 z-10 bg-background">
@@ -109,7 +124,10 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
                 </DrawerDescription>
               </div>
               <DrawerClose asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" onClick={() => {
+                  // Ensure pointer-events are enabled when closing via button
+                  document.body.style.pointerEvents = '';
+                }}>
                   <X className="h-4 w-4" />
                 </Button>
               </DrawerClose>
@@ -134,7 +152,7 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
               }}
               editingIndex={property ? 0 : null}
               onSubmit={handleSubmit}
-              onCancel={onClose}
+              onCancel={handleClose}
               hideCancel={true}
               standalone={true}
             />
@@ -142,7 +160,10 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
 
           <DrawerFooter className="sticky bottom-0 z-10 bg-background mt-auto">
             <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" onClick={() => {
+                // Ensure pointer-events are enabled when closing via button
+                document.body.style.pointerEvents = '';
+              }}>Cancel</Button>
             </DrawerClose>
           </DrawerFooter>
         </div>
