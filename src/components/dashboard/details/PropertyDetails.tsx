@@ -104,7 +104,7 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property }) =>
             <ul className="space-y-2">
               {property.occupancyStatuses.map((status, index) => (
                 <li key={index} className="flex justify-between items-center">
-                  <span>{status.status.replace('_', ' ')}</span>
+                  <span>{status.status ? status.status.replace('_', ' ') : 'Unknown'}</span>
                   <Badge variant="outline">{status.months} months</Badge>
                 </li>
               ))}
