@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Settings, LogIn } from 'lucide-react';
+import { User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -22,14 +22,8 @@ export const AccountMenu = () => {
   };
 
   if (!user) {
-    return (
-      <Link to="/login">
-        <Button variant="outline" size="sm" className="ml-auto">
-          <LogIn className="mr-2 h-4 w-4" />
-          Sign in
-        </Button>
-      </Link>
-    );
+    // Return null instead of the sign-in button
+    return null;
   }
   
   const initials = user.email

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 
 interface SignInFormProps {
   onSuccess?: () => void;
+  redirectAfterAuth?: boolean;
 }
 
 export const SignInForm: React.FC<SignInFormProps> = ({ 
