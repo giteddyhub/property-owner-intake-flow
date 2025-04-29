@@ -27,7 +27,7 @@ export const formatOccupancyStatuses = (allocations: OccupancyAllocation[]): str
 };
 
 // Function to format an individual occupancy status for display
-export const formatOccupancyStatus = (status: OccupancyStatus): string => {
+export const formatOccupancyStatus = (status: OccupancyStatus | undefined | null): string => {
   if (!status) return 'Unknown';
   
   switch (status) {
@@ -38,7 +38,8 @@ export const formatOccupancyStatus = (status: OccupancyStatus): string => {
     case 'SHORT_TERM_RENT':
       return 'Short-term Rental';
     default:
-      return status.toString();
+      // Fix: Convert to string safely since TypeScript infers 'never' type for default case
+      return String(status);
   }
 };
 
