@@ -15,6 +15,7 @@ interface AuthModalProps {
   title?: string;
   description?: string;
   onSuccess?: () => void;
+  defaultTab?: string; // Add this new prop
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -23,6 +24,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   title = 'Sign In',
   description = 'Sign in to access your Italian tax services.',
   onSuccess,
+  defaultTab = 'sign-in', // Set a default value
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
