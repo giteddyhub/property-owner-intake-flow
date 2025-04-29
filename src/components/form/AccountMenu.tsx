@@ -21,13 +21,9 @@ export const AccountMenu = () => {
     await signOut();
   };
 
-  // If user is not logged in, show login link
+  // If user is not logged in, return null (remove the Sign In button)
   if (!user) {
-    return (
-      <Button variant="outline" size="sm" asChild>
-        <Link to="/login">Sign In</Link>
-      </Button>
-    );
+    return null;
   }
   
   const initials = user.email
