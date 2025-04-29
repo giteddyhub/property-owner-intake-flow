@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -164,7 +163,8 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
       {selectedProperty && (
         <DetailsPopover
           trigger={<div />}
-          open={detailsOpen && !drawerOpen} {/* Only show details if drawer is not open */}
+          {/* Only show details if drawer is not open */}
+          open={detailsOpen && !drawerOpen}
           onOpenChange={setDetailsOpen}
         >
           <PropertyDetails property={selectedProperty} />

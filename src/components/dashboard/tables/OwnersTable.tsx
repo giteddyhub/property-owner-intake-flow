@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Owner } from '@/components/dashboard/types';
@@ -143,7 +142,8 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
       {selectedOwner && (
         <DetailsPopover 
           trigger={<div />} 
-          open={detailsOpen && !drawerOpen} 
+          {/* Only show details if drawer is not open */}
+          open={detailsOpen && !drawerOpen}
           onOpenChange={setDetailsOpen}
         >
           <OwnerDetails owner={selectedOwner} />
