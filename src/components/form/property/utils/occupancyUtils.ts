@@ -7,17 +7,29 @@ export const formatOccupancyStatuses = (allocations: OccupancyAllocation[]): str
     return 'Not specified';
   }
   
-  if (allocations.length === 1) {
-    return formatOccupancyStatus(allocations[0].status) + ` (${allocations[0].months} months)`;
+  // Filter out any invalid allocations that might be causing undefined issues
+  const validAllocations = allocations.filter(
+    allocation => allocation && typeof allocation === 'object' && 'status' in allocation && 'months' in allocation
+  );
+  
+  if (validAllocations.length === 0) {
+    return 'Not specified';
   }
   
-  return allocations
+  if (validAllocations.length === 1) {
+    const allocation = validAllocations[0];
+    return `${formatOccupancyStatus(allocation.status)} (${allocation.months} months)`;
+  }
+  
+  return validAllocations
     .map(allocation => `${formatOccupancyStatus(allocation.status)} (${allocation.months} months)`)
     .join(', ');
 };
 
 // Function to format an individual occupancy status for display
 export const formatOccupancyStatus = (status: OccupancyStatus): string => {
+  if (!status) return 'Unknown';
+  
   switch (status) {
     case 'PERSONAL_USE':
       return 'Personal Use';
@@ -26,7 +38,7 @@ export const formatOccupancyStatus = (status: OccupancyStatus): string => {
     case 'SHORT_TERM_RENT':
       return 'Short-term Rental';
     default:
-      return status;
+      return status.toString();
   }
 };
 

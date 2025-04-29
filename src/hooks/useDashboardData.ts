@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -106,24 +107,60 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
             }
           }
 
+          // Improved parsing of occupancy statuses to handle different formats
           let parsedOccupancyStatuses: OccupancyAllocation[] = [];
           try {
             if (typeof dbProperty.occupancy_statuses === 'string') {
               parsedOccupancyStatuses = JSON.parse(dbProperty.occupancy_statuses);
             } else if (Array.isArray(dbProperty.occupancy_statuses)) {
-              parsedOccupancyStatuses = dbProperty.occupancy_statuses.map(item => {
-                if (typeof item === 'string') {
-                  try {
-                    return JSON.parse(item);
-                  } catch (e) {
-                    return { status: 'PERSONAL_USE' as OccupancyStatus, months: 12 };
+              // Handle case when it's an array of strings that need parsing
+              if (dbProperty.occupancy_statuses.length > 0 && typeof dbProperty.occupancy_statuses[0] === 'string') {
+                // Try to parse the first element to see if it's a JSON string containing an array
+                try {
+                  const parsed = JSON.parse(dbProperty.occupancy_statuses[0]);
+                  if (Array.isArray(parsed)) {
+                    parsedOccupancyStatuses = parsed;
+                  } else if (typeof parsed === 'object' && parsed !== null) {
+                    parsedOccupancyStatuses = [parsed];
                   }
+                } catch {
+                  // If parsing failed, try to parse each string individually
+                  parsedOccupancyStatuses = dbProperty.occupancy_statuses
+                    .map(item => {
+                      if (typeof item === 'string') {
+                        try {
+                          return JSON.parse(item);
+                        } catch (e) {
+                          console.error('Failed to parse occupancy status item:', item);
+                          return null;
+                        }
+                      }
+                      return item;
+                    })
+                    .filter(Boolean) as OccupancyAllocation[];
                 }
-                return item as OccupancyAllocation;
-              });
+              } else {
+                // It's already an array of objects
+                parsedOccupancyStatuses = dbProperty.occupancy_statuses.map(item => {
+                  if (typeof item === 'object' && item !== null) {
+                    return item as OccupancyAllocation;
+                  }
+                  return { status: 'PERSONAL_USE' as OccupancyStatus, months: 12 };
+                });
+              }
             }
+            
+            // Ensure we always have valid occupancy statuses
+            if (!parsedOccupancyStatuses || parsedOccupancyStatuses.length === 0) {
+              parsedOccupancyStatuses = [{ status: 'PERSONAL_USE' as OccupancyStatus, months: 12 }];
+            }
+            
+            // Final validation pass to ensure all statuses have both status and months
+            parsedOccupancyStatuses = parsedOccupancyStatuses
+              .filter(item => item && typeof item === 'object' && 'status' in item && 'months' in item);
+              
           } catch (e) {
-            console.error('Error parsing occupancy statuses:', e);
+            console.error('Error parsing occupancy statuses:', e, dbProperty.occupancy_statuses);
             parsedOccupancyStatuses = [{ status: 'PERSONAL_USE' as OccupancyStatus, months: 12 }];
           }
 
