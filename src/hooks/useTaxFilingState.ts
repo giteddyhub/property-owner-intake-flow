@@ -21,7 +21,7 @@ export const useTaxFilingState = () => {
       // Check if the user has a contact record first
       const { data: contactData, error: contactError } = await supabase
         .from('contacts')
-        .select('id')
+        .select('id, terms_accepted, privacy_accepted')
         .eq('user_id', userId)
         .maybeSingle();
       
@@ -75,6 +75,18 @@ export const useTaxFilingState = () => {
         // Use the existing contact ID
         contactId = contactData.id;
         console.log('Using existing contact with ID:', contactId);
+        
+        // If terms or privacy policies aren't accepted, update them
+        if (!contactData.terms_accepted || !contactData.privacy_accepted) {
+          console.log('Updating terms and privacy acceptance');
+          await supabase
+            .from('contacts')
+            .update({
+              terms_accepted: true,
+              privacy_accepted: true
+            })
+            .eq('id', contactId);
+        }
       }
       
       // Define a default amount for the purchase entry
