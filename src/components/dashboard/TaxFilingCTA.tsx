@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useTaxFilingState } from '@/hooks/useTaxFilingState';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TaxFilingCTAProps {
   userId: string;
@@ -13,12 +14,19 @@ interface TaxFilingCTAProps {
 
 export const TaxFilingCTA: React.FC<TaxFilingCTAProps> = ({ userId }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { createTaxFilingSession, loading } = useTaxFilingState();
   const [isProcessing, setIsProcessing] = useState(false);
   
   const handleGetTaxFilings = async () => {
     try {
       setIsProcessing(true);
+      
+      if (!userId || !user) {
+        toast.error('You need to be signed in to access tax filing services');
+        navigate('/login');
+        return;
+      }
       
       toast.info('Preparing your tax filing service...');
       
