@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Table,
@@ -38,13 +39,24 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
   const [isCreating, setIsCreating] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   
-  const handleEdit = (property: Property) => {
+  const handleEdit = (e: React.MouseEvent, property: Property) => {
+    // Stop event propagation to prevent the row click from firing
+    e.stopPropagation();
+    
     setSelectedProperty(property);
     setIsCreating(false);
     setDrawerOpen(true);
   };
   
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent, property: Property) => {
+    // Stop event propagation to prevent the row click from firing
+    e.stopPropagation();
+    
+    setSelectedProperty(property);
+    setDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteConfirm = async () => {
     if (!selectedProperty) return;
     
     try {
@@ -86,8 +98,11 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
   };
   
   const handleRowClick = (property: Property) => {
-    setSelectedProperty(property);
-    setDetailsOpen(true);
+    // Only set details if we're not already opening the drawer
+    if (!drawerOpen) {
+      setSelectedProperty(property);
+      setDetailsOpen(true);
+    }
   };
 
   return (
@@ -119,12 +134,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
                 <TableRow 
                   key={property.id}
                   className="cursor-pointer"
-                  onClick={(e) => {
-                    if ((e.target as HTMLElement).closest('.action-buttons')) {
-                      return;
-                    }
-                    handleRowClick(property);
-                  }}
+                  onClick={() => handleRowClick(property)}
                 >
                   <TableCell className="font-medium">{property.label}</TableCell>
                   <TableCell>
@@ -136,14 +146,11 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
                   <TableCell>
                     {formatOccupancyStatuses(property.occupancyStatuses)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="action-buttons">
                       <ActionButtons
-                        onEdit={() => handleEdit(property)}
-                        onDelete={() => {
-                          setSelectedProperty(property);
-                          setDeleteDialogOpen(true);
-                        }}
+                        onEdit={(e) => handleEdit(e, property)}
+                        onDelete={(e) => handleDelete(e, property)}
                       />
                     </div>
                   </TableCell>
@@ -157,7 +164,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
       {selectedProperty && (
         <DetailsPopover
           trigger={<div />}
-          open={detailsOpen}
+          open={detailsOpen && !drawerOpen}  {/* Only show details if drawer is not open */}
           onOpenChange={setDetailsOpen}
         >
           <PropertyDetails property={selectedProperty} />
@@ -174,7 +181,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-500 hover:bg-red-600">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

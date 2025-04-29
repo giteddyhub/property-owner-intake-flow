@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Owner } from '@/components/dashboard/types';
@@ -9,10 +10,12 @@ import { ActionButtons, AddButton } from '@/components/dashboard/tables/ActionBu
 import OwnerDrawer from '@/components/dashboard/drawers/OwnerDrawer';
 import { DetailsPopover } from '@/components/dashboard/details/DetailsPopover';
 import { OwnerDetails } from '@/components/dashboard/details/OwnerDetails';
+
 interface OwnersTableProps {
   owners: Owner[];
   onRefresh?: () => void;
 }
+
 export const OwnersTable: React.FC<OwnersTableProps> = ({
   owners,
   onRefresh
@@ -22,26 +25,44 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const handleEdit = (owner: Owner) => {
+  
+  const handleEdit = (e: React.MouseEvent, owner: Owner) => {
+    // Stop event propagation to prevent the row click from firing
+    e.stopPropagation();
+    
     setSelectedOwner(owner);
     setIsCreating(false);
     setDrawerOpen(true);
   };
-  const handleDelete = async () => {
+  
+  const handleDelete = (e: React.MouseEvent, owner: Owner) => {
+    // Stop event propagation to prevent the row click from firing
+    e.stopPropagation();
+    
+    setSelectedOwner(owner);
+    setDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteConfirm = async () => {
     if (!selectedOwner) return;
+    
     try {
       const {
         data: assignments
       } = await supabase.from('owner_property_assignments').select('id').eq('owner_id', selectedOwner.id);
+      
       if (assignments && assignments.length > 0) {
         toast.error('Cannot delete owner with existing property assignments. Remove assignments first.');
         setDeleteDialogOpen(false);
         return;
       }
+      
       const {
         error
       } = await supabase.from('owners').delete().eq('id', selectedOwner.id);
+      
       if (error) throw error;
+      
       toast.success('Owner deleted successfully');
       setDeleteDialogOpen(false);
       if (onRefresh) onRefresh();
@@ -50,19 +71,27 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
       toast.error('Failed to delete owner');
     }
   };
+  
   const handleAdd = () => {
     setSelectedOwner(null);
     setIsCreating(true);
     setDrawerOpen(true);
   };
+  
   const handleOwnerSaved = () => {
     if (onRefresh) onRefresh();
   };
+  
   const handleRowClick = (owner: Owner) => {
-    setSelectedOwner(owner);
-    setDetailsOpen(true);
+    // Only set details if we're not already opening the drawer
+    if (!drawerOpen) {
+      setSelectedOwner(owner);
+      setDetailsOpen(true);
+    }
   };
-  return <>
+
+  return (
+    <>
       <div className="flex justify-start mb-4">
         <AddButton onClick={handleAdd} label="Add Owner" />
       </div>
@@ -79,36 +108,47 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {owners.length === 0 ? <TableRow>
+            {owners.length === 0 ? (
+              <TableRow>
                 <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                   No owners found.
                 </TableCell>
-              </TableRow> : owners.map(owner => <TableRow key={owner.id} className="cursor-pointer" onClick={e => {
-            if ((e.target as HTMLElement).closest('.action-buttons')) {
-              return;
-            }
-            handleRowClick(owner);
-          }}>
+              </TableRow>
+            ) : (
+              owners.map(owner => (
+                <TableRow 
+                  key={owner.id} 
+                  className="cursor-pointer"
+                  onClick={() => handleRowClick(owner)}
+                >
                   <TableCell className="font-medium">{owner.firstName} {owner.lastName}</TableCell>
                   <TableCell>{owner.italianTaxCode}</TableCell>
                   <TableCell>{owner.citizenship}</TableCell>
                   <TableCell>{owner.isResidentInItaly ? 'Yes' : 'No'}</TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="action-buttons">
-                      <ActionButtons onEdit={() => handleEdit(owner)} onDelete={() => {
-                  setSelectedOwner(owner);
-                  setDeleteDialogOpen(true);
-                }} />
+                      <ActionButtons
+                        onEdit={(e) => handleEdit(e, owner)}
+                        onDelete={(e) => handleDelete(e, owner)}
+                      />
                     </div>
                   </TableCell>
-                </TableRow>)}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
       
-      {selectedOwner && <DetailsPopover trigger={<div />} open={detailsOpen} onOpenChange={setDetailsOpen}>
+      {selectedOwner && (
+        <DetailsPopover 
+          trigger={<div />} 
+          open={detailsOpen && !drawerOpen} 
+          onOpenChange={setDetailsOpen}
+        >
           <OwnerDetails owner={selectedOwner} />
-        </DetailsPopover>}
+        </DetailsPopover>
+      )}
       
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -120,13 +160,19 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-500 hover:bg-red-600">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
       
-      <OwnerDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} owner={isCreating ? undefined : selectedOwner || undefined} onSuccess={handleOwnerSaved} />
-    </>;
+      <OwnerDrawer 
+        isOpen={drawerOpen} 
+        onClose={() => setDrawerOpen(false)} 
+        owner={isCreating ? undefined : selectedOwner || undefined} 
+        onSuccess={handleOwnerSaved} 
+      />
+    </>
+  );
 };
