@@ -111,7 +111,25 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    handleOwnerChange(name, value);
+    
+    // Fix for address fields handling
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      
+      if (parent === 'address') {
+        setCurrentOwner(prev => ({
+          ...prev,
+          address: {
+            ...prev.address,
+            [child]: value
+          }
+        }));
+      } else {
+        handleOwnerChange(name, value);
+      }
+    } else {
+      handleOwnerChange(name, value);
+    }
   };
   
   const handleDateChange = (date: Date | undefined) => {
@@ -122,10 +140,20 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
   };
   
   const handleCountryChange = (field: string, value: string) => {
-    setCurrentOwner(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    if (field === 'address.country') {
+      setCurrentOwner(prev => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          country: value
+        }
+      }));
+    } else {
+      setCurrentOwner(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
   
   const handleResidencyStatusChange = (value: string) => {
