@@ -160,10 +160,10 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ properties, on
         </Table>
       </div>
       
+      {/* Only show details if drawer is not open */}
       {selectedProperty && (
         <DetailsPopover
           trigger={<div />}
-          {/* Only show details if drawer is not open */}
           open={detailsOpen && !drawerOpen}
           onOpenChange={setDetailsOpen}
         >
