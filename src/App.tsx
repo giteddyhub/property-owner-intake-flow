@@ -11,6 +11,7 @@ import ResidentSuccessPage from './pages/ResidentSuccessPage';
 import ResidencyAssessmentPage from './pages/ResidencyAssessmentPage';
 import DashboardPage from './pages/DashboardPage';
 import TaxFilingServicePage from './pages/TaxFilingServicePage';
+import LoginPage from './pages/LoginPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Protected route component
@@ -56,6 +57,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/success" element={<SuccessPage />} />
       <Route path="/ResidentSuccessPage" element={<ResidentSuccessPage />} />
       <Route path="/payment-cancelled" element={<PaymentCancelled />} />
