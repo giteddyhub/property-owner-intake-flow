@@ -17,7 +17,7 @@ export const activityExplanations = {
 
 // Explanations for different occupancy statuses
 export const occupancyExplanations = {
-  LONG_TERM_RENT: "Property rented with contracts of 1+ year",
+  LONG_TERM_RENT: "Property rented for over 30 days per single rental agreement",
   SHORT_TERM_RENT: "Property rented short-term (e.g., Airbnb)",
   PERSONAL_USE: "Used by owners or left vacant"
 };
