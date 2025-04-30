@@ -21,7 +21,7 @@ const PremiumServiceCard = ({
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Full Service Tax Filing</h2>
+            <h2 className="text-xl font-bold text-gray-900">Full Service Tax Filing 2025</h2>
             <p className="mt-2 text-gray-700">
               Let our tax professionals handle everything for you
             </p>
