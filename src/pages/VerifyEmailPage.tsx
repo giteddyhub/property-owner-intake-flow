@@ -13,6 +13,9 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
   const navigate = useNavigate();
   const userEmail = email || sessionStorage.getItem('pendingUserEmail') || 'your email';
   
+  // Check if there's pending form data to show appropriate messaging
+  const hasPendingFormData = sessionStorage.getItem('pendingFormData') !== null;
+  
   const handleBackToLogin = () => {
     navigate('/login');
   };
@@ -41,6 +44,18 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
                   </p>
                 </div>
                 
+                {hasPendingFormData && (
+                  <div className="bg-green-50 border border-green-200 rounded-md p-4 my-2">
+                    <h3 className="font-semibold text-green-800 flex items-center">
+                      <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                      Your form data has been saved
+                    </h3>
+                    <p className="text-green-700 text-sm mt-1">
+                      Your information will be automatically submitted after you verify your email.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="border-t border-gray-200 w-full my-4 pt-4">
                   <h2 className="text-lg font-semibold mb-2">What happens next?</h2>
                   <ul className="text-sm text-left space-y-3">
@@ -48,13 +63,19 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
                       <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
                       <span>After verification, you'll be automatically redirected to your dashboard</span>
                     </li>
+                    {hasPendingFormData && (
+                      <li className="flex gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                        <span><strong>Your form will be submitted automatically</strong> - no need to fill it out again</span>
+                      </li>
+                    )}
                     <li className="flex gap-2">
                       <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                      <span>Any pending form submissions will be processed</span>
+                      <span>You'll have instant access to all your property information</span>
                     </li>
                     <li className="flex gap-2">
                       <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                      <span>You can manage all your property information from your dashboard</span>
+                      <span>You can manage all your property details from your dashboard</span>
                     </li>
                   </ul>
                 </div>

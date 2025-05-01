@@ -9,6 +9,9 @@ import { supabase } from '@/integrations/supabase/client';
 // Keep track of submissions in progress to prevent duplicates
 const activeSubmissions = new Set();
 
+// Keep track of completed submissions by user ID to prevent duplicates
+const completedSubmissionsByUser = new Set();
+
 export const submitFormData = async (
   owners,
   properties,
@@ -19,7 +22,7 @@ export const submitFormData = async (
   // Generate a unique submission ID
   const submissionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
-  // Check if we already have a submission in progress with same data
+  // Check if we already have a submission in progress
   if (activeSubmissions.size > 0) {
     console.log("Warning: Another submission is already in progress", 
       { active: Array.from(activeSubmissions), current: submissionId });
@@ -27,6 +30,13 @@ export const submitFormData = async (
     return false;
   }
 
+  // If the user is logged in, check if they already have a completed submission
+  if (userId && completedSubmissionsByUser.has(userId)) {
+    console.log(`User ${userId} already has a completed submission. Preventing duplicate.`);
+    toast.info("Your information has already been submitted");
+    return false;
+  }
+  
   // Add this submission to active list
   activeSubmissions.add(submissionId);
   
@@ -45,6 +55,13 @@ export const submitFormData = async (
       if (user) {
         userId = user.id;
         console.log("Found authenticated user:", userId);
+
+        // Check again if this user already has a submission
+        if (completedSubmissionsByUser.has(userId)) {
+          console.log(`User ${userId} already has a completed submission. Preventing duplicate.`);
+          toast.info("Your information has already been submitted");
+          return false;
+        }
       } else {
         console.log("No authenticated user found");
       }
@@ -87,6 +104,9 @@ export const submitFormData = async (
     
     // If the user is authenticated, create a tax filing session and redirect to it
     if (userId) {
+      // Store the user ID in the completed submissions set to prevent duplicates
+      completedSubmissionsByUser.add(userId);
+
       // Create a purchase entry to track this session
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
@@ -110,11 +130,11 @@ export const submitFormData = async (
       
       console.log("Redirecting to tax filing service page with purchase ID:", purchase.id);
       
-      // Redirect to the tax filing service page
-      window.location.href = `/tax-filing-service/${purchase.id}`;
-      
       // Clear pending form data immediately after submission
       sessionStorage.removeItem('pendingFormData');
+      
+      // Redirect to the tax filing service page
+      window.location.href = `/tax-filing-service/${purchase.id}`;
       
       return true;
     } else {

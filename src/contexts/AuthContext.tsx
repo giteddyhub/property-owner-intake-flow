@@ -13,6 +13,7 @@ type AuthContextType = {
   loading: boolean;
   processingSubmission: boolean;
   setProcessingSubmission: (value: boolean) => void;
+  submissionCompleted: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,10 +23,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingSubmission, setProcessingSubmission] = useState(false);
-  const [submissionAttempts, setSubmissionAttempts] = useState(0);
+  const [submissionCompleted, setSubmissionCompleted] = useState(false);
+  const [pendingSubmissionProcessed, setPendingSubmissionProcessed] = useState(false);
 
   const checkAndSubmitPendingFormData = async (userId: string) => {
     try {
+      // If we already processed a submission for this session, don't do it again
+      if (pendingSubmissionProcessed || submissionCompleted) {
+        console.log("Submission already processed in this session, skipping");
+        return;
+      }
+
       // If we're already processing a submission, don't start another one
       if (processingSubmission) {
         console.log("Already processing a submission, skipping duplicate attempt");
@@ -49,13 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Generate a unique submission ID to track this submission
-        const submissionId = Date.now().toString();
+        // Add a submission tracking ID to debug any potential duplicates
+        const submissionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         console.log(`Starting submission ${submissionId} for user ${userId}`);
-        
-        // Track submission attempt to prevent duplicates
-        setSubmissionAttempts(prev => prev + 1);
-        const currentAttempt = submissionAttempts + 1;
         
         try {
           // Submit the form data with the user ID
@@ -69,20 +73,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // Immediately clear the pending form data after successful submission
           sessionStorage.removeItem('pendingFormData');
-          console.log(`Successfully submitted pending form data (attempt ${currentAttempt}) for user:`, userId);
+          console.log(`Successfully submitted pending form data (ID: ${submissionId}) for user:`, userId);
+          
+          // Mark submission as completed to prevent duplicates
+          setSubmissionCompleted(true);
+          setPendingSubmissionProcessed(true);
           
           // Set a flag to redirect to dashboard after form submission
           sessionStorage.setItem('redirectToDashboard', 'true');
-          
-          // Redirect to dashboard if we're not already there
-          if (!window.location.pathname.includes('/dashboard')) {
-            window.location.href = '/dashboard';
-          }
         } catch (error) {
           console.error(`Submission ${submissionId} failed:`, error);
         }
 
-        // Reset the processing flag after submission
+        // Reset the processing flag after submission attempt
         setProcessingSubmission(false);
       }
     } catch (error) {
@@ -170,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         processingSubmission,
         setProcessingSubmission,
+        submissionCompleted,
       }}
     >
       {children}
