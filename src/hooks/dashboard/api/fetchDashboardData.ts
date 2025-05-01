@@ -76,7 +76,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     console.log("Properties data fetched:", propertiesData?.length || 0);
     
     // If we have owners, fetch assignments related to those owners
-    let assignmentsData: DbAssignment[] = [];
+    let assignmentsData: any[] = [];
     if (ownersData && ownersData.length > 0) {
       const ownerIds = ownersData.map(o => o.id);
       const { data, error: assignmentsError } = await supabase
@@ -107,6 +107,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       }
     }
 
+    // Use type assertions to avoid deep type instantiation
     return {
       ownersData: (ownersData || []) as DbOwner[],
       propertiesData: (propertiesData || []) as DbProperty[],
