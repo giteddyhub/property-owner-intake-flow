@@ -181,17 +181,26 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     }
     
     // Extended diagnostic: Check for total data in the database
-    const { data: allOwnersCount } = await supabase
+    // Fix: Use the count() function correctly with Supabase
+    const { count: ownersCount, error: ownersCountError } = await supabase
       .from('owners')
-      .select('id', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: false });
       
-    const { data: allPropertiesCount } = await supabase
+    if (ownersCountError) {
+      console.error("Error getting owners count:", ownersCountError);
+    }
+      
+    const { count: propertiesCount, error: propertiesCountError } = await supabase
       .from('properties')
-      .select('id', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: false });
+      
+    if (propertiesCountError) {
+      console.error("Error getting properties count:", propertiesCountError);
+    }
       
     console.log("Total database counts:", {
-      allOwners: allOwnersCount?.count || 0,
-      allProperties: allPropertiesCount?.count || 0
+      allOwners: ownersCount || 0,
+      allProperties: propertiesCount || 0
     });
     
     return {
