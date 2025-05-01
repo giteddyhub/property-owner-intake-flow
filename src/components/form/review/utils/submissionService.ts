@@ -56,19 +56,19 @@ export const submitFormData = async (
     // Store this information in sessionStorage for the tax filing page
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
-    // Step 1: Save contact information
+    // Step 1: Save contact information with userId explicitly
     const contactId = await saveContactInfo(contactInfo, userId);
     
     // Store contact ID in sessionStorage
     sessionStorage.setItem('contactId', contactId);
     
-    // Step 2: Save owners and get ID mappings - pass userId explicitly
+    // Step 2: Save owners with userId explicitly
     const ownerIdMap = await saveOwners(owners, contactId, userId);
     
-    // Step 3: Save properties and get ID mappings - pass userId explicitly
+    // Step 3: Save properties with userId explicitly
     const propertyIdMap = await saveProperties(properties, contactId, userId);
     
-    // Step 4: Save owner-property assignments - pass userId explicitly
+    // Step 4: Save owner-property assignments with userId explicitly
     await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, userId);
     
     // Success notification

@@ -92,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // If signup is successful, store the user ID
     if (response.data?.user?.id) {
+      console.log("Setting user ID in storage for new signup:", response.data.user.id);
       sessionStorage.setItem('pendingUserId', response.data.user.id);
       localStorage.setItem('pendingUserId', response.data.user.id);
     }

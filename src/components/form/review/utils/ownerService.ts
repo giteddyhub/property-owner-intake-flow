@@ -2,54 +2,48 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Owner } from '@/types/form';
 
-export const saveOwners = async (
-  owners: Owner[], 
-  contactId: string,
-  userId: string | null = null
-): Promise<Map<string, string>> => {
-  const ownerIdMap = new Map<string, string>();
+export const saveOwners = async (owners: Owner[], contactId: string, userId: string | null = null) => {
+  console.log("Saving owners with userId:", userId);
+  const ownerIdMap = new Map();
   
   for (const owner of owners) {
-    console.log("Saving owner:", owner.firstName, owner.lastName, "User ID:", userId);
+    // Map owner data to database structure
+    const ownerData = {
+      first_name: owner.firstName,
+      last_name: owner.lastName,
+      date_of_birth: owner.dateOfBirth ? owner.dateOfBirth.toISOString().split('T')[0] : null,
+      country_of_birth: owner.countryOfBirth,
+      citizenship: owner.citizenship,
+      address_street: owner.address.street,
+      address_city: owner.address.city,
+      address_zip: owner.address.zip,
+      address_country: owner.address.country,
+      italian_tax_code: owner.italianTaxCode,
+      marital_status: owner.maritalStatus,
+      is_resident_in_italy: owner.isResidentInItaly,
+      italian_residence_street: owner.italianResidenceDetails?.street || null,
+      italian_residence_city: owner.italianResidenceDetails?.city || null,
+      italian_residence_zip: owner.italianResidenceDetails?.zip || null,
+      contact_id: contactId,
+      user_id: userId // Make sure to include the user_id
+    };
     
-    const { data: ownerData, error: ownerError } = await supabase
+    // Save to database
+    const { data, error } = await supabase
       .from('owners')
-      .insert({
-        first_name: owner.firstName,
-        last_name: owner.lastName,
-        date_of_birth: owner.dateOfBirth ? owner.dateOfBirth.toISOString().split('T')[0] : null,
-        country_of_birth: owner.countryOfBirth,
-        citizenship: owner.citizenship,
-        address_street: owner.address.street,
-        address_city: owner.address.city,
-        address_zip: owner.address.zip,
-        address_country: owner.address.country,
-        italian_tax_code: owner.italianTaxCode,
-        marital_status: owner.maritalStatus,
-        is_resident_in_italy: owner.isResidentInItaly,
-        // All residence fields have been removed, setting them as null
-        italian_residence_comune_name: null,
-        italian_residence_street: null,
-        italian_residence_city: null,
-        italian_residence_zip: null,
-        contact_id: contactId,
-        user_id: userId
-      })
+      .insert(ownerData)
       .select();
       
-    if (ownerError) {
-      console.error("Error saving owner:", ownerError);
-      throw new Error(`Error saving owner: ${ownerError.message}`);
+    if (error) {
+      console.error("Error saving owner:", error);
+      throw new Error(`Error saving owner: ${error.message}`);
     }
     
-    if (ownerData && ownerData.length > 0) {
-      ownerIdMap.set(owner.id, ownerData[0].id);
-      console.log(`Mapped owner ${owner.id} to database ID ${ownerData[0].id}`);
-    } else {
-      console.error("Owner was saved but no data was returned");
-      throw new Error("Failed to get database ID for owner");
+    if (data && data.length > 0) {
+      ownerIdMap.set(owner.id, data[0].id);
     }
   }
   
+  console.log("Saved owners count:", ownerIdMap.size);
   return ownerIdMap;
 };

@@ -89,7 +89,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       const ownerIds = ownersData.map(o => o.id);
       
       try {
-        // Using raw objects to avoid TypeScript's deep type analysis
+        // Using simple object extraction to avoid TypeScript's deep type analysis
         const { data, error } = await supabase
           .from('owner_property_assignments')
           .select();
@@ -97,62 +97,55 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
         if (error) {
           console.error("Error fetching assignments:", error);
         } else {
-          // Convert to plain objects explicitly to avoid TypeScript's deep type instantiation
-          const plainData = data ? data.map(item => {
-            return {
-              id: item.id,
-              property_id: item.property_id,
-              owner_id: item.owner_id,
-              ownership_percentage: item.ownership_percentage,
-              resident_at_property: item.resident_at_property,
-              resident_from_date: item.resident_from_date,
-              resident_to_date: item.resident_to_date,
-              tax_credits: item.tax_credits
-            };
-          }) : [];
+          // Create plain objects manually to avoid TypeScript's deep instantiation issues
+          const plainAssignments = data ? data.map(item => ({
+            id: item.id,
+            property_id: item.property_id,
+            owner_id: item.owner_id,
+            ownership_percentage: item.ownership_percentage,
+            resident_at_property: item.resident_at_property,
+            resident_from_date: item.resident_from_date,
+            resident_to_date: item.resident_to_date,
+            tax_credits: item.tax_credits
+          })) : [];
           
-          // Filter manually after fetching all records to avoid type issues
-          const filteredData = plainData.filter(item => 
+          // Filter to only include assignments for our owners
+          assignmentsData = plainAssignments.filter(item => 
             ownerIds.includes(item.owner_id)
-          );
+          ) as DbAssignment[];
           
-          assignmentsData = filteredData as DbAssignment[];
           console.log("Assignments data fetched:", assignmentsData.length);
         }
       } catch (error) {
         console.error("Error processing assignments:", error);
       }
     } else {
-      console.log("No owners found, trying alternative assignments fetch");
+      console.log("No owners found, checking for assignments directly");
       
       try {
-        // Fetch assignments directly by user_id using a simpler approach
         const { data, error } = await supabase
           .from('owner_property_assignments')
           .select();
         
         if (error) {
-          console.error("Error fetching assignments by user_id:", error);
+          console.error("Error fetching assignments directly:", error);
         } else {
           // Create plain objects to avoid TypeScript's deep analysis
-          const plainAssignments = data ? data.map(item => {
-            return {
-              id: item.id,
-              property_id: item.property_id,
-              owner_id: item.owner_id,
-              ownership_percentage: item.ownership_percentage,
-              resident_at_property: item.resident_at_property,
-              resident_from_date: item.resident_from_date,
-              resident_to_date: item.resident_to_date,
-              tax_credits: item.tax_credits
-            };
-          }) : [];
+          assignmentsData = (data || []).map(item => ({
+            id: item.id,
+            property_id: item.property_id,
+            owner_id: item.owner_id,
+            ownership_percentage: item.ownership_percentage,
+            resident_at_property: item.resident_at_property,
+            resident_from_date: item.resident_from_date,
+            resident_to_date: item.resident_to_date,
+            tax_credits: item.tax_credits
+          })) as DbAssignment[];
           
-          assignmentsData = plainAssignments as DbAssignment[];
-          console.log("Assignments data fetched by user_id:", assignmentsData.length);
+          console.log("Direct assignments data fetched:", assignmentsData.length);
         }
       } catch (error) {
-        console.error("Alternative assignments fetch error:", error);
+        console.error("Error with direct assignments fetch:", error);
       }
     }
 

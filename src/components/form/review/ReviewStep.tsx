@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
-import { Button } from '@/components/ui/button';
 import { Owner } from '@/types/form';
 import OwnerReviewCard from '../review/OwnerReviewCard';
 import PropertyReviewCard from '../review/PropertyReviewCard';
@@ -77,6 +76,13 @@ const ReviewStep: React.FC = () => {
       // Get current authenticated user 
       const currentUser = user;
       const userId = currentUser?.id || sessionStorage.getItem('pendingUserId');
+      
+      if (!userId) {
+        console.error("No user ID available for submission");
+        toast.error("Authentication required. Please sign in to continue.");
+        setIsSubmitting(false);
+        return;
+      }
       
       // Get user information to populate contact info
       const contactInfo = {
@@ -154,8 +160,12 @@ const ReviewStep: React.FC = () => {
         
         <div className="space-y-4">
           {properties.map((property) => {
-            const propertyAssignments = getPropertyAssignments(property.id);
-            const totalPercentage = getTotalPercentage(property.id);
+            const propertyAssignments = assignments.filter(
+              assignment => assignment.propertyId === property.id
+            );
+            const totalPercentage = propertyAssignments.reduce(
+              (sum, assignment) => sum + assignment.ownershipPercentage, 0
+            );
             
             if (propertyAssignments.length === 0) {
               return null;
@@ -167,7 +177,7 @@ const ReviewStep: React.FC = () => {
                 property={property}
                 propertyAssignments={propertyAssignments}
                 totalPercentage={totalPercentage}
-                getOwnerById={getOwnerById}
+                getOwnerById={(ownerId) => owners.find(owner => owner.id === ownerId)}
               />
             );
           })}
