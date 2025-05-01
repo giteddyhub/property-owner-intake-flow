@@ -5,6 +5,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { associateOrphanedData } from '@/hooks/dashboard/mappers/assignmentMapper';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DataRecoveryButtonProps {
   onDataRecovered: () => void;
