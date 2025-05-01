@@ -13,7 +13,6 @@ import OwnerSection from './OwnerSection';
 import OwnershipSection from './OwnershipSection';
 import ResidencySection from './ResidencySection';
 import TaxCreditsSection from './TaxCreditsSection';
-import { useAuth } from '@/contexts/AuthContext';
 
 export interface AssignmentFormValues {
   propertyId: string;
@@ -40,7 +39,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   onSuccess, 
   onClose 
 }) => {
-  const { user } = useAuth();
   const form = useForm<AssignmentFormValues>({
     defaultValues: {
       propertyId: assignment?.propertyId || '',
@@ -60,17 +58,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Get the effective user ID (from auth or storage)
-      const effectiveUserId = user?.id || 
-        sessionStorage.getItem('pendingUserId') || 
-        localStorage.getItem('pendingUserId');
-      
-      if (!effectiveUserId) {
-        toast.error("User identification required");
-        setIsSubmitting(false);
-        return;
-      }
-      
       const assignmentData = {
         property_id: values.propertyId,
         owner_id: values.ownerId,
@@ -83,8 +70,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           ? values.residentToDate.toISOString().split('T')[0]
           : null,
         tax_credits: values.taxCredits || null,
-        updated_at: new Date().toISOString(),
-        user_id: effectiveUserId
+        updated_at: new Date().toISOString()
       };
       
       // Check if this combination already exists

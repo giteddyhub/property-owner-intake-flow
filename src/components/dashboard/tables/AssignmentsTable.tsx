@@ -27,7 +27,6 @@ import AssignmentDrawer from '@/components/dashboard/drawers/AssignmentDrawer';
 import { Badge } from '@/components/ui/badge';
 import { DetailsPopover } from '@/components/dashboard/details/DetailsPopover';
 import { AssignmentDetails } from '@/components/dashboard/details/AssignmentDetails';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface AssignmentsTableProps {
   assignments: OwnerPropertyAssignment[];
@@ -42,7 +41,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   properties,
   onRefresh
 }) => {
-  const { user } = useAuth();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<OwnerPropertyAssignment | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -71,11 +69,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
     if (!selectedAssignment || !selectedAssignment.id) return;
     
     try {
-      // Get the effective user ID
-      const effectiveUserId = user?.id || 
-        sessionStorage.getItem('pendingUserId') || 
-        localStorage.getItem('pendingUserId');
-        
       const { error } = await supabase
         .from('owner_property_assignments')
         .delete()
@@ -85,33 +78,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
       
       toast.success('Assignment deleted successfully');
       setDeleteDialogOpen(false);
-      
-      // If this operation succeeded, update any assignments that might be missing the user_id
-      if (effectiveUserId && onRefresh) {
-        try {
-          // Find assignments missing user_id
-          const { data, error: fetchError } = await supabase
-            .from('owner_property_assignments')
-            .select('id')
-            .is('user_id', null);
-            
-          if (!fetchError && data && data.length > 0) {
-            const assignmentIds = data.map(item => item.id);
-            
-            // Update these assignments with the user_id
-            await supabase
-              .from('owner_property_assignments')
-              .update({ user_id: effectiveUserId })
-              .in('id', assignmentIds);
-              
-            console.log(`Updated ${data.length} assignments with missing user_id`);
-          }
-        } catch (repairError) {
-          console.error("Error repairing assignments:", repairError);
-        }
-      }
-      
-      // Refresh the data
       if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error deleting assignment:', error);

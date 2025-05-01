@@ -41,42 +41,30 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     setIsSubmitting(true);
     
     try {
-      console.log("Starting signup process...");
-      
-      // Store user information in session storage for form submission
-      sessionStorage.setItem('fullName', fullName);
-      sessionStorage.setItem('userEmail', email);
-      
       const { error, data } = await signUp(email, password, fullName);
       
       if (error) {
-        console.error("Signup error:", error);
         toast.error(error.message);
       } else {
-        console.log("Signup successful, user data:", data?.user);
         toast.success('Account created successfully!');
+        setIsSignedUp(true);
         
-        // Store the userId in both sessionStorage and localStorage for persistence
+        // Store the userId in sessionStorage for use after email verification
         if (data?.user?.id) {
-          console.log("Setting user ID in storage:", data.user.id);
           sessionStorage.setItem('pendingUserId', data.user.id);
-          localStorage.setItem('pendingUserId', data.user.id);
-          
-          // Store email for recovery purposes
-          if (data.user.email) {
-            sessionStorage.setItem('userEmail', data.user.email);
-            localStorage.setItem('userEmail', data.user.email);
-          }
-          
-          // Check if we have any form submission data that needs to be preserved
-          const contactId = sessionStorage.getItem('contactId');
-          if (contactId) {
-            console.log("Found contactId in storage, attempting to update with user ID");
-            // This is now handled in AuthContext.tsx
-          }
         }
         
-        setIsSignedUp(true);
+        // Only call onSuccess if redirectAfterAuth is false
+        if (onSuccess && !redirectAfterAuth) {
+          // Small delay to show the confirmation message
+          setTimeout(() => {
+            onSuccess();
+          }, 2000);
+        }
+        
+        if (redirectAfterAuth) {
+          navigate('/dashboard');
+        }
       }
     } catch (error) {
       console.error('Error signing up:', error);
@@ -95,22 +83,18 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         </div>
         <h3 className="text-lg font-semibold">Account Created!</h3>
         <div className="text-sm text-gray-600 max-w-xs">
-          <p className="mb-3">Your account has been created successfully. You can now continue with your submission.</p>
+          <p className="mb-3">Please check your email to verify your account.</p>
+          <div className="flex items-center justify-center gap-2 text-blue-600">
+            <Mail className="h-4 w-4" />
+            <span>{email}</span>
+          </div>
         </div>
-        {onSuccess && (
+        {!redirectAfterAuth && onSuccess && (
           <Button
             onClick={onSuccess}
             className="mt-4 w-full bg-form-400 hover:bg-form-500"
           >
             Continue with Submission
-          </Button>
-        )}
-        {redirectAfterAuth && !onSuccess && (
-          <Button
-            onClick={() => navigate('/dashboard')}
-            className="mt-4 w-full bg-form-400 hover:bg-form-500"
-          >
-            Go to Dashboard
           </Button>
         )}
       </div>

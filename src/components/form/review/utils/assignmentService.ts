@@ -20,7 +20,7 @@ export const saveAssignments = async (
       throw new Error("Missing database ID for owner or property");
     }
     
-    console.log(`Saving assignment: Owner ${dbOwnerId} - Property ${dbPropertyId} - User ${userId}`);
+    console.log(`Saving assignment: Owner ${dbOwnerId} - Property ${dbPropertyId}`);
     
     const { error } = await supabase
       .from('owner_property_assignments')

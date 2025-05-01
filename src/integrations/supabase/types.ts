@@ -278,7 +278,6 @@ export type Database = {
           resident_to_date: string | null
           tax_credits: number | null
           updated_at: string
-          user_id: string | null
         }
         Insert: {
           contact_id?: string | null
@@ -292,7 +291,6 @@ export type Database = {
           resident_to_date?: string | null
           tax_credits?: number | null
           updated_at?: string
-          user_id?: string | null
         }
         Update: {
           contact_id?: string | null
@@ -306,7 +304,6 @@ export type Database = {
           resident_to_date?: string | null
           tax_credits?: number | null
           updated_at?: string
-          user_id?: string | null
         }
         Relationships: [
           {

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import { Owner } from '@/types/form';
@@ -14,7 +14,6 @@ import LoadingOverlay from '@/components/ui/loading-overlay';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '../../auth/AuthModal';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Accordion
 } from "@/components/ui/accordion";
@@ -24,17 +23,7 @@ const ReviewStep: React.FC = () => {
   const { owners, properties, assignments } = state;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user, ensureUserAssociation } = useAuth();
-  const [formData, setFormData] = useState(null);
-  
-  // Store form data in component state to ensure it's available after authentication
-  useEffect(() => {
-    setFormData({
-      owners,
-      properties,
-      assignments
-    });
-  }, [owners, properties, assignments]);
+  const { user } = useAuth();
   
   const handleSubmitButtonClick = () => {
     if (!user) {
@@ -47,40 +36,15 @@ const ReviewStep: React.FC = () => {
   };
   
   const handleAuthSuccess = () => {
-    console.log("Auth success callback triggered");
     // Close the auth modal
     setShowAuthModal(false);
-    
-    // Proceed with form submission immediately after successful authentication
-    // Use a longer timeout to ensure auth state is fully updated
-    setTimeout(async () => {
-      console.log("Processing submission after authentication");
-      // Check if user is authenticated after modal closes
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentUser = sessionData?.session?.user;
-      
-      console.log("Current user after auth:", currentUser);
-      
-      if (currentUser) {
-        console.log("Auth success with user:", currentUser.id);
-        // Ensure associations are setup
-        await ensureUserAssociation(currentUser.email || '');
+    // Short timeout to ensure auth state is updated
+    setTimeout(() => {
+      // If user is authenticated after modal closes, submit the form
+      if (user) {
         handleSubmit();
-      } else {
-        // Check for pending user ID
-        const pendingUserId = sessionStorage.getItem('pendingUserId');
-        const userEmail = sessionStorage.getItem('userEmail');
-        
-        if (pendingUserId) {
-          console.log("No user object yet, but proceeding with pending user ID:", pendingUserId);
-          // Ensure associations are setup if we have an email
-          if (userEmail) await ensureUserAssociation(userEmail);
-          handleSubmit();
-        } else {
-          toast.error("Authentication required. Please sign in to continue.");
-        }
       }
-    }, 2000); // Increased timeout to ensure auth state is fully updated
+    }, 500);
   };
   
   const handleSubmit = async () => {
@@ -97,42 +61,15 @@ const ReviewStep: React.FC = () => {
         JSON.stringify(hasDocumentRetrievalService)
       );
       
-      // Get current authenticated user or pending ID
-      const currentUser = user;
-      const userId = currentUser?.id || sessionStorage.getItem('pendingUserId');
-      const userEmail = currentUser?.email || sessionStorage.getItem('userEmail');
-      
-      console.log("Submitting with user ID:", userId, "and email:", userEmail);
-      
-      if (!userId && !userEmail) {
-        console.error("No user ID or email available for submission");
-        toast.error("Authentication required. Please sign in to continue.");
-        setIsSubmitting(false);
-        return;
-      }
-      
       // Get user information to populate contact info
       const contactInfo = {
-        fullName: currentUser?.user_metadata?.full_name || sessionStorage.getItem('fullName') || '',
-        email: userEmail || '',
+        fullName: user?.user_metadata?.full_name || '',
+        email: user?.email || '',
         termsAccepted: true,
         privacyAccepted: true
       };
       
-      console.log("Form data being submitted:", formData || { owners, properties, assignments });
-      
-      // Pass the user ID explicitly to ensure data association
-      // Use stored formData if available, otherwise use current state
-      const dataToSubmit = formData || { owners, properties, assignments };
-      await submitFormData(
-        dataToSubmit.owners, 
-        dataToSubmit.properties, 
-        dataToSubmit.assignments, 
-        contactInfo, 
-        userId || null
-      );
-      
-      // Note: The submitFormData function now handles the redirection
+      await submitFormData(owners, properties, assignments, contactInfo, user?.id || null);
     } catch (error) {
       console.error('Error during submission:', error);
       toast.error('There was an error submitting your information. Please try again.');
@@ -141,7 +78,6 @@ const ReviewStep: React.FC = () => {
     }
   };
   
-  // Helper functions
   const getPropertyAssignments = (propertyId: string) => {
     return assignments.filter(assignment => assignment.propertyId === propertyId);
   };
@@ -236,7 +172,6 @@ const ReviewStep: React.FC = () => {
         title="Create an Account to Submit"
         description="Creating an account allows you to access your submission later and receive updates."
         defaultTab="sign-up"
-        redirectAfterAuth={false}
       />
     </div>
   );

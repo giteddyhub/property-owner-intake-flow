@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SignInForm } from './SignInForm';
 import { SignUpForm } from './SignUpForm';
-import { supabase } from '@/integrations/supabase/client';
 
 interface AuthModalProps {
   open: boolean;
@@ -29,43 +28,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   title = 'Create an Account or Sign In',
   description = 'Create an account to save your information and continue with your submission.',
   onSuccess,
-  redirectAfterAuth = false
+  // We no longer need redirectAfterAuth since we always redirect to dashboard after auth
 }) => {
   const [activeTab, setActiveTab] = useState<'sign-in' | 'sign-up'>(defaultTab);
-  const [authSuccessful, setAuthSuccessful] = useState(false);
-  
-  // Use effect to detect auth state changes
-  useEffect(() => {
-    if (!open) {
-      // Reset state when modal closes
-      setAuthSuccessful(false);
-      return;
-    }
-    
-    const subscription = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state change in modal:", event);
-      
-      if (event === 'SIGNED_IN' && session?.user && onSuccess) {
-        console.log("User signed in, calling onSuccess callback");
-        setAuthSuccessful(true);
-        // Using short timeout to let React render update first
-        setTimeout(() => {
-          onSuccess();
-        }, 300);
-      }
-    });
-    
-    return () => {
-      subscription.data.subscription.unsubscribe();
-    };
-  }, [open, onSuccess]);
-  
-  const handleSuccessCallback = () => {
-    if (!authSuccessful && onSuccess) {
-      console.log("Success callback from form");
-      onSuccess();
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,10 +52,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <TabsTrigger value="sign-up">Create Account</TabsTrigger>
             </TabsList>
             <TabsContent value="sign-in">
-              <SignInForm onSuccess={handleSuccessCallback} redirectAfterAuth={false} />
+              <SignInForm onSuccess={onSuccess} />
             </TabsContent>
             <TabsContent value="sign-up">
-              <SignUpForm onSuccess={handleSuccessCallback} redirectAfterAuth={false} />
+              <SignUpForm onSuccess={onSuccess} />
             </TabsContent>
           </Tabs>
         </div>
