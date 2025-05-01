@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@12.18.0";
 
+// Define standard CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -35,8 +36,7 @@ function initSupabase() {
 }
 
 // Fetch purchase and contact information from Supabase
-async function fetchPurchaseAndContactData(supabase, purchaseId) {
-  // Fetch purchase record
+async function fetchPurchaseData(supabase, purchaseId) {
   const { data: purchaseData, error: purchaseError } = await supabase
     .from("purchases")
     .select("id, contact_id, has_document_retrieval")
@@ -48,22 +48,28 @@ async function fetchPurchaseAndContactData(supabase, purchaseId) {
     throw new Error(`Error fetching purchase: ${purchaseError?.message || "Purchase not found"}`);
   }
 
-  // Update document retrieval preference
+  return purchaseData;
+}
+
+// Update document retrieval preference in purchase record
+async function updateDocumentRetrieval(supabase, purchaseId, hasDocumentRetrieval) {
   const { error: updateError } = await supabase
     .from("purchases")
-    .update({ has_document_retrieval: purchaseData.has_document_retrieval })
+    .update({ has_document_retrieval: hasDocumentRetrieval })
     .eq("id", purchaseId);
     
   if (updateError) {
-    console.error("Error updating purchase:", updateError);
+    console.error("Error updating purchase document retrieval preference:", updateError);
     // Non-critical error, continue execution
   }
-  
-  // Fetch contact information
+}
+
+// Fetch contact information from Supabase
+async function fetchContactData(supabase, contactId) {
   const { data: contactData, error: contactError } = await supabase
     .from("contacts")
     .select("full_name, email")
-    .eq("id", purchaseData.contact_id)
+    .eq("id", contactId)
     .single();
 
   if (contactError || !contactData) {
@@ -77,8 +83,7 @@ async function fetchPurchaseAndContactData(supabase, purchaseId) {
   }
 
   console.log("Found contact:", contactData.email);
-  
-  return { purchaseData, contactData };
+  return contactData;
 }
 
 // Create line items for the Stripe checkout session
@@ -172,6 +177,33 @@ async function updatePurchaseWithSessionId(supabase, purchaseId, sessionId, tota
   }
 }
 
+// Create error response with CORS headers
+function createErrorResponse(message, status = 400) {
+  return new Response(
+    JSON.stringify({ error: message }),
+    { 
+      status,
+      headers: { 
+        ...corsHeaders,
+        "Content-Type": "application/json" 
+      }
+    }
+  );
+}
+
+// Create success response with CORS headers
+function createSuccessResponse(data) {
+  return new Response(
+    JSON.stringify(data),
+    { 
+      headers: { 
+        ...corsHeaders,
+        "Content-Type": "application/json" 
+      }
+    }
+  );
+}
+
 // Main handler function
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -180,9 +212,6 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Stripe
-    const stripe = initStripe();
-
     // Parse request data
     const requestData = await req.json();
     const { 
@@ -200,11 +229,18 @@ serve(async (req) => {
     console.log("Processing checkout for purchase:", purchaseId, "with document retrieval:", hasDocumentRetrievalService);
     console.log("Owners count:", ownersCount, "Properties count:", propertiesCount, "Total amount:", totalAmount);
 
-    // Initialize Supabase client
+    // Initialize clients
+    const stripe = initStripe();
     const supabase = initSupabase();
 
-    // Fetch purchase and contact data
-    const { purchaseData, contactData } = await fetchPurchaseAndContactData(supabase, purchaseId);
+    // Fetch purchase data
+    const purchaseData = await fetchPurchaseData(supabase, purchaseId);
+    
+    // Update document retrieval preference
+    await updateDocumentRetrieval(supabase, purchaseId, hasDocumentRetrievalService);
+    
+    // Fetch contact data
+    const contactData = await fetchContactData(supabase, purchaseData.contact_id);
     
     // Calculate base price (total minus document retrieval fee if enabled)
     const basePrice = totalAmount - (hasDocumentRetrievalService ? 28 : 0);
@@ -240,43 +276,17 @@ serve(async (req) => {
       );
 
       // Return the session URL to redirect the user to the Stripe checkout
-      return new Response(
-        JSON.stringify({ 
-          url: session.url,
-          session_id: session.id,
-          amount_total: session.amount_total,
-        }),
-        { 
-          headers: { 
-            ...corsHeaders,
-            "Content-Type": "application/json" 
-          }
-        }
-      );
+      return createSuccessResponse({ 
+        url: session.url,
+        session_id: session.id,
+        amount_total: session.amount_total,
+      });
     } catch (stripeError) {
       console.error("Stripe error:", stripeError);
-      return new Response(
-        JSON.stringify({ error: `Stripe error: ${stripeError.message}` }),
-        { 
-          status: 400,
-          headers: { 
-            ...corsHeaders,
-            "Content-Type": "application/json" 
-          }
-        }
-      );
+      return createErrorResponse(`Stripe error: ${stripeError.message}`);
     }
   } catch (error) {
     console.error("Error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 400,
-        headers: { 
-          ...corsHeaders,
-          "Content-Type": "application/json" 
-        }
-      }
-    );
+    return createErrorResponse(error.message);
   }
 });
