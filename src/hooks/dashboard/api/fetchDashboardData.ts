@@ -105,19 +105,18 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       console.log("No owners found, skipping assignments fetch");
       
       // Alternative attempt - try fetching assignments directly by user_id
-      // Remove select parameters completely and do a simple raw query
-      const { data, error } = await supabase
+      // Use raw query approach with JSON stringification to break type recursion
+      const response = await supabase
         .from('owner_property_assignments')
         .select()
         .eq('user_id', userId);
         
-      if (error) {
-        console.error("Error fetching assignments by user_id:", error);
-      } else if (data) {
-        // Convert the result to a plain array of objects
-        assignmentsData = Array.isArray(data) 
-          ? data.map(item => ({ ...item } as DbAssignment))
-          : [];
+      if (response.error) {
+        console.error("Error fetching assignments by user_id:", response.error);
+      } else if (response.data) {
+        // Break the type recursion by using JSON.parse(JSON.stringify())
+        const rawData = JSON.parse(JSON.stringify(response.data));
+        assignmentsData = Array.isArray(rawData) ? rawData : [];
         console.log("Assignments data fetched by user_id:", assignmentsData.length);
       }
     }
