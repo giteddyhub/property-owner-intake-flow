@@ -11,6 +11,7 @@ import ResidencyAssessmentPage from './pages/ResidencyAssessmentPage';
 import DashboardPage from './pages/DashboardPage';
 import TaxFilingServicePage from './pages/TaxFilingServicePage';
 import LoginPage from './pages/LoginPage';
+import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Protected route component
@@ -63,6 +64,11 @@ const AppRoutes = () => {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <DashboardPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/account-settings" element={
+        <ProtectedRoute>
+          <AccountSettingsPage />
         </ProtectedRoute>
       } />
       <Route path="/tax-filing-service/:sessionId" element={

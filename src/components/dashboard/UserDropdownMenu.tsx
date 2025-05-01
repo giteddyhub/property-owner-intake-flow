@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { User, Settings, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ interface UserDropdownMenuProps {
 
 export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const getUserInitials = () => {
     if (!user || !user.user_metadata || !user.user_metadata.full_name) return 'U';
@@ -38,6 +40,10 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut })
 
   const getUserEmail = () => {
     return user?.email || 'No email available';
+  };
+  
+  const handleAccountSettings = () => {
+    navigate('/account-settings');
   };
 
   return (
@@ -60,7 +66,7 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut })
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleAccountSettings}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Account Settings</span>
         </DropdownMenuItem>
