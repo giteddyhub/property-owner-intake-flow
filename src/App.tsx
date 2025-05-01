@@ -1,10 +1,9 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Index from './pages/Index';
 import PaymentCancelled from './pages/PaymentCancelled';
 import NotFound from './pages/NotFound';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster, toast } from 'sonner';
 import ResidentSuccessPage from './pages/ResidentSuccessPage';
 import ResidencyAssessmentPage from './pages/ResidencyAssessmentPage';
 import DashboardPage from './pages/DashboardPage';
@@ -13,7 +12,6 @@ import LoginPage from './pages/LoginPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import VerifyEmailPage from './pages/VerifyEmailPage';
-import { Sonner } from 'sonner';
 
 // Protected route component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -58,15 +56,12 @@ const AppRoutes = () => {
     const paymentStatus = params.get('payment');
 
     if (paymentStatus === 'success') {
-      toast({
-        title: 'Payment Successful!',
+      toast.success('Payment Successful!', {
         description: 'Thank you for your payment.',
       });
     } else if (paymentStatus === 'cancelled') {
-      toast({
-        title: 'Payment Cancelled',
+      toast.error('Payment Cancelled', {
         description: 'Your payment was cancelled. Please try again.',
-        type: 'error',
       });
     }
   }, [location.search]);
@@ -113,7 +108,7 @@ function App() {
       <Router>
         <div className="min-h-screen bg-background">
           <AppRoutes />
-          <Sonner position="top-right" closeButton={true} richColors />
+          <SonnerToaster position="top-right" closeButton={true} richColors />
         </div>
       </Router>
     </AuthProvider>
