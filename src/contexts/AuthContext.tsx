@@ -11,6 +11,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any | null, data: any | null }>;
   signOut: () => Promise<void>;
+  ensureUserAssociation: (email: string) => Promise<string | null>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +35,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (session?.user?.id) {
             sessionStorage.setItem('pendingUserId', session.user.id);
             localStorage.setItem('pendingUserId', session.user.id);
+            
+            // Check if we need to associate any orphaned data
+            if (session.user.email) {
+              import('@/hooks/dashboard/mappers/assignmentMapper').then(module => {
+                module.associateOrphanedData(session.user.id, session.user.email)
+                  .then(result => {
+                    if (result.success) {
+                      toast.success(`Successfully associated your previous submissions with your account`);
+                    }
+                  })
+                  .catch(err => console.error("Error associating data:", err));
+              });
+            }
           }
         } else if (event === 'SIGNED_OUT') {
           // User has signed out
@@ -107,9 +121,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     await supabase.auth.signOut();
   };
+  
+  // Helper function to ensure user data is properly associated
+  const ensureUserAssociation = async (email: string): Promise<string | null> => {
+    // First check if we have a current authenticated user
+    if (user?.id) {
+      return user.id;
+    }
+    
+    // Next check if we have a pending user ID in storage
+    const pendingUserId = sessionStorage.getItem('pendingUserId') || 
+                          localStorage.getItem('pendingUserId');
+    if (pendingUserId) {
+      return pendingUserId;
+    }
+    
+    // If we have an email but no user ID, check if this email has an account
+    if (email) {
+      try {
+        console.log("Checking for existing user with email:", email);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Error checking for existing user:", error);
+          return null;
+        }
+        
+        if (data?.id) {
+          console.log("Found existing user ID for email:", data.id);
+          // Store this user ID in session/local storage
+          sessionStorage.setItem('pendingUserId', data.id);
+          localStorage.setItem('pendingUserId', data.id);
+          return data.id;
+        }
+      } catch (error) {
+        console.error("Error in ensureUserAssociation:", error);
+      }
+    }
+    
+    // No user association found
+    return null;
+  };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      loading, 
+      signIn, 
+      signUp, 
+      signOut, 
+      ensureUserAssociation 
+    }}>
       {children}
     </AuthContext.Provider>
   );

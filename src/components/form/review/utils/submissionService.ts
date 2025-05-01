@@ -23,28 +23,49 @@ export const submitFormData = async (
       userId
     });
     
-    // If no userId is provided but we have a pendingUserId in sessionStorage, use it
-    if (!userId) {
+    // Enhanced userId resolution with multiple fallbacks
+    let effectiveUserId = userId;
+    
+    // If no userId is provided but we have a pendingUserId in storage, use it
+    if (!effectiveUserId) {
       const pendingUserId = sessionStorage.getItem('pendingUserId') || localStorage.getItem('pendingUserId');
       if (pendingUserId) {
         console.log("Using pending user ID from storage:", pendingUserId);
-        userId = pendingUserId;
+        effectiveUserId = pendingUserId;
       }
     }
     
     // Double check if we can get the current user from Supabase
-    if (!userId) {
+    if (!effectiveUserId) {
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session?.user?.id) {
-        userId = sessionData.session.user.id;
-        console.log("Retrieved user ID from current session:", userId);
+        effectiveUserId = sessionData.session.user.id;
+        console.log("Retrieved user ID from current session:", effectiveUserId);
+      }
+    }
+    
+    // If email is provided, try to find user by email as last resort
+    if (!effectiveUserId && contactInfo?.email) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', contactInfo.email)
+        .maybeSingle();
+        
+      if (!error && data?.id) {
+        effectiveUserId = data.id;
+        console.log("Found user ID by email lookup:", effectiveUserId);
+        
+        // Store it for future use
+        sessionStorage.setItem('pendingUserId', effectiveUserId);
+        localStorage.setItem('pendingUserId', effectiveUserId);
       }
     }
     
     // Log authentication status
-    console.log("Final user ID for submission:", userId);
+    console.log("Final user ID for submission:", effectiveUserId);
     
-    if (!userId) {
+    if (!effectiveUserId) {
       console.error("No user ID available for submission");
       toast.error("Authentication required. Please sign in to continue.");
       throw new Error("No user ID available for submission");
@@ -57,19 +78,19 @@ export const submitFormData = async (
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
     // Step 1: Save contact information with userId explicitly
-    const contactId = await saveContactInfo(contactInfo, userId);
+    const contactId = await saveContactInfo(contactInfo, effectiveUserId);
     
     // Store contact ID in sessionStorage
     sessionStorage.setItem('contactId', contactId);
     
     // Step 2: Save owners with userId explicitly
-    const ownerIdMap = await saveOwners(owners, contactId, userId);
+    const ownerIdMap = await saveOwners(owners, contactId, effectiveUserId);
     
     // Step 3: Save properties with userId explicitly
-    const propertyIdMap = await saveProperties(properties, contactId, userId);
+    const propertyIdMap = await saveProperties(properties, contactId, effectiveUserId);
     
     // Step 4: Save owner-property assignments with userId explicitly
-    await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, userId);
+    await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, effectiveUserId);
     
     // Success notification
     toast.success("Form submitted successfully! Thank you for completing the property owner intake process.");
