@@ -88,7 +88,8 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     if (ownersData.length > 0) {
       const ownerIds = ownersData.map(o => o.id);
       
-      const assignmentsResult = await supabase
+      // Use any type to avoid deep nesting in the type analysis
+      const assignmentsResult: any = await supabase
         .from('owner_property_assignments')
         .select('*')
         .in('owner_id', ownerIds);
@@ -104,8 +105,8 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       console.log("No owners found, skipping assignments fetch");
       
       // Alternative attempt - try fetching assignments directly by user_id
-      // Avoid type annotations completely for this query
-      const directAssignmentsResult = await supabase
+      // Use explicit any typing to break the deep type instantiation
+      const directAssignmentsResult: any = await supabase
         .from('owner_property_assignments')
         .select('*')
         .eq('user_id', userId);
@@ -113,9 +114,9 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       if (directAssignmentsResult.error) {
         console.error("Error fetching assignments by user_id:", directAssignmentsResult.error);
       } else {
-        // Convert the data to plain objects to break any type recursion
+        // Convert the data to plain objects with explicit type casting to break any type recursion
         assignmentsData = directAssignmentsResult.data ? 
-          JSON.parse(JSON.stringify(directAssignmentsResult.data)) : [];
+          (directAssignmentsResult.data as any[]).map(item => ({...item})) as DbAssignment[] : [];
         console.log("Assignments data fetched by user_id:", assignmentsData.length);
       }
     }
