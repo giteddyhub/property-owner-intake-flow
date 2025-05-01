@@ -68,24 +68,41 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     const propertiesData = (propertiesResult.data || []) as DbProperty[];
     console.log("Properties data fetched:", propertiesData.length);
     
-    // If we have owners, fetch assignments related to those owners
+    // Fetch assignments using direct user_id approach first
     let assignmentsData: DbAssignment[] = [];
     
-    if (ownersData.length > 0) {
+    try {
+      const { data: directAssignments, error: directError } = await supabase
+        .from('owner_property_assignments')
+        .select('*')
+        .eq('user_id', userId);
+        
+      if (directError) {
+        console.error("Error fetching assignments by user_id:", directError);
+      } else {
+        assignmentsData = (directAssignments || []) as DbAssignment[];
+        console.log("Direct assignments fetched by user_id:", assignmentsData.length);
+      }
+    } catch (error) {
+      console.error("Error processing direct assignments:", error);
+    }
+    
+    // If no direct assignments found and we have owners, 
+    // try fetching assignments related to those owners as a fallback
+    if (assignmentsData.length === 0 && ownersData.length > 0) {
       const ownerIds = ownersData.map(o => o.id);
       
       try {
-        // Using a simplified approach to avoid TypeScript's deep instantiation issues
         const { data, error } = await supabase
           .from('owner_property_assignments')
           .select('*')
           .in('owner_id', ownerIds);
         
         if (error) {
-          console.error("Error fetching assignments:", error);
+          console.error("Error fetching assignments by owner_id:", error);
         } else {
           // Create plain objects manually to avoid TypeScript's deep instantiation issues
-          assignmentsData = (data || []).map(item => ({
+          const ownerAssignments = (data || []).map(item => ({
             id: item.id,
             property_id: item.property_id,
             owner_id: item.owner_id,
@@ -93,42 +110,73 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
             resident_at_property: item.resident_at_property,
             resident_from_date: item.resident_from_date,
             resident_to_date: item.resident_to_date,
-            tax_credits: item.tax_credits
+            tax_credits: item.tax_credits,
+            user_id: item.user_id
           })) as DbAssignment[];
           
-          console.log("Assignments data fetched:", assignmentsData.length);
+          // Only add assignments that weren't already added by direct query
+          const existingIds = new Set(assignmentsData.map(a => a.id));
+          const newAssignments = ownerAssignments.filter(a => !existingIds.has(a.id));
+          
+          assignmentsData = [...assignmentsData, ...newAssignments];
+          console.log("Assignments data fetched via owners:", newAssignments.length);
         }
       } catch (error) {
-        console.error("Error processing assignments:", error);
+        console.error("Error processing assignments via owners:", error);
       }
-    } else {
-      console.log("No owners found, checking for assignments directly");
+    }
+    
+    // If we still have no assignments, check for contact_id as last resort
+    if (assignmentsData.length === 0) {
+      console.log("No assignments found through user_id or owners, checking for contact_id associations");
       
       try {
-        const { data, error } = await supabase
-          .from('owner_property_assignments')
-          .select('*')
-          .eq('contact_id', userId);
-        
-        if (error) {
-          console.error("Error fetching assignments directly:", error);
-        } else {
-          // Create plain objects to avoid TypeScript's deep analysis
-          assignmentsData = (data || []).map(item => ({
-            id: item.id,
-            property_id: item.property_id,
-            owner_id: item.owner_id,
-            ownership_percentage: item.ownership_percentage,
-            resident_at_property: item.resident_at_property,
-            resident_from_date: item.resident_from_date,
-            resident_to_date: item.resident_to_date,
-            tax_credits: item.tax_credits
-          })) as DbAssignment[];
+        // Get contacts associated with this user
+        const { data: contactsData, error: contactsError } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('user_id', userId);
           
-          console.log("Direct assignments data fetched:", assignmentsData.length);
+        if (contactsError) {
+          console.error("Error fetching contacts:", contactsError);
+        } else if (contactsData && contactsData.length > 0) {
+          const contactIds = contactsData.map(c => c.id);
+          
+          // Get assignments by contact_id
+          const { data: contactAssignments, error: contactAssignError } = await supabase
+            .from('owner_property_assignments')
+            .select('*')
+            .in('contact_id', contactIds);
+            
+          if (contactAssignError) {
+            console.error("Error fetching assignments by contact_id:", contactAssignError);
+          } else {
+            // Add any assignments not already in the list
+            const existingIds = new Set(assignmentsData.map(a => a.id));
+            const contactAssignmentsTyped = (contactAssignments || []) as DbAssignment[];
+            const newAssignments = contactAssignmentsTyped.filter(a => !existingIds.has(a.id));
+            
+            assignmentsData = [...assignmentsData, ...newAssignments];
+            console.log("Assignments data fetched via contacts:", newAssignments.length);
+            
+            // Update these assignments with the user_id for future queries
+            if (newAssignments.length > 0) {
+              const assignmentIds = newAssignments.map(a => a.id);
+              const { error: updateError } = await supabase
+                .from('owner_property_assignments')
+                .update({ user_id: userId })
+                .in('id', assignmentIds);
+                
+              if (updateError) {
+                console.error("Error updating assignments with user_id:", updateError);
+              } else {
+                console.log(`Updated ${newAssignments.length} assignments with user_id`);
+              }
+            }
+          }
         }
       } catch (error) {
-        console.error("Error with direct assignments fetch:", error);
+        console.error("Error with contact-based assignment lookup:", error);
       }
     }
 

@@ -48,4 +48,5 @@ export interface DbAssignment {
   resident_from_date?: string;
   resident_to_date?: string;
   tax_credits?: number;
+  user_id?: string;
 }

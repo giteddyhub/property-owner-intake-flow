@@ -13,6 +13,7 @@ export const mapDbAssignmentsToAssignments = (dbAssignments: DbAssignment[]): Ow
       from: new Date(dbAssignment.resident_from_date),
       to: dbAssignment.resident_to_date ? new Date(dbAssignment.resident_to_date) : null
     } : undefined,
-    taxCredits: dbAssignment.tax_credits ? Number(dbAssignment.tax_credits) : undefined
+    taxCredits: dbAssignment.tax_credits ? Number(dbAssignment.tax_credits) : undefined,
+    userId: dbAssignment.user_id
   }));
 };

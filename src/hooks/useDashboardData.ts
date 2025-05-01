@@ -55,8 +55,10 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         setProperties(mappedProperties);
         setAssignments(mappedAssignments);
         
-        if (!result.ownersData.length && !result.propertiesData.length) {
+        if (!result.ownersData.length && !result.propertiesData.length && !result.assignmentsData.length) {
           console.warn("No data found for this user. This might be expected for new users.");
+        } else {
+          console.log(`Found ${result.ownersData.length} owners, ${result.propertiesData.length} properties, ${result.assignmentsData.length} assignments`);
         }
         
       } catch (error) {
