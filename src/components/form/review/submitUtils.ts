@@ -10,9 +10,12 @@ export const submitFormData = async (
   owners: Owner[],
   properties: Property[],
   assignments: OwnerPropertyAssignment[],
-  contactInfo: any
+  contactInfo: any,
+  userId: string | null = null
 ): Promise<void> => {
   try {
+    console.log("Starting submission with user ID:", userId);
+    
     // Store the counts in sessionStorage for pricing calculation on tax filing page
     sessionStorage.setItem('ownersCount', String(owners.length));
     sessionStorage.setItem('propertiesCount', String(properties.length));
@@ -29,8 +32,9 @@ export const submitFormData = async (
     
     // This function now delegates to the main submission service
     // which will handle redirecting to the appropriate page
+    // Pass the userId parameter to ensure data is associated with the user
     return import('./utils/submissionService').then(module => {
-      return module.submitFormData(owners, properties, assignments, contactInfo);
+      return module.submitFormData(owners, properties, assignments, contactInfo, userId);
     });
   } catch (error) {
     console.error('Error submitting form data:', error);

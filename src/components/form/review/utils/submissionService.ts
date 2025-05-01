@@ -23,6 +23,15 @@ export const submitFormData = async (
       userId
     });
     
+    // If no userId is provided but we have a pendingUserId in sessionStorage, use it
+    if (!userId) {
+      const pendingUserId = sessionStorage.getItem('pendingUserId');
+      if (pendingUserId) {
+        console.log("Using pending user ID from session storage:", pendingUserId);
+        userId = pendingUserId;
+      }
+    }
+    
     // Check if any property has document retrieval service enabled
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
     
@@ -42,7 +51,7 @@ export const submitFormData = async (
     const propertyIdMap = await saveProperties(properties, contactId, userId);
     
     // Step 4: Save owner-property assignments
-    await saveAssignments(assignments, propertyIdMap, ownerIdMap, contactId);
+    await saveAssignments(assignments, propertyIdMap, ownerIdMap, contactId, userId);
     
     // Success notification
     toast.success("Form submitted successfully! Thank you for completing the property owner intake process.");
@@ -50,7 +59,7 @@ export const submitFormData = async (
     // Add a brief delay before redirecting to ensure loading state is visible
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // If the user is authenticated, create a tax filing session and redirect to it
+    // If the user is authenticated or we have a pending user ID, create a tax filing session
     if (userId) {
       // Create a purchase entry to track this session
       const { data: purchase, error: purchaseError } = await supabase

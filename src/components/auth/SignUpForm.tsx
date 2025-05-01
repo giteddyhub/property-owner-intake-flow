@@ -51,6 +51,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         
         // Store the userId in sessionStorage for use after email verification
         if (data?.user?.id) {
+          console.log("Setting user ID in session storage:", data.user.id);
           sessionStorage.setItem('pendingUserId', data.user.id);
         }
         
