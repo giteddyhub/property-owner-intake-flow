@@ -5,7 +5,6 @@ import FormLayout from '@/components/form/FormLayout';
 import Footer from '@/components/layout/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileWarning from '@/components/mobile/MobileWarning';
-import { AuthProvider } from '@/contexts/AuthContext';
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -15,14 +14,14 @@ const Index = () => {
       {isMobile ? (
         <MobileWarning />
       ) : (
-        <AuthProvider>
+        <>
           <main className="flex-grow">
             <FormProvider>
               <FormLayout />
             </FormProvider>
           </main>
           <Footer />
-        </AuthProvider>
+        </>
       )}
     </div>
   );

@@ -81,16 +81,37 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
       assignments: assignments.length
     });
     
+    // Clear any previous submission flags to start fresh
+    sessionStorage.removeItem('formSubmittedDuringSignup');
+    sessionStorage.removeItem('forceRetrySubmission');
+    
+    // Store the pending form data
     sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
     
     if (!user) {
       console.log("[ReviewStepContext] User not logged in, showing auth modal");
-      // If not logged in, show auth modal
+      // If not logged in, show auth modal and set flag to submit after verification
+      sessionStorage.setItem('submitAfterVerification', 'true');
+      sessionStorage.setItem('redirectToDashboard', 'true');
       setShowAuthModal(true);
     } else {
-      console.log("[ReviewStepContext] User is logged in, proceeding with direct submission");
-      // If logged in, proceed with submission directly
-      handleSubmit();
+      console.log("[ReviewStepContext] User is logged in, checking verification status");
+      // Check if the user's email is verified
+      if (user.email_confirmed_at || user.confirmed_at) {
+        console.log("[ReviewStepContext] User email verified, proceeding with direct submission");
+        // If logged in and verified, proceed with submission directly
+        handleSubmit();
+      } else {
+        console.log("[ReviewStepContext] User email not verified, redirecting to verification page");
+        // If not verified, redirect to verify email page
+        sessionStorage.setItem('submitAfterVerification', 'true');
+        sessionStorage.setItem('redirectToDashboard', 'true');
+        toast.warning("You need to verify your email before submitting data", {
+          description: "Redirecting to verification page..."
+        });
+        // Use window.location for a full page reload to trigger auth state
+        window.location.href = '/verify-email';
+      }
     }
   };
   
@@ -103,6 +124,8 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
     
     // No need to handle submission here - it will be handled by AuthContext
     console.log("[ReviewStepContext] Auth success, submission will be handled by AuthContext");
+    
+    // The submitAfterVerification flag is already set, AuthContext will handle submission
   };
   
   const handleSubmit = async () => {
@@ -132,6 +155,8 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
         email: user?.email || ''
       };
       
+      console.log("[ReviewStepContext] Submitting form data with user ID:", user.id);
+      
       // Pass the user ID explicitly to ensure it's associated with the submission
       const result = await submitFormData(owners, properties, assignments, contactInfo, user.id);
       
@@ -141,6 +166,8 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
       
       // Clear form data to prevent duplicate submissions
       sessionStorage.removeItem('pendingFormData');
+      sessionStorage.removeItem('submitAfterVerification');
+      sessionStorage.removeItem('redirectToDashboard');
       sessionStorage.setItem('formSubmittedDuringSignup', 'true');
       
       // Notify user of success

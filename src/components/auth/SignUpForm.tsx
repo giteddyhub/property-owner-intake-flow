@@ -54,6 +54,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         toast.success('Account created successfully! Please check your email to verify your account.');
         setIsSignedUp(true);
         
+        // Log data for debugging
+        console.log("[SignUpForm] Sign up successful:", data?.user?.id);
+        
         // Save email in session storage for the verification page
         sessionStorage.setItem('pendingUserEmail', email);
         
@@ -120,7 +123,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           placeholder="John Doe"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSignedUp}
           required
         />
       </div>
@@ -133,7 +136,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSignedUp}
           required
         />
       </div>
@@ -145,7 +148,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSignedUp}
           required
           minLength={8}
         />
@@ -154,20 +157,36 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         </p>
       </div>
       
-      <Button
-        type="submit"
-        className="w-full bg-form-400 hover:bg-form-500"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Creating account...
-          </>
-        ) : (
-          'Create account'
-        )}
-      </Button>
+      {isSignedUp ? (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Mail className="h-5 w-5 text-green-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-green-800">Verification email sent</h3>
+              <div className="mt-2 text-sm text-green-700">
+                <p>Please check your email and click the verification link to complete your registration.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <Button
+          type="submit"
+          className="w-full bg-form-400 hover:bg-form-500"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            'Create account'
+          )}
+        </Button>
+      )}
     </form>
   );
 };

@@ -24,11 +24,15 @@ const STEPS = [
 const FormLayout: React.FC = () => {
   const { state, goToStep } = useFormContext();
   const { currentStep } = state;
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   
   // Redirect authenticated users to dashboard
   useEffect(() => {
+    if (loading) {
+      return; // Wait until auth is loaded
+    }
+    
     if (user) {
       toast.warning('You are already signed in', {
         description: 'Redirecting to your dashboard...',
@@ -43,9 +47,17 @@ const FormLayout: React.FC = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [user, navigate]);
+  }, [user, navigate, loading]);
 
   const renderStep = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin h-8 w-8 border-4 border-form-300 border-t-transparent rounded-full"></div>
+        </div>
+      );
+    }
+    
     switch (currentStep) {
       case 0:
         return <WelcomeStep />;
