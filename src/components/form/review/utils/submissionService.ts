@@ -1,5 +1,5 @@
 
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import type { SubmissionData } from './types';
 import { saveContactInfo } from './contactService';
 import { saveOwners } from './ownerService';
@@ -23,6 +23,17 @@ export const submitFormData = async (
       userId
     });
     
+    // Check if user is authenticated
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        userId = user.id;
+        console.log("Found authenticated user:", userId);
+      } else {
+        console.log("No authenticated user found");
+      }
+    }
+    
     // Check if any property has document retrieval service enabled
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
     
@@ -35,13 +46,13 @@ export const submitFormData = async (
     // Store contact ID in sessionStorage
     sessionStorage.setItem('contactId', contactId);
     
-    // Step 2: Save owners and get ID mappings
+    // Step 2: Save owners and get ID mappings - ensure user_id is passed
     const ownerIdMap = await saveOwners(owners, contactId, userId);
     
-    // Step 3: Save properties and get ID mappings
+    // Step 3: Save properties and get ID mappings - ensure user_id is passed
     const propertyIdMap = await saveProperties(properties, contactId, userId);
     
-    // Step 4: Save owner-property assignments
+    // Step 4: Save owner-property assignments - ensure user_id is passed
     await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, userId);
     
     // Success notification
@@ -59,7 +70,8 @@ export const submitFormData = async (
           contact_id: contactId,
           payment_status: 'pending',
           has_document_retrieval: hasDocumentRetrievalService,
-          amount: 0 // Will be calculated during checkout
+          amount: 0, // Will be calculated during checkout
+          user_id: userId // Make sure to associate the purchase with the user
         })
         .select('id')
         .single();

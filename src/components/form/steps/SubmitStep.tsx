@@ -7,6 +7,7 @@ import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTaxFilingState } from '@/hooks/useTaxFilingState';
+import { submitFormData } from '../review/submitUtils';
 
 const SubmitStep: React.FC = () => {
   const { state, prevStep } = useFormContext();
@@ -15,49 +16,65 @@ const SubmitStep: React.FC = () => {
   const { createTaxFilingSession } = useTaxFilingState();
   
   const handleSubmit = async () => {
-    toast.success('Form submitted successfully!', {
-      description: 'Thank you for completing the property owner intake process.',
-      duration: 5000,
-    });
-    
-    // Store submission data in sessionStorage for the tax filing service
-    sessionStorage.setItem('ownersCount', String(owners.length));
-    sessionStorage.setItem('propertiesCount', String(properties.length));
-    
-    // Check if any property has document retrieval service
-    const hasDocumentRetrievalService = properties.some(
-      property => property.useDocumentRetrievalService
-    );
-    
-    // Store document retrieval preference in session storage
-    sessionStorage.setItem('hasDocumentRetrievalService', 
-      JSON.stringify(hasDocumentRetrievalService)
-    );
-    
-    setTimeout(() => {
-      toast("Creating your tax filing service...", {
-        description: "You'll be redirected to your personalized tax filing page shortly.",
+    try {
+      toast.success('Form submitted successfully!', {
+        description: 'Thank you for completing the property owner intake process.',
+        duration: 5000,
       });
-    }, 1000);
-    
-    // If user is authenticated, create a tax filing session
-    if (user) {
-      try {
-        const sessionId = await createTaxFilingSession(user.id);
-        if (sessionId) {
-          // Redirect to the tax filing service page
-          window.location.href = `/tax-filing-service/${sessionId}`;
-        } else {
-          // Fallback to dashboard if session creation failed
-          window.location.href = '/dashboard';
-        }
-      } catch (error) {
-        console.error('Error creating tax filing session:', error);
-        toast.error('Failed to create tax filing service. Please try again.');
+      
+      // Store submission data in sessionStorage for the tax filing service
+      sessionStorage.setItem('ownersCount', String(owners.length));
+      sessionStorage.setItem('propertiesCount', String(properties.length));
+      
+      // Check if any property has document retrieval service
+      const hasDocumentRetrievalService = properties.some(
+        property => property.useDocumentRetrievalService
+      );
+      
+      // Store document retrieval preference in session storage
+      sessionStorage.setItem('hasDocumentRetrievalService', 
+        JSON.stringify(hasDocumentRetrievalService)
+      );
+      
+      // Get user information to populate contact info
+      const contactInfo = {
+        fullName: user?.user_metadata?.full_name || '',
+        email: user?.email || ''
+      };
+      
+      // Submit the form data with user ID so it appears in dashboard
+      if (user) {
+        await submitFormData(owners, properties, assignments, contactInfo, user.id);
       }
-    } else {
-      // If not authenticated, this shouldn't happen as users are required to log in
-      toast.error('Authentication required. Please log in to continue.');
+      
+      setTimeout(() => {
+        toast("Creating your tax filing service...", {
+          description: "You'll be redirected to your personalized tax filing page shortly.",
+        });
+      }, 1000);
+      
+      // If user is authenticated, create a tax filing session
+      if (user) {
+        try {
+          const sessionId = await createTaxFilingSession(user.id);
+          if (sessionId) {
+            // Redirect to the tax filing service page
+            window.location.href = `/tax-filing-service/${sessionId}`;
+          } else {
+            // Fallback to dashboard if session creation failed
+            window.location.href = '/dashboard';
+          }
+        } catch (error) {
+          console.error('Error creating tax filing session:', error);
+          toast.error('Failed to create tax filing service. Please try again.');
+        }
+      } else {
+        // If not authenticated, this shouldn't happen as users are required to log in
+        toast.error('Authentication required. Please log in to continue.');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('There was an error processing your submission. Please try again.');
     }
   };
   

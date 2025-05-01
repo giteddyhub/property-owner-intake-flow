@@ -67,6 +67,7 @@ const ReviewStep: React.FC = () => {
         email: user?.email || ''
       };
       
+      // Pass the user ID to submitFormData so data can be properly associated
       await submitFormData(owners, properties, assignments, contactInfo, user?.id || null);
     } catch (error) {
       console.error('Error during submission:', error);

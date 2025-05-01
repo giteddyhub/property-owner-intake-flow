@@ -2,22 +2,28 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Owner } from '@/types/form';
 
-export const saveOwners = async (
-  owners: Owner[], 
-  contactId: string,
-  userId: string | null = null
-): Promise<Map<string, string>> => {
-  const ownerIdMap = new Map<string, string>();
-  
-  for (const owner of owners) {
-    console.log("Saving owner:", owner.firstName, owner.lastName, "User ID:", userId);
+/**
+ * Save owners and return mapping of client-side IDs to database IDs
+ */
+export const saveOwners = async (owners: Owner[], contactId: string, userId: string | null = null): Promise<Record<string, string>> {
+  try {
+    console.log(`Saving ${owners.length} owners with contactId:`, contactId);
     
-    const { data: ownerData, error: ownerError } = await supabase
-      .from('owners')
-      .insert({
+    if (owners.length === 0) {
+      return {};
+    }
+    
+    const idMap: Record<string, string> = {};
+    
+    // Process each owner
+    for (const owner of owners) {
+      // Map from the form model to the database model
+      const dbOwner = {
         first_name: owner.firstName,
         last_name: owner.lastName,
-        date_of_birth: owner.dateOfBirth ? owner.dateOfBirth.toISOString().split('T')[0] : null,
+        date_of_birth: owner.dateOfBirth instanceof Date ? 
+          owner.dateOfBirth.toISOString().split('T')[0] : 
+          owner.dateOfBirth ? new Date(owner.dateOfBirth).toISOString().split('T')[0] : null,
         country_of_birth: owner.countryOfBirth,
         citizenship: owner.citizenship,
         address_street: owner.address.street,
@@ -27,29 +33,37 @@ export const saveOwners = async (
         italian_tax_code: owner.italianTaxCode,
         marital_status: owner.maritalStatus,
         is_resident_in_italy: owner.isResidentInItaly,
-        // All residence fields have been removed, setting them as null
-        italian_residence_comune_name: null,
-        italian_residence_street: null,
-        italian_residence_city: null,
-        italian_residence_zip: null,
+        italian_residence_street: owner.italianResidenceDetails?.street || null,
+        italian_residence_city: owner.italianResidenceDetails?.city || null,
+        italian_residence_zip: owner.italianResidenceDetails?.zip || null,
         contact_id: contactId,
-        user_id: userId
-      })
-      .select();
+        user_id: userId,  // Ensure user_id is set when available
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
       
-    if (ownerError) {
-      console.error("Error saving owner:", ownerError);
-      throw new Error(`Error saving owner: ${ownerError.message}`);
+      console.log("Inserting owner:", dbOwner);
+      
+      // Insert into database
+      const { data, error } = await supabase
+        .from('owners')
+        .insert(dbOwner)
+        .select('id')
+        .single();
+      
+      if (error) {
+        console.error('Error saving owner:', error);
+        throw new Error(`Failed to save owner ${owner.firstName} ${owner.lastName}: ${error.message}`);
+      }
+      
+      // Store mapping of client ID to database ID
+      idMap[owner.id] = data.id;
+      console.log(`Mapped owner ID ${owner.id} to database ID ${data.id}`);
     }
     
-    if (ownerData && ownerData.length > 0) {
-      ownerIdMap.set(owner.id, ownerData[0].id);
-      console.log(`Mapped owner ${owner.id} to database ID ${ownerData[0].id}`);
-    } else {
-      console.error("Owner was saved but no data was returned");
-      throw new Error("Failed to get database ID for owner");
-    }
+    return idMap;
+  } catch (error) {
+    console.error('Error in saveOwners:', error);
+    throw error;
   }
-  
-  return ownerIdMap;
 };
