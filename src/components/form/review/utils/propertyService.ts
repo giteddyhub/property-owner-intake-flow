@@ -7,6 +7,16 @@ export const saveProperties = async (properties: Property[], contactId: string, 
   const propertyIdMap = new Map();
   
   for (const property of properties) {
+    // Convert PropertyDocument[] to string[] by JSON stringifying each document
+    const documentStrings = property.documents 
+      ? property.documents.map(doc => JSON.stringify(doc))
+      : [];
+    
+    // Map occupancy statuses to string[]
+    const occupancyStatusStrings = property.occupancyStatuses
+      ? property.occupancyStatuses.map(status => JSON.stringify(status))
+      : [];
+    
     // Map property data to database structure
     const propertyData = {
       label: property.label || `${property.address.street}, ${property.address.zip}`,
@@ -22,8 +32,8 @@ export const saveProperties = async (properties: Property[], contactId: string, 
       sale_price: property.salePrice || null,
       remodeling: property.remodeling || false,
       rental_income: property.rentalIncome || null,
-      occupancy_statuses: property.occupancyStatuses || [],
-      documents: property.documents || [],
+      occupancy_statuses: occupancyStatusStrings,
+      documents: documentStrings,
       use_document_retrieval_service: property.useDocumentRetrievalService || false,
       contact_id: contactId,
       user_id: userId // Make sure to include the user_id
