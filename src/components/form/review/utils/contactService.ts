@@ -5,10 +5,11 @@ import { ContactInfo } from './types';
 export const saveContactInfo = async (contactInfo: ContactInfo, userId: string | null = null): Promise<string> => {
   console.log("Saving contact information:", contactInfo, "User ID:", userId);
   
-  // Create a form submission entry instead of contact
+  // Create a form submission entry 
   const submissionData = {
     user_id: userId,
-    submitted_at: new Date().toISOString()
+    submitted_at: new Date().toISOString(),
+    state: 'new'
   };
   
   const { data, error } = await supabase

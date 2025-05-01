@@ -38,20 +38,32 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
     const fetchUserData = async () => {
       setLoading(true);
       try {
-        // Use user_id fields instead of contact_id
+        console.log("Fetching dashboard data for user:", userId);
+        
+        // Use user_id fields to fetch data
         const { data: ownersData, error: ownersError } = await supabase
           .from('owners')
           .select('*')
           .eq('user_id', userId);
 
-        if (ownersError) throw ownersError;
+        if (ownersError) {
+          console.error("Error fetching owners:", ownersError);
+          throw ownersError;
+        }
+        
+        console.log("Found owners:", ownersData?.length || 0);
         
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select('*')
           .eq('user_id', userId);
 
-        if (propertiesError) throw propertiesError;
+        if (propertiesError) {
+          console.error("Error fetching properties:", propertiesError);
+          throw propertiesError;
+        }
+        
+        console.log("Found properties:", propertiesData?.length || 0);
         
         // Only fetch assignments if we have owners
         let assignmentsData = [];
@@ -59,10 +71,15 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           const { data: fetchedAssignments, error: assignmentsError } = await supabase
             .from('owner_property_assignments')
             .select('*')
-            .in('owner_id', ownersData.map(o => o.id));
+            .eq('user_id', userId);
             
-          if (assignmentsError) throw assignmentsError;
-          assignmentsData = fetchedAssignments;
+          if (assignmentsError) {
+            console.error("Error fetching assignments:", assignmentsError);
+            throw assignmentsError;
+          }
+          
+          assignmentsData = fetchedAssignments || [];
+          console.log("Found assignments:", assignmentsData.length);
         }
         
         // Map the data to our frontend types

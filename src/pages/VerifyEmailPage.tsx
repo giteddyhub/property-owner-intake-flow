@@ -15,7 +15,8 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
   
   // Check if there's pending form data to show appropriate messaging
   const hasPendingFormData = sessionStorage.getItem('pendingFormData') !== null;
-  const formAlreadySubmitted = !hasPendingFormData && sessionStorage.getItem('redirectToDashboard') === 'true';
+  const formSubmittedDuringSignup = sessionStorage.getItem('formSubmittedDuringSignup') === 'true';
+  const formAlreadySubmitted = formSubmittedDuringSignup || sessionStorage.getItem('redirectToDashboard') === 'true';
   
   const handleBackToLogin = () => {
     navigate('/login');
@@ -57,7 +58,7 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
                   </div>
                 )}
                 
-                {hasPendingFormData && (
+                {hasPendingFormData && !formSubmittedDuringSignup && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 my-2">
                     <h3 className="font-semibold text-yellow-800 flex items-center">
                       <Mail className="h-5 w-5 mr-2 text-yellow-600" />

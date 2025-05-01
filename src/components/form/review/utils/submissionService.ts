@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 import type { SubmissionData } from './types';
 import { saveContactInfo } from './contactService';
@@ -73,12 +74,30 @@ export const submitFormData = async (
     // Store this information in sessionStorage for the tax filing page
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
-    // Step 1: Create form submission entry (previously saving contact info)
+    // Step 1: Create form submission entry with the user_id
     console.log("Creating form submission with userId:", userId);
-    const submissionId = await saveContactInfo(contactInfo, userId);
+    
+    // Create form submission directly rather than going through contactService
+    // This ensures the user_id is properly set in the form_submissions table
+    const { data: formData, error: formError } = await supabase
+      .from('form_submissions')
+      .insert({
+        user_id: userId,
+        submitted_at: new Date().toISOString(),
+        state: 'new'
+      })
+      .select('id')
+      .single();
+    
+    if (formError) {
+      console.error('Failed to create form submission:', formError);
+      throw formError;
+    }
+    
+    const submissionId = formData.id;
     console.log("Form submission created with ID:", submissionId);
     
-    // Store submission ID in sessionStorage (previously contactId)
+    // Store submission ID in sessionStorage
     sessionStorage.setItem('submissionId', submissionId);
     
     // Step 2: Save owners and get ID mappings - ensure user_id is passed

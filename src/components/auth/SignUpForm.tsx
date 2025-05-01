@@ -46,7 +46,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     
     try {
       // Submit the form data immediately with the user ID
-      await submitFormData(
+      const result = await submitFormData(
         pendingFormData.owners,
         pendingFormData.properties,
         pendingFormData.assignments,
@@ -54,13 +54,14 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         userId
       );
       
-      console.log("Form data submitted successfully immediately after signup");
-      
-      // Clear the pending form data to prevent duplicate submissions
-      sessionStorage.removeItem('pendingFormData');
+      console.log("Form data submitted successfully immediately after signup, result:", result);
       
       // Set a flag to redirect to dashboard after email verification
       sessionStorage.setItem('redirectToDashboard', 'true');
+      sessionStorage.setItem('formSubmittedDuringSignup', 'true');
+      
+      // Don't clear the pending form data yet, as we'll need it if email verification fails
+      // It will be cleared after successful verification and dashboard redirection
     } catch (error) {
       console.error("Error submitting form data after signup:", error);
     }
