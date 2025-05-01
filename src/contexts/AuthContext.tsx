@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem('pendingUserId');
         } else if (event === 'USER_UPDATED') {
           // This happens when email is verified
-          toast.success("Email verification successful!");
+          toast.success("User information updated successfully!");
         }
         
         // Update session and user state
