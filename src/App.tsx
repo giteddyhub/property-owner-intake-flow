@@ -34,6 +34,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Authenticated route component - redirects to dashboard if authenticated
 const AnonymousRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -109,14 +110,14 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <div className="min-h-screen bg-background">
           <AppRoutes />
           <Toaster />
         </div>
-      </AuthProvider>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 
