@@ -75,16 +75,17 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       const ownerIds = ownersData.map(o => o.id);
       
       try {
-        // Using simple object extraction to avoid TypeScript's deep type analysis
+        // Using a simplified approach to avoid TypeScript's deep instantiation issues
         const { data, error } = await supabase
           .from('owner_property_assignments')
-          .select();
+          .select('*')
+          .in('owner_id', ownerIds);
         
         if (error) {
           console.error("Error fetching assignments:", error);
         } else {
           // Create plain objects manually to avoid TypeScript's deep instantiation issues
-          const plainAssignments = data ? data.map(item => ({
+          assignmentsData = (data || []).map(item => ({
             id: item.id,
             property_id: item.property_id,
             owner_id: item.owner_id,
@@ -93,12 +94,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
             resident_from_date: item.resident_from_date,
             resident_to_date: item.resident_to_date,
             tax_credits: item.tax_credits
-          })) : [];
-          
-          // Filter to only include assignments for our owners
-          assignmentsData = plainAssignments.filter(item => 
-            ownerIds.includes(item.owner_id)
-          ) as DbAssignment[];
+          })) as DbAssignment[];
           
           console.log("Assignments data fetched:", assignmentsData.length);
         }
@@ -112,7 +108,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
         const { data, error } = await supabase
           .from('owner_property_assignments')
           .select('*')
-          .eq('user_id', userId);
+          .eq('contact_id', userId);
         
         if (error) {
           console.error("Error fetching assignments directly:", error);
