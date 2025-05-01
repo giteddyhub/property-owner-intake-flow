@@ -109,20 +109,22 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       console.log("No owners found, skipping assignments fetch");
       
       // Alternative attempt - try fetching assignments directly by user_id
-      const assignmentsResult: SupabaseQueryResult<DbAssignment> = await supabase
+      // Using explicit type to prevent infinite type instantiation
+      const directAssignmentsResult = await supabase
         .from('owner_property_assignments')
         .select('*')
         .eq('user_id', userId);
         
-      if (assignmentsResult.error) {
-        console.error("Error fetching assignments by user_id:", assignmentsResult.error);
+      if (directAssignmentsResult.error) {
+        console.error("Error fetching assignments by user_id:", directAssignmentsResult.error);
       } else {
-        assignmentsData = (assignmentsResult.data || []) as DbAssignment[];
+        // Explicitly cast to break potential recursive type analysis
+        assignmentsData = (directAssignmentsResult.data || []) as DbAssignment[];
         console.log("Assignments data fetched by user_id:", assignmentsData.length);
       }
     }
 
-    // Return the final result with explicit type annotations
+    // Return the final result
     return {
       ownersData,
       propertiesData,
