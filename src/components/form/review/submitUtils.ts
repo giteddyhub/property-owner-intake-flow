@@ -19,7 +19,7 @@ export const submitFormData = async (
   assignments: OwnerPropertyAssignment[],
   contactInfo: any,
   userId: string | null = null
-): Promise<SubmissionResult> {  // Update return type to the new interface
+): Promise<SubmissionResult> => {  // Fixed the syntax error here
   try {
     // Store the counts in sessionStorage for pricing calculation on tax filing page
     sessionStorage.setItem('ownersCount', String(owners.length));
