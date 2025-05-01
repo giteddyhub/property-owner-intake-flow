@@ -86,12 +86,14 @@ export const submitFormData = async (
   properties: Property[],
   assignments: OwnerPropertyAssignment[],
   contactInfo: ContactInfo,
-  userId: string
+  userId: string,
+  isImmediateSubmission: boolean = false // Added flag for immediate submission
 ): Promise<SubmissionResult> => {
   // Generate a unique submission key
   const submissionKey = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
   console.log(`[submissionService] Starting submission ${submissionKey} with userId:`, userId);
+  console.log(`[submissionService] isImmediateSubmission:`, isImmediateSubmission);
   
   // Reset tracker if needed (after page reload)
   if (window.location.pathname === '/' && sessionStorage.getItem('pendingFormData')) {
@@ -158,18 +160,23 @@ export const submitFormData = async (
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
-    // CRITICAL: Verify the user is authenticated and email is verified
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData?.user) {
-      console.error("[submissionService] Error verifying user:", userError);
-      throw new Error("Failed to verify user authentication. Please sign in again.");
-    }
-    
-    // Verify email is confirmed
-    if (!userData.user.email_confirmed_at && !userData.user.confirmed_at) {
-      console.error("[submissionService] User email not verified:", userData.user.email);
-      throw new Error("Email verification required. Please check your inbox and verify your email address before submitting.");
+    // CRITICAL CHANGE: Skip email verification check for immediate submission during signup
+    if (!isImmediateSubmission) {
+      // Only check email verification if not an immediate submission
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData?.user) {
+        console.error("[submissionService] Error verifying user:", userError);
+        throw new Error("Failed to verify user authentication. Please sign in again.");
+      }
+      
+      // Verify email is confirmed
+      if (!userData.user.email_confirmed_at && !userData.user.confirmed_at) {
+        console.error("[submissionService] User email not verified:", userData.user.email);
+        throw new Error("Email verification required. Please check your inbox and verify your email address before submitting.");
+      }
+    } else {
+      console.log("[submissionService] Immediate submission - bypassing email verification check");
     }
     
     // Step 1: Create form submission entry
@@ -206,8 +213,18 @@ export const submitFormData = async (
       console.error('[submissionService] Failed to create form submission:', formError);
       
       // Check for RLS policy violations
-      if (formError.message.includes('violates row-level security policy')) {
-        throw new Error(`Authorization error: You need to verify your email before submitting data. Check your inbox for a verification link.`);
+      if (formError.message?.includes('violates row-level security policy')) {
+        if (isImmediateSubmission) {
+          // For immediate submissions, we need to handle this specially
+          console.warn("[submissionService] RLS policy violation during immediate submission - will retry after verification");
+          sessionStorage.setItem('forceRetrySubmission', 'true');
+          return { 
+            success: false,
+            error: "Your account has been created, but we need you to verify your email before we can process your submission."
+          };
+        } else {
+          throw new Error(`Authorization error: You need to verify your email before submitting data. Check your inbox for a verification link.`);
+        }
       }
       
       throw new Error(`Database error: ${formError.message}`);
@@ -278,13 +295,21 @@ export const submitFormData = async (
     
     // Special handling for RLS policy errors
     if (error.message && error.message.includes('violates row-level security policy')) {
-      toast.error("Authorization error: You need to verify your email before submitting data");
-      // Set a flag so we try again after verification
-      sessionStorage.setItem('forceRetrySubmission', 'true');
-      return { 
-        success: false, 
-        error: "Authorization error: You need to verify your email before submitting data"
-      };
+      if (isImmediateSubmission) {
+        // For immediate submission, let the user know we'll try again after verification
+        sessionStorage.setItem('forceRetrySubmission', 'true');
+        return { 
+          success: false, 
+          error: "Your account has been created. Please verify your email to complete your submission."
+        };
+      } else {
+        toast.error("Authorization error: You need to verify your email before submitting data");
+        sessionStorage.setItem('forceRetrySubmission', 'true');
+        return { 
+          success: false, 
+          error: "Authorization error: You need to verify your email before submitting data"
+        };
+      }
     }
     
     toast.error(error instanceof Error ? error.message : 'Please try again later');

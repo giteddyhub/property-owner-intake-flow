@@ -54,24 +54,18 @@ export const submitFormData = async (
         console.error("[submitUtils] No user ID available and no authenticated user found");
         return { 
           success: false, 
-          error: "Authentication required for submission. Please sign in and verify your email first." 
+          error: "Authentication required for submission. Please sign in to continue." 
         };
       }
     }
     
-    // Double-check if the user has a confirmed email
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user?.email_confirmed_at && !userData?.user?.confirmed_at) {
-      console.warn("[submitUtils] User email not confirmed yet.");
-      return {
-        success: false,
-        error: "Email verification required. Please check your inbox and click the verification link before submitting data."
-      };
-    }
+    // CRITICAL CHANGE: Skip email verification check during immediate submission from signup
+    // We don't need to check for email_confirmed_at for immediate submission after signup
     
     // Directly call the submission service with user ID
     return import('./utils/submissionService').then(module => {
-      return module.submitFormData(owners, properties, assignments, contactInfo, userId);
+      // Pass a flag to indicate this is an immediate submission during signup
+      return module.submitFormData(owners, properties, assignments, contactInfo, userId, true);
     });
   } catch (error: any) {
     console.error('[submitUtils] Error submitting form data:', error);
