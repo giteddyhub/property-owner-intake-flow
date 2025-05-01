@@ -39,9 +39,9 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
         totalAmount: priceBreakdown.totalPrice
       });
       
-      // Add a timeout to handle potential network issues
+      // Add a longer timeout to handle potential network issues
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timed out')), 15000)
+        setTimeout(() => reject(new Error('Request timed out')), 30000)
       );
       
       const fetchPromise = supabase.functions.invoke('create-checkout', {
@@ -77,9 +77,9 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
       
       // Small delay to allow toast to be seen
       setTimeout(() => {
-        // Redirect to Stripe checkout
+        // Open in new window to avoid potential redirect issues
         window.location.href = data.url;
-      }, 500);
+      }, 800);
     } catch (error) {
       console.error('Error creating checkout session:', error);
       
@@ -89,7 +89,7 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
       } else if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         toast.error('Unable to connect to the payment service. Please check your internet connection and try again.');
       } else {
-        toast.error('Unable to initiate checkout. Please try again later.');
+        toast.error('Unable to initiate checkout. Please try again later or contact support.');
       }
     } finally {
       setLoading(false);

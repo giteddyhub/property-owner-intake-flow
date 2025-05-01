@@ -16,7 +16,12 @@ serve(async (req) => {
 
   try {
     console.log("Initializing Stripe with secret key");
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
+    if (!stripeKey) {
+      throw new Error("STRIPE_SECRET_KEY is not set");
+    }
+    
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2023-10-16",
     });
 
@@ -60,10 +65,15 @@ serve(async (req) => {
     }
 
     // Update the document retrieval preference on the purchase
-    await supabase
+    const { error: updateError } = await supabase
       .from("purchases")
       .update({ has_document_retrieval: hasDocumentRetrievalService })
       .eq("id", purchaseId);
+      
+    if (updateError) {
+      console.error("Error updating purchase:", updateError);
+      // Non-critical error, continue execution
+    }
     
     // Fetch contact information to use in the checkout
     const { data: contactData, error: contactError } = await supabase
@@ -77,6 +87,11 @@ serve(async (req) => {
       throw new Error(`Error fetching contact: ${contactError?.message || "Contact not found"}`);
     }
 
+    if (!contactData.email) {
+      console.error("Contact email missing");
+      throw new Error("Contact email is required for checkout");
+    }
+
     console.log("Found contact:", contactData.email);
 
     // Convert total amount to cents for Stripe
@@ -86,8 +101,8 @@ serve(async (req) => {
     const documentRetrievalFee = hasDocumentRetrievalService ? 2800 : 0; // €28.00 in cents
     
     // Use the calculated total if provided, otherwise fallback to base calculation
-    // Update the base price to match the new early bird price of €295 (29500 cents)
-    const finalAmount = totalAmountCents > 0 ? totalAmountCents : 29500 + documentRetrievalFee;
+    const baseAmount = 29500; // €295.00 in cents (early bird price)
+    const finalAmount = totalAmountCents > 0 ? totalAmountCents : baseAmount + documentRetrievalFee;
 
     // Create line items description based on the counts
     const baseDescription = `Professional tax filing service for ${ownersCount} owner${ownersCount > 1 ? 's' : ''} and ${propertiesCount} propert${propertiesCount > 1 ? 'ies' : 'y'} (Early Bird Price)`;
@@ -96,7 +111,7 @@ serve(async (req) => {
     const lineItems = [
       {
         price_data: {
-          currency: "eur", // Changed to EUR
+          currency: "eur",
           product_data: {
             name: "Tax Filing Service - Early Access",
             description: baseDescription,
@@ -111,7 +126,7 @@ serve(async (req) => {
     if (hasDocumentRetrievalService) {
       lineItems.push({
         price_data: {
-          currency: "eur", // Changed to EUR
+          currency: "eur",
           product_data: {
             name: "Document Retrieval Service",
             description: "Retrieval of property documents from Italian registry",
@@ -124,48 +139,67 @@ serve(async (req) => {
 
     console.log("Creating Stripe checkout session with amount:", finalAmount / 100);
 
-    // Set up the checkout session with Stripe
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: lineItems,
-      mode: "payment",
-      customer_email: contactData.email,
-      success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/payment-cancelled`,
-      metadata: {
-        purchase_id: purchaseId,
-        has_document_retrieval: hasDocumentRetrievalService ? "true" : "false",
-        owners_count: ownersCount.toString(),
-        properties_count: propertiesCount.toString(),
-      },
-    });
+    try {
+      // Set up the checkout session with Stripe
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: lineItems,
+        mode: "payment",
+        customer_email: contactData.email,
+        success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.get("origin")}/payment-cancelled`,
+        metadata: {
+          purchase_id: purchaseId,
+          has_document_retrieval: hasDocumentRetrievalService ? "true" : "false",
+          owners_count: ownersCount.toString(),
+          properties_count: propertiesCount.toString(),
+        },
+      });
 
-    console.log("Stripe session created:", session.id);
+      console.log("Stripe session created:", session.id);
 
-    // Update the purchase record with the Stripe session ID
-    await supabase
-      .from("purchases")
-      .update({ 
-        amount: finalAmount / 100, // Convert cents to euros
-        stripe_session_id: session.id, 
-        payment_status: "pending",
-        has_document_retrieval: hasDocumentRetrievalService,
-      })
-      .eq("id", purchaseId);
+      // Update the purchase record with the Stripe session ID
+      const { error: updateSessionError } = await supabase
+        .from("purchases")
+        .update({ 
+          amount: finalAmount / 100, // Convert cents to euros
+          stripe_session_id: session.id, 
+          payment_status: "pending",
+          has_document_retrieval: hasDocumentRetrievalService,
+        })
+        .eq("id", purchaseId);
 
-    // Return the session URL to redirect the user to the Stripe checkout
-    return new Response(
-      JSON.stringify({ 
-        url: session.url,
-        session_id: session.id,
-      }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          "Content-Type": "application/json" 
-        }
+      if (updateSessionError) {
+        console.error("Error updating purchase with session ID:", updateSessionError);
+        // Non-critical error, continue execution
       }
-    );
+
+      // Return the session URL to redirect the user to the Stripe checkout
+      return new Response(
+        JSON.stringify({ 
+          url: session.url,
+          session_id: session.id,
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            "Content-Type": "application/json" 
+          }
+        }
+      );
+    } catch (stripeError) {
+      console.error("Stripe error:", stripeError);
+      return new Response(
+        JSON.stringify({ error: `Stripe error: ${stripeError.message}` }),
+        { 
+          status: 400,
+          headers: { 
+            ...corsHeaders,
+            "Content-Type": "application/json" 
+          }
+        }
+      );
+    }
   } catch (error) {
     console.error("Error:", error);
     return new Response(
