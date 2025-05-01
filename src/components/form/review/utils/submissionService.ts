@@ -1,16 +1,13 @@
 
 import { toast } from 'sonner';
 import type { SubmissionData } from './types';
-import { saveContactInfo } from './contactService';
 import { saveOwners } from './ownerService';
 import { saveProperties } from './propertyService';
 import { saveAssignments } from './assignmentService';
 import { supabase } from '@/integrations/supabase/client';
 
-// Keep track of submissions in progress to prevent duplicates
+// Reset the globals when the module is loaded to prevent issues with stale state
 const activeSubmissions = new Set();
-
-// Keep track of completed submissions by user ID to prevent duplicates
 const completedSubmissionsByUser = new Set();
 
 // Define a clear return type interface
@@ -30,19 +27,15 @@ export const submitFormData = async (
   // Generate a unique submission ID
   const submissionKey = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
-  // Check if we already have a submission in progress
+  // Check if another submission is already in progress
   if (activeSubmissions.size > 0) {
     console.log("Warning: Another submission is already in progress", 
       { active: Array.from(activeSubmissions), current: submissionKey });
-    toast.warning("Please wait, submission already in progress");
-    return { success: false };
-  }
-
-  // If the user is logged in, check if they already have a completed submission
-  if (userId && completedSubmissionsByUser.has(userId)) {
-    console.log(`User ${userId} already has a completed submission. Preventing duplicate.`);
-    toast.info("Your information has already been submitted");
-    return { success: false };
+    
+    // Instead of blocking, we'll clear the active submissions and proceed
+    // This helps recover from stuck submission states
+    console.log("Clearing active submissions to allow this submission to proceed");
+    activeSubmissions.clear();
   }
   
   // Add this submission to active list
@@ -63,20 +56,16 @@ export const submitFormData = async (
       if (user) {
         userId = user.id;
         console.log("Found authenticated user:", userId);
-
-        // Check again if this user already has a submission
-        if (completedSubmissionsByUser.has(userId)) {
-          console.log(`User ${userId} already has a completed submission. Preventing duplicate.`);
-          toast.info("Your information has already been submitted");
-          activeSubmissions.delete(submissionKey);
-          return { success: false };
-        }
       } else {
-        console.log("No authenticated user found");
+        console.log("No authenticated user found, this submission will likely fail");
       }
     }
     
-    // Check if any property has document retrieval service enabled
+    // Store the counts in sessionStorage for pricing calculation on tax filing page
+    sessionStorage.setItem('ownersCount', String(owners.length));
+    sessionStorage.setItem('propertiesCount', String(properties.length));
+    
+    // Check if any property has document retrieval service
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
     
     // Store this information in sessionStorage for the tax filing page
@@ -88,9 +77,18 @@ export const submitFormData = async (
     const submissionData = {
       user_id: userId,
       submitted_at: new Date().toISOString(),
-      state: 'new'
+      state: 'new',
+      has_document_retrieval: hasDocumentRetrievalService
     };
     
+    // Only attempt to create form submission if user is logged in
+    if (!userId) {
+      console.log("No user ID available, skipping form submission creation");
+      activeSubmissions.delete(submissionKey);
+      return { success: false };
+    }
+    
+    // Create the form submission
     const { data: formData, error: formError } = await supabase
       .from('form_submissions')
       .insert(submissionData)
@@ -128,74 +126,51 @@ export const submitFormData = async (
       completedSubmissionsByUser.add(userId);
     }
     
-    // If this is an immediate submission during signup (before email verification),
-    // don't redirect or show completion message yet
-    const isImmediateSubmissionAfterSignup = !document.cookie.includes('supabase-auth-token');
-    if (isImmediateSubmissionAfterSignup) {
-      console.log("Immediate submission after signup completed - data will be available after email verification");
-      return {
-        success: true,
-        submissionId
-      };
+    // Create a purchase entry to track this session
+    const { data: purchase, error: purchaseError } = await supabase
+      .from('purchases')
+      .insert({
+        contact_id: submissionId, // Required field until we fully migrate
+        form_submission_id: submissionId, // New field that replaces contact_id
+        payment_status: 'pending',
+        has_document_retrieval: hasDocumentRetrievalService,
+        amount: 0 // Will be calculated during checkout
+      })
+      .select('id')
+      .single();
+      
+    if (purchaseError) {
+      console.error('Failed to create purchase:', purchaseError);
+      throw purchaseError;
     }
     
-    // Success notification for regular submissions
+    // Store purchase ID in sessionStorage
+    sessionStorage.setItem('purchaseId', purchase.id);
+    
+    console.log("Form data submitted successfully with submission ID:", submissionId);
+    
+    // Clear pending form data immediately after submission
+    sessionStorage.removeItem('pendingFormData');
+    
+    // Success notification
     toast.success("Form submitted successfully! Thank you for completing the property owner intake process.");
     
-    // Add a brief delay before redirecting to ensure loading state is visible
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // If the user is authenticated, create a tax filing session and redirect to it
-    if (userId) {
-      // Create a purchase entry to track this session
-      const { data: purchase, error: purchaseError } = await supabase
-        .from('purchases')
-        .insert({
-          contact_id: submissionId, // Required field until we fully migrate
-          form_submission_id: submissionId, // New field that replaces contact_id
-          payment_status: 'pending',
-          has_document_retrieval: hasDocumentRetrievalService,
-          amount: 0 // Will be calculated during checkout
-        })
-        .select('id')
-        .single();
-        
-      if (purchaseError) {
-        console.error('Failed to create purchase:', purchaseError);
-        throw purchaseError;
-      }
-      
-      // Store purchase ID in sessionStorage
-      sessionStorage.setItem('purchaseId', purchase.id);
-      
-      console.log("Redirecting to tax filing service page with purchase ID:", purchase.id);
-      
-      // Clear pending form data immediately after submission
-      sessionStorage.removeItem('pendingFormData');
-      
-      // For regular submissions (not immediately after signup), redirect to the tax filing service page
-      window.location.href = `/tax-filing-service/${purchase.id}`;
-      
-      return {
-        success: true,
-        submissionId,
-        purchaseId: purchase.id
-      };
-    } else {
-      // If user is not logged in, redirect to success page as fallback
-      // This path should rarely happen as users are prompted to log in before submission
-      console.log("No user ID available, redirecting to success page");
-      window.location.href = '/success';
-      
-      return {
-        success: true,
-        submissionId
-      };
-    }
+    return {
+      success: true,
+      submissionId,
+      purchaseId: purchase.id
+    };
     
   } catch (error) {
     console.error(`Submission ${submissionKey} failed:`, error);
-    toast.error(error instanceof Error ? error.message : 'Please try again later');
+    
+    // Special handling for RLS policy errors
+    if (error.message && error.message.includes('violates row-level security policy')) {
+      toast.error("Authorization error: You need to be logged in to submit data");
+    } else {
+      toast.error(error instanceof Error ? error.message : 'Please try again later');
+    }
+    
     return { success: false };
   } finally {
     // Remove this submission from active list

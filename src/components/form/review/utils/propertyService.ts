@@ -13,10 +13,18 @@ export const saveProperties = async (properties: Property[], formSubmissionId: s
       return {};
     }
     
+    if (!userId) {
+      console.error('No user ID provided to saveProperties');
+      throw new Error('User ID is required to save properties');
+    }
+    
     const idMap: Record<string, string> = {};
     
     // Process each property
     for (const property of properties) {
+      // Ensure address fields exist to prevent issues
+      const address = property.address || { comune: '', province: '', street: '', zip: '' };
+      
       // Format documents for database storage
       const documentStrings = property.documents && property.documents.length > 0
         ? property.documents.map(doc => JSON.stringify(doc))
@@ -32,27 +40,27 @@ export const saveProperties = async (properties: Property[], formSubmissionId: s
         : property.saleDate ? new Date(property.saleDate).toISOString().split('T')[0] : null;
       
       // Format occupancy statuses
-      const occupancyStatusesJson = JSON.stringify(property.occupancyStatuses);
+      const occupancyStatusesJson = JSON.stringify(property.occupancyStatuses || []);
       
       // Map from form model to database model
       const dbProperty = {
-        label: property.label,
-        address_comune: property.address.comune,
-        address_province: property.address.province,
-        address_street: property.address.street,
-        address_zip: property.address.zip,
-        activity_2024: property.activity2024,
+        label: property.label || 'Untitled Property',
+        address_comune: address.comune,
+        address_province: address.province,
+        address_street: address.street,
+        address_zip: address.zip,
+        activity_2024: property.activity2024 || 'owned_all_year',
         purchase_date: purchaseDate,
         purchase_price: property.purchasePrice ? Number(property.purchasePrice) : null,
         sale_date: saleDate,
         sale_price: property.salePrice ? Number(property.salePrice) : null,
-        property_type: property.propertyType,
-        remodeling: property.remodeling,
+        property_type: property.propertyType || 'RESIDENTIAL',
+        remodeling: Boolean(property.remodeling),
         occupancy_statuses: [occupancyStatusesJson], // Store as an array of JSON strings
         rental_income: property.rentalIncome ? Number(property.rentalIncome) : null,
         documents: documentStrings,
         use_document_retrieval_service: Boolean(property.useDocumentRetrievalService),
-        form_submission_id: formSubmissionId, // Updated from contact_id to form_submission_id
+        form_submission_id: formSubmissionId,
         user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()

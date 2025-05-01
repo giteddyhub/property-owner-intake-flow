@@ -19,6 +19,11 @@ export const saveAssignments = async (
       return;
     }
     
+    if (!userId) {
+      console.error('No user ID provided to saveAssignments');
+      throw new Error('User ID is required to save assignments');
+    }
+    
     // Process each assignment
     for (const assignment of assignments) {
       // Get corresponding database IDs
@@ -30,7 +35,9 @@ export const saveAssignments = async (
           originalOwnerId: assignment.ownerId,
           originalPropertyId: assignment.propertyId,
           mappedOwnerId: dbOwnerId,
-          mappedPropertyId: dbPropertyId
+          mappedPropertyId: dbPropertyId,
+          ownerIdMap,
+          propertyIdMap
         });
         throw new Error('Failed to map assignment IDs');
       }
@@ -52,12 +59,12 @@ export const saveAssignments = async (
       const dbAssignment = {
         owner_id: dbOwnerId,
         property_id: dbPropertyId,
-        ownership_percentage: assignment.ownershipPercentage,
-        resident_at_property: assignment.residentAtProperty,
+        ownership_percentage: assignment.ownershipPercentage || 0,
+        resident_at_property: Boolean(assignment.residentAtProperty),
         resident_from_date: residentFromDate,
         resident_to_date: residentToDate,
-        tax_credits: assignment.taxCredits,
-        form_submission_id: formSubmissionId, // Updated from contact_id to form_submission_id
+        tax_credits: assignment.taxCredits || null,
+        form_submission_id: formSubmissionId,
         user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()

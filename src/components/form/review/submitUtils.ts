@@ -37,6 +37,17 @@ export const submitFormData = async (
     
     console.log("Starting submission process with userId:", userId);
     
+    // Check if user is authenticated
+    if (!userId) {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        userId = data.user.id;
+        console.log("Found authenticated user:", userId);
+      } else {
+        console.log("No authenticated user found");
+      }
+    }
+    
     // Import and use the comprehensive submission service directly
     return import('./utils/submissionService').then(module => {
       return module.submitFormData(owners, properties, assignments, contactInfo, userId);

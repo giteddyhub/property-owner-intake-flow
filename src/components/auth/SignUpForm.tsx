@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, Mail } from 'lucide-react';
-import { submitFormData } from '@/components/form/review/submitUtils';
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -24,63 +24,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignedUp, setIsSignedUp] = useState(false);
-
-  const submitFormIfPending = async (userId: string, userEmail: string) => {
-    // Check if there's pending form data in session storage
-    const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
-    if (!pendingFormDataStr) {
-      console.log("No pending form data found after signup");
-      return;
-    }
-
-    const pendingFormData = JSON.parse(pendingFormDataStr);
-    
-    // Ensure the contact info includes the user's details
-    pendingFormData.contactInfo = {
-      ...pendingFormData.contactInfo,
-      fullName: fullName || pendingFormData.contactInfo?.fullName,
-      email: userEmail || pendingFormData.contactInfo?.email
-    };
-    
-    // Set processing flag to prevent duplicate submissions
-    setProcessingSubmission(true);
-    
-    console.log("Immediately submitting form data after signup for user ID:", userId);
-    console.log("Form data to submit:", pendingFormData);
-    
-    try {
-      // Submit the form data immediately with the user ID
-      const result = await submitFormData(
-        pendingFormData.owners,
-        pendingFormData.properties,
-        pendingFormData.assignments,
-        pendingFormData.contactInfo,
-        userId
-      );
-      
-      console.log("Form data submitted successfully immediately after signup, result:", result);
-      
-      if (result && result.success) {
-        // Set a flag to redirect to dashboard after email verification
-        sessionStorage.setItem('redirectToDashboard', 'true');
-        sessionStorage.setItem('formSubmittedDuringSignup', 'true');
-        
-        // Store the submission ID for later use
-        if (result.submissionId) {
-          sessionStorage.setItem('submissionId', result.submissionId);
-        }
-        
-        // Store purchase ID if available
-        if (result.purchaseId) {
-          sessionStorage.setItem('purchaseId', result.purchaseId);
-        }
-      }
-    } catch (error) {
-      console.error("Error submitting form data after signup:", error);
-    } finally {
-      setProcessingSubmission(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,8 +61,24 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         if (data?.user?.id) {
           sessionStorage.setItem('pendingUserId', data.user.id);
           
-          // Immediately submit form data if it exists
-          await submitFormIfPending(data.user.id, email);
+          // Store form data for submission after email verification
+          const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+          if (pendingFormDataStr) {
+            // Flag for auto-submission upon verification
+            sessionStorage.setItem('submitAfterVerification', 'true');
+            
+            // Store full name and email in the pending form data
+            const pendingFormData = JSON.parse(pendingFormDataStr);
+            pendingFormData.contactInfo = {
+              ...pendingFormData.contactInfo,
+              fullName: fullName,
+              email: email
+            };
+            sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
+            
+            // Set a flag to redirect to dashboard after email verification
+            sessionStorage.setItem('redirectToDashboard', 'true');
+          }
         }
         
         // Only call onSuccess if redirectAfterAuth is false
