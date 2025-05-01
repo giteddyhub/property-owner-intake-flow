@@ -41,7 +41,7 @@ export const mapDbPropertiesToProperties = (dbProperties: DbProperty[]): Propert
   });
 };
 
-// Define strict interfaces to avoid recursive type problems
+// Define strict interfaces for raw data to avoid recursive type issues
 interface RawPropertyDocument {
   id?: string;
   name?: string;

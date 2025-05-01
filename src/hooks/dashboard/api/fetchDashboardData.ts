@@ -14,6 +14,12 @@ interface FetchUserDataResult {
   error: Error | null;
 }
 
+// Define more specific types for Supabase query results to avoid deep type instantiation
+type SupabaseQueryResult<T> = {
+  data: T[] | null;
+  error: Error | null;
+};
+
 export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<FetchUserDataResult> => {
   if (!userId) {
     console.log("No userId provided to fetchUserData, skipping data fetch");
@@ -39,78 +45,85 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     }
     
     // Fetch contacts associated with this user
-    const { data: contactsData, error: contactsError } = await supabase
+    const contactsResult = await supabase
       .from('contacts')
       .select('id')
       .eq('user_id', userId);
     
-    if (contactsError) {
-      console.error("Error fetching contacts:", contactsError);
-      throw contactsError;
+    if (contactsResult.error) {
+      console.error("Error fetching contacts:", contactsResult.error);
+      throw contactsResult.error;
     }
     
+    const contactsData = contactsResult.data;
     console.log("Contacts associated with user:", contactsData?.length || 0);
     
     // Fetch owners data - use user_id directly
-    const { data: ownersData, error: ownersError } = await supabase
+    const ownersResult = await supabase
       .from('owners')
       .select('*')
       .eq('user_id', userId);
 
-    if (ownersError) {
-      console.error("Error fetching owners:", ownersError);
-      throw ownersError;
+    if (ownersResult.error) {
+      console.error("Error fetching owners:", ownersResult.error);
+      throw ownersResult.error;
     }
-    console.log("Owners data fetched:", ownersData?.length || 0);
+    
+    const ownersData = ownersResult.data || [];
+    console.log("Owners data fetched:", ownersData.length);
     
     // Fetch properties data
-    const { data: propertiesData, error: propertiesError } = await supabase
+    const propertiesResult = await supabase
       .from('properties')
       .select('*')
       .eq('user_id', userId);
 
-    if (propertiesError) {
-      console.error("Error fetching properties:", propertiesError);
-      throw propertiesError;
+    if (propertiesResult.error) {
+      console.error("Error fetching properties:", propertiesResult.error);
+      throw propertiesResult.error;
     }
-    console.log("Properties data fetched:", propertiesData?.length || 0);
+    
+    const propertiesData = propertiesResult.data || [];
+    console.log("Properties data fetched:", propertiesData.length);
     
     // If we have owners, fetch assignments related to those owners
-    let assignmentsData: any[] = [];
-    if (ownersData && ownersData.length > 0) {
+    let assignmentsData: DbAssignment[] = [];
+    
+    if (ownersData.length > 0) {
       const ownerIds = ownersData.map(o => o.id);
-      const { data, error: assignmentsError } = await supabase
+      const assignmentsResult = await supabase
         .from('owner_property_assignments')
         .select('*')
         .in('owner_id', ownerIds);
         
-      if (assignmentsError) {
-        console.error("Error fetching assignments:", assignmentsError);
-        throw assignmentsError;
+      if (assignmentsResult.error) {
+        console.error("Error fetching assignments:", assignmentsResult.error);
+        throw assignmentsResult.error;
       }
-      assignmentsData = data || [];
+      
+      assignmentsData = (assignmentsResult.data || []) as DbAssignment[];
       console.log("Assignments data fetched:", assignmentsData.length);
     } else {
       console.log("No owners found, skipping assignments fetch");
       
       // Alternative attempt - try fetching assignments directly by user_id
-      const { data, error: assignmentsError } = await supabase
+      const assignmentsResult = await supabase
         .from('owner_property_assignments')
         .select('*')
         .eq('user_id', userId);
         
-      if (assignmentsError) {
-        console.error("Error fetching assignments by user_id:", assignmentsError);
+      if (assignmentsResult.error) {
+        console.error("Error fetching assignments by user_id:", assignmentsResult.error);
       } else {
-        assignmentsData = data || [];
+        assignmentsData = (assignmentsResult.data || []) as DbAssignment[];
         console.log("Assignments data fetched by user_id:", assignmentsData.length);
       }
     }
 
-    // Use type assertions to avoid deep type instantiation
+    // Use explicit type assertions to prevent deep type analysis
     return {
-      ownersData: (ownersData || []) as DbOwner[],
-      propertiesData: (propertiesData || []) as DbProperty[],
+      ownersData: ownersData as DbOwner[],
+      propertiesData: propertiesData as DbProperty[],
       assignmentsData: assignmentsData as DbAssignment[],
       error: null
     };

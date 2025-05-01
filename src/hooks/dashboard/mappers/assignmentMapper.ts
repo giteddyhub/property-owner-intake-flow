@@ -1,16 +1,6 @@
 
 import { OwnerPropertyAssignment } from '@/components/dashboard/types';
-
-interface DbAssignment {
-  id: string;
-  property_id: string;
-  owner_id: string;
-  ownership_percentage: number;
-  resident_at_property: boolean;
-  resident_from_date?: string;
-  resident_to_date?: string;
-  tax_credits?: number;
-}
+import { DbAssignment } from '../types';
 
 export const mapDbAssignmentsToAssignments = (dbAssignments: DbAssignment[]): OwnerPropertyAssignment[] => {
   return dbAssignments.map((dbAssignment: DbAssignment): OwnerPropertyAssignment => ({
