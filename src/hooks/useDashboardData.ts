@@ -153,12 +153,12 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           let parsedDocuments: PropertyDocument[] = [];
           try {
             if (dbProperty.documents && Array.isArray(dbProperty.documents)) {
-              parsedDocuments = dbProperty.documents.map(docString => {
+              parsedDocuments = dbProperty.documents.map((docString: any) => {
                 try {
                   if (typeof docString === 'string') {
                     return JSON.parse(docString);
                   }
-                  return docString;
+                  return docString as PropertyDocument;
                 } catch (e) {
                   console.log("Error parsing document string:", docString);
                   return {
@@ -167,7 +167,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
                     type: 'unknown',
                     size: 0,
                     uploadDate: new Date()
-                  };
+                  } as PropertyDocument;
                 }
               });
             }
@@ -183,7 +183,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
             } else if (Array.isArray(dbProperty.occupancy_statuses)) {
               // Handle case when it's an array of strings that need parsing
               parsedOccupancyStatuses = dbProperty.occupancy_statuses
-                .map(item => {
+                .map((item: any) => {
                   if (typeof item === 'string') {
                     try {
                       return JSON.parse(item);
@@ -229,7 +229,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           };
         });
         
-        const mappedAssignments: OwnerPropertyAssignment[] = assignmentsData.map(dbAssignment => ({
+        const mappedAssignments: OwnerPropertyAssignment[] = assignmentsData.map((dbAssignment: any) => ({
           id: dbAssignment.id,
           propertyId: dbAssignment.property_id,
           ownerId: dbAssignment.owner_id,
