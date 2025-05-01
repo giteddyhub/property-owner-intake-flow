@@ -26,6 +26,58 @@ interface UseDashboardDataReturn {
   assignments: OwnerPropertyAssignment[];
 }
 
+// Define database types to help with parsing
+interface DbOwner {
+  id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string | null;
+  country_of_birth: string;
+  citizenship: string;
+  address_street: string;
+  address_city: string;
+  address_zip: string;
+  address_country: string;
+  italian_tax_code: string;
+  marital_status: string;
+  is_resident_in_italy: boolean;
+  italian_residence_street?: string;
+  italian_residence_city?: string;
+  italian_residence_zip?: string;
+  user_id: string;
+}
+
+interface DbProperty {
+  id: string;
+  label: string;
+  address_comune: string;
+  address_province: string;
+  address_street: string;
+  address_zip: string;
+  activity_2024: string;
+  purchase_date: string | null;
+  purchase_price: number | null;
+  sale_date: string | null;
+  sale_price: number | null;
+  property_type: string;
+  remodeling: boolean;
+  occupancy_statuses: any[] | string;
+  rental_income?: number;
+  documents?: any[];
+  use_document_retrieval_service: boolean;
+}
+
+interface DbAssignment {
+  id: string;
+  property_id: string;
+  owner_id: string;
+  ownership_percentage: number;
+  resident_at_property: boolean;
+  resident_from_date?: string;
+  resident_to_date?: string;
+  tax_credits?: number;
+}
+
 export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataProps): UseDashboardDataReturn => {
   const [loading, setLoading] = useState(true);
   const [owners, setOwners] = useState<Owner[]>([]);
@@ -93,7 +145,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         console.log("Properties data fetched:", propertiesData?.length || 0);
         
         // If we have owners, fetch assignments related to those owners
-        let assignmentsData = [];
+        let assignmentsData: DbAssignment[] = [];
         if (ownersData && ownersData.length > 0) {
           const ownerIds = ownersData.map(o => o.id);
           const { data, error: assignmentsError } = await supabase
@@ -125,7 +177,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         }
         
         // Map the data to the expected formats
-        const mappedOwners: Owner[] = (ownersData || []).map(dbOwner => ({
+        const mappedOwners: Owner[] = (ownersData || []).map((dbOwner: DbOwner) => ({
           id: dbOwner.id,
           firstName: dbOwner.first_name,
           lastName: dbOwner.last_name,
@@ -148,7 +200,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           } : undefined
         }));
         
-        const mappedProperties: Property[] = (propertiesData || []).map(dbProperty => {
+        const mappedProperties: Property[] = (propertiesData || []).map((dbProperty: DbProperty) => {
           // Handle documents parsing
           let parsedDocuments: PropertyDocument[] = [];
           try {
@@ -156,7 +208,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
               parsedDocuments = dbProperty.documents.map((docString: any) => {
                 try {
                   if (typeof docString === 'string') {
-                    return JSON.parse(docString);
+                    return JSON.parse(docString) as PropertyDocument;
                   }
                   return docString as PropertyDocument;
                 } catch (e) {
@@ -179,22 +231,22 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           let parsedOccupancyStatuses: OccupancyAllocation[] = [];
           try {
             if (typeof dbProperty.occupancy_statuses === 'string') {
-              parsedOccupancyStatuses = JSON.parse(dbProperty.occupancy_statuses);
+              parsedOccupancyStatuses = JSON.parse(dbProperty.occupancy_statuses) as OccupancyAllocation[];
             } else if (Array.isArray(dbProperty.occupancy_statuses)) {
               // Handle case when it's an array of strings that need parsing
               parsedOccupancyStatuses = dbProperty.occupancy_statuses
                 .map((item: any) => {
                   if (typeof item === 'string') {
                     try {
-                      return JSON.parse(item);
+                      return JSON.parse(item) as OccupancyAllocation;
                     } catch (e) {
                       console.error('Failed to parse occupancy status item:', item);
                       return null;
                     }
                   }
-                  return item;
+                  return item as OccupancyAllocation;
                 })
-                .filter(Boolean) as OccupancyAllocation[];
+                .filter((item): item is OccupancyAllocation => item !== null);
             }
             
             // Ensure we always have valid occupancy statuses
@@ -229,7 +281,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           };
         });
         
-        const mappedAssignments: OwnerPropertyAssignment[] = assignmentsData.map((dbAssignment: any) => ({
+        const mappedAssignments: OwnerPropertyAssignment[] = assignmentsData.map((dbAssignment: DbAssignment) => ({
           id: dbAssignment.id,
           propertyId: dbAssignment.property_id,
           ownerId: dbAssignment.owner_id,
