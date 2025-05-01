@@ -73,9 +73,7 @@ export const submitFormData = async (
     console.log("Final user ID for submission:", effectiveUserId);
     
     if (!effectiveUserId) {
-      console.error("No user ID available for submission");
-      toast.error("Authentication required. Please sign in to continue.");
-      throw new Error("No user ID available for submission");
+      console.warn("No user ID available for submission, will attempt to save data anyway and associate later");
     }
     
     // Check if any property has document retrieval service enabled
@@ -93,8 +91,8 @@ export const submitFormData = async (
     sessionStorage.setItem('contactId', contactId);
     localStorage.setItem('contactId', contactId);
     
-    // Add a small delay to ensure contact is saved completely
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Add a delay to ensure contact is saved completely
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // Step 2: Save owners with userId explicitly
     console.log("Saving owners with userId:", effectiveUserId);
@@ -111,24 +109,24 @@ export const submitFormData = async (
     await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, effectiveUserId);
     console.log("All assignments saved successfully");
     
-    // Add a delay to ensure all data is fully saved
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Add a longer delay to ensure all data is fully saved
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Verify data was saved correctly by checking counts
     const { data: savedOwners, error: ownersError } = await supabase
       .from('owners')
       .select('id')
-      .eq('user_id', effectiveUserId);
+      .eq(effectiveUserId ? 'user_id' : 'contact_id', effectiveUserId || contactId);
       
     const { data: savedProperties, error: propertiesError } = await supabase
       .from('properties')
       .select('id')
-      .eq('user_id', effectiveUserId);
+      .eq(effectiveUserId ? 'user_id' : 'contact_id', effectiveUserId || contactId);
       
     const { data: savedAssignments, error: assignmentsError } = await supabase
       .from('owner_property_assignments')
       .select('id')
-      .eq('user_id', effectiveUserId);
+      .eq(effectiveUserId ? 'user_id' : 'contact_id', effectiveUserId || contactId);
       
     console.log("Data verification:", {
       savedOwners: savedOwners?.length || 0,
@@ -166,28 +164,30 @@ export const submitFormData = async (
     console.log("Purchase created with ID:", purchase.id);
     
     // Final verification check - ensure we can see the data
-    const { error: finalCheck } = await supabase
-      .from('contacts')
-      .select('*')
-      .eq('id', contactId)
-      .eq('user_id', effectiveUserId)
-      .maybeSingle();
-      
-    if (finalCheck) {
-      console.warn("Final verification check failed:", finalCheck);
-      // Try one more time to update the user_id
-      const { error: updateError } = await supabase
+    if (effectiveUserId) {
+      const { error: finalCheck } = await supabase
         .from('contacts')
-        .update({ user_id: effectiveUserId })
-        .eq('id', contactId);
+        .select('*')
+        .eq('id', contactId)
+        .eq('user_id', effectiveUserId)
+        .maybeSingle();
         
-      if (updateError) {
-        console.error("Final attempt to update contact failed:", updateError);
+      if (finalCheck) {
+        console.warn("Final verification check failed:", finalCheck);
+        // Try one more time to update the user_id
+        const { error: updateError } = await supabase
+          .from('contacts')
+          .update({ user_id: effectiveUserId })
+          .eq('id', contactId);
+          
+        if (updateError) {
+          console.error("Final attempt to update contact failed:", updateError);
+        } else {
+          console.log("Final contact update succeeded");
+        }
       } else {
-        console.log("Final contact update succeeded");
+        console.log("Final verification passed - data is correctly associated");
       }
-    } else {
-      console.log("Final verification passed - data is correctly associated");
     }
     
     // Redirect to the tax filing service page

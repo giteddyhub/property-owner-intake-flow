@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -13,10 +14,10 @@ import LoadingOverlay from '@/components/ui/loading-overlay';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '../../auth/AuthModal';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Accordion
 } from "@/components/ui/accordion";
-import { supabase } from '@/integrations/supabase/client';
 
 const ReviewStep: React.FC = () => {
   const { state, goToStep, prevStep } = useFormContext();
@@ -24,6 +25,16 @@ const ReviewStep: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user, ensureUserAssociation } = useAuth();
+  const [formData, setFormData] = useState(null);
+  
+  // Store form data in component state to ensure it's available after authentication
+  useEffect(() => {
+    setFormData({
+      owners,
+      properties,
+      assignments
+    });
+  }, [owners, properties, assignments]);
   
   const handleSubmitButtonClick = () => {
     if (!user) {
@@ -40,8 +51,10 @@ const ReviewStep: React.FC = () => {
     // Close the auth modal
     setShowAuthModal(false);
     
-    // Give extra time to ensure auth state is fully updated
+    // Proceed with form submission immediately after successful authentication
+    // Use a longer timeout to ensure auth state is fully updated
     setTimeout(async () => {
+      console.log("Processing submission after authentication");
       // Check if user is authenticated after modal closes
       const { data: sessionData } = await supabase.auth.getSession();
       const currentUser = sessionData?.session?.user;
@@ -67,7 +80,7 @@ const ReviewStep: React.FC = () => {
           toast.error("Authentication required. Please sign in to continue.");
         }
       }
-    }, 1500); // Increased timeout to ensure auth state is updated
+    }, 2000); // Increased timeout to ensure auth state is fully updated
   };
   
   const handleSubmit = async () => {
@@ -100,14 +113,24 @@ const ReviewStep: React.FC = () => {
       
       // Get user information to populate contact info
       const contactInfo = {
-        fullName: currentUser?.user_metadata?.full_name || '',
+        fullName: currentUser?.user_metadata?.full_name || sessionStorage.getItem('fullName') || '',
         email: userEmail || '',
         termsAccepted: true,
         privacyAccepted: true
       };
       
+      console.log("Form data being submitted:", formData || { owners, properties, assignments });
+      
       // Pass the user ID explicitly to ensure data association
-      await submitFormData(owners, properties, assignments, contactInfo, userId || null);
+      // Use stored formData if available, otherwise use current state
+      const dataToSubmit = formData || { owners, properties, assignments };
+      await submitFormData(
+        dataToSubmit.owners, 
+        dataToSubmit.properties, 
+        dataToSubmit.assignments, 
+        contactInfo, 
+        userId || null
+      );
       
       // Note: The submitFormData function now handles the redirection
     } catch (error) {
@@ -118,6 +141,7 @@ const ReviewStep: React.FC = () => {
     }
   };
   
+  // Helper functions
   const getPropertyAssignments = (propertyId: string) => {
     return assignments.filter(assignment => assignment.propertyId === propertyId);
   };

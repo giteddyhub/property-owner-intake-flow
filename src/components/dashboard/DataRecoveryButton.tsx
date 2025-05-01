@@ -21,10 +21,16 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
   
   const handleRecoveryAttempt = async () => {
     if (!user?.email) {
-      toast.error("You must be logged in with a valid email to recover data");
-      return;
+      // Try to find email in sessionStorage
+      const storedEmail = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
+      
+      if (!storedEmail) {
+        toast.error("You must be logged in with a valid email to recover data");
+        return;
+      }
     }
     
+    const userEmail = user?.email || sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
     const userId = user?.id || sessionStorage.getItem('pendingUserId') || localStorage.getItem('pendingUserId');
     
     if (!userId) {
@@ -35,10 +41,10 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
     setIsRecovering(true);
     
     try {
-      console.log(`Attempting to recover data for user ${userId} with email ${user.email}`);
+      console.log(`Attempting to recover data for user ${userId} with email ${userEmail}`);
       
       // Try standard data recovery approach first
-      const result = await associateOrphanedData(userId, user.email);
+      const result = await associateOrphanedData(userId, userEmail);
       
       if (result.success) {
         toast.success(`Successfully recovered your data!`);
@@ -46,7 +52,7 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
       } else {
         // Try a second approach - check against email only
         console.log("First recovery attempt failed, trying email-only approach");
-        const emailOnlyResult = await associateOrphanedData(userId, user.email, true);
+        const emailOnlyResult = await associateOrphanedData(userId, userEmail, true);
         
         if (emailOnlyResult.success) {
           toast.success(`Successfully recovered your data through email matching!`);
@@ -54,15 +60,36 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
         } else {
           // Try a third, more aggressive approach - look for any data with matching email
           console.log("Second recovery attempt failed, trying aggressive approach");
-          const contactInfo = await fetchContactByEmail(user.email);
           
-          if (contactInfo) {
-            console.log("Found contact info via email:", contactInfo);
-            await associateContactDataWithUser(contactInfo.id, userId);
-            toast.success("Successfully recovered your data through contact lookup!");
+          // First check if there are any contacts with this email that don't have a user_id
+          const { data: contactData, error: contactError } = await supabase
+            .from('contacts')
+            .select('id')
+            .eq('email', userEmail)
+            .is('user_id', null);
+            
+          if (!contactError && contactData && contactData.length > 0) {
+            console.log(`Found ${contactData.length} contacts with matching email but no user ID`);
+            
+            // Update each contact with the user ID
+            for (const contact of contactData) {
+              await associateContactDataWithUser(contact.id, userId);
+            }
+            
+            toast.success(`Successfully recovered your data! Found ${contactData.length} matching submissions.`);
             onDataRecovered();
           } else {
-            toast.info("No orphaned data was found associated with your account");
+            // Try to find contact directly
+            const contactInfo = await fetchContactByEmail(userEmail);
+            
+            if (contactInfo) {
+              console.log("Found contact info via email:", contactInfo);
+              await associateContactDataWithUser(contactInfo.id, userId);
+              toast.success("Successfully recovered your data through contact lookup!");
+              onDataRecovered();
+            } else {
+              toast.info("No orphaned data was found associated with your account. If you previously submitted data, please contact support.");
+            }
           }
         }
       }
@@ -91,8 +118,10 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
   };
   
   // Helper function to associate all data from a contact with a user
-  const associateContactDataWithUser = async (contactId: string, userId: string) => {
+  const associateContactDataWithUser = async (contactId: string, userId: string): Promise<void> => {
     try {
+      console.log(`Associating all data for contact ${contactId} with user ${userId}`);
+      
       // Update the contact with user ID
       const { error: contactError } = await supabase
         .from('contacts')
@@ -141,7 +170,7 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
   return (
     <Button
       onClick={handleRecoveryAttempt}
-      disabled={isRecovering || !user?.email}
+      disabled={isRecovering || (!user?.email && !sessionStorage.getItem('userEmail'))}
       variant={prominent ? "default" : "outline"}
       size={prominent ? "lg" : "sm"}
       className={`flex items-center gap-2 ${prominent ? 'bg-form-400 hover:bg-form-500 text-white' : ''}`}

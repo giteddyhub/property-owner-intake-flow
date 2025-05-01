@@ -62,7 +62,38 @@ export const saveContactInfo = async (contactInfo: ContactInfo, userId: string |
     privacy_accepted: contactInfo.privacyAccepted
   };
   
-  // Save the contact info
+  // Check if we already have a contact with this email and user_id
+  if (contactInfo.email && effectiveUserId) {
+    const { data: existingContact, error: lookupError } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('email', contactInfo.email)
+      .eq('user_id', effectiveUserId)
+      .maybeSingle();
+      
+    if (!lookupError && existingContact?.id) {
+      console.log("Found existing contact with this email and user ID:", existingContact.id);
+      // Update existing contact
+      const { error: updateError } = await supabase
+        .from('contacts')
+        .update({
+          full_name: contactInfo.fullName,
+          submitted_at: new Date().toISOString(),
+          terms_accepted: contactInfo.termsAccepted,
+          privacy_accepted: contactInfo.privacyAccepted
+        })
+        .eq('id', existingContact.id);
+        
+      if (updateError) {
+        console.error("Error updating existing contact:", updateError);
+      } else {
+        console.log("Updated existing contact");
+        return existingContact.id;
+      }
+    }
+  }
+  
+  // Save the contact info as new record
   const { data, error } = await supabase
     .from('contacts')
     .insert(contactData)

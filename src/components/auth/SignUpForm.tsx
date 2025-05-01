@@ -42,6 +42,11 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     
     try {
       console.log("Starting signup process...");
+      
+      // Store user information in session storage for form submission
+      sessionStorage.setItem('fullName', fullName);
+      sessionStorage.setItem('userEmail', email);
+      
       const { error, data } = await signUp(email, password, fullName);
       
       if (error) {
