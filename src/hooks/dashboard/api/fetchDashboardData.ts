@@ -105,18 +105,19 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       console.log("No owners found, skipping assignments fetch");
       
       // Alternative attempt - try fetching assignments directly by user_id
-      // Use explicit any typing to break the deep type instantiation
-      const directAssignmentsResult: any = await supabase
+      // Remove select parameters completely and do a simple raw query
+      const { data, error } = await supabase
         .from('owner_property_assignments')
-        .select('*')
+        .select()
         .eq('user_id', userId);
         
-      if (directAssignmentsResult.error) {
-        console.error("Error fetching assignments by user_id:", directAssignmentsResult.error);
-      } else {
-        // Convert the data to plain objects with explicit type casting to break any type recursion
-        assignmentsData = directAssignmentsResult.data ? 
-          (directAssignmentsResult.data as any[]).map(item => ({...item})) as DbAssignment[] : [];
+      if (error) {
+        console.error("Error fetching assignments by user_id:", error);
+      } else if (data) {
+        // Convert the result to a plain array of objects
+        assignmentsData = Array.isArray(data) 
+          ? data.map(item => ({ ...item } as DbAssignment))
+          : [];
         console.log("Assignments data fetched by user_id:", assignmentsData.length);
       }
     }
