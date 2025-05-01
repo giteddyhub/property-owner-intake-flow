@@ -12,7 +12,7 @@ export const submitFormData = async (
   assignments: OwnerPropertyAssignment[],
   contactInfo: any,
   userId: string | null = null
-): Promise<void> => {
+): Promise<boolean> {  // Change return type from void to boolean
   try {
     // Store the counts in sessionStorage for pricing calculation on tax filing page
     sessionStorage.setItem('ownersCount', String(owners.length));
