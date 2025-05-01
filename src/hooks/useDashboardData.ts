@@ -10,6 +10,7 @@ import { fetchUserData } from './dashboard/api/fetchDashboardData';
 import { mapDbOwnersToOwners } from './dashboard/mappers/ownerMapper';
 import { mapDbPropertiesToProperties } from './dashboard/mappers/propertyMapper';
 import { mapDbAssignmentsToAssignments } from './dashboard/mappers/assignmentMapper';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseDashboardDataProps {
   userId: string | undefined;
@@ -45,6 +46,25 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
     
     const loadUserData = async () => {
       try {
+        console.log("Fetching dashboard data for userId:", userId);
+        
+        // Debug: Check if user exists in auth.users
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        console.log("Current authenticated user:", authData?.user?.id);
+        console.log("Using userId for fetch:", userId);
+        console.log("Match between auth and param:", authData?.user?.id === userId);
+        
+        // Debug: Try a direct query to check data existence
+        const { data: directOwners, error: directOwnersError } = await supabase
+          .from('owners')
+          .select('id')
+          .eq('user_id', userId);
+        
+        console.log("Direct query for owners result:", {
+          count: directOwners?.length || 0,
+          error: directOwnersError
+        });
+        
         const result = await fetchUserData({ userId });
         
         if (!isMounted) return;
@@ -58,12 +78,29 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         const mappedProperties = mapDbPropertiesToProperties(result.propertiesData);
         const mappedAssignments = mapDbAssignmentsToAssignments(result.assignmentsData);
         
+        console.log("Dashboard data fetched:", {
+          owners: mappedOwners.length,
+          properties: mappedProperties.length,
+          assignments: mappedAssignments.length
+        });
+        
         setOwners(mappedOwners);
         setProperties(mappedProperties);
         setAssignments(mappedAssignments);
         
         if (!result.ownersData.length && !result.propertiesData.length && !result.assignmentsData.length) {
           console.warn("No data found for this user. This might be expected for new users.");
+          
+          // Debug: Check if this user has any contact records
+          const { data: contactData, error: contactError } = await supabase
+            .from('contacts')
+            .select('id')
+            .eq('user_id', userId);
+            
+          console.log("Contact records for this user:", {
+            count: contactData?.length || 0,
+            error: contactError
+          });
         } else {
           console.log(`Found ${result.ownersData.length} owners, ${result.propertiesData.length} properties, ${result.assignmentsData.length} assignments`);
         }

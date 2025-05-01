@@ -36,6 +36,19 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       // Continue anyway as we might be using a pendingUserId
     } else {
       console.log("Auth user data:", authUserData?.user?.id);
+      console.log("Match between auth and param:", authUserData?.user?.id === userId);
+    }
+    
+    // Fetch contacts to verify user association
+    const { data: contactsData, error: contactsError } = await supabase
+      .from('contacts')
+      .select('id, user_id')
+      .eq('user_id', userId);
+      
+    if (contactsError) {
+      console.error("Error checking contacts:", contactsError);
+    } else {
+      console.log("Contact data for this user:", contactsData);
     }
     
     // Fetch owners data - use user_id directly
@@ -158,44 +171,42 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
             
             assignmentsData = [...assignmentsData, ...newAssignments];
             console.log("Assignments data fetched via contacts:", newAssignments.length);
-            
-            // Update these assignments with the user_id for future queries
-            if (newAssignments.length > 0) {
-              const assignmentIds = newAssignments.map(a => a.id);
-              const { error: updateError } = await supabase
-                .from('owner_property_assignments')
-                .update({ user_id: userId })
-                .in('id', assignmentIds);
-                
-              if (updateError) {
-                console.error("Error updating assignments with user_id:", updateError);
-              } else {
-                console.log(`Updated ${newAssignments.length} assignments with user_id`);
-              }
-            }
           }
+        } else {
+          console.log("No contacts found for this user");
         }
       } catch (error) {
-        console.error("Error with contact-based assignment lookup:", error);
+        console.error("Error in contact check for assignments:", error);
       }
     }
-
-    // Return the final result
+    
+    // Extended diagnostic: Check for total data in the database
+    const { data: allOwnersCount } = await supabase
+      .from('owners')
+      .select('id', { count: 'exact', head: true });
+      
+    const { data: allPropertiesCount } = await supabase
+      .from('properties')
+      .select('id', { count: 'exact', head: true });
+      
+    console.log("Total database counts:", {
+      allOwners: allOwnersCount?.count || 0,
+      allProperties: allPropertiesCount?.count || 0
+    });
+    
     return {
       ownersData,
       propertiesData,
       assignmentsData,
       error: null
     };
-
   } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-    toast.error('Failed to load your data. Please try again later.');
+    console.error("Error in fetchUserData:", error);
     return {
       ownersData: [],
       propertiesData: [],
       assignmentsData: [],
-      error: error as Error
+      error: error instanceof Error ? error : new Error('Unknown error in fetchUserData')
     };
   }
 };

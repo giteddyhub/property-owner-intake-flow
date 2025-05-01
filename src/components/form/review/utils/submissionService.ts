@@ -26,21 +26,24 @@ export const submitFormData = async (
     // Enhanced userId resolution with multiple fallbacks
     let effectiveUserId = userId;
     
+    // Double-check current auth state
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session?.user?.id) {
+      if (!effectiveUserId || effectiveUserId !== sessionData.session.user.id) {
+        console.log("Found authenticated user ID that differs from provided userId. Using authenticated ID.");
+        effectiveUserId = sessionData.session.user.id;
+        
+        // Update storage with this userId for consistency
+        sessionStorage.setItem('pendingUserId', effectiveUserId);
+        localStorage.setItem('pendingUserId', effectiveUserId);
+      }
+    }
     // If no userId is provided but we have a pendingUserId in storage, use it
-    if (!effectiveUserId) {
+    else if (!effectiveUserId) {
       const pendingUserId = sessionStorage.getItem('pendingUserId') || localStorage.getItem('pendingUserId');
       if (pendingUserId) {
         console.log("Using pending user ID from storage:", pendingUserId);
         effectiveUserId = pendingUserId;
-      }
-    }
-    
-    // Double check if we can get the current user from Supabase
-    if (!effectiveUserId) {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData?.session?.user?.id) {
-        effectiveUserId = sessionData.session.user.id;
-        console.log("Retrieved user ID from current session:", effectiveUserId);
       }
     }
     
@@ -189,6 +192,10 @@ export const submitFormData = async (
         console.log("Final verification passed - data is correctly associated");
       }
     }
+    
+    // Force store the user ID for the dashboard to use
+    sessionStorage.setItem('pendingUserId', effectiveUserId || '');
+    localStorage.setItem('pendingUserId', effectiveUserId || '');
     
     // Redirect to the tax filing service page
     window.location.href = `/tax-filing-service/${purchase.id}`;
