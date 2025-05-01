@@ -95,16 +95,16 @@ serve(async (req) => {
     console.log("Found contact:", contactData.email);
 
     // Convert total amount to cents for Stripe
+    // Use the provided totalAmount from the frontend, which is already calculated based on owners, properties, etc.
     const totalAmountCents = Math.round(totalAmount * 100);
+    console.log("Using total amount from frontend calculation:", totalAmount, "EUR (", totalAmountCents, "cents)");
 
-    // Calculate document retrieval fee
-    const documentRetrievalFee = hasDocumentRetrievalService ? 2800 : 0; // €28.00 in cents
+    // Calculate base price and document retrieval separately for line items
+    const basePrice = totalAmount - (hasDocumentRetrievalService ? 28 : 0);
+    const basePriceCents = Math.round(basePrice * 100);
+    const documentRetrievalFeeCents = hasDocumentRetrievalService ? 2800 : 0; // €28.00 in cents
     
-    // Use the calculated total if provided, otherwise fallback to base calculation
-    const baseAmount = 29500; // €295.00 in cents (early bird price)
-    const finalAmount = totalAmountCents > 0 ? totalAmountCents : baseAmount + documentRetrievalFee;
-
-    // Create line items description based on the counts
+    // Define line items description based on the counts
     const baseDescription = `Professional tax filing service for ${ownersCount} owner${ownersCount > 1 ? 's' : ''} and ${propertiesCount} propert${propertiesCount > 1 ? 'ies' : 'y'} (Early Bird Price)`;
 
     // Define line items based on services
@@ -116,7 +116,7 @@ serve(async (req) => {
             name: "Tax Filing Service - Early Access",
             description: baseDescription,
           },
-          unit_amount: finalAmount - documentRetrievalFee, // Base amount excluding document retrieval fee
+          unit_amount: basePriceCents,
         },
         quantity: 1,
       },
@@ -131,13 +131,14 @@ serve(async (req) => {
             name: "Document Retrieval Service",
             description: "Retrieval of property documents from Italian registry",
           },
-          unit_amount: documentRetrievalFee,
+          unit_amount: documentRetrievalFeeCents,
         },
         quantity: 1,
       });
     }
 
-    console.log("Creating Stripe checkout session with amount:", finalAmount / 100);
+    console.log("Creating Stripe checkout session with amount:", totalAmount);
+    console.log("Line items:", JSON.stringify(lineItems));
 
     try {
       // Set up the checkout session with Stripe
@@ -158,12 +159,13 @@ serve(async (req) => {
 
       console.log("Stripe session created:", session.id);
       console.log("Stripe session URL:", session.url);
+      console.log("Stripe session amount total:", session.amount_total);
 
       // Update the purchase record with the Stripe session ID
       const { error: updateSessionError } = await supabase
         .from("purchases")
         .update({ 
-          amount: finalAmount / 100, // Convert cents to euros
+          amount: totalAmount, // Store in euros
           stripe_session_id: session.id, 
           payment_status: "pending",
           has_document_retrieval: hasDocumentRetrievalService,
@@ -185,6 +187,7 @@ serve(async (req) => {
         JSON.stringify({ 
           url: session.url,
           session_id: session.id,
+          amount_total: session.amount_total,
         }),
         { 
           headers: { 

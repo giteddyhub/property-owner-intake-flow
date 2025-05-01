@@ -86,11 +86,17 @@ const TaxFilingServicePage = () => {
           
         // Update counts
         if (ownersData) {
-          setOwnersCount(ownersData.length || 1);
+          const count = ownersData.length || 1;
+          setOwnersCount(count);
+          // Store in sessionStorage for the checkout process
+          sessionStorage.setItem('ownersCount', count.toString());
         }
         
         if (propertiesData) {
-          setPropertiesCount(propertiesData.length || 1);
+          const count = propertiesData.length || 1;
+          setPropertiesCount(count);
+          // Store in sessionStorage for the checkout process
+          sessionStorage.setItem('propertiesCount', count.toString());
           
           // If any property has document retrieval enabled and this preference hasn't been set yet
           if (purchaseData.has_document_retrieval === null) {
@@ -133,6 +139,10 @@ const TaxFilingServicePage = () => {
     if (sessionId) {
       sessionStorage.setItem('purchaseId', sessionId);
     }
+    
+    // Make sure the owner and property counts are in session storage
+    sessionStorage.setItem('ownersCount', ownersCount.toString());
+    sessionStorage.setItem('propertiesCount', propertiesCount.toString());
 
     // Proceed to checkout using the hook
     await handleCheckout();
