@@ -43,7 +43,7 @@ const AccountSettingsPage = () => {
       toast({
         title: 'Error',
         description: 'There was a problem updating your profile.',
-        variant: 'destructive',
+        type: 'error', // Changed from 'variant: "destructive"' to 'type: "error"'
       });
       console.error('Error updating profile:', error);
     } finally {
