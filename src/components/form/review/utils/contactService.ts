@@ -9,9 +9,7 @@ export const saveContactInfo = async (contactInfo: ContactInfo, userId: string |
     full_name: contactInfo.fullName,
     email: contactInfo.email,
     submitted_at: new Date().toISOString(),
-    user_id: userId,
-    terms_accepted: contactInfo.termsAccepted,
-    privacy_accepted: contactInfo.privacyAccepted
+    user_id: userId
   };
   
   const { data, error } = await supabase

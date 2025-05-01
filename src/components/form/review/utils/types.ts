@@ -2,8 +2,6 @@
 export interface ContactInfo {
   fullName: string;
   email: string;
-  termsAccepted: boolean;
-  privacyAccepted: boolean;
 }
 
 export interface SubmissionData {
@@ -11,5 +9,4 @@ export interface SubmissionData {
   properties: any[];
   assignments: any[];
   contactInfo: ContactInfo;
-  userId?: string | null;
 }

@@ -21,7 +21,7 @@ export const useTaxFilingState = () => {
       // Check if the user has a contact record first
       const { data: contactData, error: contactError } = await supabase
         .from('contacts')
-        .select('id, terms_accepted, privacy_accepted')
+        .select('id')
         .eq('user_id', userId)
         .maybeSingle();
       
@@ -34,7 +34,7 @@ export const useTaxFilingState = () => {
         throw contactError;
       }
       
-      if (!contactData || contactData.id === null) {
+      if (!contactData || !contactData.id) {
         // Create a contact record for this user if it doesn't exist
         console.log('No contact found, creating new contact');
         const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -57,8 +57,6 @@ export const useTaxFilingState = () => {
             user_id: userId,
             full_name: userData.user?.user_metadata?.full_name || 'Unknown Name',
             email: userData.user?.email || '',
-            terms_accepted: true,
-            privacy_accepted: true
           })
           .select('id')
           .single();
@@ -75,18 +73,6 @@ export const useTaxFilingState = () => {
         // Use the existing contact ID
         contactId = contactData.id;
         console.log('Using existing contact with ID:', contactId);
-        
-        // If terms or privacy policies aren't accepted, update them
-        if (!contactData.terms_accepted || !contactData.privacy_accepted) {
-          console.log('Updating terms and privacy acceptance');
-          await supabase
-            .from('contacts')
-            .update({
-              terms_accepted: true,
-              privacy_accepted: true
-            })
-            .eq('id', contactId);
-        }
       }
       
       // Define a default amount for the purchase entry
