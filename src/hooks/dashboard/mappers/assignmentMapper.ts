@@ -31,11 +31,21 @@ export const associateOrphanedData = async (
 
   try {
     // First, check if there are orphaned contact records with this email
-    const { data: contactData, error: contactError } = await supabase
+    let contactQuery = supabase
       .from('contacts')
       .select('id, email, full_name, user_id')
-      .eq('email', userEmail)
-      .is('user_id', emailOnlyMode ? null : userId);
+      .eq('email', userEmail);
+      
+    // Apply the appropriate filter based on emailOnlyMode
+    if (emailOnlyMode) {
+      // If in email-only mode, look for contacts with null user_id
+      contactQuery = contactQuery.is('user_id', null);
+    } else {
+      // Otherwise, filter by the provided userId or null
+      contactQuery = contactQuery.or(`user_id.eq.${userId},user_id.is.null`);
+    }
+    
+    const { data: contactData, error: contactError } = await contactQuery;
       
     if (contactError) {
       console.error("Error checking for orphaned contacts:", contactError);
@@ -44,51 +54,9 @@ export const associateOrphanedData = async (
     
     console.log(`Found ${contactData?.length || 0} potential orphaned contacts:`, contactData);
     
-    // If no matching contacts, try a different approach
+    // If no matching contacts, return early
     if (!contactData || contactData.length === 0) {
-      // Check for orphaned data with null user_id
-      const { data: nullUserContacts, error: nullError } = await supabase
-        .from('contacts')
-        .select('id, email, full_name')
-        .eq('email', userEmail)
-        .is('user_id', null);
-        
-      if (nullError) {
-        console.error("Error checking for null user_id contacts:", nullError);
-        return { success: false, message: nullError.message };
-      }
-      
-      console.log(`Found ${nullUserContacts?.length || 0} contacts with null user_id:`, nullUserContacts);
-      
-      if (!nullUserContacts || nullUserContacts.length === 0) {
-        return { success: false, message: "No matching contacts found" };
-      }
-      
-      // Update these null contacts with the user's ID
-      for (const contact of nullUserContacts) {
-        console.log(`Updating contact ${contact.id} to associate with user ${userId}`);
-        
-        const { error: updateError } = await supabase
-          .from('contacts')
-          .update({ user_id: userId })
-          .eq('id', contact.id);
-          
-        if (updateError) {
-          console.error(`Error updating contact ${contact.id}:`, updateError);
-          continue;
-        }
-        
-        // Look for orphaned owners associated with this contact
-        await associateOrphanedOwners(contact.id, userId);
-        
-        // Look for orphaned properties associated with this contact
-        await associateOrphanedProperties(contact.id, userId);
-        
-        // Look for orphaned assignments associated with this contact
-        await associateOrphanedAssignments(contact.id, userId);
-      }
-      
-      return { success: true, message: "Successfully associated orphaned data" };
+      return { success: false, message: "No matching contacts found" };
     }
     
     // Process each contact found
