@@ -6,13 +6,20 @@ import { toast } from 'sonner';
 // Change from `export` to `export type` for type re-exports
 export type { ContactInfo } from './utils/types';
 
+// Update the return type to match what's actually returned from the function
+export interface SubmissionResult {
+  success: boolean;
+  submissionId?: string;
+  purchaseId?: string;
+}
+
 export const submitFormData = async (
   owners: Owner[],
   properties: Property[],
   assignments: OwnerPropertyAssignment[],
   contactInfo: any,
   userId: string | null = null
-): Promise<boolean> => {  // Change return type from void to boolean
+): Promise<SubmissionResult> {  // Update return type to the new interface
   try {
     // Store the counts in sessionStorage for pricing calculation on tax filing page
     sessionStorage.setItem('ownersCount', String(owners.length));
@@ -37,6 +44,6 @@ export const submitFormData = async (
   } catch (error) {
     console.error('Error submitting form data:', error);
     toast.error('Failed to submit your information. Please try again.');
-    throw error;
+    return { success: false };
   }
 };

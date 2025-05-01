@@ -46,7 +46,11 @@ const SubmitStep: React.FC = () => {
       
       // Submit the form data with user ID so it appears in dashboard
       if (user) {
-        await submitFormData(owners, properties, assignments, contactInfo, user.id);
+        const result = await submitFormData(owners, properties, assignments, contactInfo, user.id);
+        if (!result.success) {
+          toast.error("There was a problem with your submission. Please try again.");
+          return;
+        }
       }
       
       setTimeout(() => {

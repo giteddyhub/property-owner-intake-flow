@@ -13,13 +13,20 @@ const activeSubmissions = new Set();
 // Keep track of completed submissions by user ID to prevent duplicates
 const completedSubmissionsByUser = new Set();
 
+// Define a clear return type interface
+export interface SubmissionResult {
+  success: boolean;
+  submissionId?: string;
+  purchaseId?: string;
+}
+
 export const submitFormData = async (
   owners,
   properties,
   assignments,
   contactInfo,
   userId = null
-) => {
+): Promise<SubmissionResult> => {
   // Generate a unique submission ID
   const submissionKey = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
@@ -28,14 +35,14 @@ export const submitFormData = async (
     console.log("Warning: Another submission is already in progress", 
       { active: Array.from(activeSubmissions), current: submissionKey });
     toast.warning("Please wait, submission already in progress");
-    return false;
+    return { success: false };
   }
 
   // If the user is logged in, check if they already have a completed submission
   if (userId && completedSubmissionsByUser.has(userId)) {
     console.log(`User ${userId} already has a completed submission. Preventing duplicate.`);
     toast.info("Your information has already been submitted");
-    return false;
+    return { success: false };
   }
   
   // Add this submission to active list
@@ -62,7 +69,7 @@ export const submitFormData = async (
           console.log(`User ${userId} already has a completed submission. Preventing duplicate.`);
           toast.info("Your information has already been submitted");
           activeSubmissions.delete(submissionKey);
-          return false;
+          return { success: false };
         }
       } else {
         console.log("No authenticated user found");
@@ -189,7 +196,7 @@ export const submitFormData = async (
   } catch (error) {
     console.error(`Submission ${submissionKey} failed:`, error);
     toast.error(error instanceof Error ? error.message : 'Please try again later');
-    throw error;
+    return { success: false };
   } finally {
     // Remove this submission from active list
     activeSubmissions.delete(submissionKey);
