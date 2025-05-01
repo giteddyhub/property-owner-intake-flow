@@ -46,6 +46,33 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Check if we have pending form data to update
+      const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+      if (pendingFormDataStr) {
+        try {
+          // Update the pending form data with user information before signup
+          const pendingFormData = JSON.parse(pendingFormDataStr);
+          if (!pendingFormData.contactInfo) {
+            pendingFormData.contactInfo = {};
+          }
+          
+          pendingFormData.contactInfo.fullName = fullName;
+          pendingFormData.contactInfo.email = email;
+          sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
+          
+          // Flag for auto-submission upon verification
+          sessionStorage.setItem('submitAfterVerification', 'true');
+          sessionStorage.setItem('redirectToDashboard', 'true');
+          
+          console.log("[SignUpForm] Updated pending form data with user info:", {
+            fullName,
+            email
+          });
+        } catch (parseError) {
+          console.error("[SignUpForm] Error updating pending form data:", parseError);
+        }
+      }
+      
       const { error, data } = await signUp(email, password, fullName);
       
       if (error) {
@@ -65,32 +92,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           const userId = data.user.id;
           sessionStorage.setItem('pendingUserId', userId);
           console.log("[SignUpForm] Stored pendingUserId:", userId);
-          
-          // Update pending form data for submission after email verification
-          const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
-          if (pendingFormDataStr) {
-            console.log("[SignUpForm] Found pendingFormData, preparing for submission after verification");
-            try {
-              // Flag for auto-submission upon verification
-              sessionStorage.setItem('submitAfterVerification', 'true');
-              
-              // Store full name and email in the pending form data
-              const pendingFormData = JSON.parse(pendingFormDataStr);
-              if (!pendingFormData.contactInfo) {
-                pendingFormData.contactInfo = {};
-              }
-              pendingFormData.contactInfo.fullName = fullName;
-              pendingFormData.contactInfo.email = email;
-              sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
-              
-              // Set a flag to redirect to dashboard after email verification
-              sessionStorage.setItem('redirectToDashboard', 'true');
-              console.log("[SignUpForm] Set up auto-submission after verification");
-            } catch (parseError) {
-              console.error("[SignUpForm] Error parsing pending form data:", parseError);
-              toast.error("There was an error processing your form data");
-            }
-          }
         }
         
         // Only call onSuccess if redirectAfterAuth is false
@@ -103,7 +104,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         
         if (redirectAfterAuth) {
           // Redirect to the verify email page
-          navigate('/verify-email');
+          setTimeout(() => {
+            navigate('/verify-email');
+          }, 1500);
         }
       }
     } catch (error: any) {

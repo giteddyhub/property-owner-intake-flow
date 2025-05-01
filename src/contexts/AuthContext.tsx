@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [processingSubmission, setProcessingSubmission] = useState<boolean>(false);
   const [submissionCompleted, setSubmissionCompleted] = useState<boolean>(false);
   const [submissionAttempts, setSubmissionAttempts] = useState<number>(0);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   useEffect(() => {
     console.log("[AuthContext] Setting up auth state listener");
@@ -52,12 +53,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Use setTimeout to avoid auth state conflicts
             setTimeout(() => {
               processPendingFormData(session.user.id);
-            }, 500);
-          } else {
-            // Regular sign in, also check for pending data
+            }, 1000); // Increased timeout to ensure auth state is fully updated
+          } else if (isVerified) {
+            // Regular sign in with already verified email, also check for pending data
             setTimeout(() => {
               processPendingFormData(session.user.id);
-            }, 100);
+            }, 500);
           }
         }
       }
@@ -67,13 +68,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("[AuthContext] Initial session check:", session?.user?.id || "No session");
       setUser(session?.user || null);
+      setIsInitialized(true);
       setLoading(false);
       
       // Check for pending form data on initial load
       if (session?.user) {
         setTimeout(() => {
           processPendingFormData(session.user.id);
-        }, 100);
+        }, 500);
       }
     });
 
@@ -105,8 +107,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     if (!isVerified) {
       console.log("[AuthContext] User email not verified, skipping submission");
-      // Clear retry flag if set, to avoid infinite loops
-      sessionStorage.removeItem('forceRetrySubmission');
+      // Flag for retry after verification
+      if (pendingFormData && submitAfterVerification === 'true') {
+        console.log("[AuthContext] Setting force retry flag for after verification");
+        sessionStorage.setItem('forceRetrySubmission', 'true');
+      }
       return;
     }
     
@@ -116,7 +121,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Prevent processing if already handling a submission
       if (processingSubmission || submissionCompleted) {
         console.log("[AuthContext] Submission already in progress or completed, skipping");
-        sessionStorage.removeItem('forceRetrySubmission');
         return;
       }
       
@@ -141,12 +145,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
         
         // Ensure contact info has user's email and name if available
-        if (!contactInfo.fullName && user?.user_metadata?.full_name) {
-          contactInfo.fullName = user.user_metadata.full_name;
+        if (!contactInfo.fullName && data?.user?.user_metadata?.full_name) {
+          contactInfo.fullName = data.user.user_metadata.full_name;
         }
         
-        if (!contactInfo.email && user?.email) {
-          contactInfo.email = user.email;
+        if (!contactInfo.email && data?.user?.email) {
+          contactInfo.email = data.user.email;
         }
         
         // Submit the data with explicit userId
@@ -173,21 +177,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.error(`[AuthContext] Submission failed:`, result.error);
           toast.error(`Failed to submit your data: ${result.error}`);
           
-          // If the error suggests we should try again later, keep the retry flag
-          if (result.error?.includes('try again') || result.error?.includes('Authorization error')) {
+          // If the error suggests we should try again later or is an authorization error, keep the retry flag
+          if (result.error?.includes('try again') || 
+              result.error?.includes('Authorization error') ||
+              result.error?.includes('violates row-level security policy')) {
+            console.log("[AuthContext] Setting retry flag due to authorization error");
             sessionStorage.setItem('forceRetrySubmission', 'true');
+            toast.info("We'll try again after email verification is confirmed");
           }
         }
       } catch (error: any) {
         console.error("[AuthContext] Error submitting pending form data:", error);
         toast.error("There was an error processing your submission.");
+        
+        // Set retry flag if it seems like an auth or timing issue
+        sessionStorage.setItem('forceRetrySubmission', 'true');
       } finally {
         setProcessingSubmission(false);
       }
     } else {
       console.log("[AuthContext] No pending form data found or no submission flag");
-      // Always clear the retry flag when done checking
-      sessionStorage.removeItem('forceRetrySubmission');
+      // Keep the retry flag if needed but not processed yet
+      if (pendingFormData && !submitAfterVerification) {
+        console.log("[AuthContext] Found pending form data but no submission flag");
+      }
     }
   };
 
@@ -196,7 +209,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    return await supabase.auth.signUp({
+    const response = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -205,6 +218,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
     });
+    
+    if (!response.error && response.data?.user) {
+      console.log("[AuthContext] Sign up successful, user created with ID:", response.data.user.id);
+    }
+    
+    return response;
   };
 
   const signOut = async () => {
@@ -226,7 +245,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signIn,
         signUp,
         signOut,
-        loading,
+        loading: loading || !isInitialized,
         processingSubmission,
         setProcessingSubmission,
         submissionCompleted,

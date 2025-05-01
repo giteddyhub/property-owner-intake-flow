@@ -73,6 +73,10 @@ const getSubmissionTracker = (() => {
       const state = getState();
       state.completed = state.completed.filter(id => id !== userId);
       setState(state);
+    },
+    
+    getActiveCount: () => {
+      return getState().active.length;
     }
   };
 })();
@@ -95,6 +99,13 @@ export const submitFormData = async (
     getSubmissionTracker.reset();
   }
   
+  // Verify userId is provided and valid
+  if (!userId) {
+    const error = "User ID is required for form submission";
+    console.error(`[submissionService] ${error}`);
+    return { success: false, error };
+  }
+  
   // Check if this user already has a completed submission
   if (userId && getSubmissionTracker.isCompleted(userId)) {
     console.log(`[submissionService] User ${userId} already has a completed submission`);
@@ -107,6 +118,15 @@ export const submitFormData = async (
     console.log("[submissionService] Force retry flag found, clearing completed state");
     getSubmissionTracker.clearCompleted(userId);
     sessionStorage.removeItem('forceRetrySubmission');
+  }
+  
+  // Check if there are too many active submissions (prevents potential spamming)
+  if (getSubmissionTracker.getActiveCount() >= 3) {
+    console.log("[submissionService] Too many active submissions, rejecting new submission");
+    return { 
+      success: false, 
+      error: "Too many active submissions. Please wait a moment and try again." 
+    };
   }
   
   // Check if another submission is already in progress
@@ -138,21 +158,24 @@ export const submitFormData = async (
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
-    // CRITICAL: Verify the user is authenticated
-    if (!userId) {
-      throw new Error("User ID is required for form submission");
-    }
-    
-    // Verify that the user can be found in the auth system
+    // CRITICAL: Verify the user is authenticated and email is verified
     const { data: userData, error: userError } = await supabase.auth.getUser();
+    
     if (userError || !userData?.user) {
       console.error("[submissionService] Error verifying user:", userError);
       throw new Error("Failed to verify user authentication. Please sign in again.");
     }
     
+    // Verify email is confirmed
+    if (!userData.user.email_confirmed_at && !userData.user.confirmed_at) {
+      console.error("[submissionService] User email not verified:", userData.user.email);
+      throw new Error("Email verification required. Please check your inbox and verify your email address before submitting.");
+    }
+    
     // Step 1: Create form submission entry
     console.log(`[submissionService] Creating form submission for user:`, userId);
     
+    // Initial attempt to create submission
     const submissionData = {
       user_id: userId,
       submitted_at: new Date().toISOString(),
@@ -160,11 +183,24 @@ export const submitFormData = async (
       has_document_retrieval: hasDocumentRetrievalService
     };
     
-    const { data: formData, error: formError } = await supabase
-      .from('form_submissions')
-      .insert(submissionData)
-      .select('id')
-      .single();
+    let formData;
+    let formError;
+    
+    try {
+      const response = await supabase
+        .from('form_submissions')
+        .insert(submissionData)
+        .select('id')
+        .single();
+      
+      formData = response.data;
+      formError = response.error;
+    } catch (insertError) {
+      console.error("[submissionService] Exception during form submission insert:", insertError);
+      formError = {
+        message: insertError instanceof Error ? insertError.message : String(insertError)
+      };
+    }
     
     if (formError) {
       console.error('[submissionService] Failed to create form submission:', formError);

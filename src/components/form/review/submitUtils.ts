@@ -54,7 +54,7 @@ export const submitFormData = async (
         console.error("[submitUtils] No user ID available and no authenticated user found");
         return { 
           success: false, 
-          error: "Authentication required for submission. Please sign in first." 
+          error: "Authentication required for submission. Please sign in and verify your email first." 
         };
       }
     }
@@ -62,7 +62,11 @@ export const submitFormData = async (
     // Double-check if the user has a confirmed email
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.email_confirmed_at && !userData?.user?.confirmed_at) {
-      console.warn("[submitUtils] User email not confirmed yet. Submission may fail due to RLS policies.");
+      console.warn("[submitUtils] User email not confirmed yet.");
+      return {
+        success: false,
+        error: "Email verification required. Please check your inbox and click the verification link before submitting data."
+      };
     }
     
     // Directly call the submission service with user ID

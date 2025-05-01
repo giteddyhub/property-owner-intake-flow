@@ -27,25 +27,46 @@ const FormLayout: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   
-  // Redirect authenticated users to dashboard
+  // Only redirect authenticated users who are not in the verification flow
   useEffect(() => {
     if (loading) {
       return; // Wait until auth is loaded
     }
     
-    if (user) {
-      toast.warning('You are already signed in', {
-        description: 'Redirecting to your dashboard...',
-        icon: <AlertTriangle className="h-4 w-4" />,
-        duration: 3000,
-      });
+    const isVerifying = sessionStorage.getItem('pendingUserEmail') || 
+                        sessionStorage.getItem('pendingFormData') ||
+                        window.location.pathname === '/verify-email';
+    
+    if (user && !isVerifying) {
+      // Check if user's email is verified before redirecting
+      const isEmailVerified = user.email_confirmed_at || user.confirmed_at;
       
-      // Short delay to allow toast to be seen
-      const timer = setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
-      
-      return () => clearTimeout(timer);
+      if (isEmailVerified) {
+        toast.warning('You are already signed in', {
+          description: 'Redirecting to your dashboard...',
+          icon: <AlertTriangle className="h-4 w-4" />,
+          duration: 3000,
+        });
+        
+        // Short delay to allow toast to be seen
+        const timer = setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+      } else {
+        // If user is authenticated but not verified, redirect to verification page
+        toast.info('Please verify your email address', {
+          description: 'Redirecting to email verification page...',
+          duration: 3000,
+        });
+        
+        const timer = setTimeout(() => {
+          navigate('/verify-email');
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+      }
     }
   }, [user, navigate, loading]);
 
@@ -115,7 +136,7 @@ const FormLayout: React.FC = () => {
                 <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2"></div>
                 <div 
                   className="absolute top-1/2 left-0 h-0.5 bg-form-300 -translate-y-1/2 transition-all" 
-                  style={{ width: `${(currentStep + 1) * 25}%` }}
+                  style={{ width: `${(currentStep) * 25}%` }}
                 ></div>
               </div>
             </div>

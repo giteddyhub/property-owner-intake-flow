@@ -5,7 +5,6 @@ import Index from './pages/Index';
 import PaymentCancelled from './pages/PaymentCancelled';
 import NotFound from './pages/NotFound';
 import { Toaster } from '@/components/ui/toaster';
-import { useToast } from '@/hooks/use-toast';
 import ResidentSuccessPage from './pages/ResidentSuccessPage';
 import ResidencyAssessmentPage from './pages/ResidencyAssessmentPage';
 import DashboardPage from './pages/DashboardPage';
@@ -14,6 +13,7 @@ import LoginPage from './pages/LoginPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import { Sonner } from 'sonner';
 
 // Protected route component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -50,7 +50,6 @@ const AnonymousRoute = ({ children }: { children: React.ReactNode }) => {
 
 // This component wraps the routes and handles location-based effects
 const AppRoutes = () => {
-  const { toast } = useToast();
   const location = useLocation();
 
   useEffect(() => {
@@ -70,7 +69,7 @@ const AppRoutes = () => {
         type: 'error',
       });
     }
-  }, [location.search, toast]);
+  }, [location.search]);
 
   return (
     <Routes>
@@ -114,7 +113,7 @@ function App() {
       <Router>
         <div className="min-h-screen bg-background">
           <AppRoutes />
-          <Toaster />
+          <Sonner position="top-right" closeButton={true} richColors />
         </div>
       </Router>
     </AuthProvider>

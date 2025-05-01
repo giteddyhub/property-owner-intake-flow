@@ -5,6 +5,7 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { submitFormData } from '@/components/form/review/submitUtils';
+import { useNavigate } from 'react-router-dom';
 
 type ReviewStepContextType = {
   isSubmitting: boolean;
@@ -47,16 +48,9 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
   const [submissionInProgress, setSubmissionInProgress] = useState(false);
   const [submissionAttempted, setSubmissionAttempted] = useState(false);
   const { user, processingSubmission, setProcessingSubmission, submissionCompleted } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmitButtonClick = () => {
-    // Prevent duplicate submissions
-    if (processingSubmission || submissionInProgress || submissionCompleted) {
-      toast.info("Your submission is already being processed");
-      return;
-    }
-    
-    console.log("[ReviewStepContext] handleSubmitButtonClick with user:", user?.id || "not logged in");
-    
+  const storeFormDataInSession = () => {
     // Store form data in sessionStorage so we can access it post-authentication
     const pendingFormData = {
       owners,
@@ -72,7 +66,7 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
     if (!Array.isArray(owners) || !Array.isArray(properties) || !Array.isArray(assignments)) {
       toast.error("Invalid form data. Please try again.");
       console.error("[ReviewStepContext] Invalid form data structure:", { owners, properties, assignments });
-      return;
+      return false;
     }
     
     console.log("[ReviewStepContext] Storing pending form data with counts:", {
@@ -81,12 +75,28 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
       assignments: assignments.length
     });
     
+    // Store the pending form data
+    sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
+    return true;
+  };
+
+  const handleSubmitButtonClick = () => {
+    // Prevent duplicate submissions
+    if (processingSubmission || submissionInProgress || submissionCompleted) {
+      toast.info("Your submission is already being processed");
+      return;
+    }
+    
+    console.log("[ReviewStepContext] handleSubmitButtonClick with user:", user?.id || "not logged in");
+    
     // Clear any previous submission flags to start fresh
     sessionStorage.removeItem('formSubmittedDuringSignup');
     sessionStorage.removeItem('forceRetrySubmission');
     
-    // Store the pending form data
-    sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
+    // Store form data in session storage
+    if (!storeFormDataInSession()) {
+      return;
+    }
     
     if (!user) {
       console.log("[ReviewStepContext] User not logged in, showing auth modal");
@@ -109,8 +119,10 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
         toast.warning("You need to verify your email before submitting data", {
           description: "Redirecting to verification page..."
         });
-        // Use window.location for a full page reload to trigger auth state
-        window.location.href = '/verify-email';
+        // Use navigate for a more controlled redirect
+        setTimeout(() => {
+          navigate('/verify-email');
+        }, 1500);
       }
     }
   };
@@ -125,7 +137,8 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
     // No need to handle submission here - it will be handled by AuthContext
     console.log("[ReviewStepContext] Auth success, submission will be handled by AuthContext");
     
-    // The submitAfterVerification flag is already set, AuthContext will handle submission
+    // Ensure the submitAfterVerification flag is set
+    sessionStorage.setItem('submitAfterVerification', 'true');
   };
   
   const handleSubmit = async () => {
@@ -173,9 +186,26 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
       // Notify user of success
       toast.success("Your information has been submitted successfully!");
       
+      // Redirect to dashboard after successful submission
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+      
     } catch (error: any) {
       console.error("[ReviewStepContext] Error during submission:", error);
       toast.error(error.message || 'There was an error submitting your information. Please try again.');
+      
+      // If the error is related to authorization, we might need to redirect to verification
+      if (error.message?.includes('Authorization error') || 
+          error.message?.includes('violates row-level security policy')) {
+        
+        toast.info("You may need to verify your email. Redirecting to verification page...");
+        sessionStorage.setItem('submitAfterVerification', 'true');
+        
+        setTimeout(() => {
+          navigate('/verify-email');
+        }, 2000);
+      }
     } finally {
       setIsSubmitting(false);
       setProcessingSubmission(false);
