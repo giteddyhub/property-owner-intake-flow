@@ -9,7 +9,7 @@ import AssignmentReviewCard from '../review/AssignmentReviewCard';
 import SubmissionSummary from '../review/SubmissionSummary';
 import SectionHeader from '../review/SectionHeader';
 import ReviewActions from '../review/ReviewActions';
-import { submitFormData } from '../review/submitUtils';
+import { submitFormData } from '../review/utils/submitUtils';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '../../auth/AuthModal';

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { LoadingScreen } from '@/components/dashboard/LoadingScreen';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { toast } from 'sonner';
 
 const DashboardPage = () => {
   const { user, signOut } = useAuth();
@@ -20,6 +21,28 @@ const DashboardPage = () => {
     userId: user?.id,
     refreshFlag 
   });
+
+  // Detect if we're coming back from form submission
+  useEffect(() => {
+    const isComingFromSubmission = sessionStorage.getItem('contactId');
+    if (isComingFromSubmission && user) {
+      // Clear the flag to avoid showing the message again
+      sessionStorage.removeItem('contactId');
+      
+      // Show the welcome message
+      toast.success("Welcome to your dashboard!", {
+        description: "Your property information has been saved and is now available in your account.",
+        duration: 5000,
+      });
+    }
+  }, [user]);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!user && !loading) {
+      navigate('/');
+    }
+  }, [user, navigate, loading]);
 
   // Add a global cleanup handler
   useEffect(() => {
@@ -68,20 +91,14 @@ const DashboardPage = () => {
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
 
   return (
     <DashboardLayout

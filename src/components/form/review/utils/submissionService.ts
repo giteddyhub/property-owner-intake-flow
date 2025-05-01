@@ -1,6 +1,6 @@
 
-import { toast } from '@/hooks/use-toast';
-import type { SubmissionData } from './types';
+import { toast } from 'sonner';
+import type { ContactInfo } from './types';
 import { saveContactInfo } from './contactService';
 import { saveOwners } from './ownerService';
 import { saveProperties } from './propertyService';
@@ -51,7 +51,7 @@ export const submitFormData = async (
     const propertyIdMap = await saveProperties(properties, contactId, userId);
     
     // Step 4: Save owner-property assignments
-    await saveAssignments(assignments, propertyIdMap, ownerIdMap, contactId, userId);
+    await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, userId);
     
     // Success notification
     toast.success("Form submitted successfully! Thank you for completing the property owner intake process.");

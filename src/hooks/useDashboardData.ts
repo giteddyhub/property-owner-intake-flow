@@ -33,33 +33,73 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
   const [assignments, setAssignments] = useState<OwnerPropertyAssignment[]>([]);
 
   useEffect(() => {
-    if (!userId) return;
+    // Don't try to fetch data if no userId is available
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchUserData = async () => {
       setLoading(true);
       try {
+        console.log("Fetching user data for userId:", userId);
+        
+        // Check if the user exists in the database first
+        const { data: userData, error: userError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', userId)
+          .single();
+        
+        if (userError) {
+          console.log("User not found in profiles:", userError);
+        }
+        
+        // Fetch owners data
         const { data: ownersData, error: ownersError } = await supabase
           .from('owners')
           .select('*')
           .eq('user_id', userId);
 
-        if (ownersError) throw ownersError;
+        if (ownersError) {
+          console.error("Error fetching owners:", ownersError);
+          throw ownersError;
+        }
+        console.log("Owners data fetched:", ownersData?.length || 0);
         
+        // Fetch properties data
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select('*')
           .eq('user_id', userId);
 
-        if (propertiesError) throw propertiesError;
+        if (propertiesError) {
+          console.error("Error fetching properties:", propertiesError);
+          throw propertiesError;
+        }
+        console.log("Properties data fetched:", propertiesData?.length || 0);
         
-        const { data: assignmentsData, error: assignmentsError } = await supabase
-          .from('owner_property_assignments')
-          .select('*')
-          .in('owner_id', ownersData.length > 0 ? ownersData.map(o => o.id) : ['none']);
-
-        if (assignmentsError) throw assignmentsError;
+        // If we have owners, fetch assignments related to those owners
+        let assignmentsData = [];
+        if (ownersData && ownersData.length > 0) {
+          const ownerIds = ownersData.map(o => o.id);
+          const { data, error: assignmentsError } = await supabase
+            .from('owner_property_assignments')
+            .select('*')
+            .in('owner_id', ownerIds);
+            
+          if (assignmentsError) {
+            console.error("Error fetching assignments:", assignmentsError);
+            throw assignmentsError;
+          }
+          assignmentsData = data || [];
+          console.log("Assignments data fetched:", assignmentsData.length);
+        } else {
+          console.log("No owners found, skipping assignments fetch");
+        }
         
-        const mappedOwners: Owner[] = ownersData.map(dbOwner => ({
+        // Map the data to the expected formats
+        const mappedOwners: Owner[] = (ownersData || []).map(dbOwner => ({
           id: dbOwner.id,
           firstName: dbOwner.first_name,
           lastName: dbOwner.last_name,
@@ -82,10 +122,11 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           } : undefined
         }));
         
-        const mappedProperties: Property[] = propertiesData.map(dbProperty => {
+        const mappedProperties: Property[] = (propertiesData || []).map(dbProperty => {
+          // Handle documents parsing
           let parsedDocuments: PropertyDocument[] = [];
-          if (dbProperty.documents && Array.isArray(dbProperty.documents)) {
-            try {
+          try {
+            if (dbProperty.documents && Array.isArray(dbProperty.documents)) {
               parsedDocuments = dbProperty.documents.map(docString => {
                 try {
                   if (typeof docString === 'string') {
@@ -93,72 +134,47 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
                   }
                   return docString;
                 } catch (e) {
+                  console.log("Error parsing document string:", docString);
                   return {
                     id: 'unknown',
-                    name: docString,
+                    name: typeof docString === 'string' ? docString : 'Unknown document',
                     type: 'unknown',
                     size: 0,
                     uploadDate: new Date()
                   };
                 }
               });
-            } catch (e) {
-              console.error('Error parsing documents:', e);
             }
+          } catch (e) {
+            console.error('Error parsing documents:', e);
           }
 
-          // Improved parsing of occupancy statuses to handle different formats
+          // Handle occupancy statuses parsing
           let parsedOccupancyStatuses: OccupancyAllocation[] = [];
           try {
             if (typeof dbProperty.occupancy_statuses === 'string') {
               parsedOccupancyStatuses = JSON.parse(dbProperty.occupancy_statuses);
             } else if (Array.isArray(dbProperty.occupancy_statuses)) {
               // Handle case when it's an array of strings that need parsing
-              if (dbProperty.occupancy_statuses.length > 0 && typeof dbProperty.occupancy_statuses[0] === 'string') {
-                // Try to parse the first element to see if it's a JSON string containing an array
-                try {
-                  const parsed = JSON.parse(dbProperty.occupancy_statuses[0]);
-                  if (Array.isArray(parsed)) {
-                    parsedOccupancyStatuses = parsed;
-                  } else if (typeof parsed === 'object' && parsed !== null) {
-                    parsedOccupancyStatuses = [parsed];
+              parsedOccupancyStatuses = dbProperty.occupancy_statuses
+                .map(item => {
+                  if (typeof item === 'string') {
+                    try {
+                      return JSON.parse(item);
+                    } catch (e) {
+                      console.error('Failed to parse occupancy status item:', item);
+                      return null;
+                    }
                   }
-                } catch {
-                  // If parsing failed, try to parse each string individually
-                  parsedOccupancyStatuses = dbProperty.occupancy_statuses
-                    .map(item => {
-                      if (typeof item === 'string') {
-                        try {
-                          return JSON.parse(item);
-                        } catch (e) {
-                          console.error('Failed to parse occupancy status item:', item);
-                          return null;
-                        }
-                      }
-                      return item;
-                    })
-                    .filter(Boolean) as OccupancyAllocation[];
-                }
-              } else {
-                // It's already an array of objects
-                parsedOccupancyStatuses = dbProperty.occupancy_statuses.map(item => {
-                  if (typeof item === 'object' && item !== null) {
-                    return item as OccupancyAllocation;
-                  }
-                  return { status: 'PERSONAL_USE' as OccupancyStatus, months: 12 };
-                });
-              }
+                  return item;
+                })
+                .filter(Boolean) as OccupancyAllocation[];
             }
             
             // Ensure we always have valid occupancy statuses
             if (!parsedOccupancyStatuses || parsedOccupancyStatuses.length === 0) {
               parsedOccupancyStatuses = [{ status: 'PERSONAL_USE' as OccupancyStatus, months: 12 }];
             }
-            
-            // Final validation pass to ensure all statuses have both status and months
-            parsedOccupancyStatuses = parsedOccupancyStatuses
-              .filter(item => item && typeof item === 'object' && 'status' in item && 'months' in item);
-              
           } catch (e) {
             console.error('Error parsing occupancy statuses:', e, dbProperty.occupancy_statuses);
             parsedOccupancyStatuses = [{ status: 'PERSONAL_USE' as OccupancyStatus, months: 12 }];
