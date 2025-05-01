@@ -4,6 +4,7 @@ import { Owner } from '@/components/dashboard/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createEmptyOwner } from '@/components/form/owner/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UseOwnerDrawerProps {
   owner?: Owner;
@@ -15,6 +16,7 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResidencyDialog, setShowResidencyDialog] = useState(false);
   const [currentOwner, setCurrentOwner] = useState<Owner>(owner || createEmptyOwner());
+  const { user } = useAuth(); // Get the current authenticated user
   
   // Reset currentOwner when owner prop changes
   useEffect(() => {
@@ -37,6 +39,12 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
     setIsSubmitting(true);
     
     try {
+      const userId = user?.id;
+      
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+      
       if (owner?.id) {
         // Update existing owner
         const { error } = await supabase
@@ -58,7 +66,8 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
             italian_residence_street: currentOwner.italianResidenceDetails?.street || null,
             italian_residence_city: currentOwner.italianResidenceDetails?.city || null,
             italian_residence_zip: currentOwner.italianResidenceDetails?.zip || null,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            user_id: userId // Make sure to include the user_id in updates too
           })
           .eq('id', owner.id);
           
@@ -84,7 +93,8 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
             // Only access ItalianResidenceDetails properties if they exist
             italian_residence_street: currentOwner.italianResidenceDetails?.street || null,
             italian_residence_city: currentOwner.italianResidenceDetails?.city || null,
-            italian_residence_zip: currentOwner.italianResidenceDetails?.zip || null
+            italian_residence_zip: currentOwner.italianResidenceDetails?.zip || null,
+            user_id: userId // Set the user_id field with the current user's ID
           });
           
         if (error) throw error;
