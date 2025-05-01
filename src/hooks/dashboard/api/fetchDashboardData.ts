@@ -88,36 +88,46 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     if (ownersData.length > 0) {
       const ownerIds = ownersData.map(o => o.id);
       
-      // Use any type to avoid deep nesting in the type analysis
-      const assignmentsResult: any = await supabase
-        .from('owner_property_assignments')
-        .select('*')
-        .in('owner_id', ownerIds);
+      try {
+        // Completely avoiding complex type inference by using .then() syntax
+        // This prevents deep type analysis that causes the infinite instantiation error
+        const result = await supabase
+          .from('owner_property_assignments')
+          .select()
+          .in('owner_id', ownerIds)
+          .then(res => {
+            if (res.error) throw res.error;
+            // Return plain JavaScript objects to break type recursion
+            return res.data ? res.data.map(item => ({...item})) : [];
+          });
         
-      if (assignmentsResult.error) {
-        console.error("Error fetching assignments:", assignmentsResult.error);
-        throw assignmentsResult.error;
+        assignmentsData = result as DbAssignment[];
+        console.log("Assignments data fetched:", assignmentsData.length);
+      } catch (error) {
+        console.error("Error fetching assignments:", error);
       }
-      
-      assignmentsData = (assignmentsResult.data || []) as DbAssignment[];
-      console.log("Assignments data fetched:", assignmentsData.length);
     } else {
       console.log("No owners found, skipping assignments fetch");
       
-      // Alternative attempt - try fetching assignments directly by user_id
-      // Use raw query approach with JSON stringification to break type recursion
-      const response = await supabase
-        .from('owner_property_assignments')
-        .select()
-        .eq('user_id', userId);
-        
-      if (response.error) {
-        console.error("Error fetching assignments by user_id:", response.error);
-      } else if (response.data) {
-        // Break the type recursion by using JSON.parse(JSON.stringify())
-        const rawData = JSON.parse(JSON.stringify(response.data));
-        assignmentsData = Array.isArray(rawData) ? rawData : [];
+      try {
+        // Alternative attempt using plain promises to avoid TypeScript's inference problems
+        const result = await supabase
+          .from('owner_property_assignments')
+          .select()
+          .eq('user_id', userId)
+          .then(res => {
+            if (res.error) {
+              console.error("Error fetching assignments by user_id:", res.error);
+              return [];
+            }
+            // Return plain JavaScript objects
+            return res.data ? res.data.map(item => ({...item})) : [];
+          });
+          
+        assignmentsData = result as DbAssignment[];
         console.log("Assignments data fetched by user_id:", assignmentsData.length);
+      } catch (error) {
+        console.error("Alternative assignments fetch error:", error);
       }
     }
 
