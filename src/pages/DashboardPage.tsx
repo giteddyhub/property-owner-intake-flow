@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,12 +22,6 @@ const DashboardPage = () => {
   // Try to get the user ID from either the authenticated user or the stored pending ID
   const effectiveUserId = user?.id || pendingUserId;
   
-  // Fetch data using the effective user ID
-  const { loading, owners, properties, assignments } = useDashboardData({ 
-    userId: effectiveUserId,
-    refreshFlag 
-  });
-
   // Check for pendingUserId in both sessionStorage and localStorage
   useEffect(() => {
     const storedPendingUserId = sessionStorage.getItem('pendingUserId') || 
@@ -37,11 +32,19 @@ const DashboardPage = () => {
       setPendingUserId(storedPendingUserId);
     }
   }, []);
+  
+  // Fetch data using the effective user ID
+  const { loading, owners, properties, assignments } = useDashboardData({ 
+    userId: effectiveUserId,
+    refreshFlag 
+  });
 
   // Handle the case where we are coming back after a form submission
   useEffect(() => {
-    const isComingFromSubmission = sessionStorage.getItem('contactId');
-    if (isComingFromSubmission) {
+    const contactId = sessionStorage.getItem('contactId');
+    if (contactId) {
+      console.log("Found contact ID in session storage:", contactId);
+      
       // Clear the flag to avoid showing the message again
       sessionStorage.removeItem('contactId');
       
@@ -54,7 +57,19 @@ const DashboardPage = () => {
       // Refresh data to ensure we have the latest
       refreshData();
     }
-  }, [effectiveUserId, refreshData]);
+  }, [refreshData]);
+
+  // Check if there's any purchase id that we should redirect to
+  useEffect(() => {
+    const purchaseId = sessionStorage.getItem('purchaseId');
+    if (purchaseId && !loading) {
+      // Only redirect if we have verified the user is authenticated
+      if (effectiveUserId) {
+        console.log("Found pending tax filing session:", purchaseId);
+        navigate(`/tax-filing-service/${purchaseId}`);
+      }
+    }
+  }, [effectiveUserId, navigate, loading]);
 
   // Redirect if not authenticated and we don't have a pending user ID
   useEffect(() => {
@@ -119,6 +134,7 @@ const DashboardPage = () => {
     // Clear the pending user ID from storage
     sessionStorage.removeItem('pendingUserId');
     localStorage.removeItem('pendingUserId');
+    sessionStorage.removeItem('purchaseId');
     
     // If we had a pending user ID but no authenticated user, just navigate home
     if (pendingUserId && !user) {

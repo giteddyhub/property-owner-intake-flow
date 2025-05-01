@@ -25,9 +25,9 @@ export const submitFormData = async (
     
     // If no userId is provided but we have a pendingUserId in sessionStorage, use it
     if (!userId) {
-      const pendingUserId = sessionStorage.getItem('pendingUserId');
+      const pendingUserId = sessionStorage.getItem('pendingUserId') || localStorage.getItem('pendingUserId');
       if (pendingUserId) {
-        console.log("Using pending user ID from session storage:", pendingUserId);
+        console.log("Using pending user ID from storage:", pendingUserId);
         userId = pendingUserId;
       }
     }
@@ -43,6 +43,12 @@ export const submitFormData = async (
     
     // Log authentication status
     console.log("Final user ID for submission:", userId);
+    
+    if (!userId) {
+      console.error("No user ID available for submission");
+      toast.error("Authentication required. Please sign in to continue.");
+      throw new Error("No user ID available for submission");
+    }
     
     // Check if any property has document retrieval service enabled
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
@@ -71,35 +77,28 @@ export const submitFormData = async (
     // Add a brief delay before redirecting to ensure loading state is visible
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // If the user is authenticated or we have a pending user ID, create a tax filing session
-    if (userId) {
-      // Create a purchase entry to track this session
-      const { data: purchase, error: purchaseError } = await supabase
-        .from('purchases')
-        .insert({
-          contact_id: contactId,
-          payment_status: 'pending',
-          has_document_retrieval: hasDocumentRetrievalService,
-          amount: 0 // Will be calculated during checkout
-        })
-        .select('id')
-        .single();
-        
-      if (purchaseError) {
-        console.error('Failed to create purchase:', purchaseError);
-        throw purchaseError;
-      }
+    // Create a purchase entry to track this tax filing session
+    const { data: purchase, error: purchaseError } = await supabase
+      .from('purchases')
+      .insert({
+        contact_id: contactId,
+        payment_status: 'pending',
+        has_document_retrieval: hasDocumentRetrievalService,
+        amount: 0 // Will be calculated during checkout
+      })
+      .select('id')
+      .single();
       
-      // Store purchase ID in sessionStorage
-      sessionStorage.setItem('purchaseId', purchase.id);
-      
-      // Redirect to the tax filing service page
-      window.location.href = `/tax-filing-service/${purchase.id}`;
-    } else {
-      // If user is not logged in, redirect to success page as fallback
-      // This path should rarely happen as users are prompted to log in before submission
-      window.location.href = '/success';
+    if (purchaseError) {
+      console.error('Failed to create purchase:', purchaseError);
+      throw purchaseError;
     }
+    
+    // Store purchase ID in sessionStorage
+    sessionStorage.setItem('purchaseId', purchase.id);
+    
+    // Redirect to the tax filing service page
+    window.location.href = `/tax-filing-service/${purchase.id}`;
     
   } catch (error) {
     console.error('Error submitting form:', error);

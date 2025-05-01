@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 type AuthContextType = {
   session: Session | null;
@@ -23,7 +24,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event);
+        console.log('Auth state changed:', event, session?.user?.id);
+        
+        if (event === 'SIGNED_IN') {
+          // User has signed in
+          toast.success("Successfully signed in!");
+          
+          // Store the user ID in both sessionStorage and localStorage for persistence
+          if (session?.user?.id) {
+            sessionStorage.setItem('pendingUserId', session.user.id);
+            localStorage.setItem('pendingUserId', session.user.id);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          // User has signed out
+          toast.info("You have been signed out");
+          
+          // Clear stored IDs
+          sessionStorage.removeItem('pendingUserId');
+          localStorage.removeItem('pendingUserId');
+        } else if (event === 'USER_UPDATED') {
+          // This happens when email is verified
+          toast.success("Email verification successful!");
+        }
+        
+        // Update session and user state
         setSession(session);
         setUser(session?.user ?? null);
       }
@@ -31,8 +55,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Store the user ID if available
+      if (session?.user?.id) {
+        sessionStorage.setItem('pendingUserId', session.user.id);
+        localStorage.setItem('pendingUserId', session.user.id);
+      }
+      
       setLoading(false);
     });
 
@@ -57,10 +89,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       },
     });
+    
+    // If signup is successful, store the user ID
+    if (response.data?.user?.id) {
+      sessionStorage.setItem('pendingUserId', response.data.user.id);
+      localStorage.setItem('pendingUserId', response.data.user.id);
+    }
+    
     return { error: response.error, data: response.data };
   };
 
   const signOut = async () => {
+    // Clear stored user IDs
+    sessionStorage.removeItem('pendingUserId');
+    localStorage.removeItem('pendingUserId');
+    
     await supabase.auth.signOut();
   };
 

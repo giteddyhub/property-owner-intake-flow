@@ -35,6 +35,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
   useEffect(() => {
     // Don't try to fetch data if no userId is available
     if (!userId) {
+      console.log("No userId provided to useDashboardData, skipping data fetch");
       setLoading(false);
       return;
     }
@@ -44,7 +45,17 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
       try {
         console.log("Fetching user data for userId:", userId);
         
-        // Fetch contacts associated with this user first to ensure we have the right data
+        // First, check if the user exists in the auth.users table
+        const { data: authUserData, error: authUserError } = await supabase.auth.getUser();
+        
+        if (authUserError) {
+          console.error("Error fetching auth user:", authUserError);
+          // Continue anyway as we might be using a pendingUserId
+        } else {
+          console.log("Auth user data:", authUserData?.user?.id);
+        }
+        
+        // Fetch contacts associated with this user
         const { data: contactsData, error: contactsError } = await supabase
           .from('contacts')
           .select('id')
@@ -55,9 +66,9 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           throw contactsError;
         }
         
-        console.log("Contacts associated with user:", contactsData);
+        console.log("Contacts associated with user:", contactsData?.length || 0);
         
-        // Fetch owners data - use user_id directly and also check for any owner linked to user's contacts
+        // Fetch owners data - use user_id directly
         const { data: ownersData, error: ownersError } = await supabase
           .from('owners')
           .select('*')
@@ -69,7 +80,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         }
         console.log("Owners data fetched:", ownersData?.length || 0);
         
-        // Fetch properties data - same approach as owners
+        // Fetch properties data
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select('*')
@@ -98,6 +109,19 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           console.log("Assignments data fetched:", assignmentsData.length);
         } else {
           console.log("No owners found, skipping assignments fetch");
+          
+          // Alternative attempt - try fetching assignments directly by user_id
+          const { data, error: assignmentsError } = await supabase
+            .from('owner_property_assignments')
+            .select('*')
+            .eq('user_id', userId);
+            
+          if (assignmentsError) {
+            console.error("Error fetching assignments by user_id:", assignmentsError);
+          } else {
+            assignmentsData = data || [];
+            console.log("Assignments data fetched by user_id:", assignmentsData.length);
+          }
         }
         
         // Map the data to the expected formats
@@ -221,6 +245,11 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         setOwners(mappedOwners);
         setProperties(mappedProperties);
         setAssignments(mappedAssignments);
+        
+        if (!ownersData?.length && !propertiesData?.length) {
+          console.warn("No data found for this user. This might be expected for new users.");
+        }
+        
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         toast.error('Failed to load your data. Please try again later.');

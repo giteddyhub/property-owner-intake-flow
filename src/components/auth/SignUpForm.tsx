@@ -49,13 +49,23 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         toast.success('Account created successfully!');
         setIsSignedUp(true);
         
-        // Store the userId in sessionStorage for use after email verification
+        // Store the userId in both sessionStorage and localStorage for persistence
         if (data?.user?.id) {
-          console.log("Setting user ID in session storage:", data.user.id);
+          console.log("Setting user ID in storage:", data.user.id);
           sessionStorage.setItem('pendingUserId', data.user.id);
-          
-          // Also store in localStorage for persistence across page reloads
           localStorage.setItem('pendingUserId', data.user.id);
+          
+          // Also check if we have any form submission data that needs to be preserved
+          const contactId = sessionStorage.getItem('contactId');
+          if (contactId) {
+            console.log("Found contactId in storage, this means we need to preserve purchase ID");
+            // Get purchase ID if available
+            const purchaseId = sessionStorage.getItem('purchaseId');
+            if (purchaseId) {
+              console.log("Found purchaseId in storage:", purchaseId);
+              // This will be used for redirect after email verification
+            }
+          }
         }
         
         // Only call onSuccess if redirectAfterAuth is false
