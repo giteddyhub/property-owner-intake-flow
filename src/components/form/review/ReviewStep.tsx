@@ -38,12 +38,24 @@ const ReviewStep: React.FC = () => {
   const handleAuthSuccess = () => {
     // Close the auth modal
     setShowAuthModal(false);
+    
     // Short timeout to ensure auth state is updated
     setTimeout(() => {
-      // Get the latest user from the auth context
+      // Get the current user from Auth context
       const currentUser = user;
+      
       if (currentUser) {
+        console.log("Auth success with user:", currentUser.id);
         handleSubmit();
+      } else {
+        // If no user is available yet but we have a pending ID, try to proceed
+        const pendingUserId = sessionStorage.getItem('pendingUserId');
+        if (pendingUserId) {
+          console.log("No user object yet, but proceeding with pending user ID:", pendingUserId);
+          handleSubmit();
+        } else {
+          toast.error("Authentication required. Please sign in to continue.");
+        }
       }
     }, 500);
   };
@@ -64,6 +76,7 @@ const ReviewStep: React.FC = () => {
       
       // Get current authenticated user 
       const currentUser = user;
+      const userId = currentUser?.id || sessionStorage.getItem('pendingUserId');
       
       // Get user information to populate contact info
       const contactInfo = {
@@ -74,7 +87,7 @@ const ReviewStep: React.FC = () => {
       };
       
       // Pass the user ID explicitly to ensure data association
-      await submitFormData(owners, properties, assignments, contactInfo, currentUser?.id || null);
+      await submitFormData(owners, properties, assignments, contactInfo, userId);
     } catch (error) {
       console.error('Error during submission:', error);
       toast.error('There was an error submitting your information. Please try again.');

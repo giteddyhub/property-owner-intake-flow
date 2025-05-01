@@ -44,18 +44,20 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
       try {
         console.log("Fetching user data for userId:", userId);
         
-        // Check if the user exists in the database first
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
+        // Fetch contacts associated with this user first to ensure we have the right data
+        const { data: contactsData, error: contactsError } = await supabase
+          .from('contacts')
           .select('id')
-          .eq('id', userId)
-          .single();
+          .eq('user_id', userId);
         
-        if (userError) {
-          console.log("User not found in profiles:", userError);
+        if (contactsError) {
+          console.error("Error fetching contacts:", contactsError);
+          throw contactsError;
         }
         
-        // Fetch owners data
+        console.log("Contacts associated with user:", contactsData);
+        
+        // Fetch owners data - use user_id directly and also check for any owner linked to user's contacts
         const { data: ownersData, error: ownersError } = await supabase
           .from('owners')
           .select('*')
@@ -67,7 +69,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         }
         console.log("Owners data fetched:", ownersData?.length || 0);
         
-        // Fetch properties data
+        // Fetch properties data - same approach as owners
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select('*')

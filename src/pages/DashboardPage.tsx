@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,26 +5,43 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { LoadingScreen } from '@/components/dashboard/LoadingScreen';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const DashboardPage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('properties');
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   
   const [refreshFlag, setRefreshFlag] = useState(0);
   const refreshData = useCallback(() => {
     setRefreshFlag(prev => prev + 1);
   }, []);
   
+  // Try to get the user ID from either the authenticated user or the stored pending ID
+  const effectiveUserId = user?.id || pendingUserId;
+  
+  // Fetch data using the effective user ID
   const { loading, owners, properties, assignments } = useDashboardData({ 
-    userId: user?.id,
+    userId: effectiveUserId,
     refreshFlag 
   });
 
-  // Detect if we're coming back from form submission
+  // Check for pendingUserId in both sessionStorage and localStorage
+  useEffect(() => {
+    const storedPendingUserId = sessionStorage.getItem('pendingUserId') || 
+                              localStorage.getItem('pendingUserId');
+    
+    if (storedPendingUserId) {
+      console.log("Found pending user ID in storage:", storedPendingUserId);
+      setPendingUserId(storedPendingUserId);
+    }
+  }, []);
+
+  // Handle the case where we are coming back after a form submission
   useEffect(() => {
     const isComingFromSubmission = sessionStorage.getItem('contactId');
-    if (isComingFromSubmission && user) {
+    if (isComingFromSubmission) {
       // Clear the flag to avoid showing the message again
       sessionStorage.removeItem('contactId');
       
@@ -34,15 +50,19 @@ const DashboardPage = () => {
         description: "Your property information has been saved and is now available in your account.",
         duration: 5000,
       });
+      
+      // Refresh data to ensure we have the latest
+      refreshData();
     }
-  }, [user]);
+  }, [effectiveUserId, refreshData]);
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated and we don't have a pending user ID
   useEffect(() => {
-    if (!user && !loading) {
+    if (!user && !pendingUserId && !loading) {
+      console.log("No authenticated user or pending ID found, redirecting to home");
       navigate('/');
     }
-  }, [user, navigate, loading]);
+  }, [user, navigate, loading, pendingUserId]);
 
   // Add a global cleanup handler
   useEffect(() => {
@@ -96,6 +116,17 @@ const DashboardPage = () => {
   }
 
   const handleSignOut = async () => {
+    // Clear the pending user ID from storage
+    sessionStorage.removeItem('pendingUserId');
+    localStorage.removeItem('pendingUserId');
+    
+    // If we had a pending user ID but no authenticated user, just navigate home
+    if (pendingUserId && !user) {
+      navigate('/');
+      return;
+    }
+    
+    // Otherwise, perform the normal sign out
     await signOut();
     navigate('/');
   };

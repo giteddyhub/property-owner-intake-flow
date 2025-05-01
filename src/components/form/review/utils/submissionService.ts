@@ -32,6 +32,18 @@ export const submitFormData = async (
       }
     }
     
+    // Double check if we can get the current user from Supabase
+    if (!userId) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.user?.id) {
+        userId = sessionData.session.user.id;
+        console.log("Retrieved user ID from current session:", userId);
+      }
+    }
+    
+    // Log authentication status
+    console.log("Final user ID for submission:", userId);
+    
     // Check if any property has document retrieval service enabled
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
     
@@ -44,13 +56,13 @@ export const submitFormData = async (
     // Store contact ID in sessionStorage
     sessionStorage.setItem('contactId', contactId);
     
-    // Step 2: Save owners and get ID mappings
+    // Step 2: Save owners and get ID mappings - pass userId explicitly
     const ownerIdMap = await saveOwners(owners, contactId, userId);
     
-    // Step 3: Save properties and get ID mappings
+    // Step 3: Save properties and get ID mappings - pass userId explicitly
     const propertyIdMap = await saveProperties(properties, contactId, userId);
     
-    // Step 4: Save owner-property assignments
+    // Step 4: Save owner-property assignments - pass userId explicitly
     await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, userId);
     
     // Success notification

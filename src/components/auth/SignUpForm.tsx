@@ -53,6 +53,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         if (data?.user?.id) {
           console.log("Setting user ID in session storage:", data.user.id);
           sessionStorage.setItem('pendingUserId', data.user.id);
+          
+          // Also store in localStorage for persistence across page reloads
+          localStorage.setItem('pendingUserId', data.user.id);
         }
         
         // Only call onSuccess if redirectAfterAuth is false
