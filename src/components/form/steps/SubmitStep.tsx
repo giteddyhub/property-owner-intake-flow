@@ -42,6 +42,8 @@ const SubmitStep: React.FC = () => {
         email: user?.email || ''
       };
       
+      console.log("Submit Step: Submitting with user ID:", user?.id);
+      
       // Submit the form data with user ID so it appears in dashboard
       if (user) {
         await submitFormData(owners, properties, assignments, contactInfo, user.id);

@@ -41,19 +41,27 @@ export const submitFormData = async (
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
     // Step 1: Save contact information
+    console.log("Saving contact info with userId:", userId);
     const contactId = await saveContactInfo(contactInfo, userId);
+    console.log("Contact saved with ID:", contactId);
     
     // Store contact ID in sessionStorage
     sessionStorage.setItem('contactId', contactId);
     
     // Step 2: Save owners and get ID mappings - ensure user_id is passed
+    console.log("Saving owners with userId:", userId);
     const ownerIdMap = await saveOwners(owners, contactId, userId);
+    console.log("Owner ID mapping:", ownerIdMap);
     
     // Step 3: Save properties and get ID mappings - ensure user_id is passed
+    console.log("Saving properties with userId:", userId);
     const propertyIdMap = await saveProperties(properties, contactId, userId);
+    console.log("Property ID mapping:", propertyIdMap);
     
     // Step 4: Save owner-property assignments - ensure user_id is passed
+    console.log("Saving assignments with userId:", userId);
     await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, userId);
+    console.log("Assignments saved successfully");
     
     // Success notification
     toast.success("Form submitted successfully! Thank you for completing the property owner intake process.");
@@ -84,11 +92,14 @@ export const submitFormData = async (
       // Store purchase ID in sessionStorage
       sessionStorage.setItem('purchaseId', purchase.id);
       
+      console.log("Redirecting to tax filing service page with purchase ID:", purchase.id);
+      
       // Redirect to the tax filing service page
       window.location.href = `/tax-filing-service/${purchase.id}`;
     } else {
       // If user is not logged in, redirect to success page as fallback
       // This path should rarely happen as users are prompted to log in before submission
+      console.log("No user ID available, redirecting to success page");
       window.location.href = '/success';
     }
     

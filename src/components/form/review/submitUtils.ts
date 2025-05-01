@@ -28,8 +28,9 @@ export const submitFormData = async (
       JSON.stringify(hasDocumentRetrievalService)
     );
     
-    // This function now delegates to the main submission service
-    // which will handle redirecting to the appropriate page
+    console.log("Starting submission process with userId:", userId);
+    
+    // Import and use the comprehensive submission service directly
     return import('./utils/submissionService').then(module => {
       return module.submitFormData(owners, properties, assignments, contactInfo, userId);
     });

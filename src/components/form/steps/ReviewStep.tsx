@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -51,15 +50,7 @@ const ReviewStep: React.FC = () => {
     try {
       setIsSubmitting(true);
       
-      // Check if any property has document retrieval service
-      const hasDocumentRetrievalService = properties.some(
-        property => property.useDocumentRetrievalService
-      );
-      
-      // Store in session storage for the success page
-      sessionStorage.setItem('hasDocumentRetrievalService', 
-        JSON.stringify(hasDocumentRetrievalService)
-      );
+      console.log("Submitting form with user ID:", user?.id);
       
       // Get user information to populate contact info
       const contactInfo = {
