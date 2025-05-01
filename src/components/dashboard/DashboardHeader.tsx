@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserDropdownMenu } from '@/components/dashboard/UserDropdownMenu';
 
 interface DashboardHeaderProps {
   onSignOut: () => Promise<void>;
@@ -9,16 +9,6 @@ interface DashboardHeaderProps {
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onSignOut }) => {
   const { user } = useAuth();
-
-  const getUserInitials = () => {
-    if (!user || !user.user_metadata || !user.user_metadata.full_name) return 'U';
-    const fullName = user.user_metadata.full_name;
-    const nameParts = fullName.split(' ');
-    if (nameParts.length >= 2) {
-      return `${nameParts[0][0]}${nameParts[1][0]}`;
-    }
-    return nameParts[0][0] || 'U';
-  };
 
   return (
     <header className="border-b border-gray-100 bg-white">
@@ -34,11 +24,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onSignOut }) =
 
         <div className="flex items-center">
           <div className="relative">
-            <Avatar className="h-8 w-8 cursor-pointer" onClick={onSignOut}>
-              <AvatarFallback className="bg-blue-100 text-blue-800">
-                {getUserInitials()}
-              </AvatarFallback>
-            </Avatar>
+            <UserDropdownMenu onSignOut={onSignOut} />
           </div>
         </div>
       </div>
