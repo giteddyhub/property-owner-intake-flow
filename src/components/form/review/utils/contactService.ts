@@ -22,11 +22,18 @@ export const saveContactInfo = async (contactInfo: ContactInfo, userId: string |
         effectiveUserId = profileData.id;
         console.log("Found user ID by profile email lookup:", effectiveUserId);
       } else {
-        // If profile lookup fails, try auth.users directly (requires service role which we don't have)
-        // Instead, use any stored user ID
-        effectiveUserId = sessionStorage.getItem('pendingUserId') || localStorage.getItem('pendingUserId');
-        if (effectiveUserId) {
-          console.log("Using user ID from storage:", effectiveUserId);
+        // Try to get user ID from auth if available
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user?.id) {
+          effectiveUserId = sessionData.session.user.id;
+          console.log("Found user ID from current session:", effectiveUserId);
+        } else {
+          // If all lookups fail, use any stored user ID
+          effectiveUserId = sessionStorage.getItem('pendingUserId') || 
+                           localStorage.getItem('pendingUserId');
+          if (effectiveUserId) {
+            console.log("Using user ID from storage:", effectiveUserId);
+          }
         }
       }
     }
@@ -55,7 +62,7 @@ export const saveContactInfo = async (contactInfo: ContactInfo, userId: string |
     privacy_accepted: contactInfo.privacyAccepted
   };
   
-  // Save the contact info regardless of whether we have a userId
+  // Save the contact info
   const { data, error } = await supabase
     .from('contacts')
     .insert(contactData)
@@ -76,5 +83,20 @@ export const saveContactInfo = async (contactInfo: ContactInfo, userId: string |
   sessionStorage.setItem('contactId', contactId);
   localStorage.setItem('contactId', contactId);
   
+  // If user ID is available but wasn't originally in the contact record, update it now
+  // This is a safety measure in case user ID becomes available after initial save
+  if (effectiveUserId && !data[0].user_id) {
+    console.log("Updating contact with user ID that became available after initial save");
+    const { error: updateError } = await supabase
+      .from('contacts')
+      .update({ user_id: effectiveUserId })
+      .eq('id', contactId);
+      
+    if (updateError) {
+      console.error("Error updating contact with new user ID:", updateError);
+    }
+  }
+  
+  console.log("Contact saved successfully with ID:", contactId, "and user ID:", effectiveUserId || "(none)");
   return contactId;
 };

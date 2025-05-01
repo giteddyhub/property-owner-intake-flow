@@ -13,6 +13,7 @@ import { DataTables } from '@/components/dashboard/DataTables';
 import { ActionsToolbar } from '@/components/dashboard/ActionsToolbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { DataRecoveryButton } from './DataRecoveryButton';
+import { AlertCircle } from 'lucide-react';
 
 interface DashboardLayoutProps {
   owners: Owner[];
@@ -35,6 +36,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Check if there's any data
+  const hasNoData = owners.length === 0 && properties.length === 0;
   
   // Get user's name from user metadata
   const getUserName = () => {
@@ -65,22 +69,40 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-gray-900">Overview</h2>
             <div className="flex items-center gap-2">
-              {(owners.length === 0 && properties.length === 0) && (
+              {hasNoData && (
                 <DataRecoveryButton onDataRecovered={onRefresh} />
               )}
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <DataFilterTabs activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
-            <DataTables 
-              properties={properties} 
-              owners={owners} 
-              assignments={assignments} 
-              activeFilter={activeFilter}
-              onRefresh={onRefresh}
-            />
-          </div>
+          {hasNoData ? (
+            <div className="bg-gray-50 rounded-xl p-8 mb-4 text-center">
+              <div className="max-w-md mx-auto">
+                <div className="flex justify-center mb-4">
+                  <AlertCircle className="h-12 w-12 text-amber-500" />
+                </div>
+                <h3 className="text-xl font-medium mb-2">No Data Found</h3>
+                <p className="text-gray-600 mb-6">
+                  We couldn't find any properties, owners, or assignments associated with your account.
+                  If you previously filled out our form, you can use the button below to recover your data.
+                </p>
+                <div className="flex justify-center">
+                  <DataRecoveryButton onDataRecovered={onRefresh} prominent={true} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-4 mb-4">
+              <DataFilterTabs activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
+              <DataTables 
+                properties={properties} 
+                owners={owners} 
+                assignments={assignments} 
+                activeFilter={activeFilter}
+                onRefresh={onRefresh}
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>

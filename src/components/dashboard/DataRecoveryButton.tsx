@@ -8,10 +8,12 @@ import { associateOrphanedData } from '@/hooks/dashboard/mappers/assignmentMappe
 
 interface DataRecoveryButtonProps {
   onDataRecovered: () => void;
+  prominent?: boolean;
 }
 
 export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({ 
-  onDataRecovered 
+  onDataRecovered,
+  prominent = false
 }) => {
   const [isRecovering, setIsRecovering] = useState(false);
   const { user } = useAuth();
@@ -34,7 +36,7 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
     try {
       console.log(`Attempting to recover data for user ${userId} with email ${user.email}`);
       
-      // Try a more aggressive data recovery approach
+      // Try standard data recovery approach first
       const result = await associateOrphanedData(userId, user.email);
       
       if (result.success) {
@@ -49,7 +51,18 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
           toast.success(`Successfully recovered your data through email matching!`);
           onDataRecovered();
         } else {
-          toast.info("No orphaned data was found associated with your account");
+          // Try a third, more aggressive approach - look for any data with matching email
+          console.log("Second recovery attempt failed, trying aggressive approach");
+          const contactInfo = await fetchContactByEmail(user.email);
+          
+          if (contactInfo) {
+            console.log("Found contact info via email:", contactInfo);
+            await associateContactDataWithUser(contactInfo.id, userId);
+            toast.success("Successfully recovered your data through contact lookup!");
+            onDataRecovered();
+          } else {
+            toast.info("No orphaned data was found associated with your account");
+          }
         }
       }
     } catch (error) {
@@ -60,13 +73,77 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
     }
   };
 
+  // Helper function to find contact by email
+  const fetchContactByEmail = async (email: string) => {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('id, full_name, email')
+      .eq('email', email)
+      .maybeSingle();
+      
+    if (error) {
+      console.error("Error finding contact by email:", error);
+      return null;
+    }
+    
+    return data;
+  };
+  
+  // Helper function to associate all data from a contact with a user
+  const associateContactDataWithUser = async (contactId: string, userId: string) => {
+    try {
+      // Update the contact with user ID
+      const { error: contactError } = await supabase
+        .from('contacts')
+        .update({ user_id: userId })
+        .eq('id', contactId);
+        
+      if (contactError) {
+        console.error("Error updating contact:", contactError);
+      }
+      
+      // Update owners with this contact
+      const { error: ownersError } = await supabase
+        .from('owners')
+        .update({ user_id: userId })
+        .eq('contact_id', contactId);
+        
+      if (ownersError) {
+        console.error("Error updating owners:", ownersError);
+      }
+      
+      // Update properties with this contact
+      const { error: propertiesError } = await supabase
+        .from('properties')
+        .update({ user_id: userId })
+        .eq('contact_id', contactId);
+        
+      if (propertiesError) {
+        console.error("Error updating properties:", propertiesError);
+      }
+      
+      // Update assignments with this contact
+      const { error: assignmentsError } = await supabase
+        .from('owner_property_assignments')
+        .update({ user_id: userId })
+        .eq('contact_id', contactId);
+        
+      if (assignmentsError) {
+        console.error("Error updating assignments:", assignmentsError);
+      }
+    } catch (error) {
+      console.error("Error associating contact data with user:", error);
+      throw error;
+    }
+  };
+
   return (
     <Button
       onClick={handleRecoveryAttempt}
       disabled={isRecovering || !user?.email}
-      variant="outline"
-      size="sm"
-      className="flex items-center gap-2"
+      variant={prominent ? "default" : "outline"}
+      size={prominent ? "lg" : "sm"}
+      className={`flex items-center gap-2 ${prominent ? 'bg-form-400 hover:bg-form-500 text-white' : ''}`}
     >
       {isRecovering ? (
         <>
@@ -76,7 +153,7 @@ export const DataRecoveryButton: React.FC<DataRecoveryButtonProps> = ({
       ) : (
         <>
           <RefreshCw className="h-4 w-4" />
-          Find Missing Data
+          {prominent ? 'Recover Your Form Data' : 'Find Missing Data'}
         </>
       )}
     </Button>

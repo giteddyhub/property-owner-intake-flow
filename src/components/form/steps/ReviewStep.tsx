@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import { Owner } from '@/types/form';
@@ -17,13 +16,14 @@ import { toast } from 'sonner';
 import {
   Accordion
 } from "@/components/ui/accordion";
+import { supabase } from '@/integrations/supabase/client';
 
 const ReviewStep: React.FC = () => {
   const { state, goToStep, prevStep } = useFormContext();
   const { owners, properties, assignments } = state;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user } = useAuth();
+  const { user, ensureUserAssociation } = useAuth();
   
   const handleSubmitButtonClick = () => {
     if (!user) {
@@ -36,15 +36,38 @@ const ReviewStep: React.FC = () => {
   };
   
   const handleAuthSuccess = () => {
+    console.log("Auth success callback triggered");
     // Close the auth modal
     setShowAuthModal(false);
-    // Short timeout to ensure auth state is updated
-    setTimeout(() => {
-      // If user is authenticated after modal closes, submit the form
-      if (user) {
+    
+    // Give extra time to ensure auth state is fully updated
+    setTimeout(async () => {
+      // Check if user is authenticated after modal closes
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUser = sessionData?.session?.user;
+      
+      console.log("Current user after auth:", currentUser);
+      
+      if (currentUser) {
+        console.log("Auth success with user:", currentUser.id);
+        // Ensure associations are setup
+        await ensureUserAssociation(currentUser.email || '');
         handleSubmit();
+      } else {
+        // Check for pending user ID
+        const pendingUserId = sessionStorage.getItem('pendingUserId');
+        const userEmail = sessionStorage.getItem('userEmail');
+        
+        if (pendingUserId) {
+          console.log("No user object yet, but proceeding with pending user ID:", pendingUserId);
+          // Ensure associations are setup if we have an email
+          if (userEmail) await ensureUserAssociation(userEmail);
+          handleSubmit();
+        } else {
+          toast.error("Authentication required. Please sign in to continue.");
+        }
       }
-    }, 500);
+    }, 1500); // Increased timeout to ensure auth state is updated
   };
   
   const handleSubmit = async () => {
@@ -61,15 +84,32 @@ const ReviewStep: React.FC = () => {
         JSON.stringify(hasDocumentRetrievalService)
       );
       
+      // Get current authenticated user or pending ID
+      const currentUser = user;
+      const userId = currentUser?.id || sessionStorage.getItem('pendingUserId');
+      const userEmail = currentUser?.email || sessionStorage.getItem('userEmail');
+      
+      console.log("Submitting with user ID:", userId, "and email:", userEmail);
+      
+      if (!userId && !userEmail) {
+        console.error("No user ID or email available for submission");
+        toast.error("Authentication required. Please sign in to continue.");
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Get user information to populate contact info
       const contactInfo = {
-        fullName: user?.user_metadata?.full_name || '',
-        email: user?.email || '',
+        fullName: currentUser?.user_metadata?.full_name || '',
+        email: userEmail || '',
         termsAccepted: true,
         privacyAccepted: true
       };
       
-      await submitFormData(owners, properties, assignments, contactInfo, user?.id || null);
+      // Pass the user ID explicitly to ensure data association
+      await submitFormData(owners, properties, assignments, contactInfo, userId || null);
+      
+      // Note: The submitFormData function now handles the redirection
     } catch (error) {
       console.error('Error during submission:', error);
       toast.error('There was an error submitting your information. Please try again.');
@@ -172,6 +212,7 @@ const ReviewStep: React.FC = () => {
         title="Create an Account to Submit"
         description="Creating an account allows you to access your submission later and receive updates."
         defaultTab="sign-up"
+        redirectAfterAuth={false}
       />
     </div>
   );

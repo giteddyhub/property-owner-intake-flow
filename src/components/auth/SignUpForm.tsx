@@ -41,47 +41,37 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     setIsSubmitting(true);
     
     try {
+      console.log("Starting signup process...");
       const { error, data } = await signUp(email, password, fullName);
       
       if (error) {
+        console.error("Signup error:", error);
         toast.error(error.message);
       } else {
+        console.log("Signup successful, user data:", data?.user);
         toast.success('Account created successfully!');
         
-        // With email confirmation disabled, we can proceed with login flow
-        if (data?.user) {
-          setIsSignedUp(true);
+        // Store the userId in both sessionStorage and localStorage for persistence
+        if (data?.user?.id) {
+          console.log("Setting user ID in storage:", data.user.id);
+          sessionStorage.setItem('pendingUserId', data.user.id);
+          localStorage.setItem('pendingUserId', data.user.id);
           
-          // Store the userId in both sessionStorage and localStorage for persistence
-          if (data.user.id) {
-            console.log("Setting user ID in storage:", data.user.id);
-            sessionStorage.setItem('pendingUserId', data.user.id);
-            localStorage.setItem('pendingUserId', data.user.id);
-            
-            // Also check if we have any form submission data that needs to be preserved
-            const contactId = sessionStorage.getItem('contactId');
-            if (contactId) {
-              console.log("Found contactId in storage, this means we need to preserve purchase ID");
-              // Get purchase ID if available
-              const purchaseId = sessionStorage.getItem('purchaseId');
-              if (purchaseId) {
-                console.log("Found purchaseId in storage:", purchaseId);
-              }
-            }
+          // Store email for recovery purposes
+          if (data.user.email) {
+            sessionStorage.setItem('userEmail', data.user.email);
+            localStorage.setItem('userEmail', data.user.email);
           }
           
-          // Only call onSuccess if redirectAfterAuth is false
-          if (onSuccess && !redirectAfterAuth) {
-            // Small delay to show the confirmation message
-            setTimeout(() => {
-              onSuccess();
-            }, 2000);
-          }
-          
-          if (redirectAfterAuth) {
-            navigate('/dashboard');
+          // Check if we have any form submission data that needs to be preserved
+          const contactId = sessionStorage.getItem('contactId');
+          if (contactId) {
+            console.log("Found contactId in storage, attempting to update with user ID");
+            // This is now handled in AuthContext.tsx
           }
         }
+        
+        setIsSignedUp(true);
       }
     } catch (error) {
       console.error('Error signing up:', error);
@@ -91,7 +81,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     }
   };
 
-  // Success state after signing up - modified to reflect that email confirmation is not required
+  // Success state after signing up
   if (isSignedUp) {
     return (
       <div className="flex flex-col items-center text-center space-y-4 py-4">
@@ -100,9 +90,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         </div>
         <h3 className="text-lg font-semibold">Account Created!</h3>
         <div className="text-sm text-gray-600 max-w-xs">
-          <p className="mb-3">Your account has been created successfully. You can now use the application.</p>
+          <p className="mb-3">Your account has been created successfully. You can now continue with your submission.</p>
         </div>
-        {!redirectAfterAuth && onSuccess && (
+        {onSuccess && (
           <Button
             onClick={onSuccess}
             className="mt-4 w-full bg-form-400 hover:bg-form-500"
@@ -110,7 +100,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
             Continue with Submission
           </Button>
         )}
-        {redirectAfterAuth && (
+        {redirectAfterAuth && !onSuccess && (
           <Button
             onClick={() => navigate('/dashboard')}
             className="mt-4 w-full bg-form-400 hover:bg-form-500"

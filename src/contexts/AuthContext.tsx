@@ -62,6 +62,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     console.error("Error updating contact with user ID:", updateError);
                   } else {
                     console.log("Successfully updated contact with user ID");
+                    
+                    // After updating contact, also update related owners, properties, and assignments
+                    // This ensures all related data is properly associated with the user
+                    await associateOrphanedDataWithContactId(contactId, session.user.id);
                   }
                 } catch (error) {
                   console.error("Exception while updating contact with user ID:", error);
@@ -70,17 +74,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               
               // Import and run data association after a slight delay
               // This is to ensure all auth processes have completed
-              setTimeout(() => {
-                import('@/hooks/dashboard/mappers/assignmentMapper').then(module => {
-                  module.associateOrphanedData(session.user.id, session.user.email)
-                    .then(result => {
-                      if (result.success) {
-                        toast.success(`Successfully associated your previous submissions with your account`);
-                      }
-                    })
-                    .catch(err => console.error("Error associating data:", err));
-                });
-              }, 1000);
+              setTimeout(async () => {
+                try {
+                  const { associateOrphanedData } = await import('@/hooks/dashboard/mappers/assignmentMapper');
+                  const result = await associateOrphanedData(session.user.id, session.user.email);
+                  if (result.success) {
+                    toast.success(`Successfully associated your previous submissions with your account`);
+                  }
+                } catch (err) {
+                  console.error("Error associating data:", err);
+                }
+              }, 1500);
             }
           }
         } else if (event === 'SIGNED_OUT') {
@@ -112,6 +116,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionStorage.setItem('userEmail', session.user.email);
           localStorage.setItem('userEmail', session.user.email);
         }
+        
+        // Check if we have a pending contact to associate
+        const contactId = sessionStorage.getItem('contactId') || localStorage.getItem('contactId');
+        if (contactId) {
+          console.log("Found pending contactId during initial load:", contactId);
+          // The update will be handled in the onAuthStateChange event
+        }
       }
       
       setLoading(false);
@@ -119,6 +130,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Helper function to associate orphaned data with contact ID
+  const associateOrphanedDataWithContactId = async (contactId: string, userId: string) => {
+    try {
+      console.log(`Associating all data for contact ${contactId} with user ${userId}`);
+      
+      // Update owners
+      const { error: ownersError } = await supabase
+        .from('owners')
+        .update({ user_id: userId })
+        .eq('contact_id', contactId)
+        .is('user_id', null);
+        
+      if (ownersError) {
+        console.error("Error updating owners:", ownersError);
+      }
+      
+      // Update properties
+      const { error: propertiesError } = await supabase
+        .from('properties')
+        .update({ user_id: userId })
+        .eq('contact_id', contactId)
+        .is('user_id', null);
+        
+      if (propertiesError) {
+        console.error("Error updating properties:", propertiesError);
+      }
+      
+      // Update assignments
+      const { error: assignmentsError } = await supabase
+        .from('owner_property_assignments')
+        .update({ user_id: userId })
+        .eq('contact_id', contactId)
+        .is('user_id', null);
+        
+      if (assignmentsError) {
+        console.error("Error updating assignments:", assignmentsError);
+      }
+      
+      console.log("Completed associating orphaned data for contact");
+    } catch (error) {
+      console.error("Error in associateOrphanedDataWithContactId:", error);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -151,7 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sessionStorage.setItem('pendingUserId', response.data.user.id);
       localStorage.setItem('pendingUserId', response.data.user.id);
       
-      // Also check if we have any form submission data that needs to be preserved
+      // Check if we have any form submission data that needs to be preserved
       const contactId = sessionStorage.getItem('contactId');
       if (contactId) {
         console.log("Found contactId in storage, attempting to update with user ID");
@@ -166,6 +221,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error("Error updating contact with user ID:", updateError);
           } else {
             console.log("Successfully updated contact with user ID");
+            
+            // Also update related data
+            await associateOrphanedDataWithContactId(contactId, response.data.user.id);
           }
         } catch (error) {
           console.error("Exception while updating contact with user ID:", error);
@@ -188,6 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const ensureUserAssociation = async (email: string): Promise<string | null> => {
     // First check if we have a current authenticated user
     if (user?.id) {
+      console.log("Using current authenticated user ID:", user.id);
       return user.id;
     }
     
@@ -195,6 +254,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pendingUserId = sessionStorage.getItem('pendingUserId') || 
                           localStorage.getItem('pendingUserId');
     if (pendingUserId) {
+      console.log("Using pending user ID from storage:", pendingUserId);
       return pendingUserId;
     }
     
@@ -226,6 +286,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     // No user association found
+    console.log("No user association found for email:", email);
     return null;
   };
 
