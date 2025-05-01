@@ -14,7 +14,7 @@ import LoginPage from './pages/LoginPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-// Protected route component
+// Protected route component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -25,6 +25,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Authenticated route component - redirects to dashboard if authenticated
+const AnonymousRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
@@ -56,8 +71,16 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={
+        <AnonymousRoute>
+          <Index />
+        </AnonymousRoute>
+      } />
+      <Route path="/login" element={
+        <AnonymousRoute>
+          <LoginPage />
+        </AnonymousRoute>
+      } />
       <Route path="/ResidentSuccessPage" element={<ResidentSuccessPage />} />
       <Route path="/payment-cancelled" element={<PaymentCancelled />} />
       <Route path="/residency-assessment" element={<ResidencyAssessmentPage />} />

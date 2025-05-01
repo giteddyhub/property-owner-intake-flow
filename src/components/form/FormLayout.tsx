@@ -1,6 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import WelcomeStep from './steps/WelcomeStep';
 import OwnerStep from './steps/OwnerStep';
 import PropertyStep from './steps/PropertyStep';
@@ -8,6 +10,8 @@ import AssignmentStep from './steps/AssignmentStep';
 import ReviewStep from './steps/ReviewStep';
 import { AccountMenu } from './AccountMenu';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { AlertTriangle } from 'lucide-react';
 
 const STEPS = [
   { id: 0, name: 'Welcome' },
@@ -20,6 +24,26 @@ const STEPS = [
 const FormLayout: React.FC = () => {
   const { state, goToStep } = useFormContext();
   const { currentStep } = state;
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (user) {
+      toast.warning('You are already signed in', {
+        description: 'Redirecting to your dashboard...',
+        icon: <AlertTriangle className="h-4 w-4" />,
+        duration: 3000,
+      });
+      
+      // Short delay to allow toast to be seen
+      const timer = setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, navigate]);
 
   const renderStep = () => {
     switch (currentStep) {

@@ -98,11 +98,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(newSession);
       setUser(newSession?.user ?? null);
 
-      // When a user signs in or the session is refreshed, check for and submit pending form data
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession?.user) {
+      // When a user signs in, session is refreshed, or email is verified, check for and submit pending form data
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && newSession?.user) {
         // Use setTimeout to ensure auth state is fully updated and avoid race conditions
         setTimeout(() => {
           checkAndSubmitPendingFormData(newSession.user.id);
+          
+          // Redirect to dashboard after email verification
+          if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+            // Check if we're not already on the dashboard
+            if (!window.location.pathname.includes('/dashboard')) {
+              console.log("Redirecting to dashboard after authentication event:", event);
+              window.location.href = '/dashboard';
+            }
+          }
         }, 1000);
       }
     });
