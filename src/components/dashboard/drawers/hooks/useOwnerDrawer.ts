@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { Owner } from '@/components/dashboard/types';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { createEmptyOwner } from '@/components/form/owner/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOwnerDrawerSubmit } from './useOwnerDrawerSubmit';
+import { useOwnerFieldHandlers } from './useOwnerFieldHandlers';
+import { useOwnerDrawerCleanup } from './useOwnerDrawerCleanup';
 
 interface UseOwnerDrawerProps {
   owner?: Owner;
@@ -16,7 +17,19 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResidencyDialog, setShowResidencyDialog] = useState(false);
   const [currentOwner, setCurrentOwner] = useState<Owner>(owner || createEmptyOwner());
-  const { user } = useAuth(); // Get the current authenticated user
+  const { user } = useAuth();
+  
+  // Import handler modules
+  const { handleSubmit: submitOwner } = useOwnerDrawerSubmit();
+  const { handleClose: cleanupDrawer } = useOwnerDrawerCleanup();
+  const { 
+    handleOwnerChange,
+    handleInputChange,
+    handleDateChange,
+    handleCountryChange,
+    handleResidencyStatusChange,
+    handleResidencyDetailChange
+  } = useOwnerFieldHandlers({ setCurrentOwner });
   
   // Reset currentOwner when owner prop changes
   useEffect(() => {
@@ -26,7 +39,6 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
   // Ensure clean up on unmount or when drawer closes
   useEffect(() => {
     return () => {
-      // This will run when the component unmounts or when isOpen changes to false
       document.body.style.pointerEvents = '';
     };
   }, []);
@@ -39,161 +51,21 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
     setIsSubmitting(true);
     
     try {
-      const userId = user?.id;
-      
-      if (!userId) {
-        throw new Error('User not authenticated');
-      }
-      
-      if (owner?.id) {
-        // Update existing owner
-        const { error } = await supabase
-          .from('owners')
-          .update({
-            first_name: currentOwner.firstName,
-            last_name: currentOwner.lastName,
-            date_of_birth: currentOwner.dateOfBirth ? currentOwner.dateOfBirth.toISOString().split('T')[0] : null,
-            country_of_birth: currentOwner.countryOfBirth,
-            citizenship: currentOwner.citizenship,
-            address_street: currentOwner.address.street,
-            address_city: currentOwner.address.city,
-            address_zip: currentOwner.address.zip,
-            address_country: currentOwner.address.country,
-            italian_tax_code: currentOwner.italianTaxCode,
-            marital_status: currentOwner.maritalStatus,
-            is_resident_in_italy: currentOwner.isResidentInItaly,
-            // Only access ItalianResidenceDetails properties if they exist
-            italian_residence_street: currentOwner.italianResidenceDetails?.street || null,
-            italian_residence_city: currentOwner.italianResidenceDetails?.city || null,
-            italian_residence_zip: currentOwner.italianResidenceDetails?.zip || null,
-            updated_at: new Date().toISOString(),
-            user_id: userId // Make sure to include the user_id in updates too
-          })
-          .eq('id', owner.id);
-          
-        if (error) throw error;
-        toast.success('Owner updated successfully');
-      } else {
-        // Create new owner
-        const { error } = await supabase
-          .from('owners')
-          .insert({
-            first_name: currentOwner.firstName,
-            last_name: currentOwner.lastName,
-            date_of_birth: currentOwner.dateOfBirth ? currentOwner.dateOfBirth.toISOString().split('T')[0] : null,
-            country_of_birth: currentOwner.countryOfBirth,
-            citizenship: currentOwner.citizenship,
-            address_street: currentOwner.address.street,
-            address_city: currentOwner.address.city,
-            address_zip: currentOwner.address.zip,
-            address_country: currentOwner.address.country,
-            italian_tax_code: currentOwner.italianTaxCode,
-            marital_status: currentOwner.maritalStatus,
-            is_resident_in_italy: currentOwner.isResidentInItaly,
-            // Only access ItalianResidenceDetails properties if they exist
-            italian_residence_street: currentOwner.italianResidenceDetails?.street || null,
-            italian_residence_city: currentOwner.italianResidenceDetails?.city || null,
-            italian_residence_zip: currentOwner.italianResidenceDetails?.zip || null,
-            user_id: userId // Set the user_id field with the current user's ID
-          });
-          
-        if (error) throw error;
-        toast.success('Owner added successfully');
-      }
-
-      handleClose();
-      onSuccess();
-    } catch (error) {
-      console.error('Error saving owner:', error);
-      toast.error('Failed to save owner');
+      await submitOwner({
+        owner,
+        currentOwner,
+        userId: user?.id,
+        onSuccess,
+        onClose: handleClose
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  // Field handlers
-  const handleOwnerChange = (field: string, value: any) => {
-    setCurrentOwner(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    // Fix for address fields handling
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      
-      if (parent === 'address') {
-        setCurrentOwner(prev => ({
-          ...prev,
-          address: {
-            ...prev.address,
-            [child]: value
-          }
-        }));
-      } else {
-        handleOwnerChange(name, value);
-      }
-    } else {
-      handleOwnerChange(name, value);
-    }
-  };
-  
-  const handleDateChange = (date: Date | undefined) => {
-    setCurrentOwner(prev => ({
-      ...prev,
-      dateOfBirth: date || null
-    }));
-  };
-  
-  const handleCountryChange = (field: string, value: string) => {
-    if (field === 'address.country') {
-      setCurrentOwner(prev => ({
-        ...prev,
-        address: {
-          ...prev.address,
-          country: value
-        }
-      }));
-    } else {
-      setCurrentOwner(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
-  };
-  
-  const handleResidencyStatusChange = (value: string) => {
-    setCurrentOwner(prev => ({
-      ...prev,
-      isResidentInItaly: value === 'true'
-    }));
-  };
-  
-  const handleResidencyDetailChange = (field: string, value: string) => {
-    setCurrentOwner(prev => ({
-      ...prev,
-      italianResidenceDetails: {
-        ...prev.italianResidenceDetails,
-        [field]: value
-      }
-    }));
-  };
 
   // Handle clean close to ensure no stray elements block interaction
   const handleClose = () => {
-    // Remove any pointer-events blocking that might have been applied
-    document.body.style.pointerEvents = '';
-    // Remove any lingering overlay elements
-    const overlays = document.querySelectorAll('[data-state="open"][data-radix-portal]');
-    overlays.forEach(overlay => {
-      if (overlay.parentNode) {
-        overlay.parentNode.removeChild(overlay);
-      }
-    });
+    cleanupDrawer();
     onClose();
   };
 
