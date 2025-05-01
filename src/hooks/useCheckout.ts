@@ -75,11 +75,15 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
       console.log('Redirecting to Stripe checkout:', data.url);
       toast.success('Redirecting to secure payment page...');
       
-      // Small delay to allow toast to be seen
-      setTimeout(() => {
-        // Open in new window to avoid potential redirect issues
+      // Use a more direct approach to redirect
+      // First try the modern approach
+      try {
+        window.location.assign(data.url);
+      } catch (redirectError) {
+        console.warn('Modern redirect failed, trying alternative method:', redirectError);
+        // Fallback to the classic approach if the modern one fails
         window.location.href = data.url;
-      }, 800);
+      }
     } catch (error) {
       console.error('Error creating checkout session:', error);
       

@@ -157,6 +157,7 @@ serve(async (req) => {
       });
 
       console.log("Stripe session created:", session.id);
+      console.log("Stripe session URL:", session.url);
 
       // Update the purchase record with the Stripe session ID
       const { error: updateSessionError } = await supabase
@@ -172,6 +173,11 @@ serve(async (req) => {
       if (updateSessionError) {
         console.error("Error updating purchase with session ID:", updateSessionError);
         // Non-critical error, continue execution
+      }
+
+      // Ensure URL is valid
+      if (!session.url || !session.url.startsWith("http")) {
+        throw new Error(`Invalid Stripe checkout URL: ${session.url}`);
       }
 
       // Return the session URL to redirect the user to the Stripe checkout
