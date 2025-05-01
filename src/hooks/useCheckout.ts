@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { calculatePricing } from '@/utils/pricingCalculator';
 
 type UseCheckoutResult = {
   loading: boolean;
@@ -22,13 +23,29 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
         return;
       }
       
+      // Get owner and property counts from sessionStorage or use default
+      const ownersCount = parseInt(sessionStorage.getItem('ownersCount') || '1', 10);
+      const propertiesCount = parseInt(sessionStorage.getItem('propertiesCount') || '1', 10);
+      
+      // Calculate the price based on the counts and document retrieval preference
+      const priceBreakdown = calculatePricing(ownersCount, propertiesCount, hasDocumentRetrieval);
+      
       toast.info('Preparing your checkout...');
-      console.log('Initiating checkout with:', { purchaseId, hasDocumentRetrieval });
+      console.log('Initiating checkout with:', { 
+        purchaseId, 
+        hasDocumentRetrieval,
+        ownersCount,
+        propertiesCount,
+        totalAmount: priceBreakdown.totalPrice
+      });
       
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
           purchaseId,
-          hasDocumentRetrievalService: hasDocumentRetrieval 
+          hasDocumentRetrievalService: hasDocumentRetrieval,
+          ownersCount,
+          propertiesCount,
+          totalAmount: priceBreakdown.totalPrice
         },
       });
       

@@ -14,13 +14,11 @@ import Footer from '@/components/layout/Footer';
 const SuccessPage = () => {
   const [searchParams] = useSearchParams();
   const [documentRetrievalEnabled, setDocumentRetrievalEnabled] = useState(false);
+  const [ownersCount, setOwnersCount] = useState(1);
+  const [propertiesCount, setPropertiesCount] = useState(1);
   
   const sessionId = searchParams.get('session_id');
   const contactParam = searchParams.get('contact');
-  
-  // Calculate prices
-  const basePrice = 245;
-  const documentRetrievalFee = 28;
   
   // Custom hooks for payment verification and checkout
   const { 
@@ -32,7 +30,7 @@ const SuccessPage = () => {
   
   const { loading: checkoutLoading, handleCheckout } = useCheckout(hasDocumentRetrieval);
   
-  // Check if user opted for document retrieval service
+  // Check if user opted for document retrieval service and get counts from session storage
   useEffect(() => {
     const retrievalService = sessionStorage.getItem('hasDocumentRetrievalService');
     if (retrievalService) {
@@ -40,7 +38,25 @@ const SuccessPage = () => {
       setDocumentRetrievalEnabled(hasService);
       setHasDocumentRetrieval(hasService);
     }
+
+    // Try to get owner and property counts from session storage
+    const storedOwnersCount = sessionStorage.getItem('ownersCount');
+    const storedPropertiesCount = sessionStorage.getItem('propertiesCount');
+    
+    if (storedOwnersCount) {
+      setOwnersCount(parseInt(storedOwnersCount, 10) || 1);
+    }
+    
+    if (storedPropertiesCount) {
+      setPropertiesCount(parseInt(storedPropertiesCount, 10) || 1);
+    }
   }, [setHasDocumentRetrieval]);
+  
+  const handleToggleDocumentRetrieval = () => {
+    const newValue = !hasDocumentRetrieval;
+    setHasDocumentRetrieval(newValue);
+    sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(newValue));
+  };
   
   // Determine if we're loading anything
   const isLoading = verifyLoading || checkoutLoading;
@@ -58,11 +74,12 @@ const SuccessPage = () => {
           {/* Premium Service Offer Card */}
           {!sessionId && !paymentStatus && (
             <PremiumServiceCard
-              basePrice={basePrice}
-              documentRetrievalFee={documentRetrievalFee}
+              ownersCount={ownersCount}
+              propertiesCount={propertiesCount}
               hasDocumentRetrieval={hasDocumentRetrieval}
               loading={isLoading}
               onCheckout={handleCheckout}
+              onToggleDocumentRetrieval={handleToggleDocumentRetrieval}
             />
           )}
           
@@ -71,7 +88,9 @@ const SuccessPage = () => {
           {/* Payment confirmation section */}
           {paymentStatus === 'paid' && (
             <PaymentConfirmation 
-              hasDocumentRetrieval={hasDocumentRetrieval} 
+              hasDocumentRetrieval={hasDocumentRetrieval}
+              ownersCount={ownersCount}
+              propertiesCount={propertiesCount}
             />
           )}
           

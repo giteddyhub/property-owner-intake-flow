@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import SuccessHeader from '@/components/success/SuccessHeader';
 import PremiumServiceCard from '@/components/success/PremiumServiceCard';
 import LawFirmPartnership from '@/components/success/LawFirmPartnership';
@@ -10,6 +11,7 @@ import ConsultationBooking from '@/components/success/ConsultationBooking';
 import { useCheckout } from '@/hooks/useCheckout';
 import Footer from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
+
 const TaxFilingServicePage = () => {
   const {
     sessionId
@@ -23,10 +25,9 @@ const TaxFilingServicePage = () => {
   const [hasDocumentRetrieval, setHasDocumentRetrieval] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sessionValid, setSessionValid] = useState(false);
+  const [ownersCount, setOwnersCount] = useState(1);
+  const [propertiesCount, setPropertiesCount] = useState(1);
 
-  // Calculate prices
-  const basePrice = 245;
-  const documentRetrievalFee = 28;
   const {
     loading: checkoutLoading,
     handleCheckout
@@ -70,13 +71,29 @@ const TaxFilingServicePage = () => {
         // If the purchase has document retrieval preference already set, use it
         if (purchaseData.has_document_retrieval !== null) {
           setHasDocumentRetrieval(purchaseData.has_document_retrieval);
-        } else {
-          // Otherwise check if any property has document retrieval service
-          const {
-            data: propertiesData
-          } = await supabase.from('properties').select('use_document_retrieval_service').eq('user_id', user.id);
-          if (propertiesData && propertiesData.length > 0) {
-            // If any property has document retrieval enabled, suggest it here
+        } 
+        
+        // Get counts of owners and properties for this user
+        const { data: ownersData } = await supabase
+          .from('owners')
+          .select('id')
+          .eq('user_id', user.id);
+          
+        const { data: propertiesData } = await supabase
+          .from('properties')
+          .select('id, use_document_retrieval_service')
+          .eq('user_id', user.id);
+          
+        // Update counts
+        if (ownersData) {
+          setOwnersCount(ownersData.length || 1);
+        }
+        
+        if (propertiesData) {
+          setPropertiesCount(propertiesData.length || 1);
+          
+          // If any property has document retrieval enabled and this preference hasn't been set yet
+          if (purchaseData.has_document_retrieval === null) {
             const hasAnyDocRetrieval = propertiesData.some(property => property.use_document_retrieval_service === true);
             setHasDocumentRetrieval(hasAnyDocRetrieval);
 
@@ -95,6 +112,7 @@ const TaxFilingServicePage = () => {
     };
     verifySession();
   }, [sessionId, user, navigate]);
+  
   const handleToggleDocumentRetrieval = async () => {
     setHasDocumentRetrieval(!hasDocumentRetrieval);
 
@@ -109,6 +127,7 @@ const TaxFilingServicePage = () => {
       }
     }
   };
+  
   const handleProceedToCheckout = async () => {
     // Save session ID in session storage for the checkout process
     if (sessionId) {
@@ -118,14 +137,17 @@ const TaxFilingServicePage = () => {
     // Proceed to checkout using the hook
     await handleCheckout();
   };
+  
   const handleReturnToDashboard = () => {
     navigate('/dashboard');
   };
+  
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>;
   }
+  
   if (!sessionValid) {
     return <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Invalid Session</h1>
@@ -133,15 +155,20 @@ const TaxFilingServicePage = () => {
         <Button onClick={handleReturnToDashboard}>Return to Dashboard</Button>
       </div>;
   }
+  
   return <div className="flex flex-col min-h-screen">
       <div className="flex-grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <SuccessHeader />
           
-          <PremiumServiceCard basePrice={basePrice} documentRetrievalFee={documentRetrievalFee} hasDocumentRetrieval={hasDocumentRetrieval} loading={checkoutLoading} onCheckout={handleProceedToCheckout} />
-          
-          {/* Document Retrieval Toggle */}
-          
+          <PremiumServiceCard 
+            ownersCount={ownersCount}
+            propertiesCount={propertiesCount}
+            hasDocumentRetrieval={hasDocumentRetrieval}
+            loading={checkoutLoading}
+            onCheckout={handleProceedToCheckout}
+            onToggleDocumentRetrieval={handleToggleDocumentRetrieval}
+          />
           
           {/* Law Firm Partnership Section */}
           <LawFirmPartnership />
@@ -160,4 +187,5 @@ const TaxFilingServicePage = () => {
       <Footer />
     </div>;
 };
+
 export default TaxFilingServicePage;

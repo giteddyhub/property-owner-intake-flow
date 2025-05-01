@@ -20,13 +20,20 @@ serve(async (req) => {
     });
 
     const requestData = await req.json();
-    const { purchaseId, hasDocumentRetrievalService } = requestData;
+    const { 
+      purchaseId, 
+      hasDocumentRetrievalService, 
+      ownersCount = 1, 
+      propertiesCount = 1,
+      totalAmount = 0 
+    } = requestData;
 
     if (!purchaseId) {
       throw new Error("Purchase ID is required");
     }
 
     console.log("Processing checkout for purchase:", purchaseId, "with document retrieval:", hasDocumentRetrievalService);
+    console.log("Owners count:", ownersCount, "Properties count:", propertiesCount, "Total amount:", totalAmount);
 
     // Create a Supabase client with the Auth context of the logged in user
     const supabaseUrl = "https://ijwwnaqprojdczfppxkf.supabase.co";
@@ -65,10 +72,17 @@ serve(async (req) => {
 
     console.log("Found contact:", contactData.email);
 
-    // Calculate the total amount
-    const basePrice = 24500; // $245.00 in cents
-    const documentRetrievalFee = 2800; // $28.00 in cents
-    const totalAmount = hasDocumentRetrievalService ? basePrice + documentRetrievalFee : basePrice;
+    // Convert total amount to cents for Stripe
+    const totalAmountCents = Math.round(totalAmount * 100);
+
+    // Calculate document retrieval fee
+    const documentRetrievalFee = hasDocumentRetrievalService ? 2800 : 0; // $28.00 in cents
+    
+    // Use the calculated total if provided, otherwise fallback to base calculation
+    const finalAmount = totalAmountCents > 0 ? totalAmountCents : 24500 + documentRetrievalFee;
+
+    // Create line items description based on the counts
+    const baseDescription = `Professional tax filing service for ${ownersCount} owner${ownersCount > 1 ? 's' : ''} and ${propertiesCount} propert${propertiesCount > 1 ? 'ies' : 'y'} (Early Bird Price)`;
 
     // Define line items based on services
     const lineItems = [
@@ -77,9 +91,9 @@ serve(async (req) => {
           currency: "usd",
           product_data: {
             name: "Tax Filing Service - Early Access",
-            description: "Professional tax filing service for your Italian property (discounted from $285)",
+            description: baseDescription,
           },
-          unit_amount: basePrice,
+          unit_amount: finalAmount - documentRetrievalFee, // Base amount excluding document retrieval fee
         },
         quantity: 1,
       },
@@ -100,7 +114,7 @@ serve(async (req) => {
       });
     }
 
-    console.log("Creating Stripe checkout session");
+    console.log("Creating Stripe checkout session with amount:", finalAmount / 100);
 
     // Set up the checkout session with Stripe
     const session = await stripe.checkout.sessions.create({
@@ -113,6 +127,8 @@ serve(async (req) => {
       metadata: {
         purchase_id: purchaseId,
         has_document_retrieval: hasDocumentRetrievalService ? "true" : "false",
+        owners_count: ownersCount.toString(),
+        properties_count: propertiesCount.toString(),
       },
     });
 
@@ -122,7 +138,7 @@ serve(async (req) => {
     await supabase
       .from("purchases")
       .update({ 
-        amount: totalAmount / 100, // Convert cents to dollars
+        amount: finalAmount / 100, // Convert cents to dollars
         stripe_session_id: session.id, 
         payment_status: "pending",
         has_document_retrieval: hasDocumentRetrievalService,

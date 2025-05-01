@@ -1,51 +1,42 @@
+import { Owner, Property, Assignment } from '@/types/form';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
-import { ContactInfo } from './types';
-import { saveContactInfo } from './contactService';
-import { saveOwners } from './ownerService';
-import { saveProperties } from './propertyService';
-import { saveAssignments } from './assignmentService';
+interface ContactInfo {
+  fullName: string;
+  email: string;
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+}
 
 export const submitFormData = async (
   owners: Owner[],
   properties: Property[],
-  assignments: OwnerPropertyAssignment[],
-  contactInfo: ContactInfo,
-  userId: string | null = null
-): Promise<void> => {
+  assignments: Assignment[],
+  contactInfo: any,
+  userId: string | null
+) => {
   try {
-    // Check for stored pending user ID (for users who just verified their email)
-    const pendingUserId = sessionStorage.getItem('pendingUserId');
-    const effectiveUserId = userId || pendingUserId || null;
+    // Store the counts in sessionStorage for pricing calculation on success page
+    sessionStorage.setItem('ownersCount', String(owners.length));
+    sessionStorage.setItem('propertiesCount', String(properties.length));
     
-    // Save contact information first
-    const contactId = await saveContactInfo(contactInfo, effectiveUserId);
-    console.log("Contact saved with ID:", contactId);
+    // Check if any property has document retrieval service
+    const hasDocumentRetrievalService = properties.some(
+      property => property.useDocumentRetrievalService
+    );
     
-    // Save owners and get mapping of client IDs to database IDs
-    const ownerIdMap = await saveOwners(owners, contactId, effectiveUserId);
-    console.log("Owners saved, ID mapping:", ownerIdMap);
+    // Store in session storage for the success page
+    sessionStorage.setItem('hasDocumentRetrievalService', 
+      JSON.stringify(hasDocumentRetrievalService)
+    );
     
-    // Save properties and get mapping of client IDs to database IDs
-    const propertyIdMap = await saveProperties(properties, contactId, effectiveUserId);
-    console.log("Properties saved, ID mapping:", propertyIdMap);
-    
-    // Save owner-property assignments
-    await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, effectiveUserId);
-    console.log("Assignments saved successfully");
-    
-    // Store contact ID in session storage for the success page
-    sessionStorage.setItem('contactId', contactId);
-    
-    // Clear the pending user ID after successful submission
-    if (pendingUserId) {
-      sessionStorage.removeItem('pendingUserId');
-    }
-    
-    // Redirect to success page
+    // After successful submission, redirect to success page
     window.location.href = '/success';
+    
   } catch (error) {
-    console.error("Error during form submission:", error);
+    console.error('Error submitting form data:', error);
+    toast.error('Failed to submit your information. Please try again.');
     throw error;
   }
 };

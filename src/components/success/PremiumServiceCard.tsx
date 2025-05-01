@@ -1,23 +1,32 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CheckCircle, ChevronRight, FileText, ShieldCheck, FileSearch } from 'lucide-react';
+import { calculatePricing, PriceBreakdown as PriceBreakdownType } from '@/utils/pricingCalculator';
+import PriceBreakdown from './PriceBreakdown';
+
 type PremiumServiceCardProps = {
-  basePrice: number;
-  documentRetrievalFee: number;
+  ownersCount: number;
+  propertiesCount: number;
   hasDocumentRetrieval: boolean;
   loading: boolean;
   onCheckout: () => Promise<void>;
+  onToggleDocumentRetrieval?: () => void;
 };
+
 const PremiumServiceCard = ({
-  basePrice,
-  documentRetrievalFee,
+  ownersCount,
+  propertiesCount,
   hasDocumentRetrieval,
   loading,
-  onCheckout
+  onCheckout,
+  onToggleDocumentRetrieval
 }: PremiumServiceCardProps) => {
-  const totalPrice = hasDocumentRetrieval ? basePrice + documentRetrievalFee : basePrice;
-  return <Card className="border-2 border-amber-200 bg-amber-50 mb-8">
+  const priceBreakdown = calculatePricing(ownersCount, propertiesCount, hasDocumentRetrieval);
+
+  return (
+    <Card className="border-2 border-amber-200 bg-amber-50 mb-8">
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -34,7 +43,7 @@ const PremiumServiceCard = ({
         <div className="mt-6 space-y-4">
           <div className="flex items-start">
             <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-            <span className="ml-3 text-gray-700">Complete tax return preparation</span>
+            <span className="ml-3 text-gray-700">Complete tax return preparation for {ownersCount} owner{ownersCount > 1 ? 's' : ''} and {propertiesCount} propert{propertiesCount > 1 ? 'ies' : 'y'}</span>
           </div>
           <div className="flex items-start">
             <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
@@ -50,32 +59,52 @@ const PremiumServiceCard = ({
           </div>
         </div>
         
-        <div className="mt-8">
-          <div className="flex items-baseline justify-between">
+        <div className="mt-6 border-t border-amber-200 pt-6">
+          <h3 className="font-medium text-gray-900 mb-2">Service Details</h3>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Owners registered:</span>
+            <span className="font-medium">{ownersCount}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Properties registered:</span>
+            <span className="font-medium">{propertiesCount}</span>
+          </div>
+        </div>
+        
+        <div className="mt-5">
+          <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center">
-                <span className="text-3xl font-bold text-gray-900">${basePrice}</span>
-                <span className="ml-2 text-sm text-gray-500 line-through">$285</span>
-                <span className="ml-2 text-xs px-1.5 py-0.5 bg-green-100 text-green-800 rounded">Early Access</span>
-              </div>
-              <p className="text-sm text-gray-500">one-time fee</p>
+              <PriceBreakdown priceBreakdown={priceBreakdown} showDetailedBreakdown={false} />
             </div>
             
-            {hasDocumentRetrieval && <div className="flex items-center bg-blue-50 px-3 py-2 rounded-md">
-                <FileSearch className="h-5 w-5 text-blue-500 mr-2" />
+            {onToggleDocumentRetrieval && (
+              <div 
+                className={`flex items-center ${hasDocumentRetrieval ? 'bg-blue-50' : 'bg-gray-50'} px-3 py-2 rounded-md cursor-pointer`}
+                onClick={onToggleDocumentRetrieval}
+              >
+                <FileSearch className={`h-5 w-5 ${hasDocumentRetrieval ? 'text-blue-500' : 'text-gray-400'} mr-2`} />
                 <div>
-                  <p className="text-sm font-medium text-blue-800">Document Retrieval</p>
-                  <p className="text-xs text-blue-600">+${documentRetrievalFee}</p>
+                  <p className={`text-sm font-medium ${hasDocumentRetrieval ? 'text-blue-800' : 'text-gray-700'}`}>
+                    Document Retrieval
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    +${priceBreakdown.documentRetrievalFee || 28}
+                  </p>
                 </div>
-              </div>}
+              </div>
+            )}
           </div>
           
-          {hasDocumentRetrieval && <div className="mt-2 text-right text-sm font-medium text-gray-900">
-              Total: ${totalPrice}
-            </div>}
+          <div className="mt-4">
+            <PriceBreakdown priceBreakdown={priceBreakdown} />
+          </div>
           
-          <Button onClick={onCheckout} disabled={loading} className="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md flex items-center justify-center">
-            {loading ? "Processing..." : `Purchase Full Service · $${totalPrice}`}
+          <Button 
+            onClick={onCheckout} 
+            disabled={loading} 
+            className="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md flex items-center justify-center"
+          >
+            {loading ? "Processing..." : `Purchase Full Service · $${priceBreakdown.totalPrice}`}
             {!loading && <ChevronRight className="ml-2 h-4 w-4" />}
           </Button>
           
@@ -85,6 +114,8 @@ const PremiumServiceCard = ({
           </div>
         </div>
       </div>
-    </Card>;
+    </Card>
+  );
 };
+
 export default PremiumServiceCard;

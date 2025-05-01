@@ -40,6 +40,8 @@ serve(async (req) => {
     if (session.payment_status === "paid") {
       // Get the document retrieval status from metadata
       const hasDocumentRetrieval = session.metadata?.has_document_retrieval === "true";
+      const ownersCount = parseInt(session.metadata?.owners_count || "1", 10);
+      const propertiesCount = parseInt(session.metadata?.properties_count || "1", 10);
       
       console.log("Payment is paid, updating purchase record");
       
@@ -69,6 +71,8 @@ serve(async (req) => {
         customer_email: session.customer_details?.email,
         metadata: session.metadata,
         has_document_retrieval: session.metadata?.has_document_retrieval === "true",
+        owners_count: parseInt(session.metadata?.owners_count || "1", 10),
+        properties_count: parseInt(session.metadata?.properties_count || "1", 10),
       }),
       { 
         headers: { 

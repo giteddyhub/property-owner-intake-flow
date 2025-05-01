@@ -8,6 +8,8 @@ type UsePaymentVerificationResult = {
   paymentStatus: string | null;
   paymentVerified: boolean;
   hasDocumentRetrieval: boolean;
+  ownersCount: number;
+  propertiesCount: number;
   setHasDocumentRetrieval: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
@@ -16,6 +18,8 @@ export const usePaymentVerification = (sessionId: string | null): UsePaymentVeri
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [paymentVerified, setPaymentVerified] = useState(false);
   const [hasDocumentRetrieval, setHasDocumentRetrieval] = useState(false);
+  const [ownersCount, setOwnersCount] = useState(1);
+  const [propertiesCount, setPropertiesCount] = useState(1);
   
   useEffect(() => {
     const verifyPayment = async () => {
@@ -31,6 +35,18 @@ export const usePaymentVerification = (sessionId: string | null): UsePaymentVeri
           if (data.status === 'paid') {
             setPaymentStatus('paid');
             setHasDocumentRetrieval(data.has_document_retrieval);
+            
+            // Set the owners and properties counts if available
+            if (data.owners_count) {
+              setOwnersCount(data.owners_count);
+              sessionStorage.setItem('ownersCount', data.owners_count.toString());
+            }
+            
+            if (data.properties_count) {
+              setPropertiesCount(data.properties_count);
+              sessionStorage.setItem('propertiesCount', data.properties_count.toString());
+            }
+            
             toast.success('Payment successful! Thank you for your purchase.');
           } else {
             setPaymentStatus(data.status);
@@ -54,6 +70,8 @@ export const usePaymentVerification = (sessionId: string | null): UsePaymentVeri
     paymentStatus,
     paymentVerified,
     hasDocumentRetrieval,
+    ownersCount,
+    propertiesCount,
     setHasDocumentRetrieval
   };
 };
