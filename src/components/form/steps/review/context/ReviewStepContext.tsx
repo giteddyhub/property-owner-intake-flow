@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { AuthModal } from '@/components/auth/AuthModal';
@@ -141,9 +140,9 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
       {children}
       {showAuthModal && (
         <AuthModal 
-          initialView="sign_up"
-          showSignUp={true}
-          onClose={() => setShowAuthModal(false)} 
+          open={showAuthModal}
+          onOpenChange={setShowAuthModal}
+          defaultTab="sign-up"
           onSuccess={handleAuthSuccess}
           redirectAfterAuth={true}
         />
