@@ -2,10 +2,26 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const PaymentCancelled = () => {
+  const navigate = useNavigate();
+  
   const handleReturnHome = () => {
     window.location.href = 'https://www.italiantaxes.com/';
+  };
+  
+  const handleReturnToPurchasePage = () => {
+    // Get the purchase ID from session storage
+    const purchaseId = sessionStorage.getItem('purchaseId');
+    
+    if (purchaseId) {
+      // Navigate to the user's custom tax filing service page
+      navigate(`/tax-filing-service/${purchaseId}`);
+    } else {
+      // Fallback to dashboard if purchase ID is not available
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -42,9 +58,9 @@ const PaymentCancelled = () => {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-md font-medium text-gray-900">Return to the success page</h3>
+                  <h3 className="text-md font-medium text-gray-900">Return to the purchase page</h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    Go back to the success page to purchase our full tax filing service.
+                    Go back to your personal tax filing service page to complete your purchase.
                   </p>
                 </div>
               </div>
@@ -69,9 +85,9 @@ const PaymentCancelled = () => {
         <div className="text-center">
           <Button 
             className="mr-4 bg-form-300 hover:bg-form-400 text-white"
-            onClick={() => window.location.href = '/success'}
+            onClick={handleReturnToPurchasePage}
           >
-            Return to Success Page
+            Return to Purchase Page
           </Button>
           
           <Button 
@@ -87,4 +103,3 @@ const PaymentCancelled = () => {
 };
 
 export default PaymentCancelled;
-
