@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [submissionCompleted, setSubmissionCompleted] = useState(false);
   const [pendingSubmissionProcessed, setPendingSubmissionProcessed] = useState(false);
 
-  const checkAndSubmitPendingFormData = async (userId: string) => {
+  const checkAndSubmitPendingFormData = async (userId: string, event?: string) => {
     try {
       // If we already processed a submission for this session, don't do it again
       if (pendingSubmissionProcessed || submissionCompleted) {
@@ -42,11 +42,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Check if there's pending form data in session storage
       const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+      
+      // If there's no pending form data and we have a redirectToDashboard flag,
+      // the form was already submitted during signup - no need to process again
+      if (!pendingFormDataStr && sessionStorage.getItem('redirectToDashboard') === 'true') {
+        console.log("Form was already submitted during signup, skipping duplicate submission");
+        setPendingSubmissionProcessed(true);
+        return;
+      }
+      
       if (pendingFormDataStr) {
         // Set processing flag to prevent multiple submissions
         setProcessingSubmission(true);
         
-        console.log("Found pending form data after auth state change, submitting with user ID:", userId);
+        console.log(`Found pending form data after ${event || 'auth state change'}, submitting with user ID:`, userId);
         
         const pendingFormData = JSON.parse(pendingFormDataStr);
         
@@ -105,7 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && newSession?.user) {
         // Use setTimeout to ensure auth state is fully updated and avoid race conditions
         setTimeout(() => {
-          checkAndSubmitPendingFormData(newSession.user.id);
+          // Only check for pending form data if email verification completed
+          // For SIGNED_IN events, don't process again if already submitted during signup
+          if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+            checkAndSubmitPendingFormData(newSession.user.id, event);
+          }
           
           // Redirect to dashboard after email verification
           if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
@@ -127,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If there's a user, check for pending form data
       if (initialSession?.user) {
         setTimeout(() => {
-          checkAndSubmitPendingFormData(initialSession.user.id);
+          checkAndSubmitPendingFormData(initialSession.user.id, 'initial_load');
         }, 1000);
       }
       

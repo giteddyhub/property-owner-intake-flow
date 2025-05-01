@@ -15,6 +15,7 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
   
   // Check if there's pending form data to show appropriate messaging
   const hasPendingFormData = sessionStorage.getItem('pendingFormData') !== null;
+  const formAlreadySubmitted = !hasPendingFormData && sessionStorage.getItem('redirectToDashboard') === 'true';
   
   const handleBackToLogin = () => {
     navigate('/login');
@@ -44,14 +45,26 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
                   </p>
                 </div>
                 
-                {hasPendingFormData && (
+                {formAlreadySubmitted && (
                   <div className="bg-green-50 border border-green-200 rounded-md p-4 my-2">
                     <h3 className="font-semibold text-green-800 flex items-center">
                       <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
-                      Your form data has been saved
+                      Your information has been submitted successfully
                     </h3>
                     <p className="text-green-700 text-sm mt-1">
-                      Your information will be automatically submitted after you verify your email.
+                      After verifying your email, you'll be able to access all your property information in your dashboard.
+                    </p>
+                  </div>
+                )}
+                
+                {hasPendingFormData && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 my-2">
+                    <h3 className="font-semibold text-yellow-800 flex items-center">
+                      <Mail className="h-5 w-5 mr-2 text-yellow-600" />
+                      Email verification required
+                    </h3>
+                    <p className="text-yellow-700 text-sm mt-1">
+                      Your information is ready to be submitted after you verify your email.
                     </p>
                   </div>
                 )}
@@ -63,10 +76,10 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
                       <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
                       <span>After verification, you'll be automatically redirected to your dashboard</span>
                     </li>
-                    {hasPendingFormData && (
+                    {formAlreadySubmitted && (
                       <li className="flex gap-2">
                         <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span><strong>Your form will be submitted automatically</strong> - no need to fill it out again</span>
+                        <span><strong>Your information has already been processed</strong> - it will be waiting for you in your dashboard</span>
                       </li>
                     )}
                     <li className="flex gap-2">

@@ -39,11 +39,31 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       email: userEmail
     };
     
-    // Save the updated data back to session storage
-    sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
+    // Set processing flag to prevent duplicate submissions
+    setProcessingSubmission(true);
     
-    // Don't submit the form here - redirect to verify email instead
-    console.log("Form data prepared for submission after email verification");
+    console.log("Immediately submitting form data after signup for user ID:", userId);
+    
+    try {
+      // Submit the form data immediately with the user ID
+      await submitFormData(
+        pendingFormData.owners,
+        pendingFormData.properties,
+        pendingFormData.assignments,
+        pendingFormData.contactInfo,
+        userId
+      );
+      
+      console.log("Form data submitted successfully immediately after signup");
+      
+      // Clear the pending form data to prevent duplicate submissions
+      sessionStorage.removeItem('pendingFormData');
+      
+      // Set a flag to redirect to dashboard after email verification
+      sessionStorage.setItem('redirectToDashboard', 'true');
+    } catch (error) {
+      console.error("Error submitting form data after signup:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,10 +102,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         if (data?.user?.id) {
           sessionStorage.setItem('pendingUserId', data.user.id);
           
-          // Set processing flag to prevent duplicate submissions
-          setProcessingSubmission(true);
-          
-          // Prepare form data for submission after email verification
+          // Immediately submit form data if it exists
           await submitFormIfPending(data.user.id, email);
         }
         

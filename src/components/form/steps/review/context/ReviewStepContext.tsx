@@ -57,6 +57,7 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
     console.log("ReviewStep handleSubmitButtonClick");
     
     // Store form data in sessionStorage so we can access it post-authentication
+    // This data will now be submitted immediately after signup
     sessionStorage.setItem('pendingFormData', JSON.stringify({
       owners,
       properties,
@@ -138,6 +139,15 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
       }}
     >
       {children}
+      {showAuthModal && (
+        <AuthModal 
+          initialView="sign_up"
+          showSignUp={true}
+          onClose={() => setShowAuthModal(false)} 
+          onSuccess={handleAuthSuccess}
+          redirectAfterAuth={true}
+        />
+      )}
     </ReviewStepContext.Provider>
   );
 };

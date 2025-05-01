@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 import type { SubmissionData } from './types';
 import { saveContactInfo } from './contactService';
@@ -96,7 +97,20 @@ export const submitFormData = async (
     await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, userId);
     console.log("Assignments saved successfully");
     
-    // Success notification
+    // Add user ID to completed submissions set to prevent duplicates
+    if (userId) {
+      completedSubmissionsByUser.add(userId);
+    }
+    
+    // If this is an immediate submission during signup (before email verification),
+    // don't redirect or show completion message yet
+    const isImmediateSubmissionAfterSignup = !document.cookie.includes('supabase-auth-token');
+    if (isImmediateSubmissionAfterSignup) {
+      console.log("Immediate submission after signup completed - data will be available after email verification");
+      return true;
+    }
+    
+    // Success notification for regular submissions
     toast.success("Form submitted successfully! Thank you for completing the property owner intake process.");
     
     // Add a brief delay before redirecting to ensure loading state is visible
@@ -104,9 +118,6 @@ export const submitFormData = async (
     
     // If the user is authenticated, create a tax filing session and redirect to it
     if (userId) {
-      // Store the user ID in the completed submissions set to prevent duplicates
-      completedSubmissionsByUser.add(userId);
-
       // Create a purchase entry to track this session
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
@@ -133,7 +144,7 @@ export const submitFormData = async (
       // Clear pending form data immediately after submission
       sessionStorage.removeItem('pendingFormData');
       
-      // Redirect to the tax filing service page
+      // For regular submissions (not immediately after signup), redirect to the tax filing service page
       window.location.href = `/tax-filing-service/${purchase.id}`;
       
       return true;
