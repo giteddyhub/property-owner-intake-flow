@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Check, Mail } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react';
 import { submitFormData } from '@/components/form/review/submitUtils';
 
 interface SignUpFormProps {
@@ -78,6 +77,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       }
     } catch (error) {
       console.error("Error submitting form data after signup:", error);
+    } finally {
+      setProcessingSubmission(false);
     }
   };
 
