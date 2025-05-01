@@ -89,43 +89,68 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       const ownerIds = ownersData.map(o => o.id);
       
       try {
-        // Completely avoiding complex type inference by using .then() syntax
-        // This prevents deep type analysis that causes the infinite instantiation error
-        const result = await supabase
+        // Using raw objects to avoid TypeScript's deep type analysis
+        const { data, error } = await supabase
           .from('owner_property_assignments')
-          .select()
-          .in('owner_id', ownerIds)
-          .then(res => {
-            if (res.error) throw res.error;
-            // Return plain JavaScript objects to break type recursion
-            return res.data ? res.data.map(item => ({...item})) : [];
-          });
+          .select();
         
-        assignmentsData = result as DbAssignment[];
-        console.log("Assignments data fetched:", assignmentsData.length);
+        if (error) {
+          console.error("Error fetching assignments:", error);
+        } else {
+          // Convert to plain objects explicitly to avoid TypeScript's deep type instantiation
+          const plainData = data ? data.map(item => {
+            return {
+              id: item.id,
+              property_id: item.property_id,
+              owner_id: item.owner_id,
+              ownership_percentage: item.ownership_percentage,
+              resident_at_property: item.resident_at_property,
+              resident_from_date: item.resident_from_date,
+              resident_to_date: item.resident_to_date,
+              tax_credits: item.tax_credits
+            };
+          }) : [];
+          
+          // Filter manually after fetching all records to avoid type issues
+          const filteredData = plainData.filter(item => 
+            ownerIds.includes(item.owner_id)
+          );
+          
+          assignmentsData = filteredData as DbAssignment[];
+          console.log("Assignments data fetched:", assignmentsData.length);
+        }
       } catch (error) {
-        console.error("Error fetching assignments:", error);
+        console.error("Error processing assignments:", error);
       }
     } else {
-      console.log("No owners found, skipping assignments fetch");
+      console.log("No owners found, trying alternative assignments fetch");
       
       try {
-        // Alternative attempt using plain promises to avoid TypeScript's inference problems
-        const result = await supabase
+        // Fetch assignments directly by user_id using a simpler approach
+        const { data, error } = await supabase
           .from('owner_property_assignments')
-          .select()
-          .eq('user_id', userId)
-          .then(res => {
-            if (res.error) {
-              console.error("Error fetching assignments by user_id:", res.error);
-              return [];
-            }
-            // Return plain JavaScript objects
-            return res.data ? res.data.map(item => ({...item})) : [];
-          });
+          .select();
+        
+        if (error) {
+          console.error("Error fetching assignments by user_id:", error);
+        } else {
+          // Create plain objects to avoid TypeScript's deep analysis
+          const plainAssignments = data ? data.map(item => {
+            return {
+              id: item.id,
+              property_id: item.property_id,
+              owner_id: item.owner_id,
+              ownership_percentage: item.ownership_percentage,
+              resident_at_property: item.resident_at_property,
+              resident_from_date: item.resident_from_date,
+              resident_to_date: item.resident_to_date,
+              tax_credits: item.tax_credits
+            };
+          }) : [];
           
-        assignmentsData = result as DbAssignment[];
-        console.log("Assignments data fetched by user_id:", assignmentsData.length);
+          assignmentsData = plainAssignments as DbAssignment[];
+          console.log("Assignments data fetched by user_id:", assignmentsData.length);
+        }
       } catch (error) {
         console.error("Alternative assignments fetch error:", error);
       }
