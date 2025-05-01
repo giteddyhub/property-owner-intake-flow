@@ -14,12 +14,6 @@ interface FetchUserDataResult {
   error: Error | null;
 }
 
-// Define more specific types for Supabase query results to avoid deep type instantiation
-interface SupabaseQueryResult<T> {
-  data: T[] | null;
-  error: Error | null;
-}
-
 export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<FetchUserDataResult> => {
   if (!userId) {
     console.log("No userId provided to fetchUserData, skipping data fetch");
@@ -45,7 +39,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     }
     
     // Fetch contacts associated with this user
-    const contactsResult: SupabaseQueryResult<{ id: string }> = await supabase
+    const contactsResult = await supabase
       .from('contacts')
       .select('id')
       .eq('user_id', userId);
@@ -59,7 +53,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     console.log("Contacts associated with user:", contactsData?.length || 0);
     
     // Fetch owners data - use user_id directly
-    const ownersResult: SupabaseQueryResult<DbOwner> = await supabase
+    const ownersResult = await supabase
       .from('owners')
       .select('*')
       .eq('user_id', userId);
@@ -69,12 +63,12 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       throw ownersResult.error;
     }
     
-    // Use type assertion to avoid deep instantiation
+    // Use simple casting to avoid deep type instantiation
     const ownersData = (ownersResult.data || []) as DbOwner[];
     console.log("Owners data fetched:", ownersData.length);
     
     // Fetch properties data
-    const propertiesResult: SupabaseQueryResult<DbProperty> = await supabase
+    const propertiesResult = await supabase
       .from('properties')
       .select('*')
       .eq('user_id', userId);
@@ -84,7 +78,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       throw propertiesResult.error;
     }
     
-    // Use type assertion to avoid deep instantiation
+    // Use simple casting to avoid deep type instantiation
     const propertiesData = (propertiesResult.data || []) as DbProperty[];
     console.log("Properties data fetched:", propertiesData.length);
     
@@ -93,7 +87,8 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     
     if (ownersData.length > 0) {
       const ownerIds = ownersData.map(o => o.id);
-      const assignmentsResult: SupabaseQueryResult<DbAssignment> = await supabase
+      
+      const assignmentsResult = await supabase
         .from('owner_property_assignments')
         .select('*')
         .in('owner_id', ownerIds);
@@ -109,7 +104,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       console.log("No owners found, skipping assignments fetch");
       
       // Alternative attempt - try fetching assignments directly by user_id
-      // Remove the type annotation completely to avoid recursive type analysis
+      // Avoid type annotations completely for this query
       const directAssignmentsResult = await supabase
         .from('owner_property_assignments')
         .select('*')
@@ -118,8 +113,9 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       if (directAssignmentsResult.error) {
         console.error("Error fetching assignments by user_id:", directAssignmentsResult.error);
       } else {
-        // Use a simple type assertion without complex types
-        assignmentsData = directAssignmentsResult.data as any[] || [];
+        // Convert the data to plain objects to break any type recursion
+        assignmentsData = directAssignmentsResult.data ? 
+          JSON.parse(JSON.stringify(directAssignmentsResult.data)) : [];
         console.log("Assignments data fetched by user_id:", assignmentsData.length);
       }
     }
