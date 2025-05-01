@@ -38,20 +38,6 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       console.log("Auth user data:", authUserData?.user?.id);
     }
     
-    // Fetch contacts associated with this user
-    const contactsResult = await supabase
-      .from('contacts')
-      .select('id')
-      .eq('user_id', userId);
-    
-    if (contactsResult.error) {
-      console.error("Error fetching contacts:", contactsResult.error);
-      throw contactsResult.error;
-    }
-    
-    const contactsData = contactsResult.data;
-    console.log("Contacts associated with user:", contactsData?.length || 0);
-    
     // Fetch owners data - use user_id directly
     const ownersResult = await supabase
       .from('owners')
@@ -125,7 +111,8 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
       try {
         const { data, error } = await supabase
           .from('owner_property_assignments')
-          .select();
+          .select('*')
+          .eq('user_id', userId);
         
         if (error) {
           console.error("Error fetching assignments directly:", error);
