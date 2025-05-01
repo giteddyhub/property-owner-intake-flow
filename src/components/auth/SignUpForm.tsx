@@ -39,6 +39,11 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       return;
     }
     
+    // Prevent double submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -69,9 +74,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         if (redirectAfterAuth) {
           // Check if we need to redirect to dashboard
           const shouldRedirectToDashboard = sessionStorage.getItem('redirectToDashboard') === 'true';
-          if (shouldRedirectToDashboard) {
-            // Clear the redirect flag
-            sessionStorage.removeItem('redirectToDashboard');
+          const hasPendingFormData = sessionStorage.getItem('pendingFormData') !== null;
+          
+          if (shouldRedirectToDashboard || hasPendingFormData) {
             // Delay redirect to ensure auth state is updated
             setTimeout(() => {
               // Redirect to dashboard

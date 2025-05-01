@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import AssignmentReviewCard from '../review/AssignmentReviewCard';
 import SubmissionSummary from '../review/SubmissionSummary';
 import SectionHeader from '../review/SectionHeader';
 import ReviewActions from '../review/ReviewActions';
-import { submitFormData } from '../review/submitUtils';
+import { submitFormData } from '../review/utils/submissionService';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '../../auth/AuthModal';
@@ -18,26 +17,40 @@ import {
   Accordion
 } from "@/components/ui/accordion";
 
+// Create unique ID for this component instance
+const REVIEW_STEP_INSTANCE_ID = Date.now().toString();
+
 const ReviewStep: React.FC = () => {
   const { state, goToStep, prevStep } = useFormContext();
   const { owners, properties, assignments } = state;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [submissionInProgress, setSubmissionInProgress] = useState(false);
+  const [submissionAttempted, setSubmissionAttempted] = useState(false);
   const { user, processingSubmission, setProcessingSubmission } = useAuth();
+  
+  console.log(`ReviewStep [${REVIEW_STEP_INSTANCE_ID}] render: isSubmitting=${isSubmitting}, processingSubmission=${processingSubmission}`);
   
   // Check if we should automatically try to submit pending form data
   useEffect(() => {
     const checkPendingSubmission = async () => {
+      // If submission was already attempted from this component, don't try again
+      if (submissionAttempted) {
+        return;
+      }
+      
       // If user is logged in and there's pending form data, try to submit it
-      if (user && sessionStorage.getItem('pendingFormData') && !processingSubmission) {
+      if (user && sessionStorage.getItem('pendingFormData') && !processingSubmission && !submissionInProgress) {
         const pendingData = JSON.parse(sessionStorage.getItem('pendingFormData') || '{}');
         
         // Only proceed if we have valid data
         if (pendingData.owners && pendingData.properties) {
-          console.log("Found pending form data on page load, submitting with user ID:", user.id);
+          console.log(`ReviewStep [${REVIEW_STEP_INSTANCE_ID}] found pending form data on page load, submitting with user ID:`, user.id);
           try {
             setIsSubmitting(true);
             setProcessingSubmission(true);
+            setSubmissionInProgress(true);
+            setSubmissionAttempted(true);
             
             await submitFormData(
               pendingData.owners,
@@ -55,20 +68,23 @@ const ReviewStep: React.FC = () => {
           } finally {
             setIsSubmitting(false);
             setProcessingSubmission(false);
+            setSubmissionInProgress(false);
           }
         }
       }
     };
     
     checkPendingSubmission();
-  }, [user, processingSubmission, setProcessingSubmission]);
+  }, [user, processingSubmission, setProcessingSubmission, submissionAttempted, submissionInProgress]);
   
   const handleSubmitButtonClick = () => {
     // Prevent duplicate submissions
-    if (processingSubmission) {
+    if (processingSubmission || submissionInProgress) {
       toast.info("Your submission is already being processed");
       return;
     }
+    
+    console.log(`ReviewStep [${REVIEW_STEP_INSTANCE_ID}] handleSubmitButtonClick`);
     
     // Store form data in sessionStorage so we can access it post-authentication
     sessionStorage.setItem('pendingFormData', JSON.stringify({
@@ -93,10 +109,14 @@ const ReviewStep: React.FC = () => {
   const handleAuthSuccess = () => {
     // Close the auth modal
     setShowAuthModal(false);
+    
+    // Mark that we've attempted submission from this component
+    setSubmissionAttempted(true);
+    
     // Short timeout to ensure auth state is updated
     setTimeout(() => {
       // If user is authenticated after modal closes, submit the form
-      if (user && !processingSubmission) {
+      if (user && !processingSubmission && !submissionInProgress) {
         handleSubmit();
       }
     }, 1000); // Increased timeout to ensure auth state is properly updated
@@ -104,16 +124,20 @@ const ReviewStep: React.FC = () => {
   
   const handleSubmit = async () => {
     // Prevent duplicate submissions
-    if (processingSubmission) {
+    if (processingSubmission || submissionInProgress) {
       toast.info("Your submission is already being processed");
       return;
     }
     
+    console.log(`ReviewStep [${REVIEW_STEP_INSTANCE_ID}] handleSubmit`);
+    
     try {
       setIsSubmitting(true);
       setProcessingSubmission(true);
+      setSubmissionInProgress(true);
+      setSubmissionAttempted(true);
       
-      console.log("Submitting form with user ID:", user?.id);
+      console.log(`ReviewStep [${REVIEW_STEP_INSTANCE_ID}] submitting form with user ID:`, user?.id);
       
       // Get user information to populate contact info
       const contactInfo = {
@@ -130,6 +154,9 @@ const ReviewStep: React.FC = () => {
       // Set flag to redirect to dashboard after submission
       sessionStorage.setItem('redirectToDashboard', 'true');
       
+      // Clear form data to prevent duplicate submissions
+      sessionStorage.removeItem('pendingFormData');
+      
       // Short timeout before redirecting
       setTimeout(() => {
         // Check if we should redirect to dashboard
@@ -140,11 +167,12 @@ const ReviewStep: React.FC = () => {
       }, 1000);
       
     } catch (error) {
-      console.error('Error during submission:', error);
+      console.error(`ReviewStep [${REVIEW_STEP_INSTANCE_ID}] Error during submission:`, error);
       toast.error('There was an error submitting your information. Please try again.');
     } finally {
       setIsSubmitting(false);
       setProcessingSubmission(false);
+      setSubmissionInProgress(false);
     }
   };
   
@@ -206,8 +234,8 @@ const ReviewStep: React.FC = () => {
         
         <div className="space-y-4">
           {properties.map((property) => {
-            const propertyAssignments = getPropertyAssignments(property.id);
-            const totalPercentage = getTotalPercentage(property.id);
+            const propertyAssignments = assignments.filter(assignment => assignment.propertyId === property.id);
+            const totalPercentage = propertyAssignments.reduce((sum, assignment) => sum + assignment.ownershipPercentage, 0);
             
             if (propertyAssignments.length === 0) {
               return null;
@@ -219,7 +247,7 @@ const ReviewStep: React.FC = () => {
                 property={property}
                 propertyAssignments={propertyAssignments}
                 totalPercentage={totalPercentage}
-                getOwnerById={getOwnerById}
+                getOwnerById={(id) => owners.find(owner => owner.id === id)}
               />
             );
           })}
@@ -229,7 +257,7 @@ const ReviewStep: React.FC = () => {
       <ReviewActions 
         prevStep={prevStep}
         onSubmitButtonClick={handleSubmitButtonClick}
-        isSubmitting={isSubmitting || processingSubmission}
+        isSubmitting={isSubmitting || processingSubmission || submissionInProgress}
         owners={owners}
         properties={properties}
         assignments={assignments}

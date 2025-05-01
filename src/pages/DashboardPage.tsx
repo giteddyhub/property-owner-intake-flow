@@ -13,7 +13,10 @@ const DashboardPage = () => {
   const [activeFilter, setActiveFilter] = useState('properties');
   
   const [refreshFlag, setRefreshFlag] = useState(0);
+  const [hasRefreshedAfterRedirect, setHasRefreshedAfterRedirect] = useState(false);
+  
   const refreshData = useCallback(() => {
+    console.log("Dashboard: Manually refreshing data");
     setRefreshFlag(prev => prev + 1);
   }, []);
   
@@ -26,21 +29,23 @@ const DashboardPage = () => {
   useEffect(() => {
     // Check if we need to refresh the data after form submission
     const shouldReload = sessionStorage.getItem('redirectToDashboard') === 'true';
-    if (shouldReload) {
+    
+    // Only refresh once after redirect
+    if (shouldReload && !hasRefreshedAfterRedirect) {
       sessionStorage.removeItem('redirectToDashboard');
       toast.success("Your property data has been successfully saved!");
       
-      // Force a data refresh
-      console.log("Dashboard: Refreshing data after redirect");
-      refreshData();
+      console.log("Dashboard: Initial refresh after redirect");
+      setRefreshFlag(prev => prev + 1);
+      setHasRefreshedAfterRedirect(true);
       
-      // Delay another refresh to make sure data is loaded after auth state settles
+      // Delay another refresh to ensure auth state has settled
       setTimeout(() => {
-        console.log("Dashboard: Refreshing data again after delay");
-        refreshData();
+        console.log("Dashboard: Delayed refresh after redirect");
+        setRefreshFlag(prev => prev + 1);
       }, 2000);
     }
-  }, [refreshData]);
+  }, [hasRefreshedAfterRedirect]);
 
   // Add a global cleanup handler
   useEffect(() => {
@@ -105,10 +110,6 @@ const DashboardPage = () => {
       toast.error('Failed to sign out. Please try again.');
     }
   };
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
 
   return (
     <DashboardLayout

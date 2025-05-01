@@ -2,7 +2,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
-import { submitFormData } from '@/components/form/review/submitUtils';
+import { submitFormData } from '@/components/form/review/utils/submissionService';
 
 type AuthContextType = {
   user: User | null;
@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingSubmission, setProcessingSubmission] = useState(false);
+  const [submissionAttempts, setSubmissionAttempts] = useState(0);
 
   const checkAndSubmitPendingFormData = async (userId: string) => {
     try {
@@ -47,29 +48,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProcessingSubmission(false);
           return;
         }
+
+        // Generate a unique submission ID to track this submission
+        const submissionId = Date.now().toString();
+        console.log(`Starting submission ${submissionId} for user ${userId}`);
         
-        // Submit the form data with the user ID
-        await submitFormData(
-          pendingFormData.owners,
-          pendingFormData.properties,
-          pendingFormData.assignments,
-          pendingFormData.contactInfo,
-          userId
-        );
+        // Track submission attempt to prevent duplicates
+        setSubmissionAttempts(prev => prev + 1);
+        const currentAttempt = submissionAttempts + 1;
         
-        // Clear the pending form data from session storage
-        sessionStorage.removeItem('pendingFormData');
-        console.log("Successfully submitted pending form data for user:", userId);
-        
-        // Set a flag to redirect to dashboard after form submission
-        sessionStorage.setItem('redirectToDashboard', 'true');
-        
-        // Redirect to dashboard if we're not already there
-        if (!window.location.pathname.includes('/dashboard')) {
-          window.location.href = '/dashboard';
+        try {
+          // Submit the form data with the user ID
+          await submitFormData(
+            pendingFormData.owners,
+            pendingFormData.properties,
+            pendingFormData.assignments,
+            pendingFormData.contactInfo,
+            userId
+          );
+          
+          // Immediately clear the pending form data after successful submission
+          sessionStorage.removeItem('pendingFormData');
+          console.log(`Successfully submitted pending form data (attempt ${currentAttempt}) for user:`, userId);
+          
+          // Set a flag to redirect to dashboard after form submission
+          sessionStorage.setItem('redirectToDashboard', 'true');
+          
+          // Redirect to dashboard if we're not already there
+          if (!window.location.pathname.includes('/dashboard')) {
+            window.location.href = '/dashboard';
+          }
+        } catch (error) {
+          console.error(`Submission ${submissionId} failed:`, error);
         }
 
-        // Reset the processing flag after submission is complete
+        // Reset the processing flag after submission
         setProcessingSubmission(false);
       }
     } catch (error) {
