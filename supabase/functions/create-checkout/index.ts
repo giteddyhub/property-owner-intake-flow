@@ -132,7 +132,7 @@ async function createStripeCheckoutSession(stripe, lineItems, contactEmail, requ
     line_items: lineItems,
     mode: "payment",
     customer_email: contactEmail,
-    success_url: `${requestOrigin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${requestOrigin}/tax-filing-service/${purchaseId}?payment=success`,
     cancel_url: `${requestOrigin}/payment-cancelled`,
     metadata: {
       purchase_id: purchaseId,

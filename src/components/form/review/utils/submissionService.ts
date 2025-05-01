@@ -26,7 +26,7 @@ export const submitFormData = async (
     // Check if any property has document retrieval service enabled
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
     
-    // Store this information in sessionStorage for the success page
+    // Store this information in sessionStorage for the tax filing page
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
     // Step 1: Save contact information
@@ -50,8 +50,35 @@ export const submitFormData = async (
     // Add a brief delay before redirecting to ensure loading state is visible
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Redirect to the success page
-    window.location.href = '/success';
+    // If the user is authenticated, create a tax filing session and redirect to it
+    if (userId) {
+      // Create a purchase entry to track this session
+      const { data: purchase, error: purchaseError } = await supabase
+        .from('purchases')
+        .insert({
+          contact_id: contactId,
+          payment_status: 'pending',
+          has_document_retrieval: hasDocumentRetrievalService,
+          amount: 0 // Will be calculated during checkout
+        })
+        .select('id')
+        .single();
+        
+      if (purchaseError) {
+        console.error('Failed to create purchase:', purchaseError);
+        throw purchaseError;
+      }
+      
+      // Store purchase ID in sessionStorage
+      sessionStorage.setItem('purchaseId', purchase.id);
+      
+      // Redirect to the tax filing service page
+      window.location.href = `/tax-filing-service/${purchase.id}`;
+    } else {
+      // If user is not logged in, redirect to success page as fallback
+      // This path should rarely happen as users are prompted to log in before submission
+      window.location.href = '/success';
+    }
     
   } catch (error) {
     console.error('Error submitting form:', error);

@@ -5,26 +5,60 @@ import { Button } from '@/components/ui/button';
 import FormNavigation from '@/components/form/FormNavigation';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTaxFilingState } from '@/hooks/useTaxFilingState';
 
 const SubmitStep: React.FC = () => {
   const { state, prevStep } = useFormContext();
   const { owners, properties, assignments } = state;
+  const { user } = useAuth();
+  const { createTaxFilingSession } = useTaxFilingState();
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     toast.success('Form submitted successfully!', {
       description: 'Thank you for completing the property owner intake process.',
       duration: 5000,
     });
     
+    // Store submission data in sessionStorage for the tax filing service
+    sessionStorage.setItem('ownersCount', String(owners.length));
+    sessionStorage.setItem('propertiesCount', String(properties.length));
+    
+    // Check if any property has document retrieval service
+    const hasDocumentRetrievalService = properties.some(
+      property => property.useDocumentRetrievalService
+    );
+    
+    // Store document retrieval preference in session storage
+    sessionStorage.setItem('hasDocumentRetrievalService', 
+      JSON.stringify(hasDocumentRetrievalService)
+    );
+    
     setTimeout(() => {
-      toast("Your submission has been received", {
-        description: "A confirmation email has been sent with a summary of your submission.",
-        action: {
-          label: "Download Summary",
-          onClick: () => handleDownloadSummary(),
-        },
+      toast("Creating your tax filing service...", {
+        description: "You'll be redirected to your personalized tax filing page shortly.",
       });
     }, 1000);
+    
+    // If user is authenticated, create a tax filing session
+    if (user) {
+      try {
+        const sessionId = await createTaxFilingSession(user.id);
+        if (sessionId) {
+          // Redirect to the tax filing service page
+          window.location.href = `/tax-filing-service/${sessionId}`;
+        } else {
+          // Fallback to dashboard if session creation failed
+          window.location.href = '/dashboard';
+        }
+      } catch (error) {
+        console.error('Error creating tax filing session:', error);
+        toast.error('Failed to create tax filing service. Please try again.');
+      }
+    } else {
+      // If not authenticated, this shouldn't happen as users are required to log in
+      toast.error('Authentication required. Please log in to continue.');
+    }
   };
   
   const handleDownloadSummary = () => {

@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Index from './pages/Index';
-import SuccessPage from './pages/SuccessPage';
 import PaymentCancelled from './pages/PaymentCancelled';
 import NotFound from './pages/NotFound';
 import { Toaster } from '@/components/ui/toaster';
@@ -58,7 +57,6 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/success" element={<SuccessPage />} />
       <Route path="/ResidentSuccessPage" element={<ResidentSuccessPage />} />
       <Route path="/payment-cancelled" element={<PaymentCancelled />} />
       <Route path="/residency-assessment" element={<ResidencyAssessmentPage />} />
