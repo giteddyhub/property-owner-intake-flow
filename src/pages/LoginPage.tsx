@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SignInForm } from '@/components/auth/SignInForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const {
@@ -17,13 +19,17 @@ const LoginPage = () => {
       navigate('/dashboard');
     }
   }, [user, navigate]);
+  
   const handleLoginSuccess = () => {
     setIsLoading(true);
     // The SignInForm component will handle the redirect to dashboard
   };
+  
   const handleBackToHome = () => {
-    navigate('/');
+    // Redirect to the external website instead of navigating within the app
+    window.location.href = "https://www.italiantaxes.com/";
   };
+  
   return <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex items-center mb-6">
@@ -51,4 +57,5 @@ const LoginPage = () => {
       </div>
     </div>;
 };
+
 export default LoginPage;
