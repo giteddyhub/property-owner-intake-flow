@@ -21,21 +21,35 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
   property,
   onSuccess
 }) => {
+  // Enhanced cleanup function
+  const cleanupOverlays = () => {
+    const selectors = [
+      '[data-state="closed"][data-radix-portal]',
+      '.vaul-overlay[data-state="closed"]',
+      '[role="dialog"][aria-hidden="true"]',
+      '.fixed.inset-0.z-50:not([data-state="open"])'
+    ];
+    
+    selectors.forEach(selector => {
+      document.querySelectorAll(selector).forEach(element => {
+        if (element.parentNode) {
+          console.log('Cleaning up overlay element:', element);
+          element.parentNode.removeChild(element);
+        }
+      });
+    });
+    
+    // Reset body styles
+    document.body.style.pointerEvents = '';
+    document.body.style.overflow = '';
+  };
+
   // Ensure cleanup when the component unmounts or when isOpen changes
   useEffect(() => {
     return () => {
       // This will run when the component unmounts or when isOpen changes to false
       if (!isOpen) {
-        document.body.style.pointerEvents = '';
-        
-        // Clean up any stray overlay elements
-        const overlays = document.querySelectorAll('[data-state="closed"][data-radix-portal], .vaul-overlay[data-state="closed"]');
-        overlays.forEach(overlay => {
-          if (overlay.parentNode) {
-            console.log('Cleaning up overlay on unmount:', overlay);
-            overlay.parentNode.removeChild(overlay);
-          }
-        });
+        cleanupOverlays();
       }
     };
   }, [isOpen]);
@@ -53,29 +67,6 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
   const handleClose = () => {
     // Force reset document pointerEvents
     document.body.style.pointerEvents = '';
-    
-    // Clean up any lingering overlay elements
-    const cleanupOverlays = () => {
-      const selectors = [
-        '[data-state="closed"][data-radix-portal]',
-        '.vaul-overlay[data-state="closed"]',
-        '[role="dialog"][aria-hidden="true"]',
-        '.fixed.inset-0.z-50:not([data-state="open"])'
-      ];
-      
-      selectors.forEach(selector => {
-        document.querySelectorAll(selector).forEach(element => {
-          if (element.parentNode) {
-            console.log('Removing lingering element:', element);
-            element.parentNode.removeChild(element);
-          }
-        });
-      });
-      
-      // Reset body styles
-      document.body.style.pointerEvents = '';
-      document.body.style.overflow = '';
-    };
     
     // Execute cleanup immediately and after animation completes
     cleanupOverlays();
