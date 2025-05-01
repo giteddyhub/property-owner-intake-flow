@@ -13,15 +13,22 @@ import { Button } from '@/components/ui/button';
 import { User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 export const AccountMenu = () => {
   const { user, signOut } = useAuth();
   
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out. Please try again.');
+    }
   };
 
-  // If user is not logged in, return null (remove the Sign In button)
+  // If user is not logged in, return null
   if (!user) {
     return null;
   }

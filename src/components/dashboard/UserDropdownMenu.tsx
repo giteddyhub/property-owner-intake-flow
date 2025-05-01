@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 interface UserDropdownMenuProps {
   onSignOut: () => Promise<void>;
@@ -46,6 +47,17 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut })
     navigate('/account-settings');
   };
 
+  const handleSignOut = async () => {
+    try {
+      await onSignOut();
+      toast.success('Signed out successfully');
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out. Please try again.');
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -73,7 +85,7 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut })
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={onSignOut}>
+        <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>
         </DropdownMenuItem>

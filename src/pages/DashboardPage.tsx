@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { LoadingScreen } from '@/components/dashboard/LoadingScreen';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { toast } from 'sonner';
 
 const DashboardPage = () => {
   const { user, signOut } = useAuth();
@@ -75,8 +76,14 @@ const DashboardPage = () => {
   }, [user, navigate]);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out. Please try again.');
+    }
   };
 
   if (loading) {
