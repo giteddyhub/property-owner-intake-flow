@@ -11,6 +11,8 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   loading: boolean;
+  processingSubmission: boolean;
+  setProcessingSubmission: (value: boolean) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,12 +21,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [processingSubmission, setProcessingSubmission] = useState(false);
 
   const checkAndSubmitPendingFormData = async (userId: string) => {
     try {
+      // If we're already processing a submission, don't start another one
+      if (processingSubmission) {
+        console.log("Already processing a submission, skipping duplicate attempt");
+        return;
+      }
+
       // Check if there's pending form data in session storage
       const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
       if (pendingFormDataStr) {
+        // Set processing flag to prevent multiple submissions
+        setProcessingSubmission(true);
+        
         console.log("Found pending form data after auth state change, submitting with user ID:", userId);
         
         const pendingFormData = JSON.parse(pendingFormDataStr);
@@ -32,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Ensure we have all required data before submitting
         if (!pendingFormData.owners || !pendingFormData.properties) {
           console.warn("Pending form data is incomplete, cannot submit", pendingFormData);
+          setProcessingSubmission(false);
           return;
         }
         
@@ -55,9 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!window.location.pathname.includes('/dashboard')) {
           window.location.href = '/dashboard';
         }
+
+        // Reset the processing flag after submission is complete
+        setProcessingSubmission(false);
       }
     } catch (error) {
       console.error("Error submitting pending form data:", error);
+      setProcessingSubmission(false);
     }
   };
 
@@ -70,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // When a user signs in or the session is refreshed, check for and submit pending form data
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession?.user) {
-        // Delay the submission to ensure auth state is fully updated
+        // Use setTimeout to ensure auth state is fully updated and avoid race conditions
         setTimeout(() => {
           checkAndSubmitPendingFormData(newSession.user.id);
         }, 1000);
@@ -129,6 +146,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signOut,
         loading,
+        processingSubmission,
+        setProcessingSubmission,
       }}
     >
       {children}

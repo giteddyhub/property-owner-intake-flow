@@ -23,13 +23,13 @@ const ReviewStep: React.FC = () => {
   const { owners, properties, assignments } = state;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user } = useAuth();
+  const { user, processingSubmission, setProcessingSubmission } = useAuth();
   
   // Check if we should automatically try to submit pending form data
   useEffect(() => {
     const checkPendingSubmission = async () => {
       // If user is logged in and there's pending form data, try to submit it
-      if (user && sessionStorage.getItem('pendingFormData')) {
+      if (user && sessionStorage.getItem('pendingFormData') && !processingSubmission) {
         const pendingData = JSON.parse(sessionStorage.getItem('pendingFormData') || '{}');
         
         // Only proceed if we have valid data
@@ -37,6 +37,8 @@ const ReviewStep: React.FC = () => {
           console.log("Found pending form data on page load, submitting with user ID:", user.id);
           try {
             setIsSubmitting(true);
+            setProcessingSubmission(true);
+            
             await submitFormData(
               pendingData.owners,
               pendingData.properties, 
@@ -44,6 +46,7 @@ const ReviewStep: React.FC = () => {
               pendingData.contactInfo,
               user.id
             );
+            
             sessionStorage.removeItem('pendingFormData');
             toast.success("Your information has been successfully submitted!");
           } catch (error) {
@@ -51,15 +54,22 @@ const ReviewStep: React.FC = () => {
             toast.error("Failed to submit your information. Please try again.");
           } finally {
             setIsSubmitting(false);
+            setProcessingSubmission(false);
           }
         }
       }
     };
     
     checkPendingSubmission();
-  }, [user]);
+  }, [user, processingSubmission, setProcessingSubmission]);
   
   const handleSubmitButtonClick = () => {
+    // Prevent duplicate submissions
+    if (processingSubmission) {
+      toast.info("Your submission is already being processed");
+      return;
+    }
+    
     // Store form data in sessionStorage so we can access it post-authentication
     sessionStorage.setItem('pendingFormData', JSON.stringify({
       owners,
@@ -86,15 +96,22 @@ const ReviewStep: React.FC = () => {
     // Short timeout to ensure auth state is updated
     setTimeout(() => {
       // If user is authenticated after modal closes, submit the form
-      if (user) {
+      if (user && !processingSubmission) {
         handleSubmit();
       }
     }, 1000); // Increased timeout to ensure auth state is properly updated
   };
   
   const handleSubmit = async () => {
+    // Prevent duplicate submissions
+    if (processingSubmission) {
+      toast.info("Your submission is already being processed");
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
+      setProcessingSubmission(true);
       
       console.log("Submitting form with user ID:", user?.id);
       
@@ -127,6 +144,7 @@ const ReviewStep: React.FC = () => {
       toast.error('There was an error submitting your information. Please try again.');
     } finally {
       setIsSubmitting(false);
+      setProcessingSubmission(false);
     }
   };
   
@@ -211,7 +229,7 @@ const ReviewStep: React.FC = () => {
       <ReviewActions 
         prevStep={prevStep}
         onSubmitButtonClick={handleSubmitButtonClick}
-        isSubmitting={isSubmitting}
+        isSubmitting={isSubmitting || processingSubmission}
         owners={owners}
         properties={properties}
         assignments={assignments}
