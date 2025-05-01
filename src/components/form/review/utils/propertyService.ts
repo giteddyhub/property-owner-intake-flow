@@ -5,9 +5,9 @@ import { Property } from '@/types/form';
 /**
  * Save properties and return mapping of client-side IDs to database IDs
  */
-export const saveProperties = async (properties: Property[], contactId: string, userId: string | null = null) => {
+export const saveProperties = async (properties: Property[], formSubmissionId: string, userId: string | null = null) => {
   try {
-    console.log(`Saving ${properties.length} properties with contactId:`, contactId);
+    console.log(`Saving ${properties.length} properties with formSubmissionId:`, formSubmissionId);
     
     if (properties.length === 0) {
       return {};
@@ -52,8 +52,8 @@ export const saveProperties = async (properties: Property[], contactId: string, 
         rental_income: property.rentalIncome ? Number(property.rentalIncome) : null,
         documents: documentStrings,
         use_document_retrieval_service: Boolean(property.useDocumentRetrievalService),
-        contact_id: contactId,
-        user_id: userId,  // Ensure user_id is set when available
+        form_submission_id: formSubmissionId, // Updated from contact_id to form_submission_id
+        user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };

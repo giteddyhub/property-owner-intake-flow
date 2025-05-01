@@ -74,27 +74,27 @@ export const submitFormData = async (
     // Store this information in sessionStorage for the tax filing page
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
-    // Step 1: Save contact information
-    console.log("Saving contact info with userId:", userId);
-    const contactId = await saveContactInfo(contactInfo, userId);
-    console.log("Contact saved with ID:", contactId);
+    // Step 1: Create form submission entry (previously saving contact info)
+    console.log("Creating form submission with userId:", userId);
+    const submissionId = await saveContactInfo(contactInfo, userId);
+    console.log("Form submission created with ID:", submissionId);
     
-    // Store contact ID in sessionStorage
-    sessionStorage.setItem('contactId', contactId);
+    // Store submission ID in sessionStorage (previously contactId)
+    sessionStorage.setItem('submissionId', submissionId);
     
     // Step 2: Save owners and get ID mappings - ensure user_id is passed
     console.log("Saving owners with userId:", userId);
-    const ownerIdMap = await saveOwners(owners, contactId, userId);
+    const ownerIdMap = await saveOwners(owners, submissionId, userId);
     console.log("Owner ID mapping:", ownerIdMap);
     
     // Step 3: Save properties and get ID mappings - ensure user_id is passed
     console.log("Saving properties with userId:", userId);
-    const propertyIdMap = await saveProperties(properties, contactId, userId);
+    const propertyIdMap = await saveProperties(properties, submissionId, userId);
     console.log("Property ID mapping:", propertyIdMap);
     
     // Step 4: Save owner-property assignments - ensure user_id is passed
     console.log("Saving assignments with userId:", userId);
-    await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, userId);
+    await saveAssignments(assignments, ownerIdMap, propertyIdMap, submissionId, userId);
     console.log("Assignments saved successfully");
     
     // Add user ID to completed submissions set to prevent duplicates
@@ -122,11 +122,11 @@ export const submitFormData = async (
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert({
-          contact_id: contactId,
+          form_submission_id: submissionId, // Updated from contact_id
           payment_status: 'pending',
           has_document_retrieval: hasDocumentRetrievalService,
           amount: 0, // Will be calculated during checkout
-          user_id: userId // Make sure to associate the purchase with the user
+          user_id: userId
         })
         .select('id')
         .single();

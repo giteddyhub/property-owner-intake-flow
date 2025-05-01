@@ -38,6 +38,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
     const fetchUserData = async () => {
       setLoading(true);
       try {
+        // Use user_id fields instead of contact_id
         const { data: ownersData, error: ownersError } = await supabase
           .from('owners')
           .select('*')
@@ -64,6 +65,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
           assignmentsData = fetchedAssignments;
         }
         
+        // Map the data to our frontend types
         const mappedOwners: Owner[] = ownersData.map(dbOwner => ({
           id: dbOwner.id,
           firstName: dbOwner.first_name,
@@ -88,6 +90,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         }));
         
         const mappedProperties: Property[] = propertiesData.map(dbProperty => {
+          // Process documents
           let parsedDocuments: PropertyDocument[] = [];
           if (dbProperty.documents && Array.isArray(dbProperty.documents)) {
             try {
@@ -112,7 +115,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
             }
           }
 
-          // Improved parsing of occupancy statuses to handle different formats
+          // Process occupancy statuses
           let parsedOccupancyStatuses: OccupancyAllocation[] = [];
           try {
             if (typeof dbProperty.occupancy_statuses === 'string') {

@@ -5,9 +5,9 @@ import { Owner } from '@/types/form';
 /**
  * Save owners and return mapping of client-side IDs to database IDs
  */
-export const saveOwners = async (owners: Owner[], contactId: string, userId: string | null = null) => {
+export const saveOwners = async (owners: Owner[], formSubmissionId: string, userId: string | null = null) => {
   try {
-    console.log(`Saving ${owners.length} owners with contactId:`, contactId);
+    console.log(`Saving ${owners.length} owners with formSubmissionId:`, formSubmissionId);
     
     if (owners.length === 0) {
       return {};
@@ -36,8 +36,8 @@ export const saveOwners = async (owners: Owner[], contactId: string, userId: str
         italian_residence_street: owner.italianResidenceDetails?.street || null,
         italian_residence_city: owner.italianResidenceDetails?.city || null,
         italian_residence_zip: owner.italianResidenceDetails?.zip || null,
-        contact_id: contactId,
-        user_id: userId,  // Ensure user_id is set when available
+        form_submission_id: formSubmissionId, // Updated from contact_id to form_submission_id
+        user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };

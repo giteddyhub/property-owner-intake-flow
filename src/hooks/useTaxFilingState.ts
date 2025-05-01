@@ -18,62 +18,43 @@ export const useTaxFilingState = () => {
         return null;
       }
       
-      // Check if the user has a contact record first
-      const { data: contactData, error: contactError } = await supabase
-        .from('contacts')
-        .select('id')
-        .eq('user_id', userId)
+      // Check if the user has profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('id', userId)
         .maybeSingle();
       
-      console.log('Contact lookup result:', contactData, contactError);
+      console.log('Profile lookup result:', profileData, profileError);
       
-      let contactId;
-      
-      if (contactError && contactError.code !== 'PGRST116') { // Not found error
-        console.error('Contact lookup error:', contactError);
-        throw contactError;
+      if (profileError) {
+        console.error('Profile lookup error:', profileError);
+        throw profileError;
       }
       
-      if (!contactData || !contactData.id) {
-        // Create a contact record for this user if it doesn't exist
-        console.log('No contact found, creating new contact');
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        
-        if (userError) {
-          console.error('Failed to get user data:', userError);
-          throw userError;
-        }
-        
-        if (!userData || !userData.user) {
-          console.error('No authenticated user found');
-          toast.error('Authentication error. Please login again.');
-          return null;
-        }
-        
-        // Create a contact entry for the user
-        const { data: newContact, error: createError } = await supabase
-          .from('contacts')
-          .insert({
-            user_id: userId,
-            full_name: userData.user?.user_metadata?.full_name || 'Unknown Name',
-            email: userData.user?.email || '',
-          })
-          .select('id')
-          .single();
-          
-        if (createError) {
-          console.error('Failed to create contact:', createError);
-          throw createError;
-        }
-        
-        // Use the new contact ID
-        contactId = newContact.id;
-        console.log('Created new contact with ID:', contactId);
-      } else {
-        // Use the existing contact ID
-        contactId = contactData.id;
-        console.log('Using existing contact with ID:', contactId);
+      if (!profileData) {
+        console.error('No profile found for user:', userId);
+        toast.error('User profile not found. Please complete your profile.');
+        return null;
       }
+      
+      // Create a form submission entry for this tax filing session
+      const { data: formSubmission, error: submissionError } = await supabase
+        .from('form_submissions')
+        .insert({
+          user_id: userId,
+          submitted_at: new Date().toISOString(),
+          state: 'tax_filing_init',
+        })
+        .select('id')
+        .single();
+      
+      if (submissionError) {
+        console.error('Failed to create form submission:', submissionError);
+        throw submissionError;
+      }
+      
+      console.log('Created form submission with ID:', formSubmission.id);
       
       // Define a default amount for the purchase entry
       // This will be updated during checkout with the final amount
@@ -83,9 +64,9 @@ export const useTaxFilingState = () => {
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert({
-          contact_id: contactId,
+          form_submission_id: formSubmission.id, // Use the new form_submission_id
           payment_status: 'pending',
-          has_document_retrieval: null, // Will be set during checkout
+          has_document_retrieval: false, // Will be set during checkout
           amount: defaultAmount // Add the mandatory amount field
         })
         .select('id')

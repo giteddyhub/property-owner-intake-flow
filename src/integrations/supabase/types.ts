@@ -120,6 +120,42 @@ export type Database = {
         }
         Relationships: []
       }
+      form_submissions: {
+        Row: {
+          created_at: string
+          has_document_retrieval: boolean | null
+          id: string
+          pdf_generated: boolean | null
+          pdf_url: string | null
+          state: string
+          submitted_at: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          has_document_retrieval?: boolean | null
+          id?: string
+          pdf_generated?: boolean | null
+          pdf_url?: string | null
+          state?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          has_document_retrieval?: boolean | null
+          id?: string
+          pdf_generated?: boolean | null
+          pdf_url?: string | null
+          state?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       job_batches: {
         Row: {
           cancelled_at: number | null
@@ -263,6 +299,7 @@ export type Database = {
         Row: {
           contact_id: string | null
           created_at: string
+          form_submission_id: string | null
           id: string
           owner_id: string
           ownership_percentage: number
@@ -277,6 +314,7 @@ export type Database = {
         Insert: {
           contact_id?: string | null
           created_at?: string
+          form_submission_id?: string | null
           id?: string
           owner_id: string
           ownership_percentage: number
@@ -291,6 +329,7 @@ export type Database = {
         Update: {
           contact_id?: string | null
           created_at?: string
+          form_submission_id?: string | null
           id?: string
           owner_id?: string
           ownership_percentage?: number
@@ -304,10 +343,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "owner_property_assignments_contact_id_fkey"
-            columns: ["contact_id"]
+            foreignKeyName: "owner_property_assignments_form_submission_id_fkey"
+            columns: ["form_submission_id"]
             isOneToOne: false
-            referencedRelation: "contacts"
+            referencedRelation: "form_submissions"
             referencedColumns: ["id"]
           },
           {
@@ -338,6 +377,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           first_name: string
+          form_submission_id: string | null
           id: string
           is_resident_in_italy: boolean
           italian_residence_city: string | null
@@ -362,6 +402,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           first_name: string
+          form_submission_id?: string | null
           id?: string
           is_resident_in_italy?: boolean
           italian_residence_city?: string | null
@@ -386,6 +427,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           first_name?: string
+          form_submission_id?: string | null
           id?: string
           is_resident_in_italy?: boolean
           italian_residence_city?: string | null
@@ -401,10 +443,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "owners_contact_id_fkey"
-            columns: ["contact_id"]
+            foreignKeyName: "owners_form_submission_id_fkey"
+            columns: ["form_submission_id"]
             isOneToOne: false
-            referencedRelation: "contacts"
+            referencedRelation: "form_submissions"
             referencedColumns: ["id"]
           },
         ]
@@ -485,6 +527,7 @@ export type Database = {
           contact_id: string | null
           created_at: string
           documents: string[] | null
+          form_submission_id: string | null
           id: string
           label: string
           occupancy_statuses: string[]
@@ -508,6 +551,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           documents?: string[] | null
+          form_submission_id?: string | null
           id?: string
           label: string
           occupancy_statuses: string[]
@@ -531,6 +575,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           documents?: string[] | null
+          form_submission_id?: string | null
           id?: string
           label?: string
           occupancy_statuses?: string[]
@@ -547,10 +592,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "properties_contact_id_fkey"
-            columns: ["contact_id"]
+            foreignKeyName: "properties_form_submission_id_fkey"
+            columns: ["form_submission_id"]
             isOneToOne: false
-            referencedRelation: "contacts"
+            referencedRelation: "form_submissions"
             referencedColumns: ["id"]
           },
         ]
@@ -561,6 +606,7 @@ export type Database = {
           contact_id: string
           created_at: string
           currency: string
+          form_submission_id: string | null
           has_document_retrieval: boolean | null
           id: string
           payment_status: string
@@ -573,6 +619,7 @@ export type Database = {
           contact_id: string
           created_at?: string
           currency?: string
+          form_submission_id?: string | null
           has_document_retrieval?: boolean | null
           id?: string
           payment_status?: string
@@ -585,6 +632,7 @@ export type Database = {
           contact_id?: string
           created_at?: string
           currency?: string
+          form_submission_id?: string | null
           has_document_retrieval?: boolean | null
           id?: string
           payment_status?: string
@@ -594,10 +642,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "purchases_contact_id_fkey"
-            columns: ["contact_id"]
+            foreignKeyName: "purchases_form_submission_id_fkey"
+            columns: ["form_submission_id"]
             isOneToOne: false
-            referencedRelation: "contacts"
+            referencedRelation: "form_submissions"
             referencedColumns: ["id"]
           },
         ]

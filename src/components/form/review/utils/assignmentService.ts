@@ -9,11 +9,11 @@ export const saveAssignments = async (
   assignments: OwnerPropertyAssignment[],
   ownerIdMap: Record<string, string>,
   propertyIdMap: Record<string, string>,
-  contactId: string,
+  formSubmissionId: string,
   userId: string | null = null
 ) => {
   try {
-    console.log(`Saving ${assignments.length} assignments with contactId:`, contactId);
+    console.log(`Saving ${assignments.length} assignments with formSubmissionId:`, formSubmissionId);
     
     if (assignments.length === 0) {
       return;
@@ -57,8 +57,8 @@ export const saveAssignments = async (
         resident_from_date: residentFromDate,
         resident_to_date: residentToDate,
         tax_credits: assignment.taxCredits,
-        contact_id: contactId,
-        user_id: userId,  // Ensure user_id is set when available
+        form_submission_id: formSubmissionId, // Updated from contact_id to form_submission_id
+        user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
