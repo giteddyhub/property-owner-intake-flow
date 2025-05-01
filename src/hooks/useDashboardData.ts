@@ -1,18 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { 
   Owner, 
   Property, 
-  OwnerPropertyAssignment,
-  MaritalStatus,
-  PropertyDocument,
-  OccupancyAllocation,
-  OccupancyStatus,
-  ActivityType,
-  PropertyType
+  OwnerPropertyAssignment
 } from '@/components/dashboard/types';
+import { toast } from 'sonner';
+import { fetchUserData } from './dashboard/api/fetchDashboardData';
+import { mapDbOwnersToOwners } from './dashboard/mappers/ownerMapper';
+import { mapDbPropertiesToProperties } from './dashboard/mappers/propertyMapper';
+import { mapDbAssignmentsToAssignments } from './dashboard/mappers/assignmentMapper';
 
 interface UseDashboardDataProps {
   userId: string | undefined;
@@ -24,58 +21,6 @@ interface UseDashboardDataReturn {
   owners: Owner[];
   properties: Property[];
   assignments: OwnerPropertyAssignment[];
-}
-
-// Define database types to help with parsing
-interface DbOwner {
-  id: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string | null;
-  country_of_birth: string;
-  citizenship: string;
-  address_street: string;
-  address_city: string;
-  address_zip: string;
-  address_country: string;
-  italian_tax_code: string;
-  marital_status: string;
-  is_resident_in_italy: boolean;
-  italian_residence_street?: string;
-  italian_residence_city?: string;
-  italian_residence_zip?: string;
-  user_id: string;
-}
-
-interface DbProperty {
-  id: string;
-  label: string;
-  address_comune: string;
-  address_province: string;
-  address_street: string;
-  address_zip: string;
-  activity_2024: string;
-  purchase_date: string | null;
-  purchase_price: number | null;
-  sale_date: string | null;
-  sale_price: number | null;
-  property_type: string;
-  remodeling: boolean;
-  occupancy_statuses: any[] | string;
-  rental_income?: number;
-  documents?: any[];
-  use_document_retrieval_service: boolean;
-}
-
-interface DbAssignment {
-  id: string;
-  property_id: string;
-  owner_id: string;
-  ownership_percentage: number;
-  resident_at_property: boolean;
-  resident_from_date?: string;
-  resident_to_date?: string;
-  tax_credits?: number;
 }
 
 export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataProps): UseDashboardDataReturn => {
@@ -92,100 +37,25 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
       return;
     }
 
-    const fetchUserData = async () => {
+    const loadUserData = async () => {
       setLoading(true);
       try {
-        console.log("Fetching user data for userId:", userId);
+        const result = await fetchUserData({ userId });
         
-        // First, check if the user exists in the auth.users table
-        const { data: authUserData, error: authUserError } = await supabase.auth.getUser();
-        
-        if (authUserError) {
-          console.error("Error fetching auth user:", authUserError);
-          // Continue anyway as we might be using a pendingUserId
-        } else {
-          console.log("Auth user data:", authUserData?.user?.id);
-        }
-        
-        // Fetch contacts associated with this user
-        const { data: contactsData, error: contactsError } = await supabase
-          .from('contacts')
-          .select('id')
-          .eq('user_id', userId);
-        
-        if (contactsError) {
-          console.error("Error fetching contacts:", contactsError);
-          throw contactsError;
-        }
-        
-        console.log("Contacts associated with user:", contactsData?.length || 0);
-        
-        // Fetch owners data - use user_id directly
-        const { data: ownersData, error: ownersError } = await supabase
-          .from('owners')
-          .select('*')
-          .eq('user_id', userId);
-
-        if (ownersError) {
-          console.error("Error fetching owners:", ownersError);
-          throw ownersError;
-        }
-        console.log("Owners data fetched:", ownersData?.length || 0);
-        
-        // Fetch properties data
-        const { data: propertiesData, error: propertiesError } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('user_id', userId);
-
-        if (propertiesError) {
-          console.error("Error fetching properties:", propertiesError);
-          throw propertiesError;
-        }
-        console.log("Properties data fetched:", propertiesData?.length || 0);
-        
-        // If we have owners, fetch assignments related to those owners
-        let assignmentsData: DbAssignment[] = [];
-        if (ownersData && ownersData.length > 0) {
-          const ownerIds = ownersData.map(o => o.id);
-          const { data, error: assignmentsError } = await supabase
-            .from('owner_property_assignments')
-            .select('*')
-            .in('owner_id', ownerIds);
-            
-          if (assignmentsError) {
-            console.error("Error fetching assignments:", assignmentsError);
-            throw assignmentsError;
-          }
-          assignmentsData = data || [];
-          console.log("Assignments data fetched:", assignmentsData.length);
-        } else {
-          console.log("No owners found, skipping assignments fetch");
-          
-          // Alternative attempt - try fetching assignments directly by user_id
-          const { data, error: assignmentsError } = await supabase
-            .from('owner_property_assignments')
-            .select('*')
-            .eq('user_id', userId);
-            
-          if (assignmentsError) {
-            console.error("Error fetching assignments by user_id:", assignmentsError);
-          } else {
-            assignmentsData = data || [];
-            console.log("Assignments data fetched by user_id:", assignmentsData.length);
-          }
+        if (result.error) {
+          throw result.error;
         }
         
         // Map the data to the expected formats with explicit typing
-        const mappedOwners: Owner[] = mapDbOwnersToOwners(ownersData || []);
-        const mappedProperties: Property[] = mapDbPropertiesToProperties(propertiesData || []);
-        const mappedAssignments: OwnerPropertyAssignment[] = mapDbAssignmentsToAssignments(assignmentsData);
+        const mappedOwners = mapDbOwnersToOwners(result.ownersData);
+        const mappedProperties = mapDbPropertiesToProperties(result.propertiesData);
+        const mappedAssignments = mapDbAssignmentsToAssignments(result.assignmentsData);
         
         setOwners(mappedOwners);
         setProperties(mappedProperties);
         setAssignments(mappedAssignments);
         
-        if (!ownersData?.length && !propertiesData?.length) {
+        if (!result.ownersData.length && !result.propertiesData.length) {
           console.warn("No data found for this user. This might be expected for new users.");
         }
         
@@ -197,150 +67,8 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
       }
     };
 
-    fetchUserData();
+    loadUserData();
   }, [userId, refreshFlag]);
 
   return { loading, owners, properties, assignments };
-};
-
-// Helper functions with explicit types to prevent excessive type instantiation
-
-const mapDbOwnersToOwners = (dbOwners: DbOwner[]): Owner[] => {
-  return dbOwners.map((dbOwner: DbOwner): Owner => ({
-    id: dbOwner.id,
-    firstName: dbOwner.first_name,
-    lastName: dbOwner.last_name,
-    dateOfBirth: dbOwner.date_of_birth ? new Date(dbOwner.date_of_birth) : null,
-    countryOfBirth: dbOwner.country_of_birth,
-    citizenship: dbOwner.citizenship,
-    address: {
-      street: dbOwner.address_street,
-      city: dbOwner.address_city,
-      zip: dbOwner.address_zip,
-      country: dbOwner.address_country
-    },
-    italianTaxCode: dbOwner.italian_tax_code,
-    maritalStatus: dbOwner.marital_status as MaritalStatus,
-    isResidentInItaly: dbOwner.is_resident_in_italy,
-    italianResidenceDetails: dbOwner.is_resident_in_italy ? {
-      street: dbOwner.italian_residence_street,
-      city: dbOwner.italian_residence_city,
-      zip: dbOwner.italian_residence_zip
-    } : undefined
-  }));
-};
-
-const mapDbPropertiesToProperties = (dbProperties: DbProperty[]): Property[] => {
-  return dbProperties.map((dbProperty: DbProperty): Property => {
-    // Parse documents with explicit typing
-    const parsedDocuments: PropertyDocument[] = parsePropertyDocuments(dbProperty.documents);
-    
-    // Parse occupancy statuses with explicit typing
-    const parsedOccupancyStatuses: OccupancyAllocation[] = parseOccupancyStatuses(dbProperty.occupancy_statuses);
-
-    return {
-      id: dbProperty.id,
-      label: dbProperty.label,
-      address: {
-        comune: dbProperty.address_comune,
-        province: dbProperty.address_province,
-        street: dbProperty.address_street,
-        zip: dbProperty.address_zip
-      },
-      activity2024: dbProperty.activity_2024 as ActivityType,
-      purchaseDate: dbProperty.purchase_date ? new Date(dbProperty.purchase_date) : null,
-      purchasePrice: dbProperty.purchase_price ? Number(dbProperty.purchase_price) : undefined,
-      saleDate: dbProperty.sale_date ? new Date(dbProperty.sale_date) : null,
-      salePrice: dbProperty.sale_price ? Number(dbProperty.sale_price) : undefined,
-      propertyType: dbProperty.property_type as PropertyType,
-      remodeling: dbProperty.remodeling,
-      occupancyStatuses: parsedOccupancyStatuses,
-      rentalIncome: dbProperty.rental_income ? Number(dbProperty.rental_income) : undefined,
-      documents: parsedDocuments,
-      useDocumentRetrievalService: Boolean(dbProperty.use_document_retrieval_service)
-    };
-  });
-};
-
-const parsePropertyDocuments = (documents: any[] | undefined): PropertyDocument[] => {
-  if (!documents || !Array.isArray(documents)) return [];
-  
-  return documents.map((docItem: any): PropertyDocument => {
-    if (typeof docItem === 'string') {
-      try {
-        const parsed = JSON.parse(docItem);
-        return {
-          id: parsed.id || 'unknown',
-          name: parsed.name || 'Unknown document',
-          type: parsed.type || 'unknown',
-          size: parsed.size || 0,
-          uploadDate: new Date(parsed.uploadDate || Date.now())
-        };
-      } catch (e) {
-        return {
-          id: 'unknown',
-          name: docItem || 'Unknown document',
-          type: 'unknown',
-          size: 0,
-          uploadDate: new Date()
-        };
-      }
-    }
-    return {
-      id: docItem.id || 'unknown',
-      name: docItem.name || 'Unknown document',
-      type: docItem.type || 'unknown',
-      size: docItem.size || 0,
-      uploadDate: new Date(docItem.uploadDate || Date.now())
-    };
-  });
-};
-
-const parseOccupancyStatuses = (occupancyStatuses: any[] | string | undefined): OccupancyAllocation[] => {
-  // Default value if parsing fails
-  const defaultOccupancy: OccupancyAllocation[] = [{ status: 'PERSONAL_USE' as OccupancyStatus, months: 12 }];
-  
-  try {
-    if (typeof occupancyStatuses === 'string') {
-      return JSON.parse(occupancyStatuses) as OccupancyAllocation[];
-    } 
-    
-    if (Array.isArray(occupancyStatuses)) {
-      const parsed = occupancyStatuses.map((item: any): OccupancyAllocation | null => {
-        if (typeof item === 'string') {
-          try {
-            return JSON.parse(item) as OccupancyAllocation;
-          } catch (e) {
-            console.error('Failed to parse occupancy status item:', item);
-            return null;
-          }
-        }
-        return {
-          status: (item.status || 'PERSONAL_USE') as OccupancyStatus,
-          months: item.months || 12
-        };
-      }).filter((item): item is OccupancyAllocation => item !== null);
-      
-      return parsed.length > 0 ? parsed : defaultOccupancy;
-    }
-  } catch (e) {
-    console.error('Error parsing occupancy statuses:', e, occupancyStatuses);
-  }
-  
-  return defaultOccupancy;
-};
-
-const mapDbAssignmentsToAssignments = (dbAssignments: DbAssignment[]): OwnerPropertyAssignment[] => {
-  return dbAssignments.map((dbAssignment: DbAssignment): OwnerPropertyAssignment => ({
-    id: dbAssignment.id,
-    propertyId: dbAssignment.property_id,
-    ownerId: dbAssignment.owner_id,
-    ownershipPercentage: Number(dbAssignment.ownership_percentage),
-    residentAtProperty: dbAssignment.resident_at_property,
-    residentDateRange: dbAssignment.resident_from_date ? {
-      from: new Date(dbAssignment.resident_from_date),
-      to: dbAssignment.resident_to_date ? new Date(dbAssignment.resident_to_date) : null
-    } : undefined,
-    taxCredits: dbAssignment.tax_credits ? Number(dbAssignment.tax_credits) : undefined
-  }));
 };
