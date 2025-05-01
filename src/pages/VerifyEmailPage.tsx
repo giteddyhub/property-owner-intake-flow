@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mail, CheckCircle } from 'lucide-react';
+import { Mail, CheckCircle, Loader2 } from 'lucide-react';
 import Footer from '@/components/layout/Footer';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VerifyEmailPageProps {
   email?: string;
@@ -17,6 +19,31 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
   const hasPendingFormData = sessionStorage.getItem('pendingFormData') !== null;
   const formSubmittedDuringSignup = sessionStorage.getItem('formSubmittedDuringSignup') === 'true';
   const formAlreadySubmitted = formSubmittedDuringSignup || sessionStorage.getItem('redirectToDashboard') === 'true';
+  
+  // Monitor authentication state
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[VerifyEmailPage] Auth state change:", event);
+      
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        if (session?.user?.email_confirmed_at || session?.user?.confirmed_at) {
+          console.log("[VerifyEmailPage] Email confirmed, user is verified");
+          toast.success("Email verified successfully!");
+          
+          // If we have pending form data and redirect flag, go to dashboard
+          if (sessionStorage.getItem('redirectToDashboard') === 'true') {
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 2000);
+          }
+        }
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    }
+  }, [navigate]);
   
   const handleBackToLogin = () => {
     navigate('/login');
@@ -66,7 +93,12 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
                     </h3>
                     <p className="text-yellow-700 text-sm mt-1">
                       Your information is ready to be submitted after you verify your email.
+                      <span className="block mt-1">This happens automatically - just click the link in your email.</span>
                     </p>
+                    <div className="flex items-center justify-center mt-2">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2 text-yellow-600" />
+                      <span className="text-sm text-yellow-700">Waiting for verification</span>
+                    </div>
                   </div>
                 )}
                 
@@ -83,13 +115,15 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ email }) => {
                         <span><strong>Your information has already been processed</strong> - it will be waiting for you in your dashboard</span>
                       </li>
                     )}
+                    {hasPendingFormData && !formSubmittedDuringSignup && (
+                      <li className="flex gap-2">
+                        <Loader2 className="h-5 w-5 text-blue-500 animate-spin flex-shrink-0" />
+                        <span><strong>Your form data is waiting</strong> - it will be submitted automatically after verification</span>
+                      </li>
+                    )}
                     <li className="flex gap-2">
                       <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
                       <span>You'll have instant access to all your property information</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                      <span>You can manage all your property details from your dashboard</span>
                     </li>
                   </ul>
                 </div>

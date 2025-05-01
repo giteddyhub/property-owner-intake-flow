@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -39,7 +39,8 @@ const AnonymousRoute = ({ children }: { children: React.ReactNode }) => {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  if (user) {
+  // Don't redirect on verify-email page even if authenticated
+  if (user && location.pathname !== '/verify-email') {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -73,9 +74,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={
-        <AnonymousRoute>
-          <Index />
-        </AnonymousRoute>
+        <Index />
       } />
       <Route path="/login" element={
         <AnonymousRoute>
@@ -83,9 +82,7 @@ const AppRoutes = () => {
         </AnonymousRoute>
       } />
       <Route path="/verify-email" element={
-        <AnonymousRoute>
-          <VerifyEmailPage />
-        </AnonymousRoute>
+        <VerifyEmailPage />
       } />
       <Route path="/ResidentSuccessPage" element={<ResidentSuccessPage />} />
       <Route path="/payment-cancelled" element={<PaymentCancelled />} />

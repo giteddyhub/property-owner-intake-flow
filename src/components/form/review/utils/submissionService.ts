@@ -67,6 +67,12 @@ const getSubmissionTracker = (() => {
     
     reset: () => {
       setState({ active: [], completed: [] });
+    },
+    
+    clearCompleted: (userId) => {
+      const state = getState();
+      state.completed = state.completed.filter(id => id !== userId);
+      setState(state);
     }
   };
 })();
@@ -94,6 +100,13 @@ export const submitFormData = async (
     console.log(`[submissionService] User ${userId} already has a completed submission`);
     toast.info("Your information has already been submitted successfully");
     return { success: true };
+  }
+  
+  // Clear completed flag to force a retry if needed
+  if (sessionStorage.getItem('forceRetrySubmission') === 'true') {
+    console.log("[submissionService] Force retry flag found, clearing completed state");
+    getSubmissionTracker.clearCompleted(userId);
+    sessionStorage.removeItem('forceRetrySubmission');
   }
   
   // Check if another submission is already in progress
@@ -130,6 +143,13 @@ export const submitFormData = async (
       throw new Error("User ID is required for form submission");
     }
     
+    // Verify that the user can be found in the auth system
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      console.error("[submissionService] Error verifying user:", userError);
+      throw new Error("Failed to verify user authentication. Please sign in again.");
+    }
+    
     // Step 1: Create form submission entry
     console.log(`[submissionService] Creating form submission for user:`, userId);
     
@@ -148,6 +168,12 @@ export const submitFormData = async (
     
     if (formError) {
       console.error('[submissionService] Failed to create form submission:', formError);
+      
+      // Check for RLS policy violations
+      if (formError.message.includes('violates row-level security policy')) {
+        throw new Error(`Authorization error: You need to verify your email before submitting data. Check your inbox for a verification link.`);
+      }
+      
       throw new Error(`Database error: ${formError.message}`);
     }
     
@@ -197,6 +223,7 @@ export const submitFormData = async (
     
     // Clear pending form data immediately after submission
     sessionStorage.removeItem('pendingFormData');
+    sessionStorage.removeItem('submitAfterVerification');
     
     // Mark user as having completed a submission
     getSubmissionTracker.addCompleted(userId);
@@ -215,10 +242,12 @@ export const submitFormData = async (
     
     // Special handling for RLS policy errors
     if (error.message && error.message.includes('violates row-level security policy')) {
-      toast.error("Authorization error: You need to be logged in to submit data");
+      toast.error("Authorization error: You need to verify your email before submitting data");
+      // Set a flag so we try again after verification
+      sessionStorage.setItem('forceRetrySubmission', 'true');
       return { 
         success: false, 
-        error: "Authorization error: You need to be logged in to submit data"
+        error: "Authorization error: You need to verify your email before submitting data"
       };
     }
     

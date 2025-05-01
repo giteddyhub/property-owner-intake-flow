@@ -68,6 +68,19 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
       }
     };
     
+    // Validate data before storing
+    if (!Array.isArray(owners) || !Array.isArray(properties) || !Array.isArray(assignments)) {
+      toast.error("Invalid form data. Please try again.");
+      console.error("[ReviewStepContext] Invalid form data structure:", { owners, properties, assignments });
+      return;
+    }
+    
+    console.log("[ReviewStepContext] Storing pending form data with counts:", {
+      owners: owners.length,
+      properties: properties.length,
+      assignments: assignments.length
+    });
+    
     sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
     
     if (!user) {
@@ -128,6 +141,7 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
       
       // Clear form data to prevent duplicate submissions
       sessionStorage.removeItem('pendingFormData');
+      sessionStorage.setItem('formSubmittedDuringSignup', 'true');
       
       // Notify user of success
       toast.success("Your information has been submitted successfully!");

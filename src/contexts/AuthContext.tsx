@@ -25,18 +25,20 @@ export const AuthProvider = ({ children }) => {
   const [submissionCompleted, setSubmissionCompleted] = useState<boolean>(false);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST to catch all auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("[AuthContext] Auth state changed:", event, "User:", session?.user?.id);
         setUser(session?.user || null);
         
-        // Process pending form submission if this is a new sign-in
-        if (event === 'SIGNED_IN' && session?.user) {
-          console.log("[AuthContext] User signed in, checking for pending form data");
+        // Process pending form submission if this is a new sign-in or confirmed email
+        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
+          console.log(`[AuthContext] ${event} event, checking for pending form data`);
+          
+          // Use setTimeout to avoid auth state conflicts
           setTimeout(() => {
-            checkPendingFormData(session.user.id);
-          }, 0);
+            processPendingFormData(session.user.id);
+          }, 100);
         }
       }
     );
@@ -50,8 +52,8 @@ export const AuthProvider = ({ children }) => {
       // Check for pending form data on initial load
       if (session?.user) {
         setTimeout(() => {
-          checkPendingFormData(session.user.id);
-        }, 0);
+          processPendingFormData(session.user.id);
+        }, 100);
       }
     });
 
@@ -61,12 +63,18 @@ export const AuthProvider = ({ children }) => {
   }, []);
   
   // Function to handle pending form data
-  const checkPendingFormData = async (userId: string) => {
+  const processPendingFormData = async (userId: string) => {
     const pendingFormData = sessionStorage.getItem('pendingFormData');
     const submitAfterVerification = sessionStorage.getItem('submitAfterVerification');
     
     if (pendingFormData && submitAfterVerification === 'true') {
       console.log("[AuthContext] Found pending form data with submitAfterVerification flag");
+      
+      // Prevent processing if already handling a submission
+      if (processingSubmission || submissionCompleted) {
+        console.log("[AuthContext] Submission already in progress or completed, skipping");
+        return;
+      }
       
       try {
         setProcessingSubmission(true);
@@ -75,13 +83,17 @@ export const AuthProvider = ({ children }) => {
         const { owners, properties, assignments, contactInfo } = formData;
         
         // Make sure we have actual data to submit
-        if (!owners?.length || !properties?.length) {
+        if (!Array.isArray(owners) || !Array.isArray(properties)) {
           console.log("[AuthContext] Invalid form data:", formData);
           toast.error("Unable to submit form: invalid data");
           return;
         }
         
-        console.log(`[AuthContext] Submitting pending form data for user ${userId}`);
+        console.log(`[AuthContext] Submitting pending form data for user ${userId} with:`, {
+          ownersCount: owners.length,
+          propertiesCount: properties.length,
+          assignmentsCount: assignments.length
+        });
         
         // Ensure contact info has user's email and name if available
         if (!contactInfo.fullName && user?.user_metadata?.full_name) {
@@ -103,10 +115,14 @@ export const AuthProvider = ({ children }) => {
         
         if (result.success) {
           setSubmissionCompleted(true);
+          // Mark form as submitted to prevent duplicate submissions
+          sessionStorage.setItem('formSubmittedDuringSignup', 'true');
           // Clear flags after successful submission
           sessionStorage.removeItem('pendingFormData');
           sessionStorage.removeItem('submitAfterVerification');
           console.log("[AuthContext] Form submission completed successfully");
+          
+          toast.success("Your information has been submitted successfully!");
           
           // Check if we should redirect to dashboard
           const redirectToDashboard = sessionStorage.getItem('redirectToDashboard');
@@ -117,7 +133,7 @@ export const AuthProvider = ({ children }) => {
           console.log(`[AuthContext] Submission failed:`, result.error);
           toast.error(`Failed to submit your data: ${result.error}`);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("[AuthContext] Error submitting pending form data:", error);
         toast.error("There was an error processing your submission.");
       } finally {
@@ -149,6 +165,7 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem('pendingFormData');
     sessionStorage.removeItem('submitAfterVerification');
     sessionStorage.removeItem('redirectToDashboard');
+    sessionStorage.removeItem('formSubmittedDuringSignup');
     setSubmissionCompleted(false);
     return await supabase.auth.signOut();
   };
