@@ -52,12 +52,17 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
 
         if (propertiesError) throw propertiesError;
         
-        const { data: assignmentsData, error: assignmentsError } = await supabase
-          .from('owner_property_assignments')
-          .select('*')
-          .in('owner_id', ownersData.length > 0 ? ownersData.map(o => o.id) : ['none']);
-
-        if (assignmentsError) throw assignmentsError;
+        // Only fetch assignments if we have owners
+        let assignmentsData = [];
+        if (ownersData && ownersData.length > 0) {
+          const { data: fetchedAssignments, error: assignmentsError } = await supabase
+            .from('owner_property_assignments')
+            .select('*')
+            .in('owner_id', ownersData.map(o => o.id));
+            
+          if (assignmentsError) throw assignmentsError;
+          assignmentsData = fetchedAssignments;
+        }
         
         const mappedOwners: Owner[] = ownersData.map(dbOwner => ({
           id: dbOwner.id,

@@ -40,13 +40,24 @@ export const usePropertyDrawer = ({
         ? newProperty.documents.map(doc => JSON.stringify(doc))
         : [];
       
+      // Get the authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user found. Please login again.");
+      }
+      
       // Format dates correctly - ensure they are in YYYY-MM-DD format
       const purchaseDate = newProperty.purchaseDate 
-        ? newProperty.purchaseDate.toISOString().split('T')[0]
+        ? newProperty.purchaseDate instanceof Date 
+          ? newProperty.purchaseDate.toISOString().split('T')[0] 
+          : new Date(newProperty.purchaseDate).toISOString().split('T')[0]
         : null;
         
       const saleDate = newProperty.saleDate 
-        ? newProperty.saleDate.toISOString().split('T')[0] 
+        ? newProperty.saleDate instanceof Date
+          ? newProperty.saleDate.toISOString().split('T')[0]
+          : new Date(newProperty.saleDate).toISOString().split('T')[0]
         : null;
       
       // Prepare property data for the database
@@ -67,18 +78,12 @@ export const usePropertyDrawer = ({
         rental_income: newProperty.rentalIncome ? Number(newProperty.rentalIncome) : null,
         documents: documentStrings, // Send as string array
         use_document_retrieval_service: Boolean(newProperty.useDocumentRetrievalService),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        user_id: user.id  // Always set the user_id
       };
       
       console.log("Saving property data:", propertyData);
       console.log("Document retrieval:", newProperty.useDocumentRetrievalService);
-      
-      // Get the authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("No authenticated user found. Please login again.");
-      }
       
       if (property?.id) {
         // Update existing property
@@ -94,20 +99,25 @@ export const usePropertyDrawer = ({
         }
         toast.success('Property updated successfully');
       } else {
-        // Create new property - add user_id for the current user
+        // Create new property - add user_id and created_at
         console.log("Creating new property for user:", user.id);
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('properties')
           .insert({
             ...propertyData,
-            user_id: user.id,
             created_at: new Date().toISOString()
-          });
+          })
+          .select();
           
         if (error) {
           console.error('Error creating property:', error);
           throw error;
         }
+        
+        if (data && data.length > 0) {
+          console.log("Property created successfully with ID:", data[0].id);
+        }
+        
         toast.success('Property added successfully');
       }
 

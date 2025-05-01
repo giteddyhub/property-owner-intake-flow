@@ -46,10 +46,16 @@ const PropertyDrawer: React.FC<PropertyDrawerProps> = ({
 
   // Ensure cleanup when the component unmounts or when isOpen changes
   useEffect(() => {
+    // Initial cleanup when the drawer opens
+    if (isOpen) {
+      setTimeout(cleanupOverlays, 100);
+    }
+    
     return () => {
       // This will run when the component unmounts or when isOpen changes to false
       if (!isOpen) {
-        cleanupOverlays();
+        setTimeout(cleanupOverlays, 100);
+        setTimeout(cleanupOverlays, 500); // Extra cleanup after animation
       }
     };
   }, [isOpen]);
