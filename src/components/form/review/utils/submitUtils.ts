@@ -1,4 +1,5 @@
-import { Owner, Property, Assignment } from '@/types/form';
+
+import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -12,7 +13,7 @@ interface ContactInfo {
 export const submitFormData = async (
   owners: Owner[],
   properties: Property[],
-  assignments: Assignment[],
+  assignments: OwnerPropertyAssignment[],
   contactInfo: any,
   userId: string | null
 ) => {
