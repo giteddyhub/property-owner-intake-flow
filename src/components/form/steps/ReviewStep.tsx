@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
 import { Owner } from '@/types/form';
@@ -24,7 +25,52 @@ const ReviewStep: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
   
+  // Check if we should automatically try to submit pending form data
+  useEffect(() => {
+    const checkPendingSubmission = async () => {
+      // If user is logged in and there's pending form data, try to submit it
+      if (user && sessionStorage.getItem('pendingFormData')) {
+        const pendingData = JSON.parse(sessionStorage.getItem('pendingFormData') || '{}');
+        
+        // Only proceed if we have valid data
+        if (pendingData.owners && pendingData.properties) {
+          console.log("Found pending form data on page load, submitting with user ID:", user.id);
+          try {
+            setIsSubmitting(true);
+            await submitFormData(
+              pendingData.owners,
+              pendingData.properties, 
+              pendingData.assignments,
+              pendingData.contactInfo,
+              user.id
+            );
+            sessionStorage.removeItem('pendingFormData');
+            toast.success("Your information has been successfully submitted!");
+          } catch (error) {
+            console.error("Error submitting pending form data:", error);
+            toast.error("Failed to submit your information. Please try again.");
+          } finally {
+            setIsSubmitting(false);
+          }
+        }
+      }
+    };
+    
+    checkPendingSubmission();
+  }, [user]);
+  
   const handleSubmitButtonClick = () => {
+    // Store form data in sessionStorage so we can access it post-authentication
+    sessionStorage.setItem('pendingFormData', JSON.stringify({
+      owners,
+      properties,
+      assignments,
+      contactInfo: {
+        fullName: user?.user_metadata?.full_name || '',
+        email: user?.email || ''
+      }
+    }));
+    
     if (!user) {
       // If not logged in, show auth modal
       setShowAuthModal(true);

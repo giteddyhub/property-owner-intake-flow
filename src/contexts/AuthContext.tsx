@@ -1,54 +1,97 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { supabase } from '../integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { submitFormData } from '@/components/form/review/submitUtils';
 
 type AuthContextType = {
-  session: Session | null;
   user: User | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any | null }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any | null, data: any | null }>;
+  session: Session | null;
+  signUp: (email: string, password: string, fullName: string) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
+  loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event);
-        setSession(session);
-        setUser(session?.user ?? null);
+  const checkAndSubmitPendingFormData = async (userId: string) => {
+    try {
+      // Check if there's pending form data in session storage
+      const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+      if (pendingFormDataStr) {
+        console.log("Found pending form data after auth state change, submitting with user ID:", userId);
+        
+        const pendingFormData = JSON.parse(pendingFormDataStr);
+        
+        // Submit the form data with the user ID
+        await submitFormData(
+          pendingFormData.owners,
+          pendingFormData.properties,
+          pendingFormData.assignments,
+          pendingFormData.contactInfo,
+          userId
+        );
+        
+        // Clear the pending form data from session storage
+        sessionStorage.removeItem('pendingFormData');
+        console.log("Successfully submitted pending form data for user:", userId);
+        
+        // Set a flag to redirect to dashboard after form submission
+        sessionStorage.setItem('redirectToDashboard', 'true');
+        
+        // Redirect to dashboard if we're not already there
+        if (!window.location.pathname.includes('/dashboard')) {
+          window.location.href = '/dashboard';
+        }
       }
-    );
+    } catch (error) {
+      console.error("Error submitting pending form data:", error);
+    }
+  };
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+  useEffect(() => {
+    // Set auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      console.log("Auth state changed:", event, "User:", newSession?.user?.id);
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+
+      // When a user signs in or the session is refreshed, check for and submit pending form data
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession?.user) {
+        setTimeout(() => {
+          checkAndSubmitPendingFormData(newSession.user.id);
+        }, 0);
+      }
+    });
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+      
+      // If there's a user, check for pending form data
+      if (initialSession?.user) {
+        setTimeout(() => {
+          checkAndSubmitPendingFormData(initialSession.user.id);
+        }, 0);
+      }
+      
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
-  };
-
   const signUp = async (email: string, password: string, fullName: string) => {
-    const response = await supabase.auth.signUp({
+    return await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -57,41 +100,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       },
     });
-    return { error: response.error, data: response.data };
+  };
+
+  const signIn = async (email: string, password: string) => {
+    return await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
   };
 
   const signOut = async () => {
-    try {
-      // Clear local session before making the signOut request
-      setUser(null);
-      setSession(null);
-      
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Error during sign out:', error);
-        throw error;
-      }
-      
-      // Force a page refresh to clear any state that might be causing issues
-      // window.location.href = '/';
-    } catch (error) {
-      console.error('Failed to sign out:', error);
-      throw error;
-    }
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        signUp,
+        signIn,
+        signOut,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
+};
+
+export default AuthContext;

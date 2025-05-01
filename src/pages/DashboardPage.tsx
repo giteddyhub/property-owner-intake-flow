@@ -22,6 +22,17 @@ const DashboardPage = () => {
     refreshFlag 
   });
 
+  // Check for redirect from form submission
+  useEffect(() => {
+    if (sessionStorage.getItem('redirectToDashboard') === 'true') {
+      sessionStorage.removeItem('redirectToDashboard');
+      toast.success("Your property data has been successfully saved!");
+      
+      // Force a data refresh
+      refreshData();
+    }
+  }, [refreshData]);
+
   // Add a global cleanup handler
   useEffect(() => {
     // Initial cleanup on mount

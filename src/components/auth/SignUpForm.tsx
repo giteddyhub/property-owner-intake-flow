@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, Check, Mail } from 'lucide-react';
+import { submitFormData } from '@/components/form/review/submitUtils';
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -24,6 +25,35 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignedUp, setIsSignedUp] = useState(false);
+
+  const submitPendingFormData = async (userId: string) => {
+    try {
+      // Check if there's pending form data in session storage
+      const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+      if (pendingFormDataStr) {
+        const pendingFormData = JSON.parse(pendingFormDataStr);
+        console.log("Found pending form data, submitting with new user ID:", userId);
+        
+        // Submit the form data with the new user ID
+        await submitFormData(
+          pendingFormData.owners,
+          pendingFormData.properties,
+          pendingFormData.assignments,
+          pendingFormData.contactInfo,
+          userId
+        );
+        
+        // Clear the pending form data from session storage
+        sessionStorage.removeItem('pendingFormData');
+        console.log("Successfully submitted pending form data for user:", userId);
+        
+        // Set a flag to redirect to the dashboard instead of the form
+        sessionStorage.setItem('redirectToDashboard', 'true');
+      }
+    } catch (error) {
+      console.error("Error submitting pending form data:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,9 +79,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         toast.success('Account created successfully!');
         setIsSignedUp(true);
         
-        // Store the userId in sessionStorage for use after email verification
+        // Check if we have pending form data to submit with the new user ID
         if (data?.user?.id) {
+          // Store the userId in sessionStorage for use after email verification
           sessionStorage.setItem('pendingUserId', data.user.id);
+          
+          // Submit any pending form data with the new user ID
+          await submitPendingFormData(data.user.id);
         }
         
         // Only call onSuccess if redirectAfterAuth is false
@@ -63,7 +97,15 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         }
         
         if (redirectAfterAuth) {
-          navigate('/dashboard');
+          const shouldRedirectToDashboard = sessionStorage.getItem('redirectToDashboard') === 'true';
+          if (shouldRedirectToDashboard) {
+            // Clear the redirect flag
+            sessionStorage.removeItem('redirectToDashboard');
+            // Redirect to dashboard
+            navigate('/dashboard');
+          } else {
+            navigate('/');
+          }
         }
       }
     } catch (error) {

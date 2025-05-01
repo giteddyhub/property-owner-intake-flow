@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AuthModal } from '../auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFormContext } from '@/contexts/FormContext';
 
 interface ContactInfo {
   fullName: string;
@@ -30,6 +31,7 @@ const AuthContactInfoDialog: React.FC<AuthContactInfoDialogProps> = ({
   onSubmit,
   isSubmitting,
 }) => {
+  const { state } = useFormContext();
   const { user } = useAuth();
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     fullName: '',
@@ -81,6 +83,15 @@ const AuthContactInfoDialog: React.FC<AuthContactInfoDialogProps> = ({
       return;
     }
 
+    // Store form data in sessionStorage before proceeding to authentication
+    // This will allow us to retrieve and save the data after the user completes signup
+    sessionStorage.setItem('pendingFormData', JSON.stringify({
+      owners: state.owners,
+      properties: state.properties,
+      assignments: state.assignments,
+      contactInfo: contactInfo
+    }));
+
     // If user is not logged in, show auth modal
     if (!user) {
       setShowAuthModal(true);
@@ -100,8 +111,11 @@ const AuthContactInfoDialog: React.FC<AuthContactInfoDialogProps> = ({
     setShowAuthModal(false);
     // Short delay to let the auth state update
     setTimeout(() => {
-      if (validateEmail(contactInfo.email) && contactInfo.termsAccepted && contactInfo.privacyAccepted) {
-        onSubmit(contactInfo);
+      // If user is authenticated after modal closes, submit the form
+      if (user) {
+        if (validateEmail(contactInfo.email) && contactInfo.termsAccepted && contactInfo.privacyAccepted) {
+          onSubmit(contactInfo);
+        }
       }
     }, 500);
   };
