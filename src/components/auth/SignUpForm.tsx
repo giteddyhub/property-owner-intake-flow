@@ -18,7 +18,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   onSuccess,
   redirectAfterAuth = false
 }) => {
-  const { signUp, user } = useAuth();
+  const { signUp } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
