@@ -29,6 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         const pendingFormData = JSON.parse(pendingFormDataStr);
         
+        // Ensure we have all required data before submitting
+        if (!pendingFormData.owners || !pendingFormData.properties) {
+          console.warn("Pending form data is incomplete, cannot submit", pendingFormData);
+          return;
+        }
+        
         // Submit the form data with the user ID
         await submitFormData(
           pendingFormData.owners,
@@ -64,9 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // When a user signs in or the session is refreshed, check for and submit pending form data
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession?.user) {
+        // Delay the submission to ensure auth state is fully updated
         setTimeout(() => {
           checkAndSubmitPendingFormData(newSession.user.id);
-        }, 0);
+        }, 1000);
       }
     });
 
@@ -79,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (initialSession?.user) {
         setTimeout(() => {
           checkAndSubmitPendingFormData(initialSession.user.id);
-        }, 0);
+        }, 1000);
       }
       
       setLoading(false);

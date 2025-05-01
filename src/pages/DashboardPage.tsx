@@ -24,12 +24,21 @@ const DashboardPage = () => {
 
   // Check for redirect from form submission
   useEffect(() => {
-    if (sessionStorage.getItem('redirectToDashboard') === 'true') {
+    // Check if we need to refresh the data after form submission
+    const shouldReload = sessionStorage.getItem('redirectToDashboard') === 'true';
+    if (shouldReload) {
       sessionStorage.removeItem('redirectToDashboard');
       toast.success("Your property data has been successfully saved!");
       
       // Force a data refresh
+      console.log("Dashboard: Refreshing data after redirect");
       refreshData();
+      
+      // Delay another refresh to make sure data is loaded after auth state settles
+      setTimeout(() => {
+        console.log("Dashboard: Refreshing data again after delay");
+        refreshData();
+      }, 2000);
     }
   }, [refreshData]);
 

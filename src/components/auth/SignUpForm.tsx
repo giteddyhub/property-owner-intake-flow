@@ -34,6 +34,12 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         const pendingFormData = JSON.parse(pendingFormDataStr);
         console.log("Found pending form data, submitting with new user ID:", userId);
         
+        // Validate form data before submission
+        if (!pendingFormData.owners || !pendingFormData.properties) {
+          console.warn("Pending form data is incomplete, skipping submission", pendingFormData);
+          return;
+        }
+        
         // Submit the form data with the new user ID
         await submitFormData(
           pendingFormData.owners,
@@ -97,12 +103,16 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         }
         
         if (redirectAfterAuth) {
+          // Check if we need to redirect to dashboard
           const shouldRedirectToDashboard = sessionStorage.getItem('redirectToDashboard') === 'true';
           if (shouldRedirectToDashboard) {
             // Clear the redirect flag
             sessionStorage.removeItem('redirectToDashboard');
-            // Redirect to dashboard
-            navigate('/dashboard');
+            // Delay redirect to ensure auth state is updated
+            setTimeout(() => {
+              // Redirect to dashboard
+              navigate('/dashboard');
+            }, 1500);
           } else {
             navigate('/');
           }

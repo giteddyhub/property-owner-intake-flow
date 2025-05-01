@@ -89,7 +89,7 @@ const ReviewStep: React.FC = () => {
       if (user) {
         handleSubmit();
       }
-    }, 500);
+    }, 1000); // Increased timeout to ensure auth state is properly updated
   };
   
   const handleSubmit = async () => {
@@ -106,6 +106,22 @@ const ReviewStep: React.FC = () => {
       
       // Pass the user ID to submitFormData so data can be properly associated
       await submitFormData(owners, properties, assignments, contactInfo, user?.id || null);
+      
+      // Show success message
+      toast.success("Your information has been successfully submitted!");
+      
+      // Set flag to redirect to dashboard after submission
+      sessionStorage.setItem('redirectToDashboard', 'true');
+      
+      // Short timeout before redirecting
+      setTimeout(() => {
+        // Check if we should redirect to dashboard
+        if (sessionStorage.getItem('redirectToDashboard')) {
+          sessionStorage.removeItem('redirectToDashboard');
+          window.location.href = '/dashboard';
+        }
+      }, 1000);
+      
     } catch (error) {
       console.error('Error during submission:', error);
       toast.error('There was an error submitting your information. Please try again.');

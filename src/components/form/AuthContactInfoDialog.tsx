@@ -91,6 +91,12 @@ const AuthContactInfoDialog: React.FC<AuthContactInfoDialogProps> = ({
       assignments: state.assignments,
       contactInfo: contactInfo
     }));
+    
+    console.log("Storing form data in sessionStorage for later submission", {
+      owners: state.owners.length,
+      properties: state.properties.length,
+      assignments: state.assignments.length
+    });
 
     // If user is not logged in, show auth modal
     if (!user) {
@@ -117,7 +123,7 @@ const AuthContactInfoDialog: React.FC<AuthContactInfoDialogProps> = ({
           onSubmit(contactInfo);
         }
       }
-    }, 500);
+    }, 1500); // Increased timeout for better reliability
   };
 
   return (
