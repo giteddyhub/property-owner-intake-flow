@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -103,7 +103,7 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      I accept the <a href="#" className="text-blue-600 hover:underline">Terms and Conditions</a>
+                      I accept the <a href="https://www.italiantaxes.com/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms and Conditions</a>
                     </FormLabel>
                     <FormMessage />
                   </div>
@@ -124,7 +124,7 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      I accept the <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
+                      I accept the <a href="https://www.italiantaxes.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Privacy Policy</a>
                     </FormLabel>
                     <FormMessage />
                   </div>

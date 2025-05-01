@@ -1,6 +1,5 @@
 
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Change from `export` to `export type` for type re-exports

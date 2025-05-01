@@ -42,7 +42,7 @@ export const submitFormData = async (
     const propertyIdMap = await saveProperties(properties, contactId, userId);
     
     // Step 4: Save owner-property assignments
-    await saveAssignments(assignments, propertyIdMap, ownerIdMap, contactId);
+    await saveAssignments(assignments, ownerIdMap, propertyIdMap, contactId, userId);
     
     // Success notification
     toast.success("Form submitted successfully! Thank you for completing the property owner intake process.");

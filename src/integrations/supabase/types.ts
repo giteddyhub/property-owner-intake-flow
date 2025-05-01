@@ -55,10 +55,8 @@ export type Database = {
           id: string
           pdf_generated: boolean | null
           pdf_url: string | null
-          privacy_accepted: boolean | null
           state: string
           submitted_at: string
-          terms_accepted: boolean | null
           updated_at: string
           user_id: string | null
         }
@@ -71,10 +69,8 @@ export type Database = {
           id?: string
           pdf_generated?: boolean | null
           pdf_url?: string | null
-          privacy_accepted?: boolean | null
           state?: string
           submitted_at?: string
-          terms_accepted?: boolean | null
           updated_at?: string
           user_id?: string | null
         }
@@ -87,10 +83,8 @@ export type Database = {
           id?: string
           pdf_generated?: boolean | null
           pdf_url?: string | null
-          privacy_accepted?: boolean | null
           state?: string
           submitted_at?: string
-          terms_accepted?: boolean | null
           updated_at?: string
           user_id?: string | null
         }
@@ -278,6 +272,7 @@ export type Database = {
           resident_to_date: string | null
           tax_credits: number | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           contact_id?: string | null
@@ -291,6 +286,7 @@ export type Database = {
           resident_to_date?: string | null
           tax_credits?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           contact_id?: string | null
@@ -304,6 +300,7 @@ export type Database = {
           resident_to_date?: string | null
           tax_credits?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {

@@ -1,6 +1,4 @@
 
-import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
-
 export interface ContactInfo {
   fullName: string;
   email: string;
@@ -9,8 +7,9 @@ export interface ContactInfo {
 }
 
 export interface SubmissionData {
-  owners: Owner[];
-  properties: Property[];
-  assignments: OwnerPropertyAssignment[];
+  owners: any[];
+  properties: any[];
+  assignments: any[];
   contactInfo: ContactInfo;
+  userId?: string | null;
 }
