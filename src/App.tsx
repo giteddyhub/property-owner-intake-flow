@@ -1,9 +1,10 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Index from './pages/Index';
 import PaymentCancelled from './pages/PaymentCancelled';
 import NotFound from './pages/NotFound';
-import { Toaster as SonnerToaster, toast } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import ResidentSuccessPage from './pages/ResidentSuccessPage';
 import ResidencyAssessmentPage from './pages/ResidencyAssessmentPage';
 import DashboardPage from './pages/DashboardPage';
@@ -108,7 +109,7 @@ function App() {
       <Router>
         <div className="min-h-screen bg-background">
           <AppRoutes />
-          <SonnerToaster position="top-right" closeButton={true} richColors />
+          <Toaster position="top-right" closeButton={true} richColors />
         </div>
       </Router>
     </AuthProvider>
