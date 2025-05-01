@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
 import { Button } from '@/components/ui/button';
@@ -64,9 +63,7 @@ const ReviewStep: React.FC = () => {
       // Get user information to populate contact info
       const contactInfo = {
         fullName: user?.user_metadata?.full_name || '',
-        email: user?.email || '',
-        termsAccepted: true,
-        privacyAccepted: true
+        email: user?.email || ''
       };
       
       await submitFormData(owners, properties, assignments, contactInfo, user?.id || null);

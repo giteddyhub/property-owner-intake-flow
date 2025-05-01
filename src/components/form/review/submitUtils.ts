@@ -9,7 +9,8 @@ export const submitFormData = async (
   owners: Owner[],
   properties: Property[],
   assignments: OwnerPropertyAssignment[],
-  contactInfo: any
+  contactInfo: any,
+  userId: string | null = null
 ): Promise<void> => {
   try {
     // Store the counts in sessionStorage for pricing calculation on tax filing page
@@ -29,7 +30,7 @@ export const submitFormData = async (
     // This function now delegates to the main submission service
     // which will handle redirecting to the appropriate page
     return import('./utils/submissionService').then(module => {
-      return module.submitFormData(owners, properties, assignments, contactInfo);
+      return module.submitFormData(owners, properties, assignments, contactInfo, userId);
     });
   } catch (error) {
     console.error('Error submitting form data:', error);

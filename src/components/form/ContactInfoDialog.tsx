@@ -15,13 +15,19 @@ import type { ContactInfo } from './review/utils/types';
 const contactFormSchema = z.object({
   fullName: z.string().min(2, { message: 'Full name must be at least 2 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
-  termsAccepted: z.boolean().refine(val => val === true, {
+  termsAgreement: z.boolean().refine(val => val === true, {
     message: 'You must accept the terms and conditions',
   }),
-  privacyAccepted: z.boolean().refine(val => val === true, {
+  privacyAgreement: z.boolean().refine(val => val === true, {
     message: 'You must accept the privacy policy',
   }),
 });
+
+// Create a type that includes terms and privacy agreement for the form
+type ContactFormValues = ContactInfo & {
+  termsAgreement: boolean;
+  privacyAgreement: boolean;
+};
 
 interface ContactInfoDialogProps {
   open: boolean;
@@ -36,18 +42,23 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
   onSubmit, 
   isSubmitting 
 }) => {
-  const form = useForm<ContactInfo>({
+  const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
       fullName: '',
       email: '',
-      termsAccepted: false,
-      privacyAccepted: false,
+      termsAgreement: false,
+      privacyAgreement: false,
     },
   });
 
-  const handleSubmit = (data: ContactInfo) => {
-    onSubmit(data);
+  const handleSubmit = (data: ContactFormValues) => {
+    // Extract just the ContactInfo fields for submission
+    const contactInfo: ContactInfo = {
+      fullName: data.fullName,
+      email: data.email
+    };
+    onSubmit(contactInfo);
   };
 
   return (
@@ -92,7 +103,7 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
             
             <FormField
               control={form.control}
-              name="termsAccepted"
+              name="termsAgreement"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
@@ -113,7 +124,7 @@ const ContactInfoDialog: React.FC<ContactInfoDialogProps> = ({
             
             <FormField
               control={form.control}
-              name="privacyAccepted"
+              name="privacyAgreement"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
