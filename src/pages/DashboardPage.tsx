@@ -13,6 +13,7 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('properties');
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
   
   const [refreshFlag, setRefreshFlag] = useState(0);
   const refreshData = useCallback(() => {
@@ -31,13 +32,24 @@ const DashboardPage = () => {
       console.log("Found pending user ID in storage:", storedPendingUserId);
       setPendingUserId(storedPendingUserId);
     }
+    
+    // Set loading auth to false after checking for pending user ID
+    setLoadingAuth(false);
   }, []);
   
   // Fetch data using the effective user ID
-  const { loading, owners, properties, assignments } = useDashboardData({ 
+  const { loading, owners, properties, assignments, error } = useDashboardData({ 
     userId: effectiveUserId,
     refreshFlag 
   });
+
+  // If we have a data loading error, show a toast
+  useEffect(() => {
+    if (error) {
+      console.error("Error loading dashboard data:", error);
+      toast.error("Failed to load dashboard data. Please try again.");
+    }
+  }, [error]);
 
   // Handle the case where we are coming back after a form submission
   useEffect(() => {
@@ -62,22 +74,22 @@ const DashboardPage = () => {
   // Check if there's any purchase id that we should redirect to
   useEffect(() => {
     const purchaseId = sessionStorage.getItem('purchaseId');
-    if (purchaseId && !loading) {
+    if (purchaseId && !loading && !loadingAuth) {
       // Only redirect if we have verified the user is authenticated
       if (effectiveUserId) {
         console.log("Found pending tax filing session:", purchaseId);
         navigate(`/tax-filing-service/${purchaseId}`);
       }
     }
-  }, [effectiveUserId, navigate, loading]);
+  }, [effectiveUserId, navigate, loading, loadingAuth]);
 
   // Redirect if not authenticated and we don't have a pending user ID
   useEffect(() => {
-    if (!user && !pendingUserId && !loading) {
+    if (!loadingAuth && !user && !pendingUserId) {
       console.log("No authenticated user or pending ID found, redirecting to home");
       navigate('/');
     }
-  }, [user, navigate, loading, pendingUserId]);
+  }, [user, navigate, loadingAuth, pendingUserId]);
 
   // Add a global cleanup handler
   useEffect(() => {
@@ -126,8 +138,35 @@ const DashboardPage = () => {
     };
   }, []);
 
-  if (loading) {
+  // Show a more informative loading screen with potential recovery options
+  if (loading && !error) {
     return <LoadingScreen />;
+  }
+
+  // If we have an error and no data, show error state
+  if (error && owners.length === 0 && properties.length === 0 && assignments.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <div className="text-center max-w-md px-4">
+          <h1 className="text-2xl font-semibold text-red-600 mb-2">Error Loading Dashboard</h1>
+          <p className="text-gray-600 mb-4">
+            We couldn't load your dashboard data. This might be due to a connection issue.
+          </p>
+          <button 
+            onClick={refreshData} 
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          >
+            Try Again
+          </button>
+          <button 
+            onClick={() => navigate('/')} 
+            className="px-4 py-2 ml-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+          >
+            Return Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const handleSignOut = async () => {

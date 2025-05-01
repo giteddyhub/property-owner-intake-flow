@@ -20,12 +20,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
+    console.log("Setting up auth provider and state listener");
+    let mounted = true;
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.id);
+        
+        if (!mounted) return;
         
         // Update session and user state immediately for UI responsiveness
         setSession(session);
@@ -75,11 +81,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // Import and run data association after a slight delay
               // This is to ensure all auth processes have completed
               setTimeout(async () => {
+                if (!mounted) return;
+                
                 try {
                   const { associateOrphanedData } = await import('@/hooks/dashboard/mappers/assignmentMapper');
-                  const result = await associateOrphanedData(session.user.id, session.user.email);
-                  if (result.success) {
-                    toast.success(`Successfully associated your previous submissions with your account`);
+                  if (session.user?.id && session.user?.email) {
+                    const result = await associateOrphanedData(session.user.id, session.user.email);
+                    if (result.success) {
+                      toast.success(`Successfully associated your previous submissions with your account`);
+                    }
                   }
                 } catch (err) {
                   console.error("Error associating data:", err);
@@ -104,6 +114,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("Initial session check:", session?.user?.id);
+      
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -116,19 +129,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionStorage.setItem('userEmail', session.user.email);
           localStorage.setItem('userEmail', session.user.email);
         }
-        
-        // Check if we have a pending contact to associate
-        const contactId = sessionStorage.getItem('contactId') || localStorage.getItem('contactId');
-        if (contactId) {
-          console.log("Found pending contactId during initial load:", contactId);
-          // The update will be handled in the onAuthStateChange event
-        }
       }
       
       setLoading(false);
+      setAuthInitialized(true);
+    }).catch(error => {
+      console.error("Error getting initial session:", error);
+      if (mounted) {
+        setLoading(false);
+        setAuthInitialized(true);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Helper function to associate orphaned data with contact ID
@@ -298,7 +314,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signIn, 
       signUp, 
       signOut, 
-      ensureUserAssociation 
+      ensureUserAssociation,
+      authInitialized
     }}>
       {children}
     </AuthContext.Provider>

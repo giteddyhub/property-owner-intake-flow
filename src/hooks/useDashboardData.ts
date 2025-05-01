@@ -21,6 +21,7 @@ interface UseDashboardDataReturn {
   owners: Owner[];
   properties: Property[];
   assignments: OwnerPropertyAssignment[];
+  error: Error | null;
 }
 
 export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataProps): UseDashboardDataReturn => {
@@ -28,6 +29,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
   const [owners, setOwners] = useState<Owner[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [assignments, setAssignments] = useState<OwnerPropertyAssignment[]>([]);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     // Don't try to fetch data if no userId is available
@@ -37,10 +39,15 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
       return;
     }
 
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+    
     const loadUserData = async () => {
-      setLoading(true);
       try {
         const result = await fetchUserData({ userId });
+        
+        if (!isMounted) return;
         
         if (result.error) {
           throw result.error;
@@ -62,15 +69,23 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }: UseDashboardDataPr
         }
         
       } catch (error) {
+        if (!isMounted) return;
+        
         console.error('Error fetching dashboard data:', error);
-        toast.error('Failed to load your data. Please try again later.');
+        setError(error instanceof Error ? error : new Error('Unknown error fetching dashboard data'));
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadUserData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId, refreshFlag]);
 
-  return { loading, owners, properties, assignments };
+  return { loading, owners, properties, assignments, error };
 };
