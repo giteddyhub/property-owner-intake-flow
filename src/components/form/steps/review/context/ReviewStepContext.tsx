@@ -4,6 +4,7 @@ import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { submitFormData } from '@/components/form/review/submitUtils';
 
 type ReviewStepContextType = {
   isSubmitting: boolean;
@@ -54,11 +55,10 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
       return;
     }
     
-    console.log("ReviewStep handleSubmitButtonClick");
+    console.log("[ReviewStepContext] handleSubmitButtonClick with user:", user?.id || "not logged in");
     
     // Store form data in sessionStorage so we can access it post-authentication
-    // This data will now be submitted immediately after signup
-    sessionStorage.setItem('pendingFormData', JSON.stringify({
+    const pendingFormData = {
       owners,
       properties,
       assignments,
@@ -66,12 +66,16 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
         fullName: user?.user_metadata?.full_name || '',
         email: user?.email || ''
       }
-    }));
+    };
+    
+    sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
     
     if (!user) {
+      console.log("[ReviewStepContext] User not logged in, showing auth modal");
       // If not logged in, show auth modal
       setShowAuthModal(true);
     } else {
+      console.log("[ReviewStepContext] User is logged in, proceeding with direct submission");
       // If logged in, proceed with submission directly
       handleSubmit();
     }
@@ -83,15 +87,23 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
     
     // Mark that we've attempted submission from this component
     setSubmissionAttempted(true);
+    
+    // No need to handle submission here - it will be handled by AuthContext
+    console.log("[ReviewStepContext] Auth success, submission will be handled by AuthContext");
   };
   
   const handleSubmit = async () => {
-    // Import dynamically to avoid circular dependencies
-    const { submitFormData } = await import('@/components/form/review/utils/submissionService');
-    
     // Prevent duplicate submissions
     if (processingSubmission || submissionInProgress || submissionCompleted) {
       toast.info("Your submission is already being processed");
+      return;
+    }
+    
+    console.log("[ReviewStepContext] handleSubmit with user:", user?.id || "not logged in");
+    
+    if (!user) {
+      toast.error("You must be logged in to submit your information");
+      setShowAuthModal(true);
       return;
     }
     
@@ -107,15 +119,22 @@ export const ReviewStepProvider: React.FC<ReviewStepProviderProps> = ({
         email: user?.email || ''
       };
       
-      // Pass the user ID to submitFormData so data can be properly associated
-      await submitFormData(owners, properties, assignments, contactInfo, user?.id || null);
+      // Pass the user ID explicitly to ensure it's associated with the submission
+      const result = await submitFormData(owners, properties, assignments, contactInfo, user.id);
+      
+      if (!result.success) {
+        throw new Error(result.error || "Unknown submission error");
+      }
       
       // Clear form data to prevent duplicate submissions
       sessionStorage.removeItem('pendingFormData');
       
-    } catch (error) {
-      console.error("Error during submission:", error);
-      toast.error('There was an error submitting your information. Please try again.');
+      // Notify user of success
+      toast.success("Your information has been submitted successfully!");
+      
+    } catch (error: any) {
+      console.error("[ReviewStepContext] Error during submission:", error);
+      toast.error(error.message || 'There was an error submitting your information. Please try again.');
     } finally {
       setIsSubmitting(false);
       setProcessingSubmission(false);

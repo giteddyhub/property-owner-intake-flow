@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { submitFormData } from '@/components/form/review/submitUtils';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: any | null;
@@ -27,34 +28,30 @@ export const AuthProvider = ({ children }) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("Auth state changed:", event, "User:", session?.user?.id);
+        console.log("[AuthContext] Auth state changed:", event, "User:", session?.user?.id);
         setUser(session?.user || null);
         
-        // Check for pending form data if user just signed in
+        // Process pending form submission if this is a new sign-in
         if (event === 'SIGNED_IN' && session?.user) {
-          const pendingFormData = sessionStorage.getItem('pendingFormData');
-          
-          if (pendingFormData) {
-            console.log("Found pending form data after SIGNED_IN, submitting with user ID:", session.user.id);
-            handlePendingFormSubmission(session.user.id, JSON.parse(pendingFormData));
-          }
+          console.log("[AuthContext] User signed in, checking for pending form data");
+          setTimeout(() => {
+            checkPendingFormData(session.user.id);
+          }, 0);
         }
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("[AuthContext] Initial session check:", session?.user?.id || "No session");
       setUser(session?.user || null);
       setLoading(false);
       
       // Check for pending form data on initial load
       if (session?.user) {
-        const pendingFormData = sessionStorage.getItem('pendingFormData');
-        
-        if (pendingFormData) {
-          console.log("Found pending form data after initial_load, submitting with user ID:", session.user.id);
-          handlePendingFormSubmission(session.user.id, JSON.parse(pendingFormData));
-        }
+        setTimeout(() => {
+          checkPendingFormData(session.user.id);
+        }, 0);
       }
     });
 
@@ -63,46 +60,71 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
   
-  // Function to handle form submission from pending data
-  const handlePendingFormSubmission = async (userId, formData) => {
-    if (processingSubmission || submissionCompleted) {
-      console.log("Submission already in progress or completed, skipping duplicate submission");
-      return;
-    }
+  // Function to handle pending form data
+  const checkPendingFormData = async (userId: string) => {
+    const pendingFormData = sessionStorage.getItem('pendingFormData');
+    const submitAfterVerification = sessionStorage.getItem('submitAfterVerification');
     
-    try {
-      setProcessingSubmission(true);
+    if (pendingFormData && submitAfterVerification === 'true') {
+      console.log("[AuthContext] Found pending form data with submitAfterVerification flag");
       
-      console.log(`Starting submission ${Date.now()}-${Math.random().toString(36).substr(2, 9)} for user ${userId}`);
-      
-      const { owners, properties, assignments, contactInfo } = formData;
-      
-      if (!contactInfo.fullName && user?.user_metadata?.full_name) {
-        contactInfo.fullName = user.user_metadata.full_name;
+      try {
+        setProcessingSubmission(true);
+        
+        const formData = JSON.parse(pendingFormData);
+        const { owners, properties, assignments, contactInfo } = formData;
+        
+        // Make sure we have actual data to submit
+        if (!owners?.length || !properties?.length) {
+          console.log("[AuthContext] Invalid form data:", formData);
+          toast.error("Unable to submit form: invalid data");
+          return;
+        }
+        
+        console.log(`[AuthContext] Submitting pending form data for user ${userId}`);
+        
+        // Ensure contact info has user's email and name if available
+        if (!contactInfo.fullName && user?.user_metadata?.full_name) {
+          contactInfo.fullName = user.user_metadata.full_name;
+        }
+        
+        if (!contactInfo.email && user?.email) {
+          contactInfo.email = user.email;
+        }
+        
+        // Submit the data
+        const result = await submitFormData(
+          owners,
+          properties,
+          assignments,
+          contactInfo,
+          userId
+        );
+        
+        if (result.success) {
+          setSubmissionCompleted(true);
+          // Clear flags after successful submission
+          sessionStorage.removeItem('pendingFormData');
+          sessionStorage.removeItem('submitAfterVerification');
+          console.log("[AuthContext] Form submission completed successfully");
+          
+          // Check if we should redirect to dashboard
+          const redirectToDashboard = sessionStorage.getItem('redirectToDashboard');
+          if (redirectToDashboard === 'true') {
+            window.location.href = '/dashboard';
+          }
+        } else {
+          console.log(`[AuthContext] Submission failed:`, result.error);
+          toast.error(`Failed to submit your data: ${result.error}`);
+        }
+      } catch (error) {
+        console.error("[AuthContext] Error submitting pending form data:", error);
+        toast.error("There was an error processing your submission.");
+      } finally {
+        setProcessingSubmission(false);
       }
-      
-      if (!contactInfo.email && user?.email) {
-        contactInfo.email = user.email;
-      }
-      
-      const result = await submitFormData(
-        owners,
-        properties,
-        assignments,
-        contactInfo,
-        userId
-      );
-      
-      if (result.success) {
-        setSubmissionCompleted(true);
-        sessionStorage.removeItem('pendingFormData');
-      } else {
-        console.log(`Submission ${Date.now()}-${Math.random().toString(36).substr(2, 9)} failed with success=false`);
-      }
-    } catch (error) {
-      console.error("Error submitting pending form data:", error);
-    } finally {
-      setProcessingSubmission(false);
+    } else {
+      console.log("[AuthContext] No pending form data found or no submitAfterVerification flag");
     }
   };
 
@@ -125,6 +147,8 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     // Clear any pending form data
     sessionStorage.removeItem('pendingFormData');
+    sessionStorage.removeItem('submitAfterVerification');
+    sessionStorage.removeItem('redirectToDashboard');
     setSubmissionCompleted(false);
     return await supabase.auth.signOut();
   };

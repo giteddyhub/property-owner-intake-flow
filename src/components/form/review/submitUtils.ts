@@ -11,6 +11,7 @@ export interface SubmissionResult {
   success: boolean;
   submissionId?: string;
   purchaseId?: string;
+  error?: string;
 }
 
 export const submitFormData = async (
@@ -35,26 +36,34 @@ export const submitFormData = async (
       JSON.stringify(hasDocumentRetrievalService)
     );
     
-    console.log("Starting submission process with userId:", userId);
+    console.log("[submitUtils] Starting submission process with userId:", userId);
     
-    // Check if user is authenticated
+    // Critical check: We absolutely need a user ID for RLS policies
     if (!userId) {
+      console.log("[submitUtils] No userId provided, checking for authenticated user");
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
         userId = data.user.id;
-        console.log("Found authenticated user:", userId);
+        console.log("[submitUtils] Found authenticated user:", userId);
       } else {
-        console.log("No authenticated user found");
+        console.error("[submitUtils] No user ID available and no authenticated user found");
+        return { 
+          success: false, 
+          error: "Authentication required for submission. Please sign in first." 
+        };
       }
     }
     
-    // Import and use the comprehensive submission service directly
+    // Directly call the submission service with user ID
     return import('./utils/submissionService').then(module => {
       return module.submitFormData(owners, properties, assignments, contactInfo, userId);
     });
-  } catch (error) {
-    console.error('Error submitting form data:', error);
+  } catch (error: any) {
+    console.error('[submitUtils] Error submitting form data:', error);
     toast.error('Failed to submit your information. Please try again.');
-    return { success: false };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    };
   }
 };

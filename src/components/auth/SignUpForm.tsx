@@ -17,7 +17,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   onSuccess,
   redirectAfterAuth = false
 }) => {
-  const { signUp, setProcessingSubmission } = useAuth();
+  const { signUp } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -57,13 +57,16 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         // Save email in session storage for the verification page
         sessionStorage.setItem('pendingUserEmail', email);
         
-        // Store the userId in sessionStorage for use after email verification
+        // Store pendingUserId for use after email verification
         if (data?.user?.id) {
-          sessionStorage.setItem('pendingUserId', data.user.id);
+          const userId = data.user.id;
+          sessionStorage.setItem('pendingUserId', userId);
+          console.log("[SignUpForm] Stored pendingUserId:", userId);
           
-          // Store form data for submission after email verification
+          // Store pending form data for submission after email verification
           const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
           if (pendingFormDataStr) {
+            console.log("[SignUpForm] Found pendingFormData");
             // Flag for auto-submission upon verification
             sessionStorage.setItem('submitAfterVerification', 'true');
             
@@ -78,6 +81,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
             
             // Set a flag to redirect to dashboard after email verification
             sessionStorage.setItem('redirectToDashboard', 'true');
+            console.log("[SignUpForm] Set up auto-submission after verification");
           }
         }
         
@@ -94,8 +98,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           navigate('/verify-email');
         }
       }
-    } catch (error) {
-      console.error('Error signing up:', error);
+    } catch (error: any) {
+      console.error('[SignUpForm] Error signing up:', error);
       toast.error('An error occurred while creating your account');
     } finally {
       setIsSubmitting(false);
