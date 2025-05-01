@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, Check, Mail } from 'lucide-react';
-import { submitFormData } from '@/components/form/review/submitUtils';
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -55,6 +54,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         toast.success('Account created successfully!');
         setIsSignedUp(true);
         
+        // Save email in session storage for the verification page
+        sessionStorage.setItem('pendingUserEmail', email);
+        
         // Store the userId in sessionStorage for use after email verification
         if (data?.user?.id) {
           sessionStorage.setItem('pendingUserId', data.user.id);
@@ -72,19 +74,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         }
         
         if (redirectAfterAuth) {
-          // Check if we need to redirect to dashboard
-          const shouldRedirectToDashboard = sessionStorage.getItem('redirectToDashboard') === 'true';
-          const hasPendingFormData = sessionStorage.getItem('pendingFormData') !== null;
-          
-          if (shouldRedirectToDashboard || hasPendingFormData) {
-            // Delay redirect to ensure auth state is updated
-            setTimeout(() => {
-              // Redirect to dashboard
-              navigate('/dashboard');
-            }, 1500);
-          } else {
-            navigate('/');
-          }
+          // Redirect to the verify email page
+          navigate('/verify-email');
         }
       }
     } catch (error) {
@@ -95,33 +86,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     }
   };
 
-  // Success state after signing up
-  if (isSignedUp) {
-    return (
-      <div className="flex flex-col items-center text-center space-y-4 py-4">
-        <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-          <Check className="h-6 w-6 text-green-600" />
-        </div>
-        <h3 className="text-lg font-semibold">Account Created!</h3>
-        <div className="text-sm text-gray-600 max-w-xs">
-          <p className="mb-3">Please check your email to verify your account.</p>
-          <div className="flex items-center justify-center gap-2 text-blue-600">
-            <Mail className="h-4 w-4" />
-            <span>{email}</span>
-          </div>
-        </div>
-        {!redirectAfterAuth && onSuccess && (
-          <Button
-            onClick={onSuccess}
-            className="mt-4 w-full bg-form-400 hover:bg-form-500"
-          >
-            Continue with Submission
-          </Button>
-        )}
-      </div>
-    );
-  }
-
+  // Success state no longer needed since we redirect to verification page
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">

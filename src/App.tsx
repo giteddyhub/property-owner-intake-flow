@@ -13,6 +13,7 @@ import TaxFilingServicePage from './pages/TaxFilingServicePage';
 import LoginPage from './pages/LoginPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 
 // Protected route component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -79,6 +80,11 @@ const AppRoutes = () => {
       <Route path="/login" element={
         <AnonymousRoute>
           <LoginPage />
+        </AnonymousRoute>
+      } />
+      <Route path="/verify-email" element={
+        <AnonymousRoute>
+          <VerifyEmailPage />
         </AnonymousRoute>
       } />
       <Route path="/ResidentSuccessPage" element={<ResidentSuccessPage />} />

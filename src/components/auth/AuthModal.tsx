@@ -55,7 +55,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <SignInForm onSuccess={onSuccess} />
             </TabsContent>
             <TabsContent value="sign-up">
-              <SignUpForm onSuccess={onSuccess} />
+              <SignUpForm onSuccess={onSuccess} redirectAfterAuth={true} />
             </TabsContent>
           </Tabs>
         </div>
