@@ -39,7 +39,12 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
         totalAmount: priceBreakdown.totalPrice
       });
       
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
+      // Add a timeout to handle potential network issues
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out')), 15000)
+      );
+      
+      const fetchPromise = supabase.functions.invoke('create-checkout', {
         body: { 
           purchaseId,
           hasDocumentRetrievalService: hasDocumentRetrieval,
@@ -49,11 +54,16 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
         },
       });
       
-      if (error) {
-        console.error('Checkout error:', error);
-        toast.error(`Checkout error: ${error.message}`);
-        throw error;
+      // Race the fetch against a timeout
+      const response = await Promise.race([fetchPromise, timeoutPromise]) as any;
+      
+      if (response.error) {
+        console.error('Checkout error:', response.error);
+        toast.error(`Checkout error: ${response.error.message || 'Unable to process checkout'}`);
+        throw response.error;
       }
+      
+      const data = response.data;
       
       if (!data?.url) {
         const errorMsg = 'No checkout URL returned from server';
@@ -72,7 +82,15 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
       }, 500);
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      toast.error('Unable to initiate checkout. Please try again later.');
+      
+      // Provide more helpful error message based on error type
+      if (error instanceof Error && error.message === 'Request timed out') {
+        toast.error('The checkout service is taking too long to respond. Please try again later.');
+      } else if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        toast.error('Unable to connect to the payment service. Please check your internet connection and try again.');
+      } else {
+        toast.error('Unable to initiate checkout. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }

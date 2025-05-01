@@ -15,6 +15,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Initializing Stripe with secret key");
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
     });
@@ -38,6 +39,12 @@ serve(async (req) => {
     // Create a Supabase client with the Auth context of the logged in user
     const supabaseUrl = "https://ijwwnaqprojdczfppxkf.supabase.co";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!supabaseServiceKey) {
+      console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
+      throw new Error("Server configuration error");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch purchase record and associated contact
