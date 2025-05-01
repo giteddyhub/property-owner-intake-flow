@@ -38,6 +38,12 @@ const PropertyDrawerContent: React.FC<PropertyDrawerContentProps> = ({
     occupancyStatuses: [{ status: 'PERSONAL_USE', months: 12 }]
   };
 
+  const handleOccupancyClick = (e: React.MouseEvent) => {
+    // This prevents clicks in the occupancy section from bubbling up
+    // and potentially causing problems with the drawer
+    e.stopPropagation();
+  };
+
   return (
     <ScrollArea className="h-full">
       <div className="p-6">
@@ -53,7 +59,10 @@ const PropertyDrawerContent: React.FC<PropertyDrawerContentProps> = ({
           </div>
         </SheetHeader>
         
-        <div className="pt-2">
+        <div 
+          className="pt-2"
+          onClick={handleOccupancyClick}
+        >
           <PropertyForm
             property={property || defaultProperty}
             editingIndex={property ? 0 : null}

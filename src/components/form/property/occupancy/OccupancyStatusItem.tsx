@@ -40,6 +40,11 @@ const OccupancyStatusItem: React.FC<OccupancyStatusItemProps> = ({
   onRemove,
   currentProperty
 }) => {
+  // Handler to stop clicks on the select from propagating up to the parent div
+  const handleSelectClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <div 
       className={cn(
@@ -65,7 +70,7 @@ const OccupancyStatusItem: React.FC<OccupancyStatusItemProps> = ({
       >
         <CollapsibleContent>
           <Label htmlFor={`${status.toLowerCase()}_months`}>Number of Months*</Label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={handleSelectClick}>
             <Select 
               value={months.toString()}
               onValueChange={(value) => onMonthsChange(parseInt(value))}
@@ -74,9 +79,15 @@ const OccupancyStatusItem: React.FC<OccupancyStatusItemProps> = ({
               <SelectTrigger className="mt-1 w-24">
                 <SelectValue placeholder="Months" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent 
+                className="z-50"
+                onClick={e => e.stopPropagation()}
+              >
                 {availableMonths.map(month => (
-                  <SelectItem key={`${status.toLowerCase()}-${month}`} value={month.toString()}>
+                  <SelectItem 
+                    key={`${status.toLowerCase()}-${month}`} 
+                    value={month.toString()}
+                  >
                     {month}
                   </SelectItem>
                 ))}

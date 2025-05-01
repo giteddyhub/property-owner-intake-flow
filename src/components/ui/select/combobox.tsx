@@ -118,28 +118,50 @@ export const Combobox = ({
     filteredOptions = [...emptyArray];
   }
 
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpen(!open);
+  };
+
+  const handleSelectItem = (itemValue: string) => {
+    onValueChange(itemValue);
+    setSearchQuery("");
+    setOpen(false);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
+          type="button"
           role="combobox"
           aria-expanded={open}
           className={cn(
             "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
             triggerClassName
           )}
+          onClick={handleTriggerClick}
         >
           {value || <span className="text-muted-foreground">{placeholder}</span>}
           <ChevronDown className="h-4 w-4 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className={cn("p-0", className)} align="start" side="bottom">
+      <PopoverContent 
+        className={cn("p-0", className)} 
+        align="start" 
+        side="bottom"
+        onClick={(e) => e.stopPropagation()}
+      >
         <Command className="w-full">
           <CommandInput
             placeholder="Search..."
             value={searchQuery}
             onValueChange={setSearchQuery}
             className="h-9"
+            onKeyDown={(e) => {
+              // Prevent propagation of keyboard events that might affect parent components
+              e.stopPropagation();
+            }}
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup className="max-h-[200px] overflow-y-auto">
@@ -147,11 +169,8 @@ export const Combobox = ({
               <CommandItem
                 key={option}
                 value={option}
-                onSelect={() => {
-                  onValueChange(option);
-                  setSearchQuery("");
-                  setOpen(false);
-                }}
+                onSelect={() => handleSelectItem(option)}
+                onClick={(e) => e.stopPropagation()}
               >
                 <Check
                   className={cn(

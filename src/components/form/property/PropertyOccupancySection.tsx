@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { occupancyExplanations } from './utils/propertyTypes';  // Updated import
+import { occupancyExplanations } from './utils/propertyTypes';
 import { usePropertyForm } from './context/PropertyFormContext';
 import OccupancyStatusItem from './occupancy/OccupancyStatusItem';
 import OccupancyProgressBar from './occupancy/OccupancyProgressBar';
@@ -18,8 +18,13 @@ const PropertyOccupancySection: React.FC = () => {
     handleRemoveOccupancyStatus
   } = usePropertyForm();
   
+  // Handle clicks in the section to prevent propagation
+  const handleSectionClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+  
   return (
-    <div className="mt-6">
+    <div className="mt-6" onClick={handleSectionClick}>
       <h4 className="text-md font-medium mb-3">Rental Status in 2024*</h4>
       
       <OccupancyProgressBar totalMonthsAllocated={totalMonthsAllocated} />
