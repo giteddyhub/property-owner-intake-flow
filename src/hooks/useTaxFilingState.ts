@@ -61,10 +61,12 @@ export const useTaxFilingState = () => {
       const defaultAmount = 0;
       
       // Create a purchase entry to track this session
+      // We still need to provide contact_id for now, even though we're moving to form_submission_id
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert({
-          form_submission_id: formSubmission.id, // Use the new form_submission_id
+          contact_id: formSubmission.id, // Required field until we fully migrate
+          form_submission_id: formSubmission.id, // New field that replaces contact_id
           payment_status: 'pending',
           has_document_retrieval: false, // Will be set during checkout
           amount: defaultAmount // Add the mandatory amount field

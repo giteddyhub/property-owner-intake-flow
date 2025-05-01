@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import type { SubmissionData } from './types';
 import { saveContactInfo } from './contactService';
@@ -21,12 +20,12 @@ export const submitFormData = async (
   userId = null
 ) => {
   // Generate a unique submission ID
-  const submissionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const submissionKey = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
   // Check if we already have a submission in progress
   if (activeSubmissions.size > 0) {
     console.log("Warning: Another submission is already in progress", 
-      { active: Array.from(activeSubmissions), current: submissionId });
+      { active: Array.from(activeSubmissions), current: submissionKey });
     toast.warning("Please wait, submission already in progress");
     return false;
   }
@@ -39,10 +38,10 @@ export const submitFormData = async (
   }
   
   // Add this submission to active list
-  activeSubmissions.add(submissionId);
+  activeSubmissions.add(submissionKey);
   
   try {
-    console.log(`Starting submission ${submissionId} with:`, {
+    console.log(`Starting submission ${submissionKey} with:`, {
       ownersCount: owners.length,
       propertiesCount: properties.length,
       assignmentsCount: assignments.length,
@@ -122,11 +121,11 @@ export const submitFormData = async (
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert({
-          form_submission_id: submissionId, // Updated from contact_id
+          contact_id: submissionId, // Required field until we fully migrate
+          form_submission_id: submissionId, // New field that replaces contact_id
           payment_status: 'pending',
           has_document_retrieval: hasDocumentRetrievalService,
-          amount: 0, // Will be calculated during checkout
-          user_id: userId
+          amount: 0 // Will be calculated during checkout
         })
         .select('id')
         .single();
@@ -158,11 +157,11 @@ export const submitFormData = async (
     }
     
   } catch (error) {
-    console.error(`Submission ${submissionId} failed:`, error);
+    console.error(`Submission ${submissionKey} failed:`, error);
     toast.error(error instanceof Error ? error.message : 'Please try again later');
     throw error;
   } finally {
     // Remove this submission from active list
-    activeSubmissions.delete(submissionId);
+    activeSubmissions.delete(submissionKey);
   }
 };
