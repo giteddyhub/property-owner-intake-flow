@@ -1,15 +1,16 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { DbOwner, DbProperty, DbAssignment } from '../types';
 
 interface FetchUserDataParams {
   userId: string | undefined;
 }
 
 interface FetchUserDataResult {
-  ownersData: any[];
-  propertiesData: any[];
-  assignmentsData: any[];
+  ownersData: DbOwner[];
+  propertiesData: DbProperty[];
+  assignmentsData: DbAssignment[];
   error: Error | null;
 }
 
@@ -75,7 +76,7 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     console.log("Properties data fetched:", propertiesData?.length || 0);
     
     // If we have owners, fetch assignments related to those owners
-    let assignmentsData: any[] = [];
+    let assignmentsData: DbAssignment[] = [];
     if (ownersData && ownersData.length > 0) {
       const ownerIds = ownersData.map(o => o.id);
       const { data, error: assignmentsError } = await supabase
@@ -107,9 +108,9 @@ export const fetchUserData = async ({ userId }: FetchUserDataParams): Promise<Fe
     }
 
     return {
-      ownersData: ownersData || [],
-      propertiesData: propertiesData || [],
-      assignmentsData: assignmentsData,
+      ownersData: (ownersData || []) as DbOwner[],
+      propertiesData: (propertiesData || []) as DbProperty[],
+      assignmentsData: assignmentsData as DbAssignment[],
       error: null
     };
 

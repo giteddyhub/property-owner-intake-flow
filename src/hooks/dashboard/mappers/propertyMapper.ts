@@ -7,26 +7,7 @@ import {
   PropertyType,
   ActivityType 
 } from '@/components/dashboard/types';
-
-interface DbProperty {
-  id: string;
-  label: string;
-  address_comune: string;
-  address_province: string;
-  address_street: string;
-  address_zip: string;
-  activity_2024: string;
-  purchase_date: string | null;
-  purchase_price: number | null;
-  sale_date: string | null;
-  sale_price: number | null;
-  property_type: string;
-  remodeling: boolean;
-  occupancy_statuses: any[] | string;
-  rental_income?: number;
-  documents?: any[];
-  use_document_retrieval_service: boolean;
-}
+import { DbProperty } from '../types';
 
 export const mapDbPropertiesToProperties = (dbProperties: DbProperty[]): Property[] => {
   return dbProperties.map((dbProperty: DbProperty): Property => {
@@ -60,13 +41,21 @@ export const mapDbPropertiesToProperties = (dbProperties: DbProperty[]): Propert
   });
 };
 
+interface RawPropertyDocument {
+  id?: string;
+  name?: string;
+  type?: string;
+  size?: number;
+  uploadDate?: string | number;
+}
+
 export const parsePropertyDocuments = (documents: any[] | undefined): PropertyDocument[] => {
   if (!documents || !Array.isArray(documents)) return [];
   
-  return documents.map((docItem: any): PropertyDocument => {
+  return documents.map((docItem): PropertyDocument => {
     if (typeof docItem === 'string') {
       try {
-        const parsed = JSON.parse(docItem);
+        const parsed = JSON.parse(docItem) as RawPropertyDocument;
         return {
           id: parsed.id || 'unknown',
           name: parsed.name || 'Unknown document',
@@ -77,22 +66,29 @@ export const parsePropertyDocuments = (documents: any[] | undefined): PropertyDo
       } catch (e) {
         return {
           id: 'unknown',
-          name: docItem || 'Unknown document',
+          name: typeof docItem === 'string' ? docItem : 'Unknown document',
           type: 'unknown',
           size: 0,
           uploadDate: new Date()
         };
       }
     }
+    
+    const docObject = docItem as RawPropertyDocument;
     return {
-      id: docItem.id || 'unknown',
-      name: docItem.name || 'Unknown document',
-      type: docItem.type || 'unknown',
-      size: docItem.size || 0,
-      uploadDate: new Date(docItem.uploadDate || Date.now())
+      id: docObject.id || 'unknown',
+      name: docObject.name || 'Unknown document',
+      type: docObject.type || 'unknown',
+      size: docObject.size || 0,
+      uploadDate: new Date(docObject.uploadDate || Date.now())
     };
   });
 };
+
+interface RawOccupancyAllocation {
+  status?: string;
+  months?: number;
+}
 
 export const parseOccupancyStatuses = (occupancyStatuses: any[] | string | undefined): OccupancyAllocation[] => {
   // Default value if parsing fails
@@ -100,24 +96,26 @@ export const parseOccupancyStatuses = (occupancyStatuses: any[] | string | undef
   
   try {
     if (typeof occupancyStatuses === 'string') {
-      const parsed = JSON.parse(occupancyStatuses);
-      return Array.isArray(parsed) ? parsed as OccupancyAllocation[] : defaultOccupancy;
+      try {
+        const parsed = JSON.parse(occupancyStatuses);
+        return Array.isArray(parsed) ? parsed.map(normalizeOccupancyItem) : defaultOccupancy;
+      } catch (e) {
+        return defaultOccupancy;
+      }
     } 
     
     if (Array.isArray(occupancyStatuses)) {
-      const parsed = occupancyStatuses.map((item: any): OccupancyAllocation | null => {
+      const parsed = occupancyStatuses.map((item): OccupancyAllocation | null => {
         if (typeof item === 'string') {
           try {
-            return JSON.parse(item) as OccupancyAllocation;
+            const parsedItem = JSON.parse(item);
+            return normalizeOccupancyItem(parsedItem);
           } catch (e) {
             console.error('Failed to parse occupancy status item:', item);
             return null;
           }
         }
-        return {
-          status: (item.status || 'PERSONAL_USE') as OccupancyStatus,
-          months: item.months || 12
-        };
+        return normalizeOccupancyItem(item);
       }).filter((item): item is OccupancyAllocation => item !== null);
       
       return parsed.length > 0 ? parsed : defaultOccupancy;
@@ -128,3 +126,10 @@ export const parseOccupancyStatuses = (occupancyStatuses: any[] | string | undef
   
   return defaultOccupancy;
 };
+
+function normalizeOccupancyItem(item: RawOccupancyAllocation): OccupancyAllocation {
+  return {
+    status: (item.status || 'PERSONAL_USE') as OccupancyStatus,
+    months: item.months || 12
+  };
+}
