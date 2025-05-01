@@ -61,6 +61,7 @@ export const submitFormData = async (
         if (completedSubmissionsByUser.has(userId)) {
           console.log(`User ${userId} already has a completed submission. Preventing duplicate.`);
           toast.info("Your information has already been submitted");
+          activeSubmissions.delete(submissionKey);
           return false;
         }
       } else {
@@ -77,15 +78,15 @@ export const submitFormData = async (
     // Step 1: Create form submission entry with the user_id
     console.log("Creating form submission with userId:", userId);
     
-    // Create form submission directly rather than going through contactService
-    // This ensures the user_id is properly set in the form_submissions table
+    const submissionData = {
+      user_id: userId,
+      submitted_at: new Date().toISOString(),
+      state: 'new'
+    };
+    
     const { data: formData, error: formError } = await supabase
       .from('form_submissions')
-      .insert({
-        user_id: userId,
-        submitted_at: new Date().toISOString(),
-        state: 'new'
-      })
+      .insert(submissionData)
       .select('id')
       .single();
     
@@ -125,7 +126,10 @@ export const submitFormData = async (
     const isImmediateSubmissionAfterSignup = !document.cookie.includes('supabase-auth-token');
     if (isImmediateSubmissionAfterSignup) {
       console.log("Immediate submission after signup completed - data will be available after email verification");
-      return true;
+      return {
+        success: true,
+        submissionId
+      };
     }
     
     // Success notification for regular submissions
@@ -165,14 +169,21 @@ export const submitFormData = async (
       // For regular submissions (not immediately after signup), redirect to the tax filing service page
       window.location.href = `/tax-filing-service/${purchase.id}`;
       
-      return true;
+      return {
+        success: true,
+        submissionId,
+        purchaseId: purchase.id
+      };
     } else {
       // If user is not logged in, redirect to success page as fallback
       // This path should rarely happen as users are prompted to log in before submission
       console.log("No user ID available, redirecting to success page");
       window.location.href = '/success';
       
-      return false;
+      return {
+        success: true,
+        submissionId
+      };
     }
     
   } catch (error) {

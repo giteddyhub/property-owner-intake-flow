@@ -29,20 +29,25 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const submitFormIfPending = async (userId: string, userEmail: string) => {
     // Check if there's pending form data in session storage
     const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
-    if (!pendingFormDataStr) return;
+    if (!pendingFormDataStr) {
+      console.log("No pending form data found after signup");
+      return;
+    }
 
     const pendingFormData = JSON.parse(pendingFormDataStr);
     
     // Ensure the contact info includes the user's details
     pendingFormData.contactInfo = {
-      fullName: fullName,
-      email: userEmail
+      ...pendingFormData.contactInfo,
+      fullName: fullName || pendingFormData.contactInfo?.fullName,
+      email: userEmail || pendingFormData.contactInfo?.email
     };
     
     // Set processing flag to prevent duplicate submissions
     setProcessingSubmission(true);
     
     console.log("Immediately submitting form data after signup for user ID:", userId);
+    console.log("Form data to submit:", pendingFormData);
     
     try {
       // Submit the form data immediately with the user ID
@@ -56,12 +61,14 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       
       console.log("Form data submitted successfully immediately after signup, result:", result);
       
-      // Set a flag to redirect to dashboard after email verification
-      sessionStorage.setItem('redirectToDashboard', 'true');
-      sessionStorage.setItem('formSubmittedDuringSignup', 'true');
-      
-      // Don't clear the pending form data yet, as we'll need it if email verification fails
-      // It will be cleared after successful verification and dashboard redirection
+      if (result && result.success) {
+        // Set a flag to redirect to dashboard after email verification
+        sessionStorage.setItem('redirectToDashboard', 'true');
+        sessionStorage.setItem('formSubmittedDuringSignup', 'true');
+        
+        // Don't clear the pending form data yet, as we'll need it if email verification fails
+        // It will be cleared after successful verification and dashboard redirection
+      }
     } catch (error) {
       console.error("Error submitting form data after signup:", error);
     }

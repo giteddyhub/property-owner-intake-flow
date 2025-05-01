@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // If there's no pending form data and we have a redirectToDashboard flag,
       // the form was already submitted during signup - no need to process again
-      if (!pendingFormDataStr && sessionStorage.getItem('redirectToDashboard') === 'true') {
+      if (!pendingFormDataStr && sessionStorage.getItem('formSubmittedDuringSignup') === 'true') {
         console.log("Form was already submitted during signup, skipping duplicate submission");
         setPendingSubmissionProcessed(true);
         return;
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         try {
           // Submit the form data with the user ID
-          await submitFormData(
+          const result = await submitFormData(
             pendingFormData.owners,
             pendingFormData.properties,
             pendingFormData.assignments,
@@ -96,6 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Reset the processing flag after submission attempt
         setProcessingSubmission(false);
+      } else {
+        console.log("No pending form data found for user:", userId);
       }
     } catch (error) {
       console.error("Error submitting pending form data:", error);
@@ -115,16 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Use setTimeout to ensure auth state is fully updated and avoid race conditions
         setTimeout(() => {
           // Only check for pending form data if email verification completed
-          // For SIGNED_IN events, don't process again if already submitted during signup
-          if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+          if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'SIGNED_IN') {
             checkAndSubmitPendingFormData(newSession.user.id, event);
           }
           
           // Redirect to dashboard after email verification
-          if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          if ((event === 'USER_UPDATED' || (event === 'SIGNED_IN' && newSession.user.email_confirmed_at)) 
+              && (sessionStorage.getItem('redirectToDashboard') === 'true' || sessionStorage.getItem('formSubmittedDuringSignup') === 'true')) {
             // Check if we're not already on the dashboard
             if (!window.location.pathname.includes('/dashboard')) {
               console.log("Redirecting to dashboard after authentication event:", event);
+              // Clear the formSubmittedDuringSignup flag
+              sessionStorage.removeItem('formSubmittedDuringSignup');
               window.location.href = '/dashboard';
             }
           }
