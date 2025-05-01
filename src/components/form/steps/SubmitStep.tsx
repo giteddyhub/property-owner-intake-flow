@@ -51,6 +51,15 @@ const SubmitStep: React.FC = () => {
           toast.error("There was a problem with your submission. Please try again.");
           return;
         }
+        
+        // Store the submission and purchase IDs
+        if (result.submissionId) {
+          sessionStorage.setItem('submissionId', result.submissionId);
+        }
+        
+        if (result.purchaseId) {
+          sessionStorage.setItem('purchaseId', result.purchaseId);
+        }
       }
       
       setTimeout(() => {

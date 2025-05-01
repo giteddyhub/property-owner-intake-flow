@@ -2,7 +2,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
-import { submitFormData } from '@/components/form/review/utils/submissionService';
+import { submitFormData } from '@/components/form/review/submitUtils';
 
 type AuthContextType = {
   user: User | null;
@@ -80,16 +80,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             userId
           );
           
-          // Immediately clear the pending form data after successful submission
-          sessionStorage.removeItem('pendingFormData');
-          console.log(`Successfully submitted pending form data (ID: ${submissionId}) for user:`, userId);
-          
-          // Mark submission as completed to prevent duplicates
-          setSubmissionCompleted(true);
-          setPendingSubmissionProcessed(true);
-          
-          // Set a flag to redirect to dashboard after form submission
-          sessionStorage.setItem('redirectToDashboard', 'true');
+          if (result.success) {
+            // Store IDs in session storage
+            if (result.submissionId) {
+              sessionStorage.setItem('submissionId', result.submissionId);
+            }
+            
+            if (result.purchaseId) {
+              sessionStorage.setItem('purchaseId', result.purchaseId);
+            }
+            
+            // Immediately clear the pending form data after successful submission
+            sessionStorage.removeItem('pendingFormData');
+            console.log(`Successfully submitted pending form data (ID: ${submissionId}) for user:`, userId);
+            
+            // Mark submission as completed to prevent duplicates
+            setSubmissionCompleted(true);
+            setPendingSubmissionProcessed(true);
+            
+            // Set a flag to redirect to dashboard after form submission
+            sessionStorage.setItem('redirectToDashboard', 'true');
+          } else {
+            console.error(`Submission ${submissionId} failed with success=false`);
+          }
         } catch (error) {
           console.error(`Submission ${submissionId} failed:`, error);
         }
@@ -117,7 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Use setTimeout to ensure auth state is fully updated and avoid race conditions
         setTimeout(() => {
           // Only check for pending form data if email verification completed
-          if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'SIGNED_IN') {
+          if ((event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && newSession.user.email_confirmed_at) {
+            checkAndSubmitPendingFormData(newSession.user.id, event);
+          } else if (event === 'SIGNED_IN') {
+            // For regular sign-ins (not after signup), also check for pending data
             checkAndSubmitPendingFormData(newSession.user.id, event);
           }
           

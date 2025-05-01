@@ -29,7 +29,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }) => {
           .eq('user_id', userId);
 
         if (ownersError) throw ownersError;
-        console.log(`Fetched ${ownersData.length} owners`);
+        console.log(`Fetched ${ownersData?.length || 0} owners`);
 
         // Fetch properties for this user
         const { data: propertiesData, error: propertiesError } = await supabase
@@ -38,7 +38,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }) => {
           .eq('user_id', userId);
 
         if (propertiesError) throw propertiesError;
-        console.log(`Fetched ${propertiesData.length} properties`);
+        console.log(`Fetched ${propertiesData?.length || 0} properties`);
 
         // Fetch assignments for this user
         const { data: assignmentsData, error: assignmentsError } = await supabase
@@ -47,7 +47,7 @@ export const useDashboardData = ({ userId, refreshFlag = 0 }) => {
           .eq('user_id', userId);
 
         if (assignmentsError) throw assignmentsError;
-        console.log(`Fetched ${assignmentsData.length} assignments`);
+        console.log(`Fetched ${assignmentsData?.length || 0} assignments`);
 
         // Set the data
         setOwners(ownersData || []);

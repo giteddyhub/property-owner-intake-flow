@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, Check, Mail } from 'lucide-react';
-import { submitFormData } from '@/components/form/review/utils/submissionService';
+import { submitFormData } from '@/components/form/review/submitUtils';
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -66,8 +66,15 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         sessionStorage.setItem('redirectToDashboard', 'true');
         sessionStorage.setItem('formSubmittedDuringSignup', 'true');
         
-        // Don't clear the pending form data yet, as we'll need it if email verification fails
-        // It will be cleared after successful verification and dashboard redirection
+        // Store the submission ID for later use
+        if (result.submissionId) {
+          sessionStorage.setItem('submissionId', result.submissionId);
+        }
+        
+        // Store purchase ID if available
+        if (result.purchaseId) {
+          sessionStorage.setItem('purchaseId', result.purchaseId);
+        }
       }
     } catch (error) {
       console.error("Error submitting form data after signup:", error);
