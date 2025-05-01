@@ -5,7 +5,7 @@ import { Property } from '@/types/form';
 /**
  * Save properties and return mapping of client-side IDs to database IDs
  */
-export const saveProperties = async (properties: Property[], contactId: string, userId: string | null = null): Promise<Record<string, string>> {
+export const saveProperties = async (properties: Property[], contactId: string, userId: string | null = null) => {
   try {
     console.log(`Saving ${properties.length} properties with contactId:`, contactId);
     

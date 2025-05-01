@@ -11,7 +11,7 @@ export const saveAssignments = async (
   propertyIdMap: Record<string, string>,
   contactId: string,
   userId: string | null = null
-): Promise<void> {
+) => {
   try {
     console.log(`Saving ${assignments.length} assignments with contactId:`, contactId);
     

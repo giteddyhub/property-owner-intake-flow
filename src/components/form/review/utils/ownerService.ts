@@ -5,7 +5,7 @@ import { Owner } from '@/types/form';
 /**
  * Save owners and return mapping of client-side IDs to database IDs
  */
-export const saveOwners = async (owners: Owner[], contactId: string, userId: string | null = null): Promise<Record<string, string>> {
+export const saveOwners = async (owners: Owner[], contactId: string, userId: string | null = null) => {
   try {
     console.log(`Saving ${owners.length} owners with contactId:`, contactId);
     
