@@ -64,6 +64,13 @@ export const submitFormData = async (
     
     // Log authentication status
     console.log("Final user ID for submission:", effectiveUserId);
+
+    // Create an extra safety measure - if we have a userId, store email association in sessionStorage
+    // This can help with recovery later if needed
+    if (effectiveUserId && contactInfo?.email) {
+      sessionStorage.setItem('userEmail', contactInfo.email);
+      localStorage.setItem('userEmail', contactInfo.email);
+    }
     
     if (!effectiveUserId) {
       console.error("No user ID available for submission");

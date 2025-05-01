@@ -1,51 +1,73 @@
-
 import { OwnerPropertyAssignment } from '@/components/dashboard/types';
-import { DbAssignment } from '../types';
+import { supabase } from '@/integrations/supabase/client';
 
-export const mapDbAssignmentsToAssignments = (dbAssignments: DbAssignment[]): OwnerPropertyAssignment[] => {
-  return dbAssignments.map((dbAssignment: DbAssignment): OwnerPropertyAssignment => ({
+export const mapDbAssignmentsToAssignments = (dbAssignments: any[]): OwnerPropertyAssignment[] => {
+  return dbAssignments.map(dbAssignment => ({
     id: dbAssignment.id,
-    propertyId: dbAssignment.property_id,
     ownerId: dbAssignment.owner_id,
-    ownershipPercentage: Number(dbAssignment.ownership_percentage),
+    propertyId: dbAssignment.property_id,
+    ownershipPercentage: dbAssignment.ownership_percentage,
     residentAtProperty: dbAssignment.resident_at_property,
-    residentDateRange: dbAssignment.resident_from_date ? {
-      from: new Date(dbAssignment.resident_from_date),
-      to: dbAssignment.resident_to_date ? new Date(dbAssignment.resident_to_date) : null
-    } : undefined,
-    taxCredits: dbAssignment.tax_credits ? Number(dbAssignment.tax_credits) : undefined,
-    userId: dbAssignment.user_id
+    residentDateRange: {
+      from: dbAssignment.resident_from_date ? new Date(dbAssignment.resident_from_date) : undefined,
+      to: dbAssignment.resident_to_date ? new Date(dbAssignment.resident_to_date) : undefined,
+    },
+    taxCredits: dbAssignment.tax_credits,
+    userId: dbAssignment.user_id,
   }));
 };
 
-// Function to associate orphaned data with a user ID
+/**
+ * Associates orphaned data with a user ID
+ * This function attempts to find and associate data that was submitted
+ * without a proper user ID association
+ */
 export const associateOrphanedData = async (
-  userId: string,
-  email: string,
-  contactTime: Date | null = null
-) => {
-  const { supabase } = await import('@/integrations/supabase/client');
-  
+  userId: string, 
+  userEmail: string, 
+  emailOnlyMode: boolean = false
+): Promise<{success: boolean, message?: string}> => {
+  console.log(`Looking for orphaned data. UserId: ${userId}, Email: ${userEmail}, EmailOnlyMode: ${emailOnlyMode}`);
+
   try {
-    console.log(`Attempting to associate orphaned data for user ${userId} with email ${email}`);
-    
-    // First, find any contacts with matching email but no user_id
+    // First, check if there are orphaned contact records with this email
     const { data: contactData, error: contactError } = await supabase
       .from('contacts')
-      .select('id')
-      .eq('email', email)
-      .is('user_id', null);
+      .select('id, email, full_name, user_id')
+      .eq('email', userEmail)
+      .is('user_id', emailOnlyMode ? null : userId);
       
     if (contactError) {
-      console.error("Error finding orphaned contacts:", contactError);
-      return { success: false, error: contactError };
+      console.error("Error checking for orphaned contacts:", contactError);
+      return { success: false, message: contactError.message };
     }
     
-    if (contactData && contactData.length > 0) {
-      console.log(`Found ${contactData.length} orphaned contacts for email ${email}`);
+    console.log(`Found ${contactData?.length || 0} potential orphaned contacts:`, contactData);
+    
+    // If no matching contacts, try a different approach
+    if (!contactData || contactData.length === 0) {
+      // Check for orphaned data with null user_id
+      const { data: nullUserContacts, error: nullError } = await supabase
+        .from('contacts')
+        .select('id, email, full_name')
+        .eq('email', userEmail)
+        .is('user_id', null);
+        
+      if (nullError) {
+        console.error("Error checking for null user_id contacts:", nullError);
+        return { success: false, message: nullError.message };
+      }
       
-      // Update the orphaned contacts with the user ID
-      for (const contact of contactData) {
+      console.log(`Found ${nullUserContacts?.length || 0} contacts with null user_id:`, nullUserContacts);
+      
+      if (!nullUserContacts || nullUserContacts.length === 0) {
+        return { success: false, message: "No matching contacts found" };
+      }
+      
+      // Update these null contacts with the user's ID
+      for (const contact of nullUserContacts) {
+        console.log(`Updating contact ${contact.id} to associate with user ${userId}`);
+        
         const { error: updateError } = await supabase
           .from('contacts')
           .update({ user_id: userId })
@@ -53,75 +75,146 @@ export const associateOrphanedData = async (
           
         if (updateError) {
           console.error(`Error updating contact ${contact.id}:`, updateError);
-        } else {
-          console.log(`Successfully associated contact ${contact.id} with user ${userId}`);
+          continue;
+        }
+        
+        // Look for orphaned owners associated with this contact
+        await associateOrphanedOwners(contact.id, userId);
+        
+        // Look for orphaned properties associated with this contact
+        await associateOrphanedProperties(contact.id, userId);
+        
+        // Look for orphaned assignments associated with this contact
+        await associateOrphanedAssignments(contact.id, userId);
+      }
+      
+      return { success: true, message: "Successfully associated orphaned data" };
+    }
+    
+    // Process each contact found
+    for (const contact of contactData) {
+      if (contact.user_id && contact.user_id !== userId) {
+        console.log(`Contact ${contact.id} already has a different user_id: ${contact.user_id}`);
+        continue; // Skip contacts that are already associated with a different user
+      }
+      
+      // Update contact with the user's ID if needed
+      if (!contact.user_id) {
+        console.log(`Updating contact ${contact.id} to associate with user ${userId}`);
+        
+        const { error: updateError } = await supabase
+          .from('contacts')
+          .update({ user_id: userId })
+          .eq('id', contact.id);
           
-          // Now update owners, properties and assignments associated with this contact
-          await associateDataByContactId(contact.id, userId);
+        if (updateError) {
+          console.error(`Error updating contact ${contact.id}:`, updateError);
+          continue;
         }
       }
       
-      return { success: true, count: contactData.length };
-    } else {
-      console.log(`No orphaned contacts found for email ${email}`);
-      return { success: false, error: "No orphaned contacts found" };
+      // Associate orphaned owners, properties, and assignments for this contact
+      await associateOrphanedOwners(contact.id, userId);
+      await associateOrphanedProperties(contact.id, userId);
+      await associateOrphanedAssignments(contact.id, userId);
     }
+    
+    return { success: true, message: "Successfully associated orphaned data" };
   } catch (error) {
     console.error("Error in associateOrphanedData:", error);
-    return { success: false, error };
+    return { success: false, message: error instanceof Error ? error.message : "Unknown error" };
   }
 };
 
-// Helper function to associate all data related to a contact with a user ID
-async function associateDataByContactId(contactId: string, userId: string) {
-  const { supabase } = await import('@/integrations/supabase/client');
+/**
+ * Associates orphaned owners with a user ID
+ */
+const associateOrphanedOwners = async (contactId: string, userId: string): Promise<void> => {
+  // First fetch owners with this contact_id
+  const { data: owners, error: fetchError } = await supabase
+    .from('owners')
+    .select('id')
+    .eq('contact_id', contactId)
+    .is('user_id', null);
+    
+  if (fetchError) {
+    console.error(`Error fetching orphaned owners for contact ${contactId}:`, fetchError);
+    return;
+  }
   
-  try {
-    // Update owners
-    const { data: ownerData, error: ownerError } = await supabase
+  console.log(`Found ${owners?.length || 0} orphaned owners for contact ${contactId}`);
+  
+  // Update each owner with the user's ID
+  for (const owner of owners || []) {
+    const { error: updateError } = await supabase
       .from('owners')
       .update({ user_id: userId })
-      .eq('contact_id', contactId)
-      .is('user_id', null)
-      .select('id');
+      .eq('id', owner.id);
       
-    if (ownerError) {
-      console.error(`Error updating owners for contact ${contactId}:`, ownerError);
-    } else {
-      console.log(`Updated ${ownerData?.length || 0} owners with user_id ${userId}`);
+    if (updateError) {
+      console.error(`Error updating owner ${owner.id}:`, updateError);
     }
+  }
+};
+
+/**
+ * Associates orphaned properties with a user ID
+ */
+const associateOrphanedProperties = async (contactId: string, userId: string): Promise<void> => {
+  // First fetch properties with this contact_id
+  const { data: properties, error: fetchError } = await supabase
+    .from('properties')
+    .select('id')
+    .eq('contact_id', contactId)
+    .is('user_id', null);
     
-    // Update properties
-    const { data: propertyData, error: propertyError } = await supabase
+  if (fetchError) {
+    console.error(`Error fetching orphaned properties for contact ${contactId}:`, fetchError);
+    return;
+  }
+  
+  console.log(`Found ${properties?.length || 0} orphaned properties for contact ${contactId}`);
+  
+  // Update each property with the user's ID
+  for (const property of properties || []) {
+    const { error: updateError } = await supabase
       .from('properties')
       .update({ user_id: userId })
-      .eq('contact_id', contactId)
-      .is('user_id', null)
-      .select('id');
+      .eq('id', property.id);
       
-    if (propertyError) {
-      console.error(`Error updating properties for contact ${contactId}:`, propertyError);
-    } else {
-      console.log(`Updated ${propertyData?.length || 0} properties with user_id ${userId}`);
+    if (updateError) {
+      console.error(`Error updating property ${property.id}:`, updateError);
     }
+  }
+};
+
+/**
+ * Associates orphaned assignments with a user ID
+ */
+const associateOrphanedAssignments = async (contactId: string, userId: string): Promise<void> => {
+  // First fetch assignments with this contact_id
+  const { data: assignments, error: fetchError } = await supabase
+    .from('owner_property_assignments')
+    .select('id')
+    .eq('contact_id', contactId)
+    .is('user_id', null);
     
-    // Update assignments
-    const { data: assignmentData, error: assignmentError } = await supabase
+  if (fetchError) {
+    console.error(`Error fetching orphaned assignments for contact ${contactId}:`, fetchError);
+    return;
+  }
+  
+  console.log(`Found ${assignments?.length || 0} orphaned assignments for contact ${contactId}`);
+  
+  // Update each assignment with the user's ID
+  for (const assignment of assignments || []) {
+    const { error: updateError } = await supabase
       .from('owner_property_assignments')
       .update({ user_id: userId })
-      .eq('contact_id', contactId)
-      .is('user_id', null)
-      .select('id');
+      .eq('id', assignment.id);
       
-    if (assignmentError) {
-      console.error(`Error updating assignments for contact ${contactId}:`, assignmentError);
-    } else {
-      console.log(`Updated ${assignmentData?.length || 0} assignments with user_id ${userId}`);
+    if (updateError) {
+      console.error(`Error updating assignment ${assignment.id}:`, updateError);
     }
-    
-    return true;
-  } catch (error) {
-    console.error(`Error in associateDataByContactId for contact ${contactId}:`, error);
-    return false;
   }
-}
+};
