@@ -30,19 +30,46 @@ export const calculatePricing = (
   const isEarlyBird = isBefore(now, earlyBirdEndDate);
   const tier: PricingTier = isEarlyBird ? 'earlyBird' : 'regular';
   
-  // Set base pricing constants based on tier
-  const baseOwnerPrice = tier === 'earlyBird' ? 245 : 285; // Base price for the first owner
-  const additionalOwnerPrice = tier === 'earlyBird' ? 60 : 70; // Price for each additional owner
-  const additionalPropertyPrice = tier === 'earlyBird' ? 40 : 50; // Price for each additional property
+  // Set base pricing constants based on tier - updated to match pricing table
+  const baseOwnerPrice = tier === 'earlyBird' ? 295 : 400; // Base price for a single owner filing
+  
+  // Additional owner price (per owner after the first)
+  // From pricing table: €147.50 for second owner, €88.50 for 3+ owners in early bird
+  // €200 for second owner, €120 for 3+ owners in regular pricing
+  const secondOwnerPrice = tier === 'earlyBird' ? 147.50 : 200;
+  const thirdPlusOwnerPrice = tier === 'earlyBird' ? 88.50 : 120;
+  
+  // Additional property price (per property after the first)
+  // From pricing table: €80 for second property, €60 for 3+ properties in early bird
+  // €120 for second property, €90 for 3+ properties in regular pricing
+  const secondPropertyPrice = tier === 'earlyBird' ? 80 : 120;
+  const thirdPlusPropertyPrice = tier === 'earlyBird' ? 60 : 90;
+  
   const documentRetrievalFee = hasDocumentRetrieval ? 28 : 0;
   
   // Calculate additional owners cost (first owner is included in base price)
-  const additionalOwners = Math.max(0, ownersCount - 1);
-  const additionalOwnersPrice = additionalOwners * additionalOwnerPrice;
+  let additionalOwnersPrice = 0;
+  if (ownersCount > 1) {
+    // Add the second owner at the second owner rate
+    additionalOwnersPrice += secondOwnerPrice;
+    
+    // Add any owners beyond the second at the third+ owner rate
+    if (ownersCount > 2) {
+      additionalOwnersPrice += (ownersCount - 2) * thirdPlusOwnerPrice;
+    }
+  }
   
   // Calculate additional properties cost (first property is included in base price)
-  const additionalProperties = Math.max(0, propertiesCount - 1);
-  const additionalPropertiesPrice = additionalProperties * additionalPropertyPrice;
+  let additionalPropertiesPrice = 0;
+  if (propertiesCount > 1) {
+    // Add the second property at the second property rate
+    additionalPropertiesPrice += secondPropertyPrice;
+    
+    // Add any properties beyond the second at the third+ property rate
+    if (propertiesCount > 2) {
+      additionalPropertiesPrice += (propertiesCount - 2) * thirdPlusPropertyPrice;
+    }
+  }
   
   // Calculate total price
   const totalPrice = baseOwnerPrice + additionalOwnersPrice + additionalPropertiesPrice + documentRetrievalFee;

@@ -79,7 +79,8 @@ serve(async (req) => {
     const documentRetrievalFee = hasDocumentRetrievalService ? 2800 : 0; // €28.00 in cents
     
     // Use the calculated total if provided, otherwise fallback to base calculation
-    const finalAmount = totalAmountCents > 0 ? totalAmountCents : 24500 + documentRetrievalFee;
+    // Update the base price to match the new early bird price of €295 (29500 cents)
+    const finalAmount = totalAmountCents > 0 ? totalAmountCents : 29500 + documentRetrievalFee;
 
     // Create line items description based on the counts
     const baseDescription = `Professional tax filing service for ${ownersCount} owner${ownersCount > 1 ? 's' : ''} and ${propertiesCount} propert${propertiesCount > 1 ? 'ies' : 'y'} (Early Bird Price)`;
