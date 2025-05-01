@@ -13,7 +13,7 @@ export interface PriceBreakdown {
   documentRetrievalFee: number | null;
   totalPrice: number;
   tier: PricingTier;
-  currency: 'USD' | 'EUR';
+  currency: 'EUR';
 }
 
 /**
@@ -23,7 +23,6 @@ export const calculatePricing = (
   ownersCount: number,
   propertiesCount: number,
   hasDocumentRetrieval: boolean = false,
-  currency: 'USD' | 'EUR' = 'USD',
 ): PriceBreakdown => {
   // Determine if early bird pricing applies
   const now = new Date();
@@ -55,15 +54,15 @@ export const calculatePricing = (
     documentRetrievalFee: hasDocumentRetrieval ? documentRetrievalFee : null,
     totalPrice,
     tier,
-    currency
+    currency: 'EUR'
   };
 };
 
 /**
  * Format a price for display
  */
-export const formatPrice = (price: number, currency: 'USD' | 'EUR' = 'USD'): string => {
-  return currency === 'USD' ? `$${price}` : `€${price}`;
+export const formatPrice = (price: number, currency: 'EUR' = 'EUR'): string => {
+  return `€${price}`;
 };
 
 /**

@@ -88,7 +88,7 @@ const PremiumServiceCard = ({
                     Document Retrieval
                   </p>
                   <p className="text-xs text-gray-600">
-                    +${priceBreakdown.documentRetrievalFee || 28}
+                    +€{priceBreakdown.documentRetrievalFee || 28}
                   </p>
                 </div>
               </div>
@@ -104,7 +104,7 @@ const PremiumServiceCard = ({
             disabled={loading} 
             className="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md flex items-center justify-center"
           >
-            {loading ? "Processing..." : `Purchase Full Service · $${priceBreakdown.totalPrice}`}
+            {loading ? "Processing..." : `Purchase Full Service · €${priceBreakdown.totalPrice}`}
             {!loading && <ChevronRight className="ml-2 h-4 w-4" />}
           </Button>
           

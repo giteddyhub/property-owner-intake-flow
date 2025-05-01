@@ -76,7 +76,7 @@ serve(async (req) => {
     const totalAmountCents = Math.round(totalAmount * 100);
 
     // Calculate document retrieval fee
-    const documentRetrievalFee = hasDocumentRetrievalService ? 2800 : 0; // $28.00 in cents
+    const documentRetrievalFee = hasDocumentRetrievalService ? 2800 : 0; // €28.00 in cents
     
     // Use the calculated total if provided, otherwise fallback to base calculation
     const finalAmount = totalAmountCents > 0 ? totalAmountCents : 24500 + documentRetrievalFee;
@@ -88,7 +88,7 @@ serve(async (req) => {
     const lineItems = [
       {
         price_data: {
-          currency: "usd",
+          currency: "eur", // Changed to EUR
           product_data: {
             name: "Tax Filing Service - Early Access",
             description: baseDescription,
@@ -103,7 +103,7 @@ serve(async (req) => {
     if (hasDocumentRetrievalService) {
       lineItems.push({
         price_data: {
-          currency: "usd",
+          currency: "eur", // Changed to EUR
           product_data: {
             name: "Document Retrieval Service",
             description: "Retrieval of property documents from Italian registry",
@@ -138,7 +138,7 @@ serve(async (req) => {
     await supabase
       .from("purchases")
       .update({ 
-        amount: finalAmount / 100, // Convert cents to dollars
+        amount: finalAmount / 100, // Convert cents to euros
         stripe_session_id: session.id, 
         payment_status: "pending",
         has_document_retrieval: hasDocumentRetrievalService,
