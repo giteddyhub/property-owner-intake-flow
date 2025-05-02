@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignedUp, setIsSignedUp] = useState(false);
+  const [hasPendingFormData, setHasPendingFormData] = useState(false);
+
+  // Check for pending form data on component mount
+  useEffect(() => {
+    const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+    setHasPendingFormData(!!pendingFormDataStr);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,7 +245,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {pendingFormDataStr ? 'Creating account & submitting data...' : 'Creating account...'}
+              {hasPendingFormData ? 'Creating account & submitting data...' : 'Creating account...'}
             </>
           ) : (
             'Create account'
