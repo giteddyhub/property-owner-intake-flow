@@ -238,7 +238,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {pendingFormData ? 'Creating account & submitting data...' : 'Creating account...'}
+              {pendingFormDataStr ? 'Creating account & submitting data...' : 'Creating account...'}
             </>
           ) : (
             'Create account'
