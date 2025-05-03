@@ -75,25 +75,27 @@ export const useTaxFilingState = () => {
       
       try {
         // Create a purchase entry with RPC function to bypass RLS
-        // Using the correct generic type parameter order for the RPC method
-        const { data, error: purchaseError } = await supabase
+        const { data: purchaseData, error: purchaseError } = await supabase
           .rpc('create_purchase_for_user', {
             user_id_input: userId,
             form_submission_id_input: formSubmission.id,
             payment_status_input: 'pending',
             has_document_retrieval_input: false,
             amount_input: defaultAmount
-          }) as { data: PurchaseResponse | null; error: any };
+          });
           
         if (purchaseError) {
           console.error('Failed to create purchase with RPC:', purchaseError);
           throw purchaseError;
         }
         
+        // Use type assertion after validating structure to safely access id
+        const purchase = purchaseData as PurchaseResponse;
+        
         // Ensure data has the expected structure before accessing properties
-        if (data && typeof data === 'object' && 'id' in data) {
-          console.log('Created purchase with ID:', data.id);
-          return data.id;
+        if (purchase && 'id' in purchase) {
+          console.log('Created purchase with ID:', purchase.id);
+          return purchase.id;
         } else {
           console.error('Purchase created but no ID returned');
           throw new Error('Purchase creation failed: No ID returned');
