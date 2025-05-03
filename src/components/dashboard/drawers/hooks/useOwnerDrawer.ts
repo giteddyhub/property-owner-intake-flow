@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Owner } from '@/components/dashboard/types';
 import { createEmptyOwner } from '@/components/form/owner/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useOwnerDrawerSubmit } from './useOwnerDrawerSubmit';
 import { useOwnerFieldHandlers } from './useOwnerFieldHandlers';
 import { useOwnerDrawerCleanup } from './useOwnerDrawerCleanup';

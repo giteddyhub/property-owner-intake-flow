@@ -4,6 +4,7 @@ import { useAuthState } from './useAuthState';
 import { useAuthActions } from './useAuthActions';
 import { useFormSubmissionHandler } from './useFormSubmissionHandler';
 import { AuthContextType, AuthProviderProps } from './authTypes';
+import { supabase } from '@/integrations/supabase/client';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

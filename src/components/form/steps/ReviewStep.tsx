@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useFormContext } from '@/contexts/FormContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import { ReviewStepContent, ReviewStepProvider } from './review';
 

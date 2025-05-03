@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { submitFormData } from '@/components/form/review/submitUtils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';

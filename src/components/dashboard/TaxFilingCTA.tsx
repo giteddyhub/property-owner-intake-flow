@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { FileText, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useTaxFilingState } from '@/hooks/useTaxFilingState';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface TaxFilingCTAProps {
   userId: string;

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import FormNavigation from '@/components/form/FormNavigation';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useTaxFilingState } from '@/hooks/useTaxFilingState';
 import { submitFormData } from '../review/submitUtils';
 
