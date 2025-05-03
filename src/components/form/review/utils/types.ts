@@ -10,3 +10,10 @@ export interface SubmissionData {
   assignments: any[];
   contactInfo: ContactInfo;
 }
+
+export interface SubmissionResult {
+  success: boolean;
+  submissionId?: string;
+  purchaseId?: string;
+  error?: string;
+}

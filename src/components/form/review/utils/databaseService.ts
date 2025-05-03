@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { saveOwners } from './ownerService';
 import { saveProperties } from './propertyService';
@@ -6,13 +5,7 @@ import { saveAssignments } from './assignmentService';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { submissionTracker } from './submissionTracker';
 import { toast } from 'sonner';
-
-export interface SubmissionResult {
-  success: boolean;
-  submissionId?: string;
-  purchaseId?: string;
-  error?: string;
-}
+import { SubmissionResult } from './types';
 
 /**
  * Creates a form submission entry in the database

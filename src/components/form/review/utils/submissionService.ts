@@ -1,18 +1,9 @@
-
 import { toast } from 'sonner';
 import type { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
-import type { ContactInfo } from './types';
+import type { ContactInfo, SubmissionResult } from './types';
 import { submissionTracker } from './submissionTracker';
 import { validateSubmission } from './submissionValidator';
 import { createFormSubmission, createPurchaseEntry, saveFormData } from './databaseService';
-
-// Define a clear return type interface
-export interface SubmissionResult {
-  success: boolean;
-  submissionId?: string;
-  purchaseId?: string;
-  error?: string;
-}
 
 export const submitFormData = async (
   owners: Owner[],
