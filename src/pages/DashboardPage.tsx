@@ -14,6 +14,7 @@ const DashboardPage = () => {
   
   const [refreshFlag, setRefreshFlag] = useState(0);
   const [hasRefreshedAfterRedirect, setHasRefreshedAfterRedirect] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
   const refreshData = useCallback(() => {
     console.log("Dashboard: Manually refreshing data");
@@ -25,27 +26,25 @@ const DashboardPage = () => {
     refreshFlag 
   });
 
-  // Check for redirect from form submission
+  // Check for redirect from form submission and handle initial data load only once
   useEffect(() => {
     // Check if we need to refresh the data after form submission
     const shouldReload = sessionStorage.getItem('redirectToDashboard') === 'true';
     
-    // Only refresh once after redirect
-    if (shouldReload && !hasRefreshedAfterRedirect) {
-      sessionStorage.removeItem('redirectToDashboard');
-      toast.success("Your property data has been successfully saved!");
+    if (!initialLoadComplete) {
+      // Initial load - mark as complete
+      setInitialLoadComplete(true);
       
-      console.log("Dashboard: Initial refresh after redirect");
-      setRefreshFlag(prev => prev + 1);
-      setHasRefreshedAfterRedirect(true);
-      
-      // Delay another refresh to ensure auth state has settled
-      setTimeout(() => {
-        console.log("Dashboard: Delayed refresh after redirect");
-        setRefreshFlag(prev => prev + 1);
-      }, 2000);
+      // Only show welcome toast for first-time redirects
+      if (shouldReload && !hasRefreshedAfterRedirect) {
+        sessionStorage.removeItem('redirectToDashboard');
+        toast.success("Your property data has been successfully saved!");
+        
+        console.log("Dashboard: Initial refresh after redirect");
+        setHasRefreshedAfterRedirect(true);
+      }
     }
-  }, [hasRefreshedAfterRedirect]);
+  }, [hasRefreshedAfterRedirect, initialLoadComplete]);
 
   // Add a global cleanup handler
   useEffect(() => {

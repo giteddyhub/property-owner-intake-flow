@@ -14,6 +14,37 @@ export interface SubmissionResult {
   error?: string;
 }
 
+// Create a simple submission tracker using sessionStorage
+const getSubmissionState = () => {
+  try {
+    const key = 'submitted_users';
+    const state = sessionStorage.getItem(key);
+    return state ? JSON.parse(state) : { users: {} };
+  } catch (e) {
+    return { users: {} };
+  }
+};
+
+const markUserSubmitted = (userId: string) => {
+  try {
+    const key = 'submitted_users';
+    const state = getSubmissionState();
+    state.users[userId] = Date.now();
+    sessionStorage.setItem(key, JSON.stringify(state));
+  } catch (e) {
+    console.error("[submitUtils] Error marking user as submitted:", e);
+  }
+};
+
+const isUserAlreadySubmitted = (userId: string) => {
+  try {
+    const state = getSubmissionState();
+    return !!state.users[userId];
+  } catch (e) {
+    return false;
+  }
+};
+
 export const submitFormData = async (
   owners: Owner[],
   properties: Property[],
@@ -59,6 +90,15 @@ export const submitFormData = async (
       }
     }
     
+    // Check if this user has already submitted data in this session
+    if (userId && isUserAlreadySubmitted(userId)) {
+      console.log("[submitUtils] User has already submitted data in this session:", userId);
+      return {
+        success: true,
+        error: "Your information has already been submitted."
+      };
+    }
+    
     // Check if we've already submitted this data to prevent duplicates
     const submissionKey = `submitted_${userId}_${Date.now()}`;
     const lastSubmissionTime = sessionStorage.getItem('lastSubmissionTime');
@@ -80,7 +120,13 @@ export const submitFormData = async (
     // This will ensure that the submission happens even if email is not verified
     return import('./utils/submissionService').then(module => {
       // Pass flag to indicate this is an immediate submission and should bypass email verification
-      return module.submitFormData(owners, properties, assignments, contactInfo, userId);
+      return module.submitFormData(owners, properties, assignments, contactInfo, userId).then((result) => {
+        // If submission was successful, mark this user as having submitted data
+        if (result.success && userId) {
+          markUserSubmitted(userId);
+        }
+        return result;
+      });
     });
   } catch (error: any) {
     console.error('[submitUtils] Error submitting form data:', error);

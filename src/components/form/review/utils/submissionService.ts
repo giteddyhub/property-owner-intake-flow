@@ -22,9 +22,9 @@ const getSubmissionTracker = (() => {
   const getState = () => {
     try {
       const state = sessionStorage.getItem(STATE_KEY);
-      return state ? JSON.parse(state) : { active: [], completed: [] };
+      return state ? JSON.parse(state) : { active: [], completed: [], submissionIds: {} };
     } catch (e) {
-      return { active: [], completed: [] };
+      return { active: [], completed: [], submissionIds: {} };
     }
   };
   
@@ -41,6 +41,16 @@ const getSubmissionTracker = (() => {
     isCompleted: (userId) => {
       const state = getState();
       return state.completed.includes(userId);
+    },
+    
+    hasSubmissionId: (userId) => {
+      const state = getState();
+      return !!state.submissionIds[userId];
+    },
+    
+    getSubmissionId: (userId) => {
+      const state = getState();
+      return state.submissionIds[userId];
     },
     
     addActive: (key) => {
@@ -65,8 +75,14 @@ const getSubmissionTracker = (() => {
       }
     },
     
+    storeSubmissionId: (userId, submissionId) => {
+      const state = getState();
+      state.submissionIds[userId] = submissionId;
+      setState(state);
+    },
+    
     reset: () => {
-      setState({ active: [], completed: [] });
+      setState({ active: [], completed: [], submissionIds: {} });
     },
     
     clearCompleted: (userId) => {
@@ -112,6 +128,17 @@ export const submitFormData = async (
   if (userId && getSubmissionTracker.isCompleted(userId)) {
     console.log(`[submissionService] User ${userId} already has a completed submission`);
     toast.info("Your information has already been submitted successfully");
+    
+    // Check if we have a stored submission ID to return
+    if (getSubmissionTracker.hasSubmissionId(userId)) {
+      const submissionId = getSubmissionTracker.getSubmissionId(userId);
+      console.log(`[submissionService] Returning previously stored submission ID: ${submissionId}`);
+      return { 
+        success: true,
+        submissionId
+      };
+    }
+    
     return { success: true };
   }
   
@@ -182,6 +209,30 @@ export const submitFormData = async (
       console.log("[submissionService] Immediate submission - bypassing email verification check");
     }
     
+    // Check if we already have a stored submission ID for this user
+    // This prevents duplicate submissions on page refresh
+    if (getSubmissionTracker.hasSubmissionId(userId)) {
+      const existingSubmissionId = getSubmissionTracker.getSubmissionId(userId);
+      
+      // Check if this submission actually exists in the database
+      const { data: existingSubmission, error: checkError } = await supabase
+        .from('form_submissions')
+        .select('id')
+        .eq('id', existingSubmissionId)
+        .eq('user_id', userId)
+        .single();
+        
+      if (!checkError && existingSubmission) {
+        console.log(`[submissionService] Found existing submission ID ${existingSubmissionId} for user ${userId}`);
+        
+        // Return the existing submission ID - no need to create a new one
+        return {
+          success: true,
+          submissionId: existingSubmissionId
+        };
+      }
+    }
+    
     // Step 1: Create form submission entry
     console.log(`[submissionService] Creating form submission for user:`, userId);
     
@@ -236,6 +287,9 @@ export const submitFormData = async (
     
     // Store submission ID in sessionStorage
     sessionStorage.setItem('submissionId', submissionId);
+    
+    // Store in our tracker to prevent duplicates
+    getSubmissionTracker.storeSubmissionId(userId, submissionId);
     
     // Step 2: Save owners and get ID mappings
     console.log("[submissionService] Saving owners with userId:", userId);
