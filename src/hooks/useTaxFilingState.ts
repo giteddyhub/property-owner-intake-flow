@@ -91,7 +91,7 @@ export const useTaxFilingState = () => {
         }
         
         // Add null check before accessing data property
-        if (data && data.id) {
+        if (data && 'id' in data) {
           console.log('Created purchase with ID:', data.id);
           return data.id;
         } else {
