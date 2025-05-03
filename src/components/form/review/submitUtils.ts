@@ -59,12 +59,10 @@ export const submitFormData = async (
       }
     }
     
-    // CRITICAL CHANGE: Skip email verification check during immediate submission from signup
-    // We don't need to check for email_confirmed_at for immediate submission after signup
-    
-    // Directly call the submission service with user ID
+    // CRITICAL CHANGE: Set isImmediateSubmission flag to true to skip email verification check
+    // This will ensure that the submission happens even if email is not verified
     return import('./utils/submissionService').then(module => {
-      // Pass a flag to indicate this is an immediate submission during signup
+      // Pass flag to indicate this is an immediate submission and should bypass email verification
       return module.submitFormData(owners, properties, assignments, contactInfo, userId, true);
     });
   } catch (error: any) {

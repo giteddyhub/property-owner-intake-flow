@@ -160,7 +160,7 @@ export const submitFormData = async (
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
-    // CRITICAL CHANGE: Skip email verification check for immediate submission during signup
+    // CRITICAL CHANGE: Skip email verification check for immediate submissions
     if (!isImmediateSubmission) {
       // Only check email verification if not an immediate submission
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -215,12 +215,14 @@ export const submitFormData = async (
       // Check for RLS policy violations
       if (formError.message?.includes('violates row-level security policy')) {
         if (isImmediateSubmission) {
-          // For immediate submissions, we need to handle this specially
-          console.warn("[submissionService] RLS policy violation during immediate submission - will retry after verification");
+          // For immediate submissions during signup, we need to handle this specially
+          console.warn("[submissionService] RLS policy violation during immediate submission");
           sessionStorage.setItem('forceRetrySubmission', 'true');
+          
+          // For now, let's return a user-friendly message
           return { 
             success: false,
-            error: "Your account has been created, but we need you to verify your email before we can process your submission."
+            error: "Your account has been created successfully. We'll process your submission once your email is verified."
           };
         } else {
           throw new Error(`Authorization error: You need to verify your email before submitting data. Check your inbox for a verification link.`);
@@ -296,7 +298,7 @@ export const submitFormData = async (
     // Special handling for RLS policy errors
     if (error.message && error.message.includes('violates row-level security policy')) {
       if (isImmediateSubmission) {
-        // For immediate submission, let the user know we'll try again after verification
+        // For immediate submission, we'll set a flag to try again after verification
         sessionStorage.setItem('forceRetrySubmission', 'true');
         return { 
           success: false, 

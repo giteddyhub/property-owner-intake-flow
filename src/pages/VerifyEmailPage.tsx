@@ -25,6 +25,7 @@ const VerifyEmailPage: React.FC = () => {
     console.log("[VerifyEmailPage] Has pending form data:", hasPendingFormData);
     console.log("[VerifyEmailPage] Processing submission:", processingSubmission);
     console.log("[VerifyEmailPage] Submission completed:", submissionCompleted);
+    console.log("[VerifyEmailPage] Form submitted during signup:", formSubmittedDuringSignup);
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("[VerifyEmailPage] Auth state change:", event);
@@ -35,30 +36,10 @@ const VerifyEmailPage: React.FC = () => {
           toast.success("Email verified successfully!");
           setVerificationStatus('verified');
           
-          // Check for and handle pending form data
-          const pendingData = sessionStorage.getItem('pendingFormData');
-          const submitAfterVerification = sessionStorage.getItem('submitAfterVerification');
-          
-          if (pendingData && submitAfterVerification === 'true' && !formAlreadySubmitted) {
-            console.log("[VerifyEmailPage] Found pending form data to submit");
-            toast.info("Submitting your information now...");
-            
-            // Force a retry on submission now that email is verified
-            sessionStorage.setItem('forceRetrySubmission', 'true');
-            
-            // Set redirect flag and wait a moment to allow AuthContext to process submission
-            sessionStorage.setItem('redirectToDashboard', 'true');
-            
-            // Delayed redirect to dashboard to allow time for form processing
-            setTimeout(() => {
-              navigate('/dashboard');
-            }, 3000); // Extended delay to ensure submission gets processed
-          } else if (sessionStorage.getItem('redirectToDashboard') === 'true') {
-            console.log("[VerifyEmailPage] Redirecting to dashboard as requested");
-            setTimeout(() => {
-              navigate('/dashboard');
-            }, 2000);
-          }
+          // Always just redirect to dashboard after verification - data should already be submitted
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
         }
       } else if (event === 'TOKEN_REFRESHED') {
         console.log("[VerifyEmailPage] Token refreshed, checking email verification status");
@@ -66,10 +47,10 @@ const VerifyEmailPage: React.FC = () => {
           setVerificationStatus('verified');
           toast.success("Email verified successfully!");
           
-          // Check again if we should force retry the submission
-          if (hasPendingFormData && !formAlreadySubmitted) {
-            sessionStorage.setItem('forceRetrySubmission', 'true');
-          }
+          // Redirect to dashboard after verification
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
         }
       }
     });
@@ -79,11 +60,10 @@ const VerifyEmailPage: React.FC = () => {
       console.log("[VerifyEmailPage] User already verified on mount");
       setVerificationStatus('verified');
       
-      // Check if we need to retry submission
-      if (hasPendingFormData && !formAlreadySubmitted && !processingSubmission) {
-        console.log("[VerifyEmailPage] Setting force retry on mount for verified user");
-        sessionStorage.setItem('forceRetrySubmission', 'true');
-      }
+      // Redirect to dashboard
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
     }
     
     // Check session every 5 seconds to detect email verification
@@ -97,10 +77,10 @@ const VerifyEmailPage: React.FC = () => {
           setVerificationStatus('verified');
           toast.success("Email verified successfully!");
           
-          // Force a retry on submission
-          if (hasPendingFormData && !formAlreadySubmitted) {
-            sessionStorage.setItem('forceRetrySubmission', 'true');
-          }
+          // Redirect to dashboard after verification
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
           
           clearInterval(checkInterval);
         }
@@ -113,7 +93,7 @@ const VerifyEmailPage: React.FC = () => {
       subscription.unsubscribe();
       clearInterval(checkInterval);
     }
-  }, [navigate, user, processingSubmission, formAlreadySubmitted, hasPendingFormData, submissionCompleted, verificationStatus]);
+  }, [navigate, user, processingSubmission, formAlreadySubmitted, hasPendingFormData, submissionCompleted, verificationStatus, formSubmittedDuringSignup]);
   
   const handleBackToLogin = () => {
     navigate('/login');
@@ -137,24 +117,6 @@ const VerifyEmailPage: React.FC = () => {
       console.error("[VerifyEmailPage] Error resending verification:", error);
       toast.error("Failed to resend verification email");
     }
-  };
-
-  const handleForceRetry = () => {
-    if (!user) {
-      toast.error("You need to be signed in to retry the submission");
-      return;
-    }
-    
-    if (!hasPendingFormData) {
-      toast.error("No form data found to submit");
-      return;
-    }
-    
-    sessionStorage.setItem('forceRetrySubmission', 'true');
-    toast.info("Retrying submission...");
-    
-    // Reload the page to force reinitialization
-    window.location.reload();
   };
 
   return (
@@ -190,20 +152,31 @@ const VerifyEmailPage: React.FC = () => {
                     <p className="text-green-700 text-sm mt-1">
                       {formAlreadySubmitted ? 
                         "Your information has been submitted successfully!" : 
-                        "Your information will now be processed automatically."}
+                        "Redirecting you to your dashboard..."}
                     </p>
                   </div>
                 )}
                 
-                {verificationStatus === 'pending' && hasPendingFormData && !formAlreadySubmitted && (
+                {verificationStatus === 'pending' && formSubmittedDuringSignup && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-4 my-2 w-full">
+                    <h3 className="font-semibold text-blue-800 flex items-center">
+                      <CheckCircle className="h-5 w-5 mr-2 text-blue-600" />
+                      Your information has been saved
+                    </h3>
+                    <p className="text-blue-700 text-sm mt-1">
+                      Your form data has been saved with your account. Please verify your email to access your dashboard.
+                    </p>
+                  </div>
+                )}
+                
+                {verificationStatus === 'pending' && !formSubmittedDuringSignup && hasPendingFormData && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 my-2 w-full">
                     <h3 className="font-semibold text-yellow-800 flex items-center">
                       <Mail className="h-5 w-5 mr-2 text-yellow-600" />
                       Email verification required
                     </h3>
                     <p className="text-yellow-700 text-sm mt-1">
-                      Your information is ready to be submitted after you verify your email.
-                      <span className="block mt-1">This happens automatically - just click the link in your email.</span>
+                      Please verify your email to access your dashboard.
                     </p>
                     <div className="flex items-center justify-center mt-2">
                       <Loader2 className="h-4 w-4 animate-spin mr-2 text-yellow-600" />
@@ -224,25 +197,6 @@ const VerifyEmailPage: React.FC = () => {
                   </div>
                 )}
                 
-                {verificationStatus === 'verified' && hasPendingFormData && !formAlreadySubmitted && !processingSubmission && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-md p-4 my-2 w-full">
-                    <h3 className="font-semibold text-orange-800 flex items-center">
-                      <AlertTriangle className="h-5 w-5 mr-2 text-orange-600" />
-                      Submission Pending
-                    </h3>
-                    <p className="text-orange-700 text-sm mt-1">
-                      Your email is verified but your information hasn't been submitted yet.
-                    </p>
-                    <Button 
-                      onClick={handleForceRetry}
-                      size="sm" 
-                      className="mt-2 bg-orange-500 hover:bg-orange-600 text-white"
-                    >
-                      Submit Information Now
-                    </Button>
-                  </div>
-                )}
-                
                 <div className="border-t border-gray-200 w-full my-4 pt-4">
                   <h2 className="text-lg font-semibold mb-2">What happens next?</h2>
                   <ul className="text-sm text-left space-y-3">
@@ -254,15 +208,10 @@ const VerifyEmailPage: React.FC = () => {
                       )}
                       <span>After verification, you'll be automatically redirected to your dashboard</span>
                     </li>
-                    {formAlreadySubmitted ? (
+                    {formSubmittedDuringSignup ? (
                       <li className="flex gap-2">
                         <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span><strong>Your information has already been processed</strong> - it will be waiting for you in your dashboard</span>
-                      </li>
-                    ) : hasPendingFormData ? (
-                      <li className="flex gap-2">
-                        <Loader2 className="h-5 w-5 text-blue-500 animate-spin flex-shrink-0" />
-                        <span><strong>Your form data is waiting</strong> - it will be submitted automatically after verification</span>
+                        <span><strong>Your information has been saved</strong> - it will be waiting for you in your dashboard</span>
                       </li>
                     ) : null}
                     <li className="flex gap-2">

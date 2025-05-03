@@ -72,120 +72,89 @@ export const useSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseSignU
     try {
       // Check if we have pending form data to submit immediately
       const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
-      if (pendingFormDataStr) {
+      
+      // First create the user account regardless of whether there's pending form data
+      const { error, data } = await signUp(email, password, fullName);
+      
+      if (error) {
+        toast.error(error.message);
+        setFormState(prev => ({ ...prev, isSubmitting: false }));
+        return;
+      }
+      
+      // We successfully created the user
+      if (pendingFormDataStr && data?.user?.id) {
         try {
-          // Update the pending form data with user information
+          // Parse the pending form data
           const pendingFormData = JSON.parse(pendingFormDataStr);
+          
+          // Update contact info with user information
           if (!pendingFormData.contactInfo) {
             pendingFormData.contactInfo = {};
           }
-          
           pendingFormData.contactInfo.fullName = fullName;
           pendingFormData.contactInfo.email = email;
           
-          // CRITICAL CHANGE: Submit the form data immediately during signup
-          console.log("[SignUpForm] Attempting immediate form submission before verification");
+          const userId = data.user.id;
+          console.log("[SignUpForm] User created with ID:", userId, "submitting form data immediately");
           
-          // First create the user account
-          const { error, data } = await signUp(email, password, fullName);
+          // Submit the form data with the new user ID
+          const { owners, properties, assignments, contactInfo } = pendingFormData;
           
-          if (error) {
-            toast.error(error.message);
-            return;
-          }
+          // Submit the data right away without waiting for verification
+          const result = await submitFormData(
+            owners,
+            properties,
+            assignments,
+            contactInfo, 
+            userId
+          );
           
-          // We have a user, now submit the form data directly
-          if (data?.user?.id) {
-            const userId = data.user.id;
-            console.log("[SignUpForm] User created with ID:", userId, "submitting form data");
+          if (result.success) {
+            console.log("[SignUpForm] Form data submitted successfully:", result);
             
-            // Submit the form data with the new user ID
-            const { owners, properties, assignments, contactInfo } = pendingFormData;
+            // Set flag to indicate the form was submitted during signup
+            sessionStorage.setItem('formSubmittedDuringSignup', 'true');
             
-            // Update contact info with the user's information
-            contactInfo.fullName = fullName;
-            contactInfo.email = email;
+            // Clear the pendingFormData as it's now submitted
+            sessionStorage.removeItem('pendingFormData');
             
-            const result = await submitFormData(owners, properties, assignments, contactInfo, userId);
-            
-            if (result.success) {
-              console.log("[SignUpForm] Form data submitted successfully:", result);
-              // Set flag to indicate the form was submitted during signup
-              sessionStorage.setItem('formSubmittedDuringSignup', 'true');
-              // Clear the pendingFormData as it's now submitted
-              sessionStorage.removeItem('pendingFormData');
-              toast.success("Your information has been submitted successfully!");
-            } else {
-              console.warn("[SignUpForm] Form submission failed:", result.error);
-            }
-          }
-          
-          toast.success('Account created successfully! Please check your email to verify your account.');
-          setFormState(prev => ({ ...prev, isSignedUp: true }));
-          
-          // Save email in session storage for the verification page
-          sessionStorage.setItem('pendingUserEmail', email);
-          
-          // Store pendingUserId for use after email verification
-          if (data?.user?.id) {
-            sessionStorage.setItem('pendingUserId', data.user.id);
-          }
-          
-          // Only call onSuccess if redirectAfterAuth is false
-          if (onSuccess && !redirectAfterAuth) {
-            // Small delay to show the confirmation message
-            setTimeout(() => {
-              onSuccess();
-            }, 2000);
-          }
-          
-          if (redirectAfterAuth) {
-            // Redirect to the verify email page
-            setTimeout(() => {
-              navigate('/verify-email');
-            }, 1500);
+            toast.success("Your information has been submitted successfully!");
+          } else {
+            console.warn("[SignUpForm] Form submission failed:", result.error);
+            // We don't show this error to the user as the account was still created successfully
           }
         } catch (parseError) {
           console.error("[SignUpForm] Error processing submission:", parseError);
-          toast.error("There was a problem processing your submission");
-          
-          // Fall back to normal signup flow
-          const { error } = await signUp(email, password, fullName);
-          if (error) {
-            toast.error(error.message);
-          } else {
-            setFormState(prev => ({ ...prev, isSignedUp: true }));
-            toast.success('Account created successfully! Please check your email to verify your account.');
-          }
+          // We don't show this error to the user as the account was still created successfully
         }
-      } else {
-        // No pending form data, just sign up normally
-        const { error } = await signUp(email, password, fullName);
-        
-        if (error) {
-          toast.error(error.message);
-        } else {
-          toast.success('Account created successfully! Please check your email to verify your account.');
-          setFormState(prev => ({ ...prev, isSignedUp: true }));
-          
-          // Save email in session storage for the verification page
-          sessionStorage.setItem('pendingUserEmail', email);
-          
-          // Only call onSuccess if redirectAfterAuth is false
-          if (onSuccess && !redirectAfterAuth) {
-            // Small delay to show the confirmation message
-            setTimeout(() => {
-              onSuccess();
-            }, 2000);
-          }
-          
-          if (redirectAfterAuth) {
-            // Redirect to the verify email page
-            setTimeout(() => {
-              navigate('/verify-email');
-            }, 1500);
-          }
-        }
+      }
+
+      // Always show success message after signup
+      toast.success('Account created successfully! Please check your email to verify your account.');
+      setFormState(prev => ({ ...prev, isSignedUp: true }));
+      
+      // Save email in session storage for the verification page
+      sessionStorage.setItem('pendingUserEmail', email);
+      
+      // Store pendingUserId for use after email verification
+      if (data?.user?.id) {
+        sessionStorage.setItem('pendingUserId', data.user.id);
+      }
+      
+      // Only call onSuccess if redirectAfterAuth is false
+      if (onSuccess && !redirectAfterAuth) {
+        // Small delay to show the confirmation message
+        setTimeout(() => {
+          onSuccess();
+        }, 2000);
+      }
+      
+      if (redirectAfterAuth) {
+        // Redirect to the verify email page
+        setTimeout(() => {
+          navigate('/verify-email');
+        }, 1500);
       }
     } catch (error: any) {
       console.error('[SignUpForm] Error signing up:', error);
