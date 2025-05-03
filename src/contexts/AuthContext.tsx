@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { submitFormData } from '@/components/form/review/submitUtils';
@@ -154,14 +155,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         // Submit the data with explicit userId
-        // Pass true as final parameter for isImmediateSubmission
+        // Fixed: Removed the extra boolean parameter that was causing the TS error
         const result = await submitFormData(
           owners,
           properties,
           assignments,
           contactInfo,
-          userId,
-          true // Force immediate submission
+          userId
         );
         
         if (result.success) {

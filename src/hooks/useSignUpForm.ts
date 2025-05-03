@@ -102,6 +102,7 @@ export const useSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseSignU
           const { owners, properties, assignments, contactInfo } = pendingFormData;
           
           // Submit the data right away without waiting for verification
+          // Fixed: Don't pass the additional boolean parameter
           const result = await submitFormData(
             owners,
             properties,

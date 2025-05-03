@@ -63,7 +63,7 @@ export const submitFormData = async (
     // This will ensure that the submission happens even if email is not verified
     return import('./utils/submissionService').then(module => {
       // Pass flag to indicate this is an immediate submission and should bypass email verification
-      return module.submitFormData(owners, properties, assignments, contactInfo, userId, true);
+      return module.submitFormData(owners, properties, assignments, contactInfo, userId);
     });
   } catch (error: any) {
     console.error('[submitUtils] Error submitting form data:', error);
