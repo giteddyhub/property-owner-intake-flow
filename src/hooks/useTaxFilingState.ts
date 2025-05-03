@@ -75,15 +75,15 @@ export const useTaxFilingState = () => {
       
       try {
         // Create a purchase entry with RPC function to bypass RLS
-        // Specify both input and output types for the RPC method
+        // Using the correct generic type parameter order for the RPC method
         const { data, error: purchaseError } = await supabase
-          .rpc<PurchaseParams, PurchaseResponse>('create_purchase_for_user', {
+          .rpc('create_purchase_for_user', {
             user_id_input: userId,
             form_submission_id_input: formSubmission.id,
             payment_status_input: 'pending',
             has_document_retrieval_input: false,
             amount_input: defaultAmount
-          });
+          }) as { data: PurchaseResponse | null; error: any };
           
         if (purchaseError) {
           console.error('Failed to create purchase with RPC:', purchaseError);
