@@ -59,7 +59,7 @@ export const submitFormData = async (
       }
     }
     
-    // CRITICAL CHANGE: Set isImmediateSubmission flag to true to skip email verification check
+    // Set isImmediateSubmission flag to true to skip email verification check
     // This will ensure that the submission happens even if email is not verified
     return import('./utils/submissionService').then(module => {
       // Pass flag to indicate this is an immediate submission and should bypass email verification

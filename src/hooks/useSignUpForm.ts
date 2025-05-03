@@ -122,11 +122,17 @@ export const useSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseSignU
             toast.success("Your information has been submitted successfully!");
           } else {
             console.warn("[SignUpForm] Form submission failed:", result.error);
-            // We don't show this error to the user as the account was still created successfully
+            
+            // Store error message to display on verification page
+            sessionStorage.setItem('submissionError', result.error || 'Unknown error occurred');
+            
+            // Don't show error toast here - will be handled on verify page
+            toast.info("Account created. We'll process your submission after verification.");
           }
         } catch (parseError) {
           console.error("[SignUpForm] Error processing submission:", parseError);
-          // We don't show this error to the user as the account was still created successfully
+          // Don't show error to the user as the account was still created successfully
+          sessionStorage.setItem('submissionError', 'Error processing your form data');
         }
       }
 
