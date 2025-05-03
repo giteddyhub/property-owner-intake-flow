@@ -59,6 +59,23 @@ export const submitFormData = async (
       }
     }
     
+    // Check if we've already submitted this data to prevent duplicates
+    const submissionKey = `submitted_${userId}_${Date.now()}`;
+    const lastSubmissionTime = sessionStorage.getItem('lastSubmissionTime');
+    const currentTime = Date.now();
+    
+    // If we have a submission timestamp and it's less than 5 seconds ago, prevent duplicate submission
+    if (lastSubmissionTime && (currentTime - parseInt(lastSubmissionTime)) < 5000) {
+      console.log("[submitUtils] Preventing duplicate submission - too soon after last submission");
+      return {
+        success: false,
+        error: "Please wait a moment before submitting again."
+      };
+    }
+    
+    // Set submission timestamp to prevent duplicates
+    sessionStorage.setItem('lastSubmissionTime', currentTime.toString());
+    
     // Set isImmediateSubmission flag to true to skip email verification check
     // This will ensure that the submission happens even if email is not verified
     return import('./utils/submissionService').then(module => {

@@ -62,7 +62,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
     setDrawerOpen(true);
     // Ensure details popup doesn't show
     setDetailsOpen(false);
-    setIsActionClick(false);
   };
   
   const handleDelete = async () => {
@@ -95,15 +94,19 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
     if (onRefresh) onRefresh();
   };
   
-  const handleRowClick = (assignment: OwnerPropertyAssignment) => {
-    // Only show details if not clicking on action buttons
-    if (!isActionClick) {
-      setSelectedAssignment(assignment);
-      setDetailsOpen(true);
+  const handleRowClick = (e: React.MouseEvent, assignment: OwnerPropertyAssignment) => {
+    // Prevent row click if action buttons were clicked
+    if (isActionClick) {
+      setIsActionClick(false);
+      return;
     }
     
-    // Reset the action click flag
-    setIsActionClick(false);
+    // Don't navigate or trigger form submission on row clicks
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setSelectedAssignment(assignment);
+    setDetailsOpen(true);
   };
   
   return (
@@ -140,7 +143,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                   <TableRow 
                     key={assignment.id || `${assignment.ownerId}-${assignment.propertyId}`}
                     className="cursor-pointer"
-                    onClick={() => handleRowClick(assignment)}
+                    onClick={(e) => handleRowClick(e, assignment)}
                   >
                     <TableCell>
                       {property ? property.label : 'Unknown Property'}
@@ -173,9 +176,9 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                     </TableCell>
                     <TableCell>
                       <div 
-                        className="action-buttons"
                         onClick={(e) => {
                           e.stopPropagation();
+                          e.preventDefault();
                           setIsActionClick(true);
                         }}
                       >
@@ -200,7 +203,12 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         <DetailsPopover
           trigger={<div />}
           open={detailsOpen}
-          onOpenChange={setDetailsOpen}
+          onOpenChange={(open) => {
+            // Only update state if we're closing it or opening it properly
+            if (!open || selectedAssignment) {
+              setDetailsOpen(open);
+            }
+          }}
         >
           <AssignmentDetails 
             assignment={selectedAssignment} 
