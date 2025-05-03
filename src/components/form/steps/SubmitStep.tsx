@@ -17,6 +17,7 @@ const SubmitStep: React.FC = () => {
   
   const handleSubmit = async () => {
     try {
+      // Show just one success message for the form submission
       toast.success('Form submitted successfully!', {
         description: 'Thank you for completing the property owner intake process.',
         duration: 5000,
@@ -46,6 +47,9 @@ const SubmitStep: React.FC = () => {
       
       // Submit the form data with user ID so it appears in dashboard
       if (user) {
+        // Set flag to prevent duplicate toast messages
+        sessionStorage.setItem('formSubmittedDuringSignup', 'true');
+        
         const result = await submitFormData(owners, properties, assignments, contactInfo, user.id);
         if (!result.success) {
           toast.error("There was a problem with your submission. Please try again.");
@@ -62,11 +66,10 @@ const SubmitStep: React.FC = () => {
         }
       }
       
-      setTimeout(() => {
-        toast("Creating your tax filing service...", {
-          description: "You'll be redirected to your personalized tax filing page shortly.",
-        });
-      }, 1000);
+      // Show loading message for tax filing service
+      toast("Creating your tax filing service...", {
+        description: "You'll be redirected to your personalized tax filing page shortly.",
+      });
       
       // If user is authenticated, create a tax filing session
       if (user) {

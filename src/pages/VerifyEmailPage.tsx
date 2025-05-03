@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const VerifyEmailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -44,8 +45,12 @@ const VerifyEmailPage: React.FC = () => {
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
         if (session?.user?.email_confirmed_at || session?.user?.confirmed_at) {
           console.log("[VerifyEmailPage] Email confirmed, user is verified");
-          toast.success("Email verified successfully!");
           setVerificationStatus('verified');
+          
+          // Don't show redundant toast messages if we already displayed them elsewhere
+          if (!formSubmittedDuringSignup) {
+            toast.success("Email verified successfully!");
+          }
           
           // Redirect to dashboard shortly after verification
           setTimeout(() => {
@@ -56,7 +61,11 @@ const VerifyEmailPage: React.FC = () => {
         console.log("[VerifyEmailPage] Token refreshed, checking email verification status");
         if (session?.user?.email_confirmed_at || session?.user?.confirmed_at) {
           setVerificationStatus('verified');
-          toast.success("Email verified successfully!");
+          
+          // Don't show redundant toast messages
+          if (!formSubmittedDuringSignup) {
+            toast.success("Email verified successfully!");
+          }
           
           // Redirect to dashboard after verification
           setTimeout(() => {
@@ -86,7 +95,11 @@ const VerifyEmailPage: React.FC = () => {
         if (data.session?.user?.email_confirmed_at || data.session?.user?.confirmed_at) {
           console.log("[VerifyEmailPage] Email verified detected in interval check");
           setVerificationStatus('verified');
-          toast.success("Email verified successfully!");
+          
+          // Don't show redundant toast messages
+          if (!formSubmittedDuringSignup) {
+            toast.success("Email verified successfully!");
+          }
           
           // Redirect to dashboard after verification
           setTimeout(() => {
@@ -104,7 +117,7 @@ const VerifyEmailPage: React.FC = () => {
       subscription.unsubscribe();
       clearInterval(checkInterval);
     }
-  }, [navigate, user, processingSubmission, submissionCompleted, verificationStatus]);
+  }, [navigate, user, processingSubmission, submissionCompleted, verificationStatus, formSubmittedDuringSignup]);
   
   const handleBackToLogin = () => {
     navigate('/login');
@@ -155,74 +168,64 @@ const VerifyEmailPage: React.FC = () => {
                 </div>
                 
                 {verificationStatus === 'verified' && (
-                  <div className="bg-green-50 border border-green-200 rounded-md p-4 my-2 w-full">
-                    <h3 className="font-semibold text-green-800 flex items-center">
-                      <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
-                      Email verified successfully
-                    </h3>
-                    <p className="text-green-700 text-sm mt-1">
+                  <Alert className="bg-green-50 border border-green-200 text-green-800">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <AlertTitle>Email verified successfully</AlertTitle>
+                    <AlertDescription className="text-green-700">
                       {formSubmittedDuringSignup || submissionCompleted ? 
                         "Your information has been submitted successfully!" : 
                         "Redirecting you to your dashboard..."}
-                    </p>
-                  </div>
+                    </AlertDescription>
+                  </Alert>
                 )}
                 
                 {verificationStatus === 'pending' && formSubmittedDuringSignup && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-md p-4 my-2 w-full">
-                    <h3 className="font-semibold text-blue-800 flex items-center">
-                      <CheckCircle className="h-5 w-5 mr-2 text-blue-600" />
-                      Your information has been saved
-                    </h3>
-                    <p className="text-blue-700 text-sm mt-1">
+                  <Alert className="bg-blue-50 border border-blue-200 text-blue-800">
+                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                    <AlertTitle>Your information has been saved</AlertTitle>
+                    <AlertDescription className="text-blue-700">
                       Your form data has been submitted successfully. Please verify your email to access your dashboard.
-                    </p>
-                  </div>
+                    </AlertDescription>
+                  </Alert>
                 )}
                 
                 {verificationStatus === 'pending' && forceRetry && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 my-2 w-full">
-                    <h3 className="font-semibold text-yellow-800 flex items-center">
-                      <AlertTriangle className="h-5 w-5 mr-2 text-yellow-600" />
-                      Form submission pending
-                    </h3>
-                    <p className="text-yellow-700 text-sm mt-1">
+                  <Alert className="bg-yellow-50 border border-yellow-200 text-yellow-800">
+                    <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                    <AlertTitle>Form submission pending</AlertTitle>
+                    <AlertDescription className="text-yellow-700">
                       Your form data has been saved. We'll process your submission once you verify your email.
-                    </p>
-                    {submissionError && (
-                      <p className="text-yellow-700 text-xs mt-1 italic">
-                        {submissionError}
-                      </p>
-                    )}
-                  </div>
+                      {submissionError && (
+                        <p className="text-xs mt-1 italic">
+                          {submissionError}
+                        </p>
+                      )}
+                    </AlertDescription>
+                  </Alert>
                 )}
                 
                 {verificationStatus === 'pending' && !formSubmittedDuringSignup && !forceRetry && hasPendingFormData && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 my-2 w-full">
-                    <h3 className="font-semibold text-yellow-800 flex items-center">
-                      <Mail className="h-5 w-5 mr-2 text-yellow-600" />
-                      Email verification required
-                    </h3>
-                    <p className="text-yellow-700 text-sm mt-1">
+                  <Alert className="bg-yellow-50 border border-yellow-200 text-yellow-800">
+                    <Mail className="h-5 w-5 text-yellow-600" />
+                    <AlertTitle>Email verification required</AlertTitle>
+                    <AlertDescription className="text-yellow-700">
                       Please verify your email address to complete the submission process.
-                    </p>
-                    <div className="flex items-center justify-center mt-2">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2 text-yellow-600" />
-                      <span className="text-sm text-yellow-700">Waiting for verification</span>
-                    </div>
-                  </div>
+                      <div className="flex items-center justify-center mt-2">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2 text-yellow-600" />
+                        <span className="text-sm">Waiting for verification</span>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
                 )}
                 
                 {processingSubmission && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-md p-4 my-2 w-full">
-                    <h3 className="font-semibold text-blue-800 flex items-center">
-                      <Loader2 className="h-5 w-5 mr-2 text-blue-600 animate-spin" />
-                      Submitting your information
-                    </h3>
-                    <p className="text-blue-700 text-sm mt-1">
+                  <Alert className="bg-blue-50 border border-blue-200 text-blue-800">
+                    <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+                    <AlertTitle>Submitting your information</AlertTitle>
+                    <AlertDescription className="text-blue-700">
                       Please wait while we process your submission...
-                    </p>
-                  </div>
+                    </AlertDescription>
+                  </Alert>
                 )}
                 
                 <div className="border-t border-gray-200 w-full my-4 pt-4">

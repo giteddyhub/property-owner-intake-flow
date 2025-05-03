@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { submitFormData } from '@/components/form/review/submitUtils';
@@ -132,7 +131,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Make sure we have actual data to submit
         if (!Array.isArray(owners) || !Array.isArray(properties)) {
           console.error("[AuthContext] Invalid form data:", formData);
-          toast.error("Unable to submit form: invalid data");
           return;
         }
         
@@ -155,7 +153,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         // Submit the data with explicit userId
-        // Fixed: Removed the extra boolean parameter that was causing the TS error
         const result = await submitFormData(
           owners,
           properties,
@@ -175,23 +172,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           sessionStorage.removeItem('submissionError');
           console.log("[AuthContext] Form submission completed successfully");
           
-          toast.success("Your information has been submitted successfully!");
+          // Don't show another success notification since the user is already receiving multiple messages
+          // Only show this if we're retrying a previously failed submission
+          if (forceRetry) {
+            toast.success("Your information has been submitted successfully!");
+          }
         } else {
           console.error(`[AuthContext] Submission failed:`, result.error);
           
           // Store error for display on verification page
           sessionStorage.setItem('submissionError', result.error || "Unknown error");
-          toast.error(`Failed to submit your data: ${result.error}`);
           
           // Keep retry flag if there was an RLS issue
           if (result.error?.includes('security policy') || result.error?.includes('Authorization error')) {
             console.log("[AuthContext] Setting retry flag for future attempts");
             sessionStorage.setItem('forceRetrySubmission', 'true');
+            
+            // Don't show error toast since the verify page will handle this
           }
         }
       } catch (error: any) {
         console.error("[AuthContext] Error submitting pending form data:", error);
-        toast.error("There was an error processing your submission.");
         
         // Set retry flag for future attempts
         sessionStorage.setItem('forceRetrySubmission', 'true');

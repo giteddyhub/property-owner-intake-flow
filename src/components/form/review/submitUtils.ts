@@ -1,4 +1,3 @@
-
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -100,7 +99,6 @@ export const submitFormData = async (
     }
     
     // Check if we've already submitted this data to prevent duplicates
-    const submissionKey = `submitted_${userId}_${Date.now()}`;
     const lastSubmissionTime = sessionStorage.getItem('lastSubmissionTime');
     const currentTime = Date.now();
     
@@ -116,6 +114,9 @@ export const submitFormData = async (
     // Set submission timestamp to prevent duplicates
     sessionStorage.setItem('lastSubmissionTime', currentTime.toString());
     
+    // Check if this is being called during sign-up process
+    const isSignupProcess = sessionStorage.getItem('formSubmittedDuringSignup') === 'true';
+    
     // Use the refactored submission service
     return import('./utils/submissionService').then(module => {
       // Pass isImmediateSubmission as true to skip email verification check
@@ -123,13 +124,29 @@ export const submitFormData = async (
         // If submission was successful, mark this user as having submitted data
         if (result.success && userId) {
           markUserSubmitted(userId);
+          
+          // If this is not part of the signup process, show success message
+          // Otherwise, the sign-up flow will handle notifications
+          if (!isSignupProcess) {
+            toast.success("Your information has been submitted successfully!");
+          }
+        } else if (!result.success && !isSignupProcess) {
+          // Only show error if not during signup process
+          // During signup, we expect possible RLS errors and handle them elsewhere
+          toast.error(result.error || "Failed to submit your information");
         }
         return result;
       });
     });
   } catch (error: any) {
     console.error('[submitUtils] Error submitting form data:', error);
-    toast.error('Failed to submit your information. Please try again.');
+    
+    // Check if this is being called during sign-up process before showing toast
+    const isSignupProcess = sessionStorage.getItem('formSubmittedDuringSignup') === 'true';
+    if (!isSignupProcess) {
+      toast.error('Failed to submit your information. Please try again.');
+    }
+    
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error occurred' 

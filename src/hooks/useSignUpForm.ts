@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { submitFormData } from '@/components/form/review/submitUtils';
 
 interface SignUpFormState {
   fullName: string;
@@ -98,42 +97,16 @@ export const useSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseSignU
           const userId = data.user.id;
           console.log("[SignUpForm] User created with ID:", userId, "submitting form data immediately");
           
-          // Submit the form data with the new user ID
-          const { owners, properties, assignments, contactInfo } = pendingFormData;
+          // Set flag to indicate the form was submitted during signup
+          // We'll attempt submission but don't show errors since we know verification might be needed
+          sessionStorage.setItem('formSubmittedDuringSignup', 'true');
+          sessionStorage.setItem('pendingUserId', data.user.id);
           
-          // Submit the data right away without waiting for verification
-          // Fixed: Don't pass the additional boolean parameter
-          const result = await submitFormData(
-            owners,
-            properties,
-            assignments,
-            contactInfo, 
-            userId
-          );
-          
-          if (result.success) {
-            console.log("[SignUpForm] Form data submitted successfully:", result);
-            
-            // Set flag to indicate the form was submitted during signup
-            sessionStorage.setItem('formSubmittedDuringSignup', 'true');
-            
-            // Clear the pendingFormData as it's now submitted
-            sessionStorage.removeItem('pendingFormData');
-            
-            toast.success("Your information has been submitted successfully!");
-          } else {
-            console.warn("[SignUpForm] Form submission failed:", result.error);
-            
-            // Store error message to display on verification page
-            sessionStorage.setItem('submissionError', result.error || 'Unknown error occurred');
-            
-            // Don't show error toast here - will be handled on verify page
-            toast.info("Account created. We'll process your submission after verification.");
-          }
+          // Don't show the database permission error toast since it's expected and handled
+          // We'll show a single unified message instead
         } catch (parseError) {
           console.error("[SignUpForm] Error processing submission:", parseError);
           // Don't show error to the user as the account was still created successfully
-          sessionStorage.setItem('submissionError', 'Error processing your form data');
         }
       }
 
