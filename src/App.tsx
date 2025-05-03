@@ -11,7 +11,7 @@ import DashboardPage from './pages/DashboardPage';
 import TaxFilingServicePage from './pages/TaxFilingServicePage';
 import LoginPage from './pages/LoginPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/auth/AuthContext';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 
 // Protected route component - redirects to login if not authenticated

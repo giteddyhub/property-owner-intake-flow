@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { useFormContext } from '@/contexts/FormContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import WelcomeStep from './steps/WelcomeStep';
 import OwnerStep from './steps/OwnerStep';

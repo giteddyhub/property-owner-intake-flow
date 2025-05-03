@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -11,7 +10,7 @@ import { StatsSummaryCards } from '@/components/dashboard/StatsSummaryCards';
 import { DataFilterTabs } from '@/components/dashboard/DataFilterTabs';
 import { DataTables } from '@/components/dashboard/DataTables';
 import { ActionsToolbar } from '@/components/dashboard/ActionsToolbar';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface DashboardLayoutProps {
   owners: Owner[];
