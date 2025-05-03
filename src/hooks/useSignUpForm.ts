@@ -122,6 +122,9 @@ export const useSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseSignU
         sessionStorage.setItem('pendingUserId', data.user.id);
       }
       
+      // Add flag for direct redirect to dashboard after email verification
+      sessionStorage.setItem('directDashboardRedirect', 'true');
+      
       // Only call onSuccess if redirectAfterAuth is false
       if (onSuccess && !redirectAfterAuth) {
         // Small delay to show the confirmation message

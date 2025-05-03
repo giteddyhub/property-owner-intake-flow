@@ -1,3 +1,4 @@
+
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -72,6 +73,9 @@ export const submitFormData = async (
     sessionStorage.setItem('hasDocumentRetrievalService', 
       JSON.stringify(hasDocumentRetrievalService)
     );
+    
+    // For direct email verification flow - set flag to redirect to dashboard after verification
+    sessionStorage.setItem('redirectToDashboard', 'true');
     
     // Critical check: We absolutely need a user ID for RLS policies
     if (!userId) {

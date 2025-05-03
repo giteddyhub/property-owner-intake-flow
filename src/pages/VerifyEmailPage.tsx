@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
@@ -15,11 +14,13 @@ const VerifyEmailPage: React.FC = () => {
   const userEmail = sessionStorage.getItem('pendingUserEmail') || 'your email';
   const [verificationStatus, setVerificationStatus] = useState<'pending'|'verified'|'failed'>('pending');
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
   
   // Get submission data from session storage
   const hasPendingFormData = sessionStorage.getItem('pendingFormData') !== null;
   const formSubmittedDuringSignup = sessionStorage.getItem('formSubmittedDuringSignup') === 'true';
   const forceRetry = sessionStorage.getItem('forceRetrySubmission') === 'true';
+  const emailJustVerified = sessionStorage.getItem('emailJustVerified') === 'true';
   
   // Check for submission errors
   useEffect(() => {
@@ -28,9 +29,30 @@ const VerifyEmailPage: React.FC = () => {
       setSubmissionError(errorMsg);
     }
   }, []);
+
+  // Handle automatic redirect if coming from email verification link
+  useEffect(() => {
+    if (emailJustVerified) {
+      console.log("[VerifyEmailPage] Email was just verified via link, preparing quick redirect");
+      setVerificationStatus('verified');
+      setRedirecting(true);
+      
+      // Clear the flag
+      sessionStorage.removeItem('emailJustVerified');
+      
+      // Show a notification
+      toast.success("Email verified successfully! Redirecting to dashboard...");
+      
+      // Redirect to dashboard immediately
+      navigate('/dashboard', { replace: true });
+    }
+  }, [emailJustVerified, navigate]);
   
   // Monitor authentication state
   useEffect(() => {
+    // Skip the rest of this effect if we're already redirecting
+    if (redirecting) return;
+    
     console.log("[VerifyEmailPage] Component mounted, current user:", user?.id);
     console.log("[VerifyEmailPage] Has pending form data:", hasPendingFormData);
     console.log("[VerifyEmailPage] Processing submission:", processingSubmission);
@@ -117,7 +139,7 @@ const VerifyEmailPage: React.FC = () => {
       subscription.unsubscribe();
       clearInterval(checkInterval);
     }
-  }, [navigate, user, processingSubmission, submissionCompleted, verificationStatus, formSubmittedDuringSignup]);
+  }, [navigate, user, processingSubmission, submissionCompleted, verificationStatus, formSubmittedDuringSignup, redirecting]);
   
   const handleBackToLogin = () => {
     navigate('/login');
@@ -142,6 +164,25 @@ const VerifyEmailPage: React.FC = () => {
       toast.error("Failed to resend verification email");
     }
   };
+
+  // If we're redirecting automatically, just show a minimal loading screen
+  if (redirecting) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-grow bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <Loader2 className="h-12 w-12 text-form-600 animate-spin" />
+              <h1 className="text-2xl font-bold text-gray-900">Redirecting to dashboard...</h1>
+              <p className="text-gray-600">
+                Email verified successfully!
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

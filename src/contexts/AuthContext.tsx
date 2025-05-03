@@ -48,6 +48,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             (!previousUser || 
               (!previousUser.email_confirmed_at && !previousUser.confirmed_at));
               
+          // Handle email verification - set flag for redirect to dashboard if on verification page
+          if (wasJustVerified) {
+            // Set redirect flag to use in VerifyEmailPage
+            sessionStorage.setItem('emailJustVerified', 'true');
+            
+            // Mark dashboard redirect for any page that checks
+            sessionStorage.setItem('redirectToDashboard', 'true');
+          }
+          
           // Attempt to process any pending form data - our new RLS policies should handle unverified users
           const shouldProcessFormData = event === 'SIGNED_IN' || wasJustVerified || 
             sessionStorage.getItem('forceRetrySubmission') === 'true';

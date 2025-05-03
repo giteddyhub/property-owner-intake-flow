@@ -50,6 +50,10 @@ const SubmitStep: React.FC = () => {
         // Set flag to prevent duplicate toast messages
         sessionStorage.setItem('formSubmittedDuringSignup', 'true');
         
+        // Add flag for direct dashboard redirect after email verification
+        sessionStorage.setItem('directDashboardRedirect', 'true');
+        sessionStorage.setItem('redirectToDashboard', 'true');
+        
         const result = await submitFormData(owners, properties, assignments, contactInfo, user.id);
         if (!result.success) {
           toast.error("There was a problem with your submission. Please try again.");
