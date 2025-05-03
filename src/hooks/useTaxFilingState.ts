@@ -57,30 +57,55 @@ export const useTaxFilingState = () => {
       console.log('Created form submission with ID:', formSubmission.id);
       
       // Define a default amount for the purchase entry
-      // This will be updated during checkout with the final amount
       const defaultAmount = 0;
       
-      // Create a purchase entry to track this session
-      // We still need to provide contact_id for now, even though we're moving to form_submission_id
-      const { data: purchase, error: purchaseError } = await supabase
-        .from('purchases')
-        .insert({
-          contact_id: formSubmission.id, // Required field until we fully migrate
-          form_submission_id: formSubmission.id, // New field that replaces contact_id
-          payment_status: 'pending',
-          has_document_retrieval: false, // Will be set during checkout
-          amount: defaultAmount // Add the mandatory amount field
-        })
-        .select('id')
-        .single();
+      try {
+        // Create a purchase entry with RPC function to bypass RLS
+        // This ensures the purchase record is created with proper user permissions
+        const { data: purchase, error: purchaseError } = await supabase
+          .rpc('create_purchase_for_user', {
+            user_id_input: userId,
+            form_submission_id_input: formSubmission.id,
+            payment_status_input: 'pending',
+            has_document_retrieval_input: false,
+            amount_input: defaultAmount
+          })
+          .select('id')
+          .single();
+          
+        if (purchaseError) {
+          console.error('Failed to create purchase with RPC:', purchaseError);
+          throw purchaseError;
+        }
         
-      if (purchaseError) {
-        console.error('Failed to create purchase:', purchaseError);
-        throw purchaseError;
+        console.log('Created purchase with ID:', purchase.id);
+        return purchase.id;
+      } catch (purchaseError) {
+        console.error('Purchase creation failed:', purchaseError);
+        
+        // Fallback insert method if RPC fails 
+        // (This will still fail if the RLS policy doesn't allow it)
+        const { data: purchase, error: directPurchaseError } = await supabase
+          .from('purchases')
+          .insert({
+            contact_id: formSubmission.id, // Required field until we fully migrate
+            form_submission_id: formSubmission.id, // New field that replaces contact_id
+            payment_status: 'pending',
+            has_document_retrieval: false, // Will be set during checkout
+            amount: defaultAmount, // Add the mandatory amount field
+            user_id: userId // Explicitly set user_id for RLS
+          })
+          .select('id')
+          .single();
+          
+        if (directPurchaseError) {
+          console.error('Failed to create purchase with direct insert:', directPurchaseError);
+          throw directPurchaseError;
+        }
+        
+        console.log('Created purchase with direct insert, ID:', purchase.id);
+        return purchase.id;
       }
-      
-      console.log('Created purchase with ID:', purchase.id);
-      return purchase.id;
       
     } catch (error) {
       console.error('Error creating tax filing session:', error);

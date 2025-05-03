@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { FileText, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,13 +30,21 @@ export const TaxFilingCTA: React.FC<TaxFilingCTAProps> = ({ userId }) => {
       
       toast.info('Preparing your tax filing service...');
       
+      // Add a delay to allow the toast to show before potentially showing error messages
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const sessionId = await createTaxFilingSession(userId);
       
       if (!sessionId) {
+        console.error('Failed to obtain a valid session ID');
         toast.error('Unable to start tax filing service. Please try again later.');
         return;
       }
       
+      // Add a small delay to prevent multiple navigation attempts
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Navigate to the tax filing service page
       navigate(`/tax-filing-service/${sessionId}`);
     } catch (error) {
       console.error('Error navigating to tax filing service:', error);

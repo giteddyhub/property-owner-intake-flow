@@ -78,17 +78,27 @@ const SubmitStep: React.FC = () => {
       // If user is authenticated, create a tax filing session
       if (user) {
         try {
+          // Add a small delay to ensure database consistency
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           const sessionId = await createTaxFilingSession(user.id);
           if (sessionId) {
             // Redirect to the tax filing service page
             window.location.href = `/tax-filing-service/${sessionId}`;
           } else {
             // Fallback to dashboard if session creation failed
-            window.location.href = '/dashboard';
+            toast.error('Could not create tax filing service. Redirecting to dashboard.');
+            setTimeout(() => {
+              window.location.href = '/dashboard';
+            }, 2000);
           }
         } catch (error) {
           console.error('Error creating tax filing session:', error);
           toast.error('Failed to create tax filing service. Please try again.');
+          // Redirect to dashboard after a delay
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 2000);
         }
       } else {
         // If not authenticated, this shouldn't happen as users are required to log in
