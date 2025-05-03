@@ -90,8 +90,8 @@ export const useTaxFilingState = () => {
           throw purchaseError;
         }
         
-        // Add null check before accessing data property
-        if (data && 'id' in data) {
+        // Type guard to ensure data has the expected structure
+        if (data && typeof data === 'object' && 'id' in data) {
           console.log('Created purchase with ID:', data.id);
           return data.id;
         } else {
