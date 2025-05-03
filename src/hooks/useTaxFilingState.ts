@@ -61,9 +61,9 @@ export const useTaxFilingState = () => {
       
       try {
         // Create a purchase entry with RPC function to bypass RLS
-        // Fix: Specify both data and error types as generic parameters
+        // Fix: Use correct generic type parameters that match Supabase's expected structure
         const { data: purchase, error: purchaseError } = await supabase
-          .rpc<{ id: string }, any>('create_purchase_for_user', {
+          .rpc('create_purchase_for_user', {
             user_id_input: userId,
             form_submission_id_input: formSubmission.id,
             payment_status_input: 'pending',
