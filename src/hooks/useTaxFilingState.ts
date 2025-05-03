@@ -69,9 +69,7 @@ export const useTaxFilingState = () => {
             payment_status_input: 'pending',
             has_document_retrieval_input: false,
             amount_input: defaultAmount
-          })
-          .select('id')
-          .single();
+          });
           
         if (purchaseError) {
           console.error('Failed to create purchase with RPC:', purchaseError);
