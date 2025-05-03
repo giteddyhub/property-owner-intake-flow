@@ -69,7 +69,7 @@ export const submitFormData = async (
       property => property.useDocumentRetrievalService
     );
     
-    // Store in session storage for the tax filing page
+    // Store in session storage for the success page
     sessionStorage.setItem('hasDocumentRetrievalService', 
       JSON.stringify(hasDocumentRetrievalService)
     );
