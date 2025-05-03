@@ -69,15 +69,21 @@ export const useTaxFilingState = () => {
             payment_status_input: 'pending',
             has_document_retrieval_input: false,
             amount_input: defaultAmount
-          });
+          }).select('id');
           
         if (purchaseError) {
           console.error('Failed to create purchase with RPC:', purchaseError);
           throw purchaseError;
         }
         
-        console.log('Created purchase with ID:', purchase.id);
-        return purchase.id;
+        // Add null check before accessing purchase property
+        if (purchase) {
+          console.log('Created purchase with ID:', purchase.id);
+          return purchase.id;
+        } else {
+          console.error('Purchase created but no ID returned');
+          throw new Error('Purchase creation failed: No ID returned');
+        }
       } catch (purchaseError) {
         console.error('Purchase creation failed:', purchaseError);
         
