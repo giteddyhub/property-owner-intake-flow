@@ -4,11 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Define the response type for the RPC function
-interface PurchaseResponse {
-  id: string;
-}
-
 // Define the parameters type for the RPC function
 interface PurchaseParams {
   user_id_input: string;
@@ -16,6 +11,11 @@ interface PurchaseParams {
   payment_status_input: string;
   has_document_retrieval_input: boolean;
   amount_input: number;
+}
+
+// Define the response type for the RPC function
+interface PurchaseResponse {
+  id: string;
 }
 
 export const useTaxFilingState = () => {
@@ -75,9 +75,9 @@ export const useTaxFilingState = () => {
       
       try {
         // Create a purchase entry with RPC function to bypass RLS
-        // We need to explicitly type the RPC call with both type parameters
+        // Fix: Use the correct generic type parameters with proper constraints
         const { data, error: purchaseError } = await supabase
-          .rpc<PurchaseResponse, PurchaseParams>('create_purchase_for_user', {
+          .rpc('create_purchase_for_user', {
             user_id_input: userId,
             form_submission_id_input: formSubmission.id,
             payment_status_input: 'pending',
