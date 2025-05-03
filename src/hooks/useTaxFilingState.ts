@@ -61,13 +61,11 @@ export const useTaxFilingState = () => {
       
       try {
         // Create a purchase entry with RPC function to bypass RLS
-        // Fix: The rpc method requires two type parameters - the return data type and the error type
-        interface PurchaseResponse {
-          id: string;
-        }
+        // Fix: Properly define the type for the RPC call
         
+        // We need to omit the generic type parameters and let TypeScript infer them
         const { data: purchase, error: purchaseError } = await supabase
-          .rpc<PurchaseResponse, any>('create_purchase_for_user', {
+          .rpc('create_purchase_for_user', {
             user_id_input: userId,
             form_submission_id_input: formSubmission.id,
             payment_status_input: 'pending',
