@@ -112,7 +112,7 @@ const AssignmentReviewCard: React.FC<AssignmentReviewCardProps> = ({
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    {assignment.taxCredits !== undefined 
+                    {assignment.taxCredits !== undefined && assignment.taxCredits !== null
                       ? `€${assignment.taxCredits.toLocaleString()}` 
                       : '—'}
                   </TableCell>

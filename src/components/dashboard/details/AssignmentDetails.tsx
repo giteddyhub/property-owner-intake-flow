@@ -71,7 +71,7 @@ export const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({
         )}
       </div>
 
-      {assignment.taxCredits !== undefined && (
+      {assignment.taxCredits !== undefined && assignment.taxCredits !== null && (
         <div className="border-t pt-2">
           <p className="text-sm font-medium">Tax Credits</p>
           <p className="text-sm mt-1">

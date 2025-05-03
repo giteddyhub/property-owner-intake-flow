@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -170,7 +169,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                       )}
                     </TableCell>
                     <TableCell>
-                      {assignment.taxCredits 
+                      {assignment.taxCredits !== undefined && assignment.taxCredits !== null
                         ? `€${assignment.taxCredits.toLocaleString()}`
                         : '-'}
                     </TableCell>
