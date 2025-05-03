@@ -116,11 +116,10 @@ export const submitFormData = async (
     // Set submission timestamp to prevent duplicates
     sessionStorage.setItem('lastSubmissionTime', currentTime.toString());
     
-    // Set isImmediateSubmission flag to true to skip email verification check
-    // This will ensure that the submission happens even if email is not verified
+    // Use the refactored submission service
     return import('./utils/submissionService').then(module => {
-      // Pass flag to indicate this is an immediate submission and should bypass email verification
-      return module.submitFormData(owners, properties, assignments, contactInfo, userId).then((result) => {
+      // Pass isImmediateSubmission as true to skip email verification check
+      return module.submitFormData(owners, properties, assignments, contactInfo, userId as string, true).then((result) => {
         // If submission was successful, mark this user as having submitted data
         if (result.success && userId) {
           markUserSubmitted(userId);
