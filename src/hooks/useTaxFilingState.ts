@@ -9,6 +9,15 @@ interface PurchaseResponse {
   id: string;
 }
 
+// Define the parameters type for the RPC function
+interface PurchaseParams {
+  user_id_input: string;
+  form_submission_id_input: string;
+  payment_status_input: string;
+  has_document_retrieval_input: boolean;
+  amount_input: number;
+}
+
 export const useTaxFilingState = () => {
   const [loading, setLoading] = useState(false);
   
@@ -66,9 +75,9 @@ export const useTaxFilingState = () => {
       
       try {
         // Create a purchase entry with RPC function to bypass RLS
-        // We need to explicitly type the RPC call
+        // We need to explicitly type the RPC call with both type parameters
         const { data, error: purchaseError } = await supabase
-          .rpc<PurchaseResponse>('create_purchase_for_user', {
+          .rpc<PurchaseResponse, PurchaseParams>('create_purchase_for_user', {
             user_id_input: userId,
             form_submission_id_input: formSubmission.id,
             payment_status_input: 'pending',
