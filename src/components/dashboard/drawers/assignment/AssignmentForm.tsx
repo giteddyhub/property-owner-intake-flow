@@ -73,8 +73,17 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         updated_at: new Date().toISOString()
       };
       
-      // Check if this combination already exists
-      if (!assignment) {
+      if (assignment?.id) {
+        // Update existing assignment
+        const { error } = await supabase
+          .from('owner_property_assignments')
+          .update(assignmentData)
+          .eq('id', assignment.id);
+          
+        if (error) throw error;
+        toast.success('Assignment updated successfully');
+      } else {
+        // Check if this combination already exists
         const { data: existingAssignment } = await supabase
           .from('owner_property_assignments')
           .select('id')
@@ -87,18 +96,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           setIsSubmitting(false);
           return;
         }
-      }
-      
-      if (assignment?.id) {
-        // Update existing assignment
-        const { error } = await supabase
-          .from('owner_property_assignments')
-          .update(assignmentData)
-          .eq('id', assignment.id);
-          
-        if (error) throw error;
-        toast.success('Assignment updated successfully');
-      } else {
+        
         // Create new assignment
         const { error } = await supabase
           .from('owner_property_assignments')
