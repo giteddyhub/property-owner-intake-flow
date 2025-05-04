@@ -65,69 +65,77 @@ export const useTaxFilingState = () => {
       
       if (submissionError) {
         console.error('Failed to create form submission:', submissionError);
+        toast.error('Failed to create tax filing session. Please try again.');
         throw submissionError;
       }
       
       console.log('Created form submission with ID:', formSubmission.id);
       
+      // Create a contacts entry if it doesn't exist yet
+      const { data: contactData, error: contactError } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      let contactId;
+      
+      if (contactError || !contactData) {
+        console.log('No contact found, creating one');
+        // Create a new contact if none exists
+        const { data: newContact, error: newContactError } = await supabase
+          .from('contacts')
+          .insert({
+            user_id: userId,
+            full_name: profileData.full_name || '',
+            email: profileData.email || '',
+            submitted_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
+          
+        if (newContactError) {
+          console.error('Failed to create contact:', newContactError);
+          throw newContactError;
+        }
+        
+        contactId = newContact.id;
+      } else {
+        contactId = contactData.id;
+      }
+      
+      console.log('Using contact ID:', contactId);
+      
       // Define a default amount for the purchase entry
       const defaultAmount = 0;
       
       try {
-        // Create a purchase entry with RPC function to bypass RLS
-        const params: PurchaseParams = {
-          user_id_input: userId,
-          form_submission_id_input: formSubmission.id,
-          payment_status_input: 'pending',
-          has_document_retrieval_input: false,
-          amount_input: defaultAmount
-        };
-        
-        // Use a type assertion to bypass the TypeScript error while maintaining runtime type safety
-        const { data, error: purchaseError } = await (supabase
-          .rpc as any)('create_purchase_for_user', params);
-          
-        if (purchaseError) {
-          console.error('Failed to create purchase with RPC:', purchaseError);
-          throw purchaseError;
-        }
-        
-        // Type check and assertion to safely access the id property
-        if (data && typeof data === 'object' && 'id' in data) {
-          const purchaseId = (data as PurchaseResponse).id;
-          console.log('Created purchase with ID:', purchaseId);
-          return purchaseId;
-        } else {
-          console.error('Purchase created but no ID returned');
-          throw new Error('Purchase creation failed: No ID returned');
-        }
-      } catch (purchaseError) {
-        console.error('Purchase creation failed:', purchaseError);
-        
-        // Fallback insert method if RPC fails 
-        // (This will still fail if the RLS policy doesn't allow it)
-        const { data: purchase, error: directPurchaseError } = await supabase
+        // Try direct insert first with explicit user_id set
+        const { data: purchase, error: purchaseError } = await supabase
           .from('purchases')
           .insert({
-            contact_id: formSubmission.id, // Required field until we fully migrate
-            form_submission_id: formSubmission.id, // New field that replaces contact_id
+            contact_id: contactId, 
+            form_submission_id: formSubmission.id,
             payment_status: 'pending',
-            has_document_retrieval: false, // Will be set during checkout
-            amount: defaultAmount, // Add the mandatory amount field
+            has_document_retrieval: false,
+            amount: defaultAmount,
             user_id: userId // Explicitly set user_id for RLS
           })
           .select('id')
           .single();
           
-        if (directPurchaseError) {
-          console.error('Failed to create purchase with direct insert:', directPurchaseError);
-          throw directPurchaseError;
+        if (purchaseError) {
+          console.error('Failed to create purchase with direct insert:', purchaseError);
+          throw purchaseError;
         }
         
         console.log('Created purchase with direct insert, ID:', purchase.id);
         return purchase.id;
+      } catch (purchaseError) {
+        console.error('Purchase creation failed:', purchaseError);
+        toast.error('Failed to create tax filing session. Please try again.');
+        return null;
       }
-      
     } catch (error) {
       console.error('Error creating tax filing session:', error);
       toast.error('Failed to start tax filing service. Please try again later.');

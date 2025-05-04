@@ -11,6 +11,7 @@ import ConsultationBooking from '@/components/success/ConsultationBooking';
 import { useCheckout } from '@/hooks/useCheckout';
 import Footer from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const TaxFilingServicePage = () => {
   const {
@@ -43,12 +44,27 @@ const TaxFilingServicePage = () => {
       try {
         setLoading(true);
 
-        // Check if purchase record exists and belongs to this user
+        // Check if purchase record exists
         const {
           data: purchaseData,
           error: purchaseError
-        } = await supabase.from('purchases').select('id, contact_id, has_document_retrieval').eq('id', sessionId).single();
-        if (purchaseError || !purchaseData) {
+        } = await supabase
+          .from('purchases')
+          .select('id, contact_id, has_document_retrieval')
+          .eq('id', sessionId)
+          .maybeSingle();
+          
+        if (purchaseError) {
+          console.error('Error fetching purchase:', purchaseError);
+          toast.error('Error loading tax filing session');
+          setSessionValid(false);
+          navigate('/dashboard');
+          return;
+        }
+        
+        if (!purchaseData) {
+          console.error('Purchase not found');
+          toast.error('Tax filing session not found');
           setSessionValid(false);
           navigate('/dashboard');
           return;
@@ -58,8 +74,23 @@ const TaxFilingServicePage = () => {
         const {
           data: contactData,
           error: contactError
-        } = await supabase.from('contacts').select('user_id').eq('id', purchaseData.contact_id).single();
-        if (contactError || !contactData || contactData.user_id !== user.id) {
+        } = await supabase
+          .from('contacts')
+          .select('user_id')
+          .eq('id', purchaseData.contact_id)
+          .maybeSingle();
+          
+        if (contactError) {
+          console.error('Error fetching contact:', contactError);
+          toast.error('Error verifying user access');
+          setSessionValid(false);
+          navigate('/dashboard');
+          return;
+        }
+        
+        if (!contactData || contactData.user_id !== user.id) {
+          console.error('Contact not found or does not belong to user');
+          toast.error('You don\'t have access to this tax filing session');
           setSessionValid(false);
           navigate('/dashboard');
           return;
@@ -104,13 +135,17 @@ const TaxFilingServicePage = () => {
             setHasDocumentRetrieval(hasAnyDocRetrieval);
 
             // Update purchase record with this preference
-            await supabase.from('purchases').update({
-              has_document_retrieval: hasAnyDocRetrieval
-            }).eq('id', sessionId);
+            await supabase
+              .from('purchases')
+              .update({
+                has_document_retrieval: hasAnyDocRetrieval
+              })
+              .eq('id', sessionId);
           }
         }
       } catch (error) {
         console.error('Error verifying session:', error);
+        toast.error('Error loading tax filing service');
         setSessionValid(false);
       } finally {
         setLoading(false);
@@ -125,9 +160,12 @@ const TaxFilingServicePage = () => {
     // Also update the purchase record with the new preference
     if (sessionId && sessionValid) {
       try {
-        await supabase.from('purchases').update({
-          has_document_retrieval: !hasDocumentRetrieval
-        }).eq('id', sessionId);
+        await supabase
+          .from('purchases')
+          .update({
+            has_document_retrieval: !hasDocumentRetrieval
+          })
+          .eq('id', sessionId);
       } catch (error) {
         console.error('Error updating document retrieval preference:', error);
       }
