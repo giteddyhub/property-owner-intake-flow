@@ -37,6 +37,24 @@ export const useTaxFilingState = () => {
         toast.error('User profile not found. Please complete your profile.');
         return null;
       }
+
+      // Fetch user's properties to check for document retrieval preference
+      const { data: propertiesData, error: propertiesError } = await supabase
+        .from('properties')
+        .select('use_document_retrieval_service')
+        .eq('user_id', userId);
+
+      if (propertiesError) {
+        console.error('Error fetching properties data:', propertiesError);
+        // Non-critical error, continue with false as default
+      }
+      
+      // Check if any property has document retrieval enabled
+      const hasDocumentRetrieval = propertiesData && propertiesData.some(
+        property => property.use_document_retrieval_service === true
+      );
+      
+      console.log('Document retrieval service needed:', hasDocumentRetrieval);
       
       // Create a form submission entry for this tax filing session
       const { data: formSubmission, error: submissionError } = await supabase
@@ -45,6 +63,7 @@ export const useTaxFilingState = () => {
           user_id: userId,
           submitted_at: new Date().toISOString(),
           state: 'tax_filing_init',
+          has_document_retrieval: hasDocumentRetrieval
         })
         .select('id')
         .single();
@@ -103,7 +122,7 @@ export const useTaxFilingState = () => {
             contact_id: contactId, 
             form_submission_id: formSubmission.id,
             payment_status: 'pending',
-            has_document_retrieval: false,
+            has_document_retrieval: hasDocumentRetrieval,
             amount: defaultAmount
           })
           .select('id')
