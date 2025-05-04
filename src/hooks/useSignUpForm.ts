@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -93,18 +94,20 @@ export const useSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseSignU
           pendingFormData.contactInfo.fullName = fullName;
           pendingFormData.contactInfo.email = email;
           
-          const userId = data.user.id;
-          console.log("[SignUpForm] User created with ID:", userId, "submitting form data immediately");
+          // Store updated form data back in session storage
+          sessionStorage.setItem('pendingFormData', JSON.stringify(pendingFormData));
           
-          // Set flag to indicate the form was submitted during signup
-          // We'll attempt submission but don't show errors since we know verification might be needed
-          sessionStorage.setItem('formSubmittedDuringSignup', 'true');
+          // Set flag to force submission after email verification
+          sessionStorage.setItem('submitAfterVerification', 'true');
+          
+          // Store user ID for the verification page to use
           sessionStorage.setItem('pendingUserId', data.user.id);
+          console.log("[SignUpForm] User created with ID:", data.user.id, "- form data saved for submission after verification");
           
-          // Don't show the database permission error toast since it's expected and handled
-          // We'll show a single unified message instead
+          // Set flag to indicate the form should be submitted during signup flow
+          sessionStorage.setItem('formSubmittedDuringSignup', 'true');
         } catch (parseError) {
-          console.error("[SignUpForm] Error processing submission:", parseError);
+          console.error("[SignUpForm] Error processing pending form data:", parseError);
           // Don't show error to the user as the account was still created successfully
         }
       }

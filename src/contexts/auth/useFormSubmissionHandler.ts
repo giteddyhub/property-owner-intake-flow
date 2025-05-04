@@ -1,6 +1,7 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { submitFormData } from '@/components/form/review/submitUtils';
+import { submitFormData } from '@/components/form/review/utils/submissionService';
 import { toast } from 'sonner';
 
 export const useFormSubmissionHandler = () => {
@@ -18,16 +19,17 @@ export const useFormSubmissionHandler = () => {
     const pendingFormData = sessionStorage.getItem('pendingFormData');
     const submitAfterVerification = sessionStorage.getItem('submitAfterVerification');
     const forceRetry = sessionStorage.getItem('forceRetrySubmission') === 'true';
-    const formAlreadySubmitted = sessionStorage.getItem('formSubmittedDuringSignup') === 'true';
+    const formAlreadySubmitted = sessionStorage.getItem('formSubmittedDuringSignup') === 'true' && 
+                                !sessionStorage.getItem('pendingFormData');
     
     console.log("[FormSubmissionHandler] Processing pending data. Has data:", !!pendingFormData, 
       "Submit after verification:", submitAfterVerification, 
       "Force retry:", forceRetry,
       "Already submitted:", formAlreadySubmitted);
       
-    // Don't process if already submitted successfully
-    if (formAlreadySubmitted && !forceRetry) {
-      console.log("[FormSubmissionHandler] Form already submitted successfully, skipping");
+    // Don't process if already submitted successfully and no pending data
+    if (formAlreadySubmitted && !pendingFormData && !forceRetry) {
+      console.log("[FormSubmissionHandler] No pending form data but marked as submitted, skipping");
       return;
     }
     
@@ -77,7 +79,8 @@ export const useFormSubmissionHandler = () => {
           properties,
           assignments,
           contactInfo,
-          userId
+          userId,
+          true // Set isImmediateSubmission to true to bypass verification checks
         );
         
         if (result.success) {
