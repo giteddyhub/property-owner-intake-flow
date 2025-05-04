@@ -4,20 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Define the parameters type for the RPC function
-interface PurchaseParams {
-  user_id_input: string;
-  form_submission_id_input: string;
-  payment_status_input: string;
-  has_document_retrieval_input: boolean;
-  amount_input: number;
-}
-
-// Define the response type for the RPC function
-interface PurchaseResponse {
-  id: string;
-}
-
 export const useTaxFilingState = () => {
   const [loading, setLoading] = useState(false);
   
@@ -109,8 +95,8 @@ export const useTaxFilingState = () => {
       // Define a default amount for the purchase entry
       const defaultAmount = 0;
       
+      // Create the purchase using insert without the user_id field which doesn't exist in the table
       try {
-        // Try direct insert first with explicit user_id set
         const { data: purchase, error: purchaseError } = await supabase
           .from('purchases')
           .insert({
@@ -118,18 +104,17 @@ export const useTaxFilingState = () => {
             form_submission_id: formSubmission.id,
             payment_status: 'pending',
             has_document_retrieval: false,
-            amount: defaultAmount,
-            user_id: userId // Explicitly set user_id for RLS
+            amount: defaultAmount
           })
           .select('id')
           .single();
           
         if (purchaseError) {
-          console.error('Failed to create purchase with direct insert:', purchaseError);
+          console.error('Failed to create purchase:', purchaseError);
           throw purchaseError;
         }
         
-        console.log('Created purchase with direct insert, ID:', purchase.id);
+        console.log('Created purchase with ID:', purchase.id);
         return purchase.id;
       } catch (purchaseError) {
         console.error('Purchase creation failed:', purchaseError);
