@@ -30,6 +30,7 @@ interface AssignmentFormProps {
   owners: Owner[];
   onSuccess: () => void;
   onClose: () => void;
+  userId: string; // Added userId prop
 }
 
 const AssignmentForm: React.FC<AssignmentFormProps> = ({ 
@@ -37,7 +38,8 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   properties, 
   owners, 
   onSuccess, 
-  onClose 
+  onClose,
+  userId // Accept userId prop
 }) => {
   const form = useForm<AssignmentFormValues>({
     defaultValues: {
@@ -70,7 +72,8 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           ? values.residentToDate.toISOString().split('T')[0]
           : null,
         tax_credits: values.taxCredits || null,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        user_id: userId // Add user_id to assignments
       };
       
       if (assignment?.id) {

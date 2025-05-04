@@ -18,6 +18,7 @@ interface AssignmentDrawerContentProps {
   owners: Owner[];
   onClose: () => void;
   onSuccess: () => void;
+  userId: string; // Added userId prop
 }
 
 const AssignmentDrawerContent: React.FC<AssignmentDrawerContentProps> = ({
@@ -25,7 +26,8 @@ const AssignmentDrawerContent: React.FC<AssignmentDrawerContentProps> = ({
   properties,
   owners,
   onClose,
-  onSuccess
+  onSuccess,
+  userId // Accept userId prop
 }) => {
   return (
     <ScrollArea className="h-full">
@@ -56,6 +58,7 @@ const AssignmentDrawerContent: React.FC<AssignmentDrawerContentProps> = ({
             owners={owners}
             onClose={onClose}
             onSuccess={onSuccess}
+            userId={userId} // Pass userId
           />
         </div>
       </div>

@@ -11,6 +11,7 @@ interface AssignmentDrawerProps {
   properties: Property[];
   owners: Owner[];
   onSuccess: () => void;
+  userId: string; // Added userId prop
 }
 
 const AssignmentDrawer: React.FC<AssignmentDrawerProps> = ({ 
@@ -19,7 +20,8 @@ const AssignmentDrawer: React.FC<AssignmentDrawerProps> = ({
   assignment,
   properties,
   owners,
-  onSuccess
+  onSuccess,
+  userId // Accept userId prop
 }) => {
   // Ensure cleanup when the component unmounts or when isOpen changes
   useEffect(() => {
@@ -85,6 +87,7 @@ const AssignmentDrawer: React.FC<AssignmentDrawerProps> = ({
           owners={owners}
           onClose={handleClose}
           onSuccess={onSuccess}
+          userId={userId} // Pass userId
         />
       </SheetContent>
     </Sheet>

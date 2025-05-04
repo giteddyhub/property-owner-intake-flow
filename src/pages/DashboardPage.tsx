@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -129,6 +128,7 @@ const DashboardPage = () => {
       activeFilter={activeFilter}
       setActiveFilter={setActiveFilter}
       onRefresh={refreshData}
+      userId={user?.id || ''}
     />
   );
 };

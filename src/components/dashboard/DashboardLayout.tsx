@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -20,6 +21,7 @@ interface DashboardLayoutProps {
   activeFilter: string;
   setActiveFilter: (filter: string) => void;
   onRefresh: () => void;
+  userId: string; // Added userId prop
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -29,7 +31,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onSignOut,
   activeFilter,
   setActiveFilter,
-  onRefresh
+  onRefresh,
+  userId // Accept the userId prop
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -56,7 +59,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           ownersCount={owners.length} 
           propertiesCount={properties.length} 
           assignmentsCount={assignments.length}
-          userId={user?.id || ''}
+          userId={userId} // Pass userId
         />
 
         <div className="bg-white rounded-xl mb-8">
@@ -72,6 +75,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               assignments={assignments} 
               activeFilter={activeFilter}
               onRefresh={onRefresh}
+              userId={userId} // Pass userId
             />
           </div>
         </div>

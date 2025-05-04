@@ -32,13 +32,15 @@ interface AssignmentsTableProps {
   owners: Owner[];
   properties: Property[];
   onRefresh?: () => void;
+  userId: string; // Added userId prop
 }
 
 export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({ 
   assignments, 
   owners, 
   properties,
-  onRefresh
+  onRefresh,
+  userId // Accept userId prop
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<OwnerPropertyAssignment | null>(null);
@@ -241,6 +243,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         properties={properties}
         owners={owners}
         onSuccess={handleAssignmentSaved}
+        userId={userId} // Pass userId
       />
     </>
   );

@@ -15,6 +15,7 @@ interface DataTablesProps {
   assignments: OwnerPropertyAssignment[];
   activeFilter: string;
   onRefresh: () => void;
+  userId: string; // Added userId prop
 }
 
 export const DataTables: React.FC<DataTablesProps> = ({ 
@@ -22,7 +23,8 @@ export const DataTables: React.FC<DataTablesProps> = ({
   owners, 
   assignments,
   activeFilter,
-  onRefresh
+  onRefresh,
+  userId // Accept userId prop
 }) => {
   console.log("Assignments data in DataTables:", assignments);
   
@@ -41,6 +43,7 @@ export const DataTables: React.FC<DataTablesProps> = ({
           owners={owners} 
           properties={properties}
           onRefresh={onRefresh} 
+          userId={userId} // Pass userId
         />
       )}
     </div>
