@@ -27,20 +27,24 @@ const DashboardPage = () => {
 
   // Check for redirect from form submission and handle initial data load only once
   useEffect(() => {
-    // Check if we need to refresh the data after form submission
-    const shouldReload = sessionStorage.getItem('redirectToDashboard') === 'true';
-    
-    if (!initialLoadComplete) {
-      // Initial load - mark as complete
-      setInitialLoadComplete(true);
-      
-      // Only show welcome toast for first-time redirects and clear the flag
-      if (shouldReload) {
-        sessionStorage.removeItem('redirectToDashboard');
-        toast.success("Your property data has been successfully saved!");
-        console.log("Dashboard: Showing one-time success message after redirect");
+    const handleOneTimeRedirectMessage = () => {
+      // Check if this is the first load
+      if (!initialLoadComplete) {
+        setInitialLoadComplete(true);
+        
+        // Check for the redirect flag
+        const shouldShowMessage = sessionStorage.getItem('redirectToDashboard') === 'true';
+        
+        if (shouldShowMessage) {
+          // Clear the flag immediately to prevent showing on refresh
+          sessionStorage.removeItem('redirectToDashboard');
+          toast.success("Your property data has been successfully saved!");
+          console.log("Dashboard: Showing one-time success message after redirect");
+        }
       }
-    }
+    };
+    
+    handleOneTimeRedirectMessage();
   }, [initialLoadComplete]);
 
   // Add a global cleanup handler
