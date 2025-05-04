@@ -13,7 +13,6 @@ const DashboardPage = () => {
   const [activeFilter, setActiveFilter] = useState('properties');
   
   const [refreshFlag, setRefreshFlag] = useState(0);
-  const [hasRefreshedAfterRedirect, setHasRefreshedAfterRedirect] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
   const refreshData = useCallback(() => {
@@ -35,16 +34,14 @@ const DashboardPage = () => {
       // Initial load - mark as complete
       setInitialLoadComplete(true);
       
-      // Only show welcome toast for first-time redirects
-      if (shouldReload && !hasRefreshedAfterRedirect) {
+      // Only show welcome toast for first-time redirects and clear the flag
+      if (shouldReload) {
         sessionStorage.removeItem('redirectToDashboard');
         toast.success("Your property data has been successfully saved!");
-        
-        console.log("Dashboard: Initial refresh after redirect");
-        setHasRefreshedAfterRedirect(true);
+        console.log("Dashboard: Showing one-time success message after redirect");
       }
     }
-  }, [hasRefreshedAfterRedirect, initialLoadComplete]);
+  }, [initialLoadComplete]);
 
   // Add a global cleanup handler
   useEffect(() => {
