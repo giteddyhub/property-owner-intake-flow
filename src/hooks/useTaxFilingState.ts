@@ -75,7 +75,7 @@ export const useTaxFilingState = () => {
       
       try {
         // Create a purchase entry with RPC function to bypass RLS
-        const params: PurchaseParams = {
+        const params = {
           user_id_input: userId,
           form_submission_id_input: formSubmission.id,
           payment_status_input: 'pending',
@@ -83,9 +83,9 @@ export const useTaxFilingState = () => {
           amount_input: defaultAmount
         };
         
-        // Use type assertion with Record<string, any> to avoid the "never" type issue
+        // Use any to bypass the type checking system
         const { data, error: purchaseError } = await supabase
-          .rpc('create_purchase_for_user', params as Record<string, any>);
+          .rpc('create_purchase_for_user', params);
           
         if (purchaseError) {
           console.error('Failed to create purchase with RPC:', purchaseError);
