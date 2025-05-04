@@ -83,9 +83,9 @@ export const useTaxFilingState = () => {
           amount_input: defaultAmount
         };
         
-        // Use type assertion to bypass TypeScript's type checking for the RPC function
+        // Call the RPC function without type restrictions
         const { data, error: purchaseError } = await supabase
-          .rpc('create_purchase_for_user', params as Record<string, any>);
+          .rpc('create_purchase_for_user', params);
           
         if (purchaseError) {
           console.error('Failed to create purchase with RPC:', purchaseError);
