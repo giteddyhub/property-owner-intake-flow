@@ -13,7 +13,6 @@ const DashboardPage = () => {
   const [activeFilter, setActiveFilter] = useState('properties');
   
   const [refreshFlag, setRefreshFlag] = useState(0);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
   const refreshData = useCallback(() => {
     console.log("Dashboard: Manually refreshing data");
@@ -25,27 +24,37 @@ const DashboardPage = () => {
     refreshFlag 
   });
 
-  // Check for redirect from form submission and handle initial data load only once
+  // Check for redirect from form submission - revised to use localStorage
   useEffect(() => {
-    const handleOneTimeRedirectMessage = () => {
-      // Check if this is the first load
-      if (!initialLoadComplete) {
-        setInitialLoadComplete(true);
+    const handleRedirectMessage = () => {
+      // Get the redirect flag from sessionStorage
+      const shouldShowMessage = sessionStorage.getItem('redirectToDashboard') === 'true';
+      
+      // Check localStorage to see if we've already shown this message in this session
+      const hasShownMessage = localStorage.getItem('dashboardMessageShown') === 'true';
+      
+      if (shouldShowMessage && !hasShownMessage) {
+        // Clear the redirect flag
+        sessionStorage.removeItem('redirectToDashboard');
         
-        // Check for the redirect flag
-        const shouldShowMessage = sessionStorage.getItem('redirectToDashboard') === 'true';
+        // Set the flag in localStorage so we don't show it again on refresh
+        localStorage.setItem('dashboardMessageShown', 'true');
         
-        if (shouldShowMessage) {
-          // Clear the flag immediately to prevent showing on refresh
-          sessionStorage.removeItem('redirectToDashboard');
-          toast.success("Your property data has been successfully saved!");
-          console.log("Dashboard: Showing one-time success message after redirect");
-        }
+        // Show the success message
+        toast.success("Your property data has been successfully saved!");
+        console.log("Dashboard: Showing one-time success message after redirect");
       }
     };
     
-    handleOneTimeRedirectMessage();
-  }, [initialLoadComplete]);
+    handleRedirectMessage();
+    
+    // Clean up localStorage when navigating away 
+    return () => {
+      // This will ensure that if the user navigates away and back, 
+      // they could potentially see the message again if redirected
+      localStorage.removeItem('dashboardMessageShown');
+    };
+  }, []);
 
   // Add a global cleanup handler
   useEffect(() => {
