@@ -3,21 +3,20 @@ import { Button } from '@/components/ui/button';
 import { useFormContext } from '@/contexts/FormContext';
 import { ArrowRight, Home, Calendar, Euro, Percent, FileText, ScanFace } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-
 const WelcomeStep: React.FC = () => {
-  const { nextStep } = useFormContext();
-
+  const {
+    nextStep
+  } = useFormContext();
   const handleGetStarted = () => {
     nextStep();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
-
-  return (
-    <div className="text-center max-w-2xl mx-auto py-6 animate-fade-in">
+  return <div className="text-center max-w-2xl mx-auto py-6 animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-form-400 mb-2 relative inline-block">
-          Italian 🇮🇹 Tax Profile
-        </h1>
+        <h1 className="text-4xl font-bold text-form-400 mb-2 relative inline-block">Italian Tax Profile</h1>
         <h2 className="text-xl text-form-300 font-medium">for property owners</h2>
       </div>
       
@@ -102,16 +101,10 @@ const WelcomeStep: React.FC = () => {
         </CardContent>
       </Card>
       
-      <Button 
-        onClick={handleGetStarted}
-        className="bg-form-300 hover:bg-form-400 text-white flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-        size="lg"
-      >
+      <Button onClick={handleGetStarted} className="bg-form-300 hover:bg-form-400 text-white flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1" size="lg">
         Get Started
         <ArrowRight className="h-4 w-4" />
       </Button>
-    </div>
-  );
+    </div>;
 };
-
 export default WelcomeStep;
