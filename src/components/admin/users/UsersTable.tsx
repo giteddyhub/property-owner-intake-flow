@@ -2,6 +2,14 @@
 import React from 'react';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { AdminActionButton } from '@/components/admin/accounts/AccountAdminDialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 
 interface UserData {
   id: string;
@@ -40,24 +48,24 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 
   return (
     <div className="border rounded-md">
-      <table className="w-full">
-        <thead>
-          <tr className="bg-muted/50">
-            <th className="text-left p-3">Name</th>
-            <th className="text-left p-3">Email</th>
-            <th className="text-left p-3">Role</th>
-            <th className="text-right p-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {users.map((user) => {
             const isAdmin = adminUsers.includes(user.id);
             
             return (
-              <tr key={user.id} className="border-t">
-                <td className="p-3">{user.full_name || 'No Name'}</td>
-                <td className="p-3">{user.email}</td>
-                <td className="p-3">
+              <TableRow key={user.id}>
+                <TableCell>{user.full_name || 'No Name'}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
                   {isAdmin ? (
                     <span className="inline-flex items-center rounded-full bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700">
                       <CheckCircle className="mr-1 h-3 w-3" />
@@ -66,18 +74,18 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                   ) : (
                     <span className="text-muted-foreground">User</span>
                   )}
-                </td>
-                <td className="p-3 text-right">
+                </TableCell>
+                <TableCell className="text-right">
                   <AdminActionButton 
                     isAdmin={isAdmin}
                     onClick={() => onAdminToggle(user)}
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 };
