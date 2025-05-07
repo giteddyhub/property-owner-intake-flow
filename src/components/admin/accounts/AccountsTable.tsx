@@ -41,6 +41,20 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
   const indexOfFirstItem = (currentPage - 1) * itemsPerPage + 1;
   const indexOfLastItem = Math.min(currentPage * itemsPerPage, filteredAccounts.length);
 
+  // Handle previous page
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Handle next page
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   return (
     <div className="bg-white rounded-md shadow overflow-hidden">
       <Table>
@@ -135,7 +149,7 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={handlePreviousPage}
                     disabled={currentPage === 1}
                   >
                     Previous
@@ -143,7 +157,7 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={handleNextPage}
                     disabled={currentPage === totalPages || totalPages === 0}
                   >
                     Next
