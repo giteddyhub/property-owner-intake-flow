@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Index from './pages/Index';
@@ -16,6 +15,8 @@ import { AuthProvider, useAuth } from './contexts/auth/AuthContext';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminSubmissionsPage from './pages/admin/AdminSubmissionsPage';
+import AdminSubmissionDetailPage from './pages/admin/AdminSubmissionDetailPage';
 
 // Protected route component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -150,12 +151,17 @@ const AppRoutes = () => {
           <AdminUsersPage />
         </AdminRoute>
       } />
-      <Route path="/admin/properties" element={
+      <Route path="/admin/submissions" element={
         <AdminRoute>
-          <AdminDashboardPage />
+          <AdminSubmissionsPage />
         </AdminRoute>
       } />
-      <Route path="/admin/submissions" element={
+      <Route path="/admin/submissions/:id" element={
+        <AdminRoute>
+          <AdminSubmissionDetailPage />
+        </AdminRoute>
+      } />
+      <Route path="/admin/properties" element={
         <AdminRoute>
           <AdminDashboardPage />
         </AdminRoute>
