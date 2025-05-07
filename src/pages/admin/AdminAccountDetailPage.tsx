@@ -31,7 +31,8 @@ import {
   Users as UsersIcon,
   ListChecks,
   ShieldCheck,
-  Shield
+  Shield,
+  CreditCard
 } from 'lucide-react';
 import {
   Table,
@@ -52,6 +53,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { PaymentData } from '@/types/admin';
 
 interface AccountDetails {
   id: string;
@@ -108,6 +110,7 @@ const AdminAccountDetailPage = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [payments, setPayments] = useState<PaymentData[]>([]);
   const [confirmAdminToggle, setConfirmAdminToggle] = useState(false);
   
   useEffect(() => {
@@ -152,10 +155,12 @@ const AdminAccountDetailPage = () => {
         console.log('Admin data:', adminData);
           
         // Fetch submissions - use direct service role for admin functionality
+        // Filter out tax_filing_init submissions as they're tracked in the Payments tab
         const { data: submissionsData, error: submissionsError } = await supabase
           .from('form_submissions')
           .select('*')
           .eq('user_id', id)
+          .neq('state', 'tax_filing_init')  // Exclude tax_filing_init entries
           .order('submitted_at', { ascending: false });
           
         if (submissionsError) {
@@ -211,6 +216,29 @@ const AdminAccountDetailPage = () => {
         
         console.log(`Fetched ${assignmentsData?.length || 0} assignments`);
         
+        // Fetch payments data
+        const { data: paymentsData, error: paymentsError } = await supabase
+          .from('purchases')
+          .select(`
+            *,
+            form_submissions:form_submission_id (state)
+          `)
+          .eq('contact_id', function() {
+            return this.supabase
+              .from('contacts')
+              .select('id')
+              .eq('user_id', id)
+              .limit(1);
+          })
+          .order('created_at', { ascending: false });
+          
+        if (paymentsError) {
+          console.error('Error fetching payments:', paymentsError);
+          throw paymentsError;
+        }
+        
+        console.log(`Fetched ${paymentsData?.length || 0} payments`);
+        
         const enhancedAssignments = assignmentsData?.map(assignment => ({
           ...assignment,
           property_label: assignment.properties?.label || 'Unknown Property',
@@ -226,6 +254,7 @@ const AdminAccountDetailPage = () => {
         setProperties(propertiesData || []);
         setOwners(ownersData || []);
         setAssignments(enhancedAssignments);
+        setPayments(paymentsData || []);
       } catch (error: any) {
         console.error('Error fetching account details:', error);
         toast.error('Failed to load account details', {
@@ -275,6 +304,28 @@ const AdminAccountDetailPage = () => {
 
   const goToSubmission = (submissionId: string) => {
     navigate(`/admin/submissions/${submissionId}`);
+  };
+
+  const formatCurrency = (amount: number, currency: string = 'eur') => {
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toUpperCase() || 'EUR',
+    });
+    
+    return formatter.format(amount);
+  };
+
+  const getPaymentStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-50 text-green-700 border-green-200';
+      case 'pending':
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'cancelled':
+        return 'bg-red-50 text-red-700 border-red-200';
+      default:
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+    }
   };
 
   if (loading) {
@@ -461,6 +512,10 @@ const AdminAccountDetailPage = () => {
                           <UsersIcon className="h-4 w-4 mr-1 text-muted-foreground" />
                           <span className="text-sm">{owners.length} owners</span>
                         </div>
+                        <div className="flex items-center">
+                          <CreditCard className="h-4 w-4 mr-1 text-muted-foreground" />
+                          <span className="text-sm">{payments.length} payments</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -471,11 +526,12 @@ const AdminAccountDetailPage = () => {
         </Card>
         
         <Tabs defaultValue="submissions" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="submissions">Submissions</TabsTrigger>
             <TabsTrigger value="properties">Properties</TabsTrigger>
             <TabsTrigger value="owners">Owners</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
+            <TabsTrigger value="payments">Payments</TabsTrigger>
           </TabsList>
           
           <TabsContent value="submissions">
@@ -689,6 +745,74 @@ const AdminAccountDetailPage = () => {
                             )}
                           </TableCell>
                           <TableCell>{format(new Date(assignment.created_at), 'MMM dd, yyyy')}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payments</CardTitle>
+                <CardDescription>
+                  {payments.length === 0 
+                    ? 'This user has no payment records.' 
+                    : `${payments.length} payment(s) found for this user.`}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {payments.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No payment records found for this user.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Document Retrieval</TableHead>
+                        <TableHead>Stripe ID</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {payments.map(payment => (
+                        <TableRow key={payment.id}>
+                          <TableCell>
+                            {format(new Date(payment.created_at), 'MMM dd, yyyy')}
+                          </TableCell>
+                          <TableCell>
+                            {formatCurrency(payment.amount, payment.currency)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={getPaymentStatusBadgeClass(payment.payment_status)}
+                            >
+                              {payment.payment_status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {payment.has_document_retrieval ? (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                Included
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                                Not Included
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {payment.stripe_payment_id 
+                              ? payment.stripe_payment_id.substring(0, 12) + '...' 
+                              : 'None'}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

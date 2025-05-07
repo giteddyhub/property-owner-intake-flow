@@ -43,3 +43,15 @@ export interface AssignmentData {
   owner_name: string;
   created_at: string;
 }
+
+export interface PaymentData {
+  id: string;
+  form_submission_id: string | null;
+  payment_status: string;
+  amount: number;
+  currency: string;
+  stripe_session_id: string | null;
+  stripe_payment_id: string | null;
+  has_document_retrieval: boolean | null;
+  created_at: string;
+}
