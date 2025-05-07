@@ -24,8 +24,7 @@ export const checkAdminSetupStatus = async (): Promise<boolean> => {
   try {
     const { supabase } = await import('@/integrations/supabase/client');
     
-    // First check if we can even access the admin_users table
-    // This handles permissions properly without causing recursion
+    // First check if we can access the admin_users table and count rows
     const { count, error } = await supabase
       .from('admin_users')
       .select('*', { count: 'exact', head: true });
