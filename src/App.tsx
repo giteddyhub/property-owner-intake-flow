@@ -161,21 +161,6 @@ const AppRoutes = () => {
           <AdminSubmissionDetailPage />
         </AdminRoute>
       } />
-      <Route path="/admin/properties" element={
-        <AdminRoute>
-          <AdminDashboardPage />
-        </AdminRoute>
-      } />
-      <Route path="/admin/documents" element={
-        <AdminRoute>
-          <AdminDashboardPage />
-        </AdminRoute>
-      } />
-      <Route path="/admin/analytics" element={
-        <AdminRoute>
-          <AdminDashboardPage />
-        </AdminRoute>
-      } />
       <Route path="/admin/settings" element={
         <AdminRoute>
           <AdminDashboardPage />

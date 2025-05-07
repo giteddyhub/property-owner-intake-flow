@@ -4,11 +4,8 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
-  Home, 
   Clipboard, 
-  LineChart, 
   Settings, 
-  FileText,
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,10 +32,7 @@ export const AdminSidebar: React.FC = () => {
   const links = [
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="h-5 w-5" /> },
     { name: 'Users & Access', path: '/admin/users', icon: <Users className="h-5 w-5" /> },
-    { name: 'Properties', path: '/admin/properties', icon: <Home className="h-5 w-5" /> },
     { name: 'Submissions', path: '/admin/submissions', icon: <Clipboard className="h-5 w-5" /> },
-    { name: 'Documents', path: '/admin/documents', icon: <FileText className="h-5 w-5" /> },
-    { name: 'Analytics', path: '/admin/analytics', icon: <LineChart className="h-5 w-5" /> },
     { name: 'Settings', path: '/admin/settings', icon: <Settings className="h-5 w-5" /> },
   ];
   
