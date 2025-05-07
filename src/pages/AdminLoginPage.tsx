@@ -12,7 +12,7 @@ import { checkAdminSetupStatus } from '@/components/admin/auth/adminAuthUtils';
 const AdminLoginPage: React.FC = () => {
   const { user, loading, isAdmin, checkAdminStatus } = useAuth();
   const navigate = useNavigate();
-  const [isSetupComplete, setIsSetupComplete] = useState(true);
+  const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
   const [initialEmail, setInitialEmail] = useState('');
   const [isChecking, setIsChecking] = useState(true);
 
@@ -21,9 +21,9 @@ const AdminLoginPage: React.FC = () => {
     const checkSetup = async () => {
       setIsChecking(true);
       try {
-        console.log("Checking admin setup status...");
+        console.log("Checking admin setup status on page load...");
         const setupComplete = await checkAdminSetupStatus();
-        console.log("Admin setup status:", setupComplete ? "complete" : "incomplete");
+        console.log("Admin setup status result:", setupComplete ? "complete" : "incomplete");
         setIsSetupComplete(setupComplete);
       } catch (error) {
         console.error("Error checking admin setup:", error);
@@ -95,17 +95,17 @@ const AdminLoginPage: React.FC = () => {
             </Button>
           </div>
           <CardTitle className="text-2xl">
-            {!isSetupComplete ? 'Initial Admin Setup' : 'Administrator Access'}
+            {isSetupComplete === false ? 'Initial Admin Setup' : 'Administrator Access'}
           </CardTitle>
           <CardDescription>
-            {!isSetupComplete 
+            {isSetupComplete === false
               ? 'Create the first administrator account for Italian Taxes'
               : 'Sign in with your administrator credentials'
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!isSetupComplete ? (
+          {isSetupComplete === false ? (
             <AdminSetupForm 
               onBackToLogin={handleBackToLogin} 
               onSetupComplete={handleSetupComplete}
@@ -116,7 +116,7 @@ const AdminLoginPage: React.FC = () => {
         </CardContent>
         <CardFooter>
           <p className="text-xs text-muted-foreground text-center w-full">
-            {!isSetupComplete
+            {isSetupComplete === false
               ? 'This setup will create a secure administrator account for Italian Taxes.'
               : 'This area is restricted to authorized administrators only.'
             }

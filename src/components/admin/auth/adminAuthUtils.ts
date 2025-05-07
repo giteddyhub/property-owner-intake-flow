@@ -22,20 +22,22 @@ export const generateSecurePassword = (): string => {
  */
 export const checkAdminSetupStatus = async (): Promise<boolean> => {
   try {
+    console.log("Checking admin setup status...");
     const { supabase } = await import('@/integrations/supabase/client');
     
-    // Query the admin_users table directly
-    const { data, error, count } = await supabase
+    // Query the admin_users table directly with a count
+    const { count, error } = await supabase
       .from('admin_users')
-      .select('*', { count: 'exact' });
+      .select('*', { count: 'exact', head: true });
     
     if (error) {
       console.error("Error checking admin setup:", error);
       return false;
     }
     
+    console.log("Admin count:", count);
     // If we have any admin users, setup is complete
-    return (count !== null && count > 0);
+    return count !== null && count > 0;
   } catch (err) {
     console.error("Exception checking admin setup:", err);
     return false;

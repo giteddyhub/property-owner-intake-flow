@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, LockIcon, AlertTriangle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -19,6 +19,28 @@ export const AdminSetupForm: React.FC<AdminSetupFormProps> = ({
 }) => {
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [authError, setAuthError] = useState('');
+
+  // Double-check on component mount if we should actually be showing this form
+  useEffect(() => {
+    const verifySetupNeeded = async () => {
+      try {
+        // Check if admin exists directly using a count query
+        const { count, error } = await supabase
+          .from('admin_users')
+          .select('*', { count: 'exact', head: true });
+          
+        if (!error && count !== null && count > 0) {
+          // Admin already exists, redirect to login form
+          console.log("Admin already exists, should show login form instead");
+          onSetupComplete(""); // Trigger parent to show login form
+        }
+      } catch (err) {
+        console.error("Error in AdminSetupForm verification:", err);
+      }
+    };
+    
+    verifySetupNeeded();
+  }, [onSetupComplete]);
 
   const handleSetupAdmin = async () => {
     setIsSettingUp(true);
