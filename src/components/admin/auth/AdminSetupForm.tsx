@@ -51,7 +51,8 @@ export const AdminSetupForm: React.FC<AdminSetupFormProps> = ({
         return;
       }
       
-      // Add the user to admin_users table
+      // Add the user to admin_users table - this should now work with our fixed RLS policies
+      // Our policy allows the first admin user to be created without requiring super admin privileges
       const { error: adminError } = await supabase
         .from('admin_users')
         .insert([{ 
@@ -60,6 +61,7 @@ export const AdminSetupForm: React.FC<AdminSetupFormProps> = ({
         }]);
         
       if (adminError) {
+        console.error("Admin privilege error:", adminError);
         setAuthError(`Failed to grant admin privileges: ${adminError.message}`);
         setIsSettingUp(false);
         return;
