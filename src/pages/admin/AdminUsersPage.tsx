@@ -36,10 +36,10 @@ const AdminUsersPage: React.FC = () => {
       setLoading(true);
       
       try {
-        // Fetch users
+        // Fetch all users from profiles table
         const { data: userData, error: userError } = await supabase
           .from('profiles')
-          .select('id, email, full_name')
+          .select('id, email, full_name, created_at')
           .order('created_at', { ascending: false });
           
         if (userError) throw userError;
@@ -54,7 +54,7 @@ const AdminUsersPage: React.FC = () => {
         setUsers(userData || []);
         setAdminUsers(adminData?.map(admin => admin.id) || []);
       } catch (error: any) {
-        console.error('Error fetching admin data:', error);
+        console.error('Error fetching user data:', error);
         toast.error('Failed to load user data');
       } finally {
         setLoading(false);
@@ -145,7 +145,7 @@ const AdminUsersPage: React.FC = () => {
   };
 
   return (
-    <AdminLayout pageTitle="Users & Access Control">
+    <AdminLayout pageTitle="Users">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">User Management</h2>
