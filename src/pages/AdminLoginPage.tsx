@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminSetupForm } from '@/components/admin/auth/AdminSetupForm';
 import { AdminLoginForm } from '@/components/admin/auth/AdminLoginForm';
-import { checkAdminSetupStatus } from '@/components/admin/auth/adminAuthUtils';
+import { checkAdminSetupStatus, refreshAdminSetupStatus } from '@/components/admin/auth/adminAuthUtils';
+import { toast } from 'sonner';
 
 const AdminLoginPage: React.FC = () => {
   const { user, loading, isAdmin, checkAdminStatus } = useAuth();
@@ -15,20 +16,38 @@ const AdminLoginPage: React.FC = () => {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
   const [initialEmail, setInitialEmail] = useState('');
   const [isChecking, setIsChecking] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Check if admin setup has been completed
   useEffect(() => {
     const checkSetup = async () => {
       setIsChecking(true);
       try {
-        console.log("Checking admin setup status on page load...");
+        console.log("[AdminLoginPage] Checking admin setup status on page load...");
+        
+        // Check if we have a cached result
+        const cachedStatus = sessionStorage.getItem('adminSetupComplete');
+        const cachedTime = parseInt(sessionStorage.getItem('adminSetupCheckedAt') || '0');
+        const cacheValid = Date.now() - cachedTime < 5 * 60 * 1000; // 5 minutes cache validity
+        
+        if (cachedStatus && cacheValid) {
+          console.log("[AdminLoginPage] Using cached admin status:", cachedStatus);
+          setIsSetupComplete(cachedStatus === 'true');
+          setIsChecking(false);
+          return;
+        }
+        
+        // No valid cache, check fresh status
         const setupComplete = await checkAdminSetupStatus();
-        console.log("Admin setup status result:", setupComplete ? "complete" : "incomplete");
+        console.log("[AdminLoginPage] Admin setup status result:", setupComplete ? "complete" : "incomplete");
         setIsSetupComplete(setupComplete);
       } catch (error) {
-        console.error("Error checking admin setup:", error);
+        console.error("[AdminLoginPage] Error checking admin setup:", error);
         // Default to showing login form if there's an error
         setIsSetupComplete(true);
+        toast.error("Error checking admin setup", { 
+          description: "Defaulting to login form. Use refresh if needed." 
+        });
       } finally {
         setIsChecking(false);
       }
@@ -58,8 +77,38 @@ const AdminLoginPage: React.FC = () => {
   };
 
   const handleSetupComplete = (email: string) => {
+    console.log("[AdminLoginPage] Setup completed, showing login form with email:", email);
     setIsSetupComplete(true);
     setInitialEmail(email);
+    
+    // Update cache
+    try {
+      sessionStorage.setItem('adminSetupComplete', 'true');
+      sessionStorage.setItem('adminSetupCheckedAt', Date.now().toString());
+    } catch (e) {
+      // Ignore storage errors
+    }
+  };
+  
+  const handleRefreshStatus = async () => {
+    setIsRefreshing(true);
+    try {
+      console.log("[AdminLoginPage] Manually refreshing admin setup status...");
+      const setupComplete = await refreshAdminSetupStatus();
+      console.log("[AdminLoginPage] Refreshed admin status:", setupComplete ? "complete" : "incomplete");
+      setIsSetupComplete(setupComplete);
+      
+      toast.success("Status refreshed", {
+        description: setupComplete 
+          ? "Admin account exists. Showing login form." 
+          : "No admin accounts found. Showing setup form."
+      });
+    } catch (error) {
+      console.error("[AdminLoginPage] Error refreshing admin setup:", error);
+      toast.error("Error refreshing status");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   if (isChecking) {
@@ -92,6 +141,17 @@ const AdminLoginPage: React.FC = () => {
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Login
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mb-2"
+              onClick={handleRefreshStatus}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh Status
             </Button>
           </div>
           <CardTitle className="text-2xl">
