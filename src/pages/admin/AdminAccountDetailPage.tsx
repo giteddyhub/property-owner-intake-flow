@@ -223,7 +223,7 @@ const AdminAccountDetailPage = () => {
             *,
             form_submissions:form_submission_id (state)
           `)
-          .eq('contact_id', function() {
+          .eq('contact_id', function(this: any) {
             return this.supabase
               .from('contacts')
               .select('id')
