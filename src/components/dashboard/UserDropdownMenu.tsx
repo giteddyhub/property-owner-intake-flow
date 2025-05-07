@@ -56,8 +56,11 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut, i
       } else {
         await signOut();
       }
+      
       toast.success('Signed out successfully');
-      navigate('/', { replace: true });
+      
+      // Force redirect to home page with window.location for a complete reset
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out. Please try again.');

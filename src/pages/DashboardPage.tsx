@@ -111,9 +111,15 @@ const DashboardPage = () => {
 
   const handleSignOut = async () => {
     try {
+      // First clear any session storage
+      sessionStorage.clear();
+      localStorage.removeItem('supabase.auth.token');
+      
       await signOut();
       toast.success('Signed out successfully');
-      navigate('/', { replace: true });
+      
+      // Use window.location for a full page reload and reset
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out. Please try again.');
