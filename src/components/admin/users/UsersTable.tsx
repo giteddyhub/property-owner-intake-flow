@@ -84,7 +84,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                 <TableCell className="text-right">
                   <AdminActionButton 
                     isAdmin={isAdmin}
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent) => {
                       e.stopPropagation(); // Prevent row click event
                       onAdminToggle(user);
                     }}
