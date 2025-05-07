@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
@@ -56,21 +55,26 @@ const AdminAccountsPage: React.FC = () => {
   const fetchAccounts = async () => {
     setLoading(true);
     try {
-      // First get all user profiles
+      console.log('Fetching all profiles...');
+      // First get all user profiles with a direct query to avoid RLS issues
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
         throw profilesError;
       }
 
-      // Get admin users separately - avoiding infinite recursion
+      console.log('Profiles data:', profilesData?.length || 0, 'records found');
+      
+      // Get admin users separately - this query doesn't cause recursion issues
       const { data: adminsData } = await supabase
         .from('admin_users')
-        .select('id')
-        .returns<{ id: string }[]>();
+        .select('id');
+      
+      console.log('Admin data:', adminsData?.length || 0, 'records found');
         
       // Store admin user IDs in state
       const adminUserIds = adminsData?.map(admin => admin.id) || [];
@@ -85,34 +89,59 @@ const AdminAccountsPage: React.FC = () => {
       // Fetch additional information for each account
       const enhancedAccounts = await Promise.all(
         profilesData.map(async (profile) => {
-          // Count submissions
-          const { count: submissionsCount } = await supabase
-            .from('form_submissions')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', profile.id);
-          
-          // Count properties
-          const { count: propertiesCount } = await supabase
-            .from('properties')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', profile.id);
-          
-          // Count owners
-          const { count: ownersCount } = await supabase
-            .from('owners')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', profile.id);
-          
-          return {
-            ...profile,
-            submissions_count: submissionsCount || 0,
-            properties_count: propertiesCount || 0,
-            owners_count: ownersCount || 0,
-            is_admin: adminUserIds.includes(profile.id)
-          };
+          try {
+            // Count submissions
+            const { count: submissionsCount, error: submissionsError } = await supabase
+              .from('form_submissions')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', profile.id);
+            
+            if (submissionsError) {
+              console.error('Error fetching submissions count:', submissionsError);
+            }
+            
+            // Count properties
+            const { count: propertiesCount, error: propertiesError } = await supabase
+              .from('properties')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', profile.id);
+            
+            if (propertiesError) {
+              console.error('Error fetching properties count:', propertiesError);
+            }
+            
+            // Count owners
+            const { count: ownersCount, error: ownersError } = await supabase
+              .from('owners')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', profile.id);
+            
+            if (ownersError) {
+              console.error('Error fetching owners count:', ownersError);
+            }
+            
+            return {
+              ...profile,
+              submissions_count: submissionsCount || 0,
+              properties_count: propertiesCount || 0,
+              owners_count: ownersCount || 0,
+              is_admin: adminUserIds.includes(profile.id)
+            };
+          } catch (error) {
+            console.error(`Error enhancing profile ${profile.id}:`, error);
+            // Return the profile with default counts if there's an error
+            return {
+              ...profile,
+              submissions_count: 0,
+              properties_count: 0,
+              owners_count: 0,
+              is_admin: adminUserIds.includes(profile.id)
+            };
+          }
         })
       );
       
+      console.log('Enhanced accounts:', enhancedAccounts.length);
       setAccounts(enhancedAccounts);
     } catch (error: any) {
       console.error('Error fetching accounts:', error);
