@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
@@ -169,13 +168,70 @@ const AdminSubmissionDetailPage = () => {
   const handleDeleteSubmission = async () => {
     if (!submission) return;
     
+    setLoading(true);
     try {
-      const { error } = await supabase
+      // First, delete all related records in the correct order to avoid foreign key constraints
+      
+      // 1. Delete owner-property assignments related to this submission
+      const { error: assignmentsError } = await supabase
+        .from('owner_property_assignments')
+        .delete()
+        .eq('form_submission_id', submission.id);
+      
+      if (assignmentsError) {
+        console.error('Error deleting related assignments:', assignmentsError);
+        toast.error('Failed to delete related assignments');
+        setLoading(false);
+        return;
+      }
+      
+      // 2. Delete owners related to this submission
+      const { error: ownersError } = await supabase
+        .from('owners')
+        .delete()
+        .eq('form_submission_id', submission.id);
+      
+      if (ownersError) {
+        console.error('Error deleting related owners:', ownersError);
+        toast.error('Failed to delete related owners');
+        setLoading(false);
+        return;
+      }
+      
+      // 3. Delete properties related to this submission
+      const { error: propertiesError } = await supabase
+        .from('properties')
+        .delete()
+        .eq('form_submission_id', submission.id);
+      
+      if (propertiesError) {
+        console.error('Error deleting related properties:', propertiesError);
+        toast.error('Failed to delete related properties');
+        setLoading(false);
+        return;
+      }
+
+      // 4. Delete any purchase records related to this submission
+      const { error: purchasesError } = await supabase
+        .from('purchases')
+        .delete()
+        .eq('form_submission_id', submission.id);
+      
+      if (purchasesError) {
+        console.error('Error deleting related purchases:', purchasesError);
+        toast.warning('Could not delete some related purchase records');
+        // Continue with deletion even if purchase deletion fails
+      }
+      
+      // 5. Finally, delete the submission itself
+      const { error: submissionError } = await supabase
         .from('form_submissions')
         .delete()
         .eq('id', submission.id);
       
-      if (error) throw error;
+      if (submissionError) {
+        throw submissionError;
+      }
       
       toast.success('Submission deleted successfully');
       navigate('/admin/submissions');
@@ -184,6 +240,8 @@ const AdminSubmissionDetailPage = () => {
       toast.error('Failed to delete submission', {
         description: error.message
       });
+    } finally {
+      setLoading(false);
     }
   };
 
