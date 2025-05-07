@@ -15,11 +15,12 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 
 interface UserDropdownMenuProps {
-  onSignOut: () => Promise<void>;
+  onSignOut?: () => Promise<void>;
+  isAdmin?: boolean;
 }
 
-export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut }) => {
-  const { user } = useAuth();
+export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut, isAdmin = false }) => {
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   
   const getUserInitials = () => {
@@ -49,7 +50,12 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut })
 
   const handleSignOut = async () => {
     try {
-      await onSignOut();
+      // Use the provided onSignOut function or fall back to the context's signOut
+      if (onSignOut) {
+        await onSignOut();
+      } else {
+        await signOut();
+      }
       toast.success('Signed out successfully');
       navigate('/', { replace: true });
     } catch (error) {

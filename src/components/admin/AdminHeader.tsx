@@ -12,7 +12,11 @@ interface AdminHeaderProps {
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ pageTitle }) => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  
+  const handleSignOut = async () => {
+    return signOut();
+  };
   
   return (
     <header className="border-b border-border px-6 py-3 bg-background z-10 flex items-center justify-between">
@@ -37,7 +41,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ pageTitle }) => {
         <span className="text-sm text-muted-foreground hidden sm:inline-block mr-2">
           {user?.email}
         </span>
-        <UserDropdownMenu isAdmin={true} />
+        <UserDropdownMenu onSignOut={handleSignOut} isAdmin={true} />
       </div>
     </header>
   );
