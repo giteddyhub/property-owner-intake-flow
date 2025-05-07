@@ -15,8 +15,9 @@ import { AuthProvider, useAuth } from './contexts/auth/AuthContext';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
-import AdminSubmissionsPage from './pages/admin/AdminSubmissionsPage';
+import AdminAccountsPage from './pages/admin/AdminAccountsPage';
 import AdminSubmissionDetailPage from './pages/admin/AdminSubmissionDetailPage';
+import AdminAccountDetailPage from './pages/admin/AdminAccountDetailPage';
 
 // Protected route component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -151,16 +152,31 @@ const AppRoutes = () => {
           <AdminUsersPage />
         </AdminRoute>
       } />
+      
+      {/* Redirect from old /admin/submissions to new /admin/accounts */}
       <Route path="/admin/submissions" element={
+        <Navigate to="/admin/accounts" replace />
+      } />
+      
+      {/* New Accounts Routes */}
+      <Route path="/admin/accounts" element={
         <AdminRoute>
-          <AdminSubmissionsPage />
+          <AdminAccountsPage />
         </AdminRoute>
       } />
+      <Route path="/admin/accounts/:id" element={
+        <AdminRoute>
+          <AdminAccountDetailPage />
+        </AdminRoute>
+      } />
+      
+      {/* Keep the submission detail route as it is */}
       <Route path="/admin/submissions/:id" element={
         <AdminRoute>
           <AdminSubmissionDetailPage />
         </AdminRoute>
       } />
+      
       <Route path="/admin/settings" element={
         <AdminRoute>
           <AdminDashboardPage />
