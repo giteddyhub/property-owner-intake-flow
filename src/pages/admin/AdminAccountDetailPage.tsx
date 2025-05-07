@@ -216,28 +216,43 @@ const AdminAccountDetailPage = () => {
         
         console.log(`Fetched ${assignmentsData?.length || 0} assignments`);
         
-        // Fetch payments data
-        const { data: paymentsData, error: paymentsError } = await supabase
-          .from('purchases')
-          .select(`
-            *,
-            form_submissions:form_submission_id (state)
-          `)
-          .eq('contact_id', function(this: any) {
-            return this.supabase
-              .from('contacts')
-              .select('id')
-              .eq('user_id', id)
-              .limit(1);
-          })
-          .order('created_at', { ascending: false });
+        // First fetch contact ID for the user
+        const { data: contactData, error: contactError } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('user_id', id)
+          .limit(1);
           
-        if (paymentsError) {
-          console.error('Error fetching payments:', paymentsError);
-          throw paymentsError;
+        if (contactError) {
+          console.error('Error fetching contact ID:', contactError);
+          throw contactError;
         }
         
-        console.log(`Fetched ${paymentsData?.length || 0} payments`);
+        let paymentsData = [];
+        
+        // If contact ID is found, fetch payments data
+        if (contactData && contactData.length > 0) {
+          const contactId = contactData[0].id;
+          
+          const { data: fetchedPayments, error: paymentsError } = await supabase
+            .from('purchases')
+            .select(`
+              *,
+              form_submissions:form_submission_id (state)
+            `)
+            .eq('contact_id', contactId)
+            .order('created_at', { ascending: false });
+            
+          if (paymentsError) {
+            console.error('Error fetching payments:', paymentsError);
+            throw paymentsError;
+          }
+          
+          paymentsData = fetchedPayments || [];
+          console.log(`Fetched ${paymentsData.length} payments`);
+        } else {
+          console.log('No contact found for this user, payments will be empty');
+        }
         
         const enhancedAssignments = assignmentsData?.map(assignment => ({
           ...assignment,
@@ -254,7 +269,7 @@ const AdminAccountDetailPage = () => {
         setProperties(propertiesData || []);
         setOwners(ownersData || []);
         setAssignments(enhancedAssignments);
-        setPayments(paymentsData || []);
+        setPayments(paymentsData);
       } catch (error: any) {
         console.error('Error fetching account details:', error);
         toast.error('Failed to load account details', {
