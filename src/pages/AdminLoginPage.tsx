@@ -71,16 +71,17 @@ const AdminLoginPage: React.FC = () => {
       // Generate a secure password
       const generatedPassword = generateSecurePassword();
       
-      // Create the admin user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Create the admin user using the regular signup flow
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: adminEmail,
         password: generatedPassword,
-        email_confirm: true,
-        user_metadata: { full_name: "Edwin Carrington" }
+        options: {
+          data: { full_name: "Edwin Carrington" }
+        }
       });
       
-      if (authError) {
-        setAuthError(`Admin account creation failed: ${authError.message}`);
+      if (signUpError) {
+        setAuthError(`Admin account creation failed: ${signUpError.message}`);
         setIsSettingUp(false);
         return;
       }
