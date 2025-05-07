@@ -10,10 +10,12 @@ import ResidencyAssessmentPage from './pages/ResidencyAssessmentPage';
 import DashboardPage from './pages/DashboardPage';
 import TaxFilingServicePage from './pages/TaxFilingServicePage';
 import LoginPage from './pages/LoginPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AuthProvider, useAuth } from './contexts/auth/AuthContext';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
 
 // Protected route component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -56,11 +58,12 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
   
   if (!isAdmin) {
-    return <Navigate to="/dashboard" state={{ from: location }} replace />;
+    // If logged in but not admin, redirect to admin login
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -136,6 +139,7 @@ const AppRoutes = () => {
       } />
       
       {/* Admin Routes */}
+      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin" element={
         <AdminRoute>
           <AdminDashboardPage />
@@ -143,7 +147,7 @@ const AppRoutes = () => {
       } />
       <Route path="/admin/users" element={
         <AdminRoute>
-          <AdminDashboardPage />
+          <AdminUsersPage />
         </AdminRoute>
       } />
       <Route path="/admin/properties" element={

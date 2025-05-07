@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   DropdownMenu,
@@ -10,13 +10,20 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
+import { User, LogOut, Settings, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 
 export const AccountMenu = () => {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isAdmin, checkAdminStatus } = useAuth();
+  
+  // Check admin status when component mounts
+  useEffect(() => {
+    if (user) {
+      checkAdminStatus();
+    }
+  }, [user, checkAdminStatus]);
   
   const handleSignOut = async () => {
     try {
@@ -63,7 +70,7 @@ export const AccountMenu = () => {
         {isAdmin && (
           <DropdownMenuItem asChild>
             <Link to="/admin">
-              <LayoutDashboard className="mr-2 h-4 w-4" />
+              <ShieldCheck className="mr-2 h-4 w-4" />
               <span>Admin Panel</span>
             </Link>
           </DropdownMenuItem>

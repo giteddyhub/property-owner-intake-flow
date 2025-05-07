@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { SignInForm } from '@/components/auth/SignInForm';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { Separator } from '@/components/ui/separator';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -45,6 +47,16 @@ const LoginPage = () => {
           </div>
 
           <SignInForm onSuccess={handleLoginSuccess} />
+          
+          <div className="mt-8">
+            <Separator className="my-6" />
+            <div className="text-center">
+              <Link to="/admin/login" className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+                <ShieldCheck className="h-4 w-4 mr-2" />
+                Administrator Sign In
+              </Link>
+            </div>
+          </div>
         </div>
 
         <div className="text-center text-sm text-gray-600 mt-4">

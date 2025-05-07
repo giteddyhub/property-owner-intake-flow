@@ -6,7 +6,6 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { LoadingScreen } from '@/components/dashboard/LoadingScreen';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 const DashboardPage = () => {
   const { user, signOut, checkAdminStatus } = useAuth();
@@ -56,54 +55,6 @@ const DashboardPage = () => {
       localStorage.removeItem('dashboardMessageShown');
     };
   }, []);
-
-  // Admin activation by keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = async (e: KeyboardEvent) => {
-      // Ctrl+Alt+A to make current user an admin
-      if (e.ctrlKey && e.altKey && e.key === 'a') {
-        try {
-          if (!user) return;
-          
-          // Check if user is already an admin
-          const { data: adminUser } = await supabase
-            .from('admin_users')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-            
-          if (adminUser) {
-            toast.info("You are already an admin");
-            return;
-          }
-          
-          // Make the user an admin
-          const { error } = await supabase
-            .from('admin_users')
-            .insert([{ id: user.id, is_super_admin: true }]);
-            
-          if (error) {
-            throw error;
-          }
-          
-          // Update admin status
-          await checkAdminStatus();
-          
-          toast.success("Admin access granted!", {
-            description: "You now have admin privileges"
-          });
-        } catch (error: any) {
-          console.error("Error granting admin access:", error);
-          toast.error("Failed to grant admin access", {
-            description: error.message
-          });
-        }
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [user, checkAdminStatus]);
 
   // Add a global cleanup handler
   useEffect(() => {
