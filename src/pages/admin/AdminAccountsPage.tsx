@@ -13,13 +13,6 @@ import {
   TableCell,
   TableFooter
 } from '@/components/ui/table';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -73,14 +66,14 @@ const AdminAccountsPage: React.FC = () => {
         throw profilesError;
       }
 
-      // Fetch admin users to mark accounts with admin status
-      const { data: adminData, error: adminError } = await supabase
+      // Get admin users separately - avoiding infinite recursion
+      const { data: adminsData } = await supabase
         .from('admin_users')
-        .select('id');
+        .select('id')
+        .returns<{ id: string }[]>();
         
-      if (adminError) throw adminError;
-      
-      const adminUserIds = adminData?.map(admin => admin.id) || [];
+      // Store admin user IDs in state
+      const adminUserIds = adminsData?.map(admin => admin.id) || [];
       setAdminUsers(adminUserIds);
 
       if (!profilesData || profilesData.length === 0) {
