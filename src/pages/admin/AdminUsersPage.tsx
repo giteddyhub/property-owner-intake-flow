@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AdminActionButton, AccountAdminDialog } from '@/components/admin/accounts/AccountAdminDialog';
 
 const AdminUsersPage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -29,6 +30,8 @@ const AdminUsersPage: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   // Fetch users and admin data
   useEffect(() => {
@@ -36,6 +39,7 @@ const AdminUsersPage: React.FC = () => {
       setLoading(true);
       
       try {
+        console.log('[AdminUsers] Fetching profiles data');
         // Fetch all users from profiles table
         const { data: userData, error: userError } = await supabase
           .from('profiles')
@@ -44,13 +48,18 @@ const AdminUsersPage: React.FC = () => {
           
         if (userError) throw userError;
         
-        // Fetch admin users
+        console.log('[AdminUsers] Fetching admin data');
+        // Fetch admin users directly without using any function that might cause recursion
         const { data: adminData, error: adminError } = await supabase
           .from('admin_users')
           .select('id');
           
-        if (adminError) throw adminError;
+        if (adminError) {
+          console.error('[AdminUsers] Error fetching admin users:', adminError);
+          throw adminError;
+        }
         
+        console.log('[AdminUsers] Admin users found:', adminData?.length || 0);
         setUsers(userData || []);
         setAdminUsers(adminData?.map(admin => admin.id) || []);
       } catch (error: any) {
@@ -114,10 +123,22 @@ const AdminUsersPage: React.FC = () => {
     }
   };
 
-  const handleToggleAdmin = async (userId: string, isAdmin: boolean) => {
+  const handleOpenAdminDialog = (user: any) => {
+    setSelectedUser(user);
+    setAdminDialogOpen(true);
+  };
+
+  const handleToggleAdmin = async () => {
+    if (!selectedUser) return;
+    
+    const userId = selectedUser.id;
+    const isAdmin = adminUsers.includes(userId);
+    const userName = selectedUser.full_name || selectedUser.email;
+    
     try {
       if (isAdmin) {
         // Remove admin privileges
+        console.log('[AdminUsers] Removing admin privileges for:', userId);
         const { error } = await supabase
           .from('admin_users')
           .delete()
@@ -126,9 +147,10 @@ const AdminUsersPage: React.FC = () => {
         if (error) throw error;
         
         setAdminUsers(prev => prev.filter(id => id !== userId));
-        toast.success('Admin privileges removed');
+        toast.success(`Admin privileges removed from ${userName}`);
       } else {
         // Grant admin privileges
+        console.log('[AdminUsers] Granting admin privileges for:', userId);
         const { error } = await supabase
           .from('admin_users')
           .insert([{ id: userId }]);
@@ -136,8 +158,10 @@ const AdminUsersPage: React.FC = () => {
         if (error) throw error;
         
         setAdminUsers(prev => [...prev, userId]);
-        toast.success('Admin privileges granted');
+        toast.success(`Admin privileges granted to ${userName}`);
       }
+      
+      setAdminDialogOpen(false);
     } catch (error: any) {
       console.error('Error toggling admin status:', error);
       toast.error('Failed to update admin status');
@@ -274,13 +298,10 @@ const AdminUsersPage: React.FC = () => {
                             )}
                           </td>
                           <td className="p-3 text-right">
-                            <Button
-                              variant={isAdmin ? "outline" : "default"}
-                              size="sm"
-                              onClick={() => handleToggleAdmin(user.id, isAdmin)}
-                            >
-                              {isAdmin ? 'Remove Admin' : 'Make Admin'}
-                            </Button>
+                            <AdminActionButton 
+                              isAdmin={isAdmin}
+                              onClick={() => handleOpenAdminDialog(user)}
+                            />
                           </td>
                         </tr>
                       );
@@ -292,6 +313,16 @@ const AdminUsersPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {selectedUser && (
+        <AccountAdminDialog
+          open={adminDialogOpen}
+          onOpenChange={setAdminDialogOpen}
+          onConfirm={handleToggleAdmin}
+          accountName={selectedUser.full_name || selectedUser.email}
+          isAdmin={adminUsers.includes(selectedUser.id)}
+        />
+      )}
     </AdminLayout>
   );
 };
