@@ -50,10 +50,13 @@ export const AdminSidebar: React.FC = () => {
                 to={link.path}
                 className={({ isActive }) => cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                  isActive 
+                  isActive || 
+                  (link.path === '/admin' && location.pathname === '/admin') || 
+                  (link.path !== '/admin' && location.pathname.startsWith(link.path))
                     ? "bg-primary text-primary-foreground" 
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
+                end={link.path === '/admin'}
               >
                 {link.icon}
                 {link.name}
