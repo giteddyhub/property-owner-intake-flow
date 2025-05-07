@@ -24,18 +24,18 @@ export const checkAdminSetupStatus = async (): Promise<boolean> => {
   try {
     const { supabase } = await import('@/integrations/supabase/client');
     
-    // First check if we can access the admin_users table and count rows
-    const { count, error } = await supabase
+    // Query the admin_users table directly
+    const { data, error, count } = await supabase
       .from('admin_users')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact' });
     
     if (error) {
       console.error("Error checking admin setup:", error);
       return false;
     }
     
-    // If we can count the rows and there are some, setup is complete
-    return count !== null && count > 0;
+    // If we have any admin users, setup is complete
+    return (count !== null && count > 0);
   } catch (err) {
     console.error("Exception checking admin setup:", err);
     return false;

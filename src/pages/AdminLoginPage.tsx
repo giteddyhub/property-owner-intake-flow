@@ -14,12 +14,24 @@ const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [isSetupComplete, setIsSetupComplete] = useState(true);
   const [initialEmail, setInitialEmail] = useState('');
+  const [isChecking, setIsChecking] = useState(true);
 
   // Check if admin setup has been completed
   useEffect(() => {
     const checkSetup = async () => {
-      const setupComplete = await checkAdminSetupStatus();
-      setIsSetupComplete(setupComplete);
+      setIsChecking(true);
+      try {
+        console.log("Checking admin setup status...");
+        const setupComplete = await checkAdminSetupStatus();
+        console.log("Admin setup status:", setupComplete ? "complete" : "incomplete");
+        setIsSetupComplete(setupComplete);
+      } catch (error) {
+        console.error("Error checking admin setup:", error);
+        // Default to showing login form if there's an error
+        setIsSetupComplete(true);
+      } finally {
+        setIsChecking(false);
+      }
     };
     
     checkSetup();
@@ -49,6 +61,23 @@ const AdminLoginPage: React.FC = () => {
     setIsSetupComplete(true);
     setInitialEmail(email);
   };
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex justify-center">
+              <div className="flex flex-col items-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                <p className="mt-4 text-sm text-muted-foreground">Checking admin setup status...</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
