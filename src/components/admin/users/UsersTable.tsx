@@ -22,13 +22,15 @@ interface UsersTableProps {
   adminUsers: string[];
   loading: boolean;
   onAdminToggle: (user: UserData) => void;
+  onRowClick: (userId: string) => void;  // New prop for handling row clicks
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({ 
   users, 
   adminUsers, 
   loading, 
-  onAdminToggle 
+  onAdminToggle,
+  onRowClick
 }) => {
   if (loading) {
     return (
@@ -62,23 +64,30 @@ export const UsersTable: React.FC<UsersTableProps> = ({
             const isAdmin = adminUsers.includes(user.id);
             
             return (
-              <TableRow key={user.id}>
+              <TableRow 
+                key={user.id}
+                onClick={() => onRowClick(user.id)}
+                className="cursor-pointer hover:bg-muted"
+              >
                 <TableCell>{user.full_name || 'No Name'}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  {isAdmin ? (
-                    <span className="inline-flex items-center rounded-full bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700">
-                      <CheckCircle className="mr-1 h-3 w-3" />
-                      Admin
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">User</span>
-                  )}
+                   {isAdmin ? (
+                     <span className="inline-flex items-center rounded-full bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700">
+                       <CheckCircle className="mr-1 h-3 w-3" />
+                       Admin
+                     </span>
+                   ) : (
+                     <span className="text-muted-foreground">User</span>
+                   )}
                 </TableCell>
                 <TableCell className="text-right">
                   <AdminActionButton 
                     isAdmin={isAdmin}
-                    onClick={() => onAdminToggle(user)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent row click event
+                      onAdminToggle(user);
+                    }}
                   />
                 </TableCell>
               </TableRow>

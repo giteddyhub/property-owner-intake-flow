@@ -4,6 +4,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ const AdminUsersPage: React.FC = () => {
     isAdmin 
   } = useAdminUsers();
   
+  const navigate = useNavigate();
   const [formOpen, setFormOpen] = useState(false);
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -52,6 +54,10 @@ const AdminUsersPage: React.FC = () => {
   const handleCreateAdminSuccess = (userData: any) => {
     addUser(userData);
     setFormOpen(false);
+  };
+
+  const handleRowClick = (userId: string) => {
+    navigate(`/admin/accounts/${userId}`);
   };
 
   return (
@@ -92,6 +98,7 @@ const AdminUsersPage: React.FC = () => {
               adminUsers={adminUsers}
               loading={loading}
               onAdminToggle={handleOpenAdminDialog}
+              onRowClick={handleRowClick}
             />
           </CardContent>
         </Card>
