@@ -11,6 +11,8 @@ export interface AuthContextType {
   setProcessingSubmission: (value: boolean) => void;
   submissionCompleted: boolean;
   setSubmissionCompleted: (value: boolean) => void;
+  isAdmin: boolean;
+  checkAdminStatus: () => Promise<boolean>;
 }
 
 export interface AuthProviderProps {

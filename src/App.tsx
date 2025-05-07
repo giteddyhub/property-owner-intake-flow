@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AuthProvider, useAuth } from './contexts/auth/AuthContext';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 
 // Protected route component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -25,6 +26,41 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Admin route component - redirects to dashboard if not admin
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, isAdmin, checkAdminStatus } = useAuth();
+  const location = useLocation();
+  const [isCheckingAdmin, setIsCheckingAdmin] = React.useState(true);
+  
+  React.useEffect(() => {
+    const verifyAdmin = async () => {
+      setIsCheckingAdmin(true);
+      await checkAdminStatus();
+      setIsCheckingAdmin(false);
+    };
+    
+    if (user && !loading) {
+      verifyAdmin();
+    } else if (!loading) {
+      setIsCheckingAdmin(false);
+    }
+  }, [user, loading, checkAdminStatus]);
+  
+  if (loading || isCheckingAdmin) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -98,6 +134,44 @@ const AppRoutes = () => {
           <TaxFilingServicePage />
         </ProtectedRoute>
       } />
+      
+      {/* Admin Routes */}
+      <Route path="/admin" element={
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
+      } />
+      <Route path="/admin/users" element={
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
+      } />
+      <Route path="/admin/properties" element={
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
+      } />
+      <Route path="/admin/submissions" element={
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
+      } />
+      <Route path="/admin/documents" element={
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
+      } />
+      <Route path="/admin/analytics" element={
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
+      } />
+      <Route path="/admin/settings" element={
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
+      } />
+      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

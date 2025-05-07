@@ -10,13 +10,13 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 
 export const AccountMenu = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   
   const handleSignOut = async () => {
     try {
@@ -59,6 +59,16 @@ export const AccountMenu = () => {
             <span>Dashboard</span>
           </Link>
         </DropdownMenuItem>
+        
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link to="/admin">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              <span>Admin Panel</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
+        
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />

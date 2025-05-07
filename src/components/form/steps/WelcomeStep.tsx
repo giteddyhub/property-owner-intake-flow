@@ -1,12 +1,16 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useFormContext } from '@/contexts/FormContext';
-import { ArrowRight, Home, Calendar, Euro, Percent, FileText, ScanFace } from 'lucide-react';
+import { ArrowRight, Home, Calendar, Euro, Percent, FileText, ScanFace, LayoutDashboard } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Link } from 'react-router-dom';
+
 const WelcomeStep: React.FC = () => {
-  const {
-    nextStep
-  } = useFormContext();
+  const { nextStep } = useFormContext();
+  const { user, isAdmin } = useAuth();
+  
   const handleGetStarted = () => {
     nextStep();
     window.scrollTo({
@@ -14,11 +18,31 @@ const WelcomeStep: React.FC = () => {
       behavior: 'smooth'
     });
   };
-  return <div className="text-center max-w-2xl mx-auto py-6 animate-fade-in">
+  
+  return (
+    <div className="text-center max-w-2xl mx-auto py-6 animate-fade-in">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-form-400 mb-2 relative inline-block">Italian Tax Profile</h1>
         <h2 className="text-xl text-form-300 font-medium">for property owners</h2>
       </div>
+      
+      {isAdmin && (
+        <div className="mb-6">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LayoutDashboard className="h-5 w-5 text-primary" />
+                <span className="font-medium">Admin Access Detected</span>
+              </div>
+              <Link to="/admin">
+                <Button variant="outline" size="sm" className="border-primary/30 hover:border-primary">
+                  Go to Admin Dashboard
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <Card className="mb-10 text-left shadow-lg border-form-200 overflow-hidden">
         <div className="bg-gradient-to-r from-form-300/10 to-form-200 py-3 px-6 border-b border-form-200">
@@ -105,6 +129,8 @@ const WelcomeStep: React.FC = () => {
         Get Started
         <ArrowRight className="h-4 w-4" />
       </Button>
-    </div>;
+    </div>
+  );
 };
+
 export default WelcomeStep;
