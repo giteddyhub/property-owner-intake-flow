@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, LockIcon, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Loader2, LockIcon, AlertTriangle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { generateSecurePassword } from './adminAuthUtils';
+import { showAdminCredentialsToast } from './AdminCredentialsToast';
 
 interface AdminSetupFormProps {
   onBackToLogin: () => void;
@@ -64,26 +65,11 @@ export const AdminSetupForm: React.FC<AdminSetupFormProps> = ({
         return;
       }
       
-      // Show the generated password to the administrator
-      toast.success('Admin account created successfully!', {
-        duration: 10000,
+      // Display admin credentials using the extracted component
+      showAdminCredentialsToast({
+        email: adminEmail,
+        password: generatedPassword
       });
-      
-      // Display the credentials with a longer timeout
-      toast(
-        <div className="space-y-2">
-          <div className="font-bold">Admin Credentials (Copy these now!)</div>
-          <div><strong>Email:</strong> {adminEmail}</div>
-          <div><strong>Password:</strong> {generatedPassword}</div>
-          <div className="text-xs text-red-500 mt-2">
-            This information will not be shown again!
-          </div>
-        </div>,
-        {
-          duration: 30000, // Show for 30 seconds
-          icon: <CheckCircle2 className="h-5 w-5 text-green-500" />
-        }
-      );
       
       // Update the UI to show the login form
       onSetupComplete(adminEmail);
