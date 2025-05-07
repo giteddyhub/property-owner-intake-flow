@@ -23,17 +23,19 @@ export const generateSecurePassword = (): string => {
 export const checkAdminSetupStatus = async (): Promise<boolean> => {
   try {
     const { supabase } = await import('@/integrations/supabase/client');
-    // Check if any admin users exist in the system
-    const { data, error, count } = await supabase
+    
+    // First check if we can even access the admin_users table
+    // This handles permissions properly without causing recursion
+    const { count, error } = await supabase
       .from('admin_users')
-      .select('*', { count: 'exact' });
+      .select('*', { count: 'exact', head: true });
     
     if (error) {
       console.error("Error checking admin setup:", error);
       return false;
     }
     
-    // If no admin users, setup hasn't been completed
+    // If we can count the rows and there are some, setup is complete
     return count !== null && count > 0;
   } catch (err) {
     console.error("Exception checking admin setup:", err);
