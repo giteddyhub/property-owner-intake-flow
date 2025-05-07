@@ -56,7 +56,8 @@ export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ su
       const { data, error } = await supabase
         .from('owners')
         .select('*')
-        .eq('form_submission_id', submissionId);
+        .eq('form_submission_id', submissionId)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       
