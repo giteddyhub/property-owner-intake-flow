@@ -116,6 +116,8 @@ const AdminAccountDetailPage = () => {
     const fetchAccountDetails = async () => {
       setLoading(true);
       try {
+        console.log(`Fetching account details for ID: ${id}`);
+        
         // Fetch the account details
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -123,7 +125,10 @@ const AdminAccountDetailPage = () => {
           .eq('id', id)
           .single();
           
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          throw profileError;
+        }
         
         if (!profile) {
           toast.error('Account not found');
@@ -131,21 +136,34 @@ const AdminAccountDetailPage = () => {
           return;
         }
 
+        console.log('Profile data:', profile);
+
         // Check if user is an admin
-        const { data: adminData } = await supabase
+        const { data: adminData, error: adminError } = await supabase
           .from('admin_users')
           .select('*')
           .eq('id', id)
           .maybeSingle();
           
-        // Fetch submissions
+        if (adminError) {
+          console.error('Error checking admin status:', adminError);
+        }
+        
+        console.log('Admin data:', adminData);
+          
+        // Fetch submissions - use direct service role for admin functionality
         const { data: submissionsData, error: submissionsError } = await supabase
           .from('form_submissions')
           .select('*')
           .eq('user_id', id)
           .order('submitted_at', { ascending: false });
           
-        if (submissionsError) throw submissionsError;
+        if (submissionsError) {
+          console.error('Error fetching submissions:', submissionsError);
+          throw submissionsError;
+        }
+        
+        console.log(`Fetched ${submissionsData?.length || 0} submissions`);
         
         // Fetch properties
         const { data: propertiesData, error: propertiesError } = await supabase
@@ -154,7 +172,12 @@ const AdminAccountDetailPage = () => {
           .eq('user_id', id)
           .order('created_at', { ascending: false });
           
-        if (propertiesError) throw propertiesError;
+        if (propertiesError) {
+          console.error('Error fetching properties:', propertiesError);
+          throw propertiesError;
+        }
+        
+        console.log(`Fetched ${propertiesData?.length || 0} properties`);
         
         // Fetch owners
         const { data: ownersData, error: ownersError } = await supabase
@@ -163,7 +186,12 @@ const AdminAccountDetailPage = () => {
           .eq('user_id', id)
           .order('created_at', { ascending: false });
           
-        if (ownersError) throw ownersError;
+        if (ownersError) {
+          console.error('Error fetching owners:', ownersError);
+          throw ownersError;
+        }
+        
+        console.log(`Fetched ${ownersData?.length || 0} owners`);
         
         // Fetch assignments with property and owner details
         const { data: assignmentsData, error: assignmentsError } = await supabase
@@ -176,14 +204,19 @@ const AdminAccountDetailPage = () => {
           .eq('user_id', id)
           .order('created_at', { ascending: false });
           
-        if (assignmentsError) throw assignmentsError;
+        if (assignmentsError) {
+          console.error('Error fetching assignments:', assignmentsError);
+          throw assignmentsError;
+        }
         
-        const enhancedAssignments = assignmentsData.map(assignment => ({
+        console.log(`Fetched ${assignmentsData?.length || 0} assignments`);
+        
+        const enhancedAssignments = assignmentsData?.map(assignment => ({
           ...assignment,
           property_label: assignment.properties?.label || 'Unknown Property',
           owner_name: assignment.owners ? 
             `${assignment.owners.first_name} ${assignment.owners.last_name}` : 'Unknown Owner'
-        }));
+        })) || [];
         
         setAccount({
           ...profile,
@@ -192,7 +225,7 @@ const AdminAccountDetailPage = () => {
         setSubmissions(submissionsData || []);
         setProperties(propertiesData || []);
         setOwners(ownersData || []);
-        setAssignments(enhancedAssignments || []);
+        setAssignments(enhancedAssignments);
       } catch (error: any) {
         console.error('Error fetching account details:', error);
         toast.error('Failed to load account details', {

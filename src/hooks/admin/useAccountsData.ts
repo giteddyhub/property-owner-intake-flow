@@ -35,7 +35,8 @@ export const useAccountsData = () => {
     setLoading(true);
     try {
       console.log('Fetching all profiles...');
-      // First get all user profiles with a direct query to avoid RLS issues
+      
+      // First get all user profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -48,10 +49,14 @@ export const useAccountsData = () => {
 
       console.log('Profiles data:', profilesData?.length || 0, 'records found');
       
-      // Get admin users separately - this query doesn't cause recursion issues
-      const { data: adminsData } = await supabase
+      // Get admin users separately
+      const { data: adminsData, error: adminsError } = await supabase
         .from('admin_users')
         .select('id');
+      
+      if (adminsError) {
+        console.error('Error fetching admin users:', adminsError);
+      }
       
       console.log('Admin data:', adminsData?.length || 0, 'records found');
         
