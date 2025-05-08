@@ -84,8 +84,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                 <TableCell className="text-right">
                   <AdminActionButton 
                     isAdmin={isAdmin}
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation(); // Prevent row click event
+                    onClick={() => {
+                      // Create a wrapper function that doesn't take parameters
+                      // but still calls onAdminToggle with the user
                       onAdminToggle(user);
                     }}
                   />
