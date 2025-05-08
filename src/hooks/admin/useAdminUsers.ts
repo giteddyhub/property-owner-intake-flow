@@ -30,22 +30,51 @@ export const useAdminUsers = () => {
       if (userError) throw userError;
       
       console.log('[AdminUsers] Fetching admin data');
-      // Fetch admin users directly without using any function that might cause recursion
-      const { data: adminData, error: adminError } = await supabase
-        .from('admin_users')
-        .select('id');
-        
-      if (adminError) {
-        console.error('[AdminUsers] Error fetching admin users:', adminError);
-        throw adminError;
-      }
       
-      console.log('[AdminUsers] Admin users found:', adminData?.length || 0);
-      setUsers(userData || []);
-      setAdminUsers(adminData?.map(admin => admin.id) || []);
+      try {
+        // Try to fetch admin users directly first
+        const { data: adminData, error: adminError } = await supabase
+          .from('admin_users')
+          .select('id');
+          
+        if (adminError) {
+          console.error('[AdminUsers] Error fetching admin users from table:', adminError);
+          throw adminError;
+        }
+        
+        console.log('[AdminUsers] Admin users found:', adminData?.length || 0);
+        setUsers(userData || []);
+        setAdminUsers(adminData?.map(admin => admin.id) || []);
+      } catch (adminError) {
+        // Fallback: If the direct query fails, try using the stored function
+        console.log('[AdminUsers] Trying alternative method to fetch admin users');
+        
+        // Fetch each user's admin status individually to avoid RLS recursion
+        const adminIds: string[] = [];
+        
+        if (userData && userData.length > 0) {
+          for (const user of userData) {
+            try {
+              const { data, error } = await supabase.rpc('is_admin', { user_id: user.id });
+              
+              if (!error && data === true) {
+                adminIds.push(user.id);
+              }
+            } catch (err) {
+              console.error(`[AdminUsers] Error checking admin status for user ${user.id}:`, err);
+            }
+          }
+          
+          console.log('[AdminUsers] Admin users found (alternative method):', adminIds.length);
+          setUsers(userData);
+          setAdminUsers(adminIds);
+        }
+      }
     } catch (error: any) {
       console.error('Error fetching user data:', error);
       toast.error('Failed to load user data');
+      setUsers([]);
+      setAdminUsers([]);
     } finally {
       setLoading(false);
     }
