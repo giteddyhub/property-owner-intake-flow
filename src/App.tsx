@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AuthProvider, useAuth } from './contexts/auth/AuthContext';
+import { AdminAuthProvider } from './contexts/admin/AdminAuthContext';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
@@ -33,6 +34,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   return <>{children}</>;
+};
+
+// Admin routes component that applies AdminAuthProvider
+const AdminRoutes = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <AdminAuthProvider>
+      {children}
+    </AdminAuthProvider>
+  );
 };
 
 // Admin route component - redirects to dashboard if not admin
@@ -141,16 +151,24 @@ const AppRoutes = () => {
       } />
       
       {/* Admin Routes */}
-      <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route path="/admin/login" element={
+        <AdminAuthProvider>
+          <AdminLoginPage />
+        </AdminAuthProvider>
+      } />
       <Route path="/admin" element={
-        <AdminRoute>
-          <AdminDashboardPage />
-        </AdminRoute>
+        <AdminRoutes>
+          <AdminRoute>
+            <AdminDashboardPage />
+          </AdminRoute>
+        </AdminRoutes>
       } />
       <Route path="/admin/users" element={
-        <AdminRoute>
-          <AdminUsersPage />
-        </AdminRoute>
+        <AdminRoutes>
+          <AdminRoute>
+            <AdminUsersPage />
+          </AdminRoute>
+        </AdminRoutes>
       } />
       
       {/* Redirect from old /admin/submissions to new /admin/accounts */}
@@ -160,27 +178,35 @@ const AppRoutes = () => {
       
       {/* New Accounts Routes */}
       <Route path="/admin/accounts" element={
-        <AdminRoute>
-          <AdminAccountsPage />
-        </AdminRoute>
+        <AdminRoutes>
+          <AdminRoute>
+            <AdminAccountsPage />
+          </AdminRoute>
+        </AdminRoutes>
       } />
       <Route path="/admin/accounts/:id" element={
-        <AdminRoute>
-          <AdminAccountDetailPage />
-        </AdminRoute>
+        <AdminRoutes>
+          <AdminRoute>
+            <AdminAccountDetailPage />
+          </AdminRoute>
+        </AdminRoutes>
       } />
       
       {/* Keep the submission detail route as it is */}
       <Route path="/admin/submissions/:id" element={
-        <AdminRoute>
-          <AdminSubmissionDetailPage />
-        </AdminRoute>
+        <AdminRoutes>
+          <AdminRoute>
+            <AdminSubmissionDetailPage />
+          </AdminRoute>
+        </AdminRoutes>
       } />
       
       <Route path="/admin/settings" element={
-        <AdminRoute>
-          <AdminDashboardPage />
-        </AdminRoute>
+        <AdminRoutes>
+          <AdminRoute>
+            <AdminDashboardPage />
+          </AdminRoute>
+        </AdminRoutes>
       } />
       
       <Route path="*" element={<NotFound />} />
