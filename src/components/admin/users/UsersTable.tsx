@@ -89,9 +89,10 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                 <TableCell className="text-right">
                   <AdminActionButton 
                     isAdmin={isAdmin}
-                    onClick={(e) => {
-                      // Create a wrapper function that doesn't expect any parameters
-                      handleActionClick(e, user);
+                    onClick={() => {
+                      // We need to create a function without parameters that calls our handler
+                      const event = new MouseEvent('click');
+                      handleActionClick(event as React.MouseEvent, user);
                     }}
                   />
                 </TableCell>
