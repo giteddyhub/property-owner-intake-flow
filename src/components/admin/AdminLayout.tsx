@@ -2,9 +2,9 @@
 import React from 'react';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -12,38 +12,32 @@ interface AdminLayoutProps {
 }
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, pageTitle }) => {
-  const { user, loading, isAdmin, checkAdminStatus } = useAuth();
-  const [isCheckingAdmin, setIsCheckingAdmin] = React.useState(true);
+  const { admin, isAdminLoading, isAdminAuthenticated, checkAdminSession } = useAdminAuth();
+  const [isVerifying, setIsVerifying] = React.useState(true);
   
   React.useEffect(() => {
     const verifyAdmin = async () => {
-      setIsCheckingAdmin(true);
-      await checkAdminStatus();
-      setIsCheckingAdmin(false);
+      setIsVerifying(true);
+      await checkAdminSession();
+      setIsVerifying(false);
     };
     
-    if (user && !loading) {
+    if (!isAdminLoading) {
       verifyAdmin();
-    } else if (!loading) {
-      setIsCheckingAdmin(false);
     }
-  }, [user, loading, checkAdminStatus]);
+  }, [isAdminLoading, checkAdminSession]);
   
-  if (loading || isCheckingAdmin) {
+  if (isAdminLoading || isVerifying) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Verifying access...</span>
+        <span className="ml-2">Verifying administrator access...</span>
       </div>
     );
   }
   
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+  if (!isAdminAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
   }
   
   return (

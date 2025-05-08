@@ -29,7 +29,7 @@ export const AdminSetupForm: React.FC<AdminSetupFormProps> = ({
         
         // First check direct database for admin users
         const { count, error } = await supabase
-          .from('admin_users')
+          .from('admin_credentials')
           .select('*', { count: 'exact', head: true });
           
         if (!error && count !== null && count > 0) {
@@ -88,23 +88,23 @@ export const AdminSetupForm: React.FC<AdminSetupFormProps> = ({
       // Generate a secure password
       const generatedPassword = generateSecurePassword();
       
-      // Create the admin user using the regular signup flow
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: adminEmail,
-        password: generatedPassword,
-        options: {
-          data: { full_name: "Edwin Carrington" }
+      // Create the admin user using the edge function
+      const { data, error } = await supabase.functions.invoke('create-admin-user', {
+        body: {
+          email: adminEmail,
+          password: generatedPassword,
+          full_name: "Edwin Carrington"
         }
       });
       
-      if (signUpError) {
-        setAuthError(`Admin account creation failed: ${signUpError.message}`);
+      if (error) {
+        setAuthError(`Admin account creation failed: ${error.message}`);
         setIsSettingUp(false);
         return;
       }
       
-      if (!authData.user) {
-        setAuthError('Admin account creation failed: No user returned');
+      if (!data) {
+        setAuthError('Admin account creation failed: No response data');
         setIsSettingUp(false);
         return;
       }

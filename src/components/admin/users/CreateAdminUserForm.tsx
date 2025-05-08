@@ -30,7 +30,7 @@ export const CreateAdminUserForm: React.FC<CreateAdminUserFormProps> = ({
     setSubmitting(true);
     
     try {
-      // Call our edge function instead of direct Supabase admin API
+      // Call our edge function for creating admin user
       const { data, error } = await supabase.functions.invoke('create-admin-user', {
         body: {
           email,

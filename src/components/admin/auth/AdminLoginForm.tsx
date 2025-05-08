@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 import { useNavigate } from 'react-router-dom';
 
 interface AdminLoginFormProps {
@@ -14,7 +14,7 @@ interface AdminLoginFormProps {
 }
 
 export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ initialEmail = '' }) => {
-  const { signIn, checkAdminStatus } = useAuth();
+  const { adminLogin } = useAdminAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
@@ -33,24 +33,15 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ initialEmail = '
     setIsSubmitting(true);
     
     try {
-      // Sign in user
-      const { error } = await signIn(email, password);
+      // Sign in admin
+      const success = await adminLogin(email, password);
       
-      if (error) {
-        setAuthError(error.message);
-        return;
+      if (success) {
+        toast.success('Signed in as administrator');
+        navigate('/admin');
+      } else {
+        setAuthError('Invalid credentials or account not found');
       }
-      
-      // Check if the user is an admin
-      const isUserAdmin = await checkAdminStatus();
-      
-      if (!isUserAdmin) {
-        setAuthError('This account does not have administrative privileges');
-        return;
-      }
-      
-      toast.success('Signed in as administrator');
-      navigate('/admin');
     } catch (error: any) {
       setAuthError(error.message || 'An error occurred during sign in');
     } finally {

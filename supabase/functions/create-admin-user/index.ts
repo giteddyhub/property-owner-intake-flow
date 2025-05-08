@@ -36,47 +36,73 @@ Deno.serve(async (req) => {
     
     console.log(`Creating admin user: ${email} with name: ${full_name}`);
     
-    // 1. Create the user account using admin API
-    const { data: userData, error: userError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name }
-    });
+    // Check if this is the first admin user
+    const { count: existingAdminCount, error: countError } = await adminClient
+      .from('admin_credentials')
+      .select('*', { count: 'exact', head: true });
     
-    if (userError) {
-      console.error('Error creating user:', userError);
+    if (countError) {
+      console.error('Error checking existing admins:', countError);
       return new Response(
-        JSON.stringify({ error: userError.message }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    if (!userData.user) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to create user account' }),
+        JSON.stringify({ error: 'Could not check if any admin accounts exist' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    // 2. Add the user to admin_users table
-    const { error: adminError } = await adminClient
-      .from('admin_users')
-      .insert([{ id: userData.user.id }]);
+    let adminId: string;
     
-    if (adminError) {
-      console.error('Error granting admin privileges:', adminError);
-      return new Response(
-        JSON.stringify({ error: adminError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    if (existingAdminCount === 0) {
+      // This is the first admin, use the create_initial_admin function
+      const { data: initialAdminData, error: initialAdminError } = await adminClient.rpc(
+        'create_initial_admin',
+        { 
+          email, 
+          password, 
+          full_name, 
+          is_super_admin: true 
+        }
       );
+      
+      if (initialAdminError) {
+        console.error('Error creating initial admin:', initialAdminError);
+        return new Response(
+          JSON.stringify({ error: initialAdminError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      adminId = initialAdminData;
+    } else {
+      // Not the first admin, insert directly
+      const { data: adminData, error: insertError } = await adminClient
+        .from('admin_credentials')
+        .insert([
+          {
+            email,
+            password_hash: adminClient.rpc('hash_password', { password }),
+            full_name,
+            is_super_admin: false
+          }
+        ])
+        .select('id')
+        .single();
+      
+      if (insertError) {
+        console.error('Error creating admin user:', insertError);
+        return new Response(
+          JSON.stringify({ error: insertError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      adminId = adminData.id;
     }
     
     // Return the created user data
     return new Response(
       JSON.stringify({
-        id: userData.user.id,
-        email: userData.user.email,
+        id: adminId,
+        email,
         full_name
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

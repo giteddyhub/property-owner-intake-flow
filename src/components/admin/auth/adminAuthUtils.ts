@@ -54,7 +54,7 @@ export const checkAdminSetupStatus = async (): Promise<boolean> => {
       
       // Query the admin_users table directly with a count
       const { count, error } = await supabase
-        .from('admin_users')
+        .from('admin_credentials')
         .select('*', { count: 'exact', head: true });
       
       if (error) {

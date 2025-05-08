@@ -1,22 +1,18 @@
 
 import React from 'react';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { UserDropdownMenu } from '@/components/dashboard/UserDropdownMenu';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AdminSidebar } from './AdminSidebar';
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 
 interface AdminHeaderProps {
   pageTitle: string;
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ pageTitle }) => {
-  const { user, signOut } = useAuth();
-  
-  const handleSignOut = async () => {
-    return signOut();
-  };
+  const { admin, adminLogout } = useAdminAuth();
   
   return (
     <header className="border-b border-border px-6 py-3 bg-background z-10 flex items-center justify-between">
@@ -39,9 +35,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ pageTitle }) => {
       
       <div className="flex items-center gap-4">
         <span className="text-sm text-muted-foreground hidden sm:inline-block mr-2">
-          {user?.email}
+          {admin?.email}
         </span>
-        <UserDropdownMenu onSignOut={handleSignOut} isAdmin={true} />
+        <UserDropdownMenu onSignOut={adminLogout} isAdmin={true} />
       </div>
     </header>
   );

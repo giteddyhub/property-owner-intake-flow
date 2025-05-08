@@ -9,20 +9,19 @@ import {
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 
 export const AdminSidebar: React.FC = () => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { adminLogout } = useAdminAuth();
   const navigate = useNavigate();
   
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await adminLogout();
       toast.success('Signed out successfully');
-      navigate('/login', { replace: true });
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out. Please try again.');

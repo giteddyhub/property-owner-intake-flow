@@ -9,9 +9,11 @@ import { AdminSetupForm } from '@/components/admin/auth/AdminSetupForm';
 import { AdminLoginForm } from '@/components/admin/auth/AdminLoginForm';
 import { checkAdminSetupStatus, refreshAdminSetupStatus } from '@/components/admin/auth/adminAuthUtils';
 import { toast } from 'sonner';
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 
 const AdminLoginPage: React.FC = () => {
-  const { user, loading, isAdmin, checkAdminStatus } = useAuth();
+  const { user } = useAuth();
+  const { admin, isAdminAuthenticated, isAdminLoading } = useAdminAuth();
   const navigate = useNavigate();
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
   const [initialEmail, setInitialEmail] = useState('');
@@ -56,21 +58,12 @@ const AdminLoginPage: React.FC = () => {
     checkSetup();
   }, []);
 
-  // Check if user is already logged in and is admin
+  // Check if admin is already logged in
   useEffect(() => {
-    const checkAuth = async () => {
-      if (user) {
-        const isUserAdmin = await checkAdminStatus();
-        if (isUserAdmin) {
-          navigate('/admin');
-        }
-      }
-    };
-    
-    if (!loading) {
-      checkAuth();
+    if (!isAdminLoading && isAdminAuthenticated) {
+      navigate('/admin');
     }
-  }, [user, loading, navigate, checkAdminStatus]);
+  }, [isAdminAuthenticated, isAdminLoading, navigate]);
 
   const handleBackToLogin = () => {
     navigate('/login');
@@ -111,7 +104,7 @@ const AdminLoginPage: React.FC = () => {
     }
   };
 
-  if (isChecking) {
+  if (isChecking || isAdminLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <Card className="w-full max-w-md">

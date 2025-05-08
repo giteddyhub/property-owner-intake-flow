@@ -9,6 +9,83 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_credentials: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          is_super_admin: boolean
+          last_login_at: string | null
+          login_count: number
+          password_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          is_super_admin?: boolean
+          last_login_at?: string | null
+          login_count?: number
+          password_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          is_super_admin?: boolean
+          last_login_at?: string | null
+          login_count?: number
+          password_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_sessions: {
+        Row: {
+          admin_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          token: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          token: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          token?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_sessions_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_users: {
         Row: {
           created_at: string
@@ -817,6 +894,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_admin_session: {
+        Args: {
+          admin_id: string
+          ip_address?: string
+          user_agent?: string
+          expires_in_hours?: number
+        }
+        Returns: {
+          session_id: string
+          token: string
+          expires_at: string
+        }[]
+      }
+      create_initial_admin: {
+        Args: {
+          email: string
+          password: string
+          full_name: string
+          is_super_admin?: boolean
+        }
+        Returns: string
+      }
+      hash_password: {
+        Args: { password: string }
+        Returns: string
+      }
+      invalidate_admin_session: {
+        Args: { session_token: string }
+        Returns: boolean
+      }
+      invalidate_all_admin_sessions: {
+        Args: { admin_email: string }
+        Returns: number
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
@@ -828,6 +939,27 @@ export type Database = {
       is_user_super_admin: {
         Args: { check_user_id: string }
         Returns: boolean
+      }
+      migrate_existing_admins: {
+        Args: { default_password: string }
+        Returns: {
+          email: string
+          full_name: string
+          created_at: string
+        }[]
+      }
+      validate_admin_session: {
+        Args: { session_token: string }
+        Returns: {
+          admin_id: string
+          email: string
+          full_name: string
+          is_super_admin: boolean
+        }[]
+      }
+      verify_admin_password: {
+        Args: { email: string; password: string }
+        Returns: string
       }
     }
     Enums: {
