@@ -22,7 +22,7 @@ interface UsersTableProps {
   adminUsers: string[];
   loading: boolean;
   onAdminToggle: (user: UserData) => void;
-  onRowClick: (userId: string) => void;  // New prop for handling row clicks
+  onRowClick: (userId: string) => void;
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({ 
@@ -89,10 +89,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                 <TableCell className="text-right">
                   <AdminActionButton 
                     isAdmin={isAdmin}
-                    onClick={() => {
-                      // Create a wrapper function with no parameters to match the expected type
-                      onAdminToggle(user);
-                    }}
+                    onClick={(e) => handleActionClick(e, user)}
                   />
                 </TableCell>
               </TableRow>

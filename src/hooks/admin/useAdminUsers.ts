@@ -1,19 +1,22 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface UserData {
+export type UserRole = 'admin' | 'user' | 'all';
+
+export interface UserData {
   id: string;
   email: string;
   full_name?: string;
   created_at: string;
 }
 
-export const useAdminUsers = () => {
+export const useAdminUsers = (defaultFilter: UserRole = 'admin') => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [adminUsers, setAdminUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<UserRole>(defaultFilter);
 
   // Fetch users and admin data
   const fetchUsers = async () => {
@@ -119,18 +122,34 @@ export const useAdminUsers = () => {
     }
   };
 
+  // Filter users based on the selected role
+  const filteredUsers = useMemo(() => {
+    switch (filter) {
+      case 'admin':
+        return users.filter(user => adminUsers.includes(user.id));
+      case 'user':
+        return users.filter(user => !adminUsers.includes(user.id));
+      case 'all':
+      default:
+        return users;
+    }
+  }, [users, adminUsers, filter]);
+
   // Initial data fetch
   useEffect(() => {
     fetchUsers();
   }, []);
 
   return {
-    users,
+    users: filteredUsers, // Return the filtered users
+    allUsers: users, // Access to all users if needed
     adminUsers,
     loading,
     fetchUsers,
     addUser,
     toggleAdminStatus,
-    isAdmin: (userId: string) => adminUsers.includes(userId)
+    isAdmin: (userId: string) => adminUsers.includes(userId),
+    filter,
+    setFilter
   };
 };

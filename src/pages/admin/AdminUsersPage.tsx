@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Dialog,
@@ -16,7 +16,8 @@ import {
 import { AccountAdminDialog } from '@/components/admin/accounts/AccountAdminDialog';
 import { UsersTable } from '@/components/admin/users/UsersTable';
 import { CreateAdminUserForm } from '@/components/admin/users/CreateAdminUserForm';
-import { useAdminUsers } from '@/hooks/admin/useAdminUsers';
+import { useAdminUsers, UserRole } from '@/hooks/admin/useAdminUsers';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const AdminUsersPage: React.FC = () => {
   const { 
@@ -25,8 +26,10 @@ const AdminUsersPage: React.FC = () => {
     loading, 
     addUser, 
     toggleAdminStatus, 
-    isAdmin 
-  } = useAdminUsers();
+    isAdmin,
+    filter,
+    setFilter
+  } = useAdminUsers('admin'); // Default to showing only admins
   
   const navigate = useNavigate();
   const [formOpen, setFormOpen] = useState(false);
@@ -60,11 +63,24 @@ const AdminUsersPage: React.FC = () => {
     navigate(`/admin/accounts/${userId}`);
   };
 
+  const getPageTitle = () => {
+    switch (filter) {
+      case 'admin':
+        return 'Admin Users';
+      case 'user':
+        return 'Regular Users';
+      case 'all':
+        return 'All Users';
+      default:
+        return 'Admin Users';
+    }
+  };
+
   return (
-    <AdminLayout pageTitle="Users">
+    <AdminLayout pageTitle="User Management">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">User Management</h2>
+          <h2 className="text-2xl font-bold">{getPageTitle()}</h2>
           <Dialog open={formOpen} onOpenChange={setFormOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -90,7 +106,20 @@ const AdminUsersPage: React.FC = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>System Users</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle>{getPageTitle()}</CardTitle>
+              <Tabs 
+                value={filter} 
+                onValueChange={(value) => setFilter(value as UserRole)}
+                className="w-auto"
+              >
+                <TabsList>
+                  <TabsTrigger value="admin">Admins</TabsTrigger>
+                  <TabsTrigger value="user">Regular Users</TabsTrigger>
+                  <TabsTrigger value="all">All Users</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </CardHeader>
           <CardContent>
             <UsersTable
