@@ -30,36 +30,23 @@ export const CreateAdminUserForm: React.FC<CreateAdminUserFormProps> = ({
     setSubmitting(true);
     
     try {
-      // 1. Create the user account
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: fullName }
+      // Call our edge function instead of direct Supabase admin API
+      const { data, error } = await supabase.functions.invoke('create-admin-user', {
+        body: {
+          email,
+          password,
+          full_name: fullName
+        }
       });
       
-      if (authError) throw authError;
-      
-      if (!authData.user) {
-        throw new Error('Failed to create user account');
-      }
-      
-      // 2. Give the user admin privileges
-      const { error: adminError } = await supabase
-        .from('admin_users')
-        .insert([{ id: authData.user.id }]);
-        
-      if (adminError) throw adminError;
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error('Failed to create admin user');
       
       // Success
       toast.success(`Admin user ${fullName} created successfully`);
       
       // Pass the new user data back to the parent component
-      onSuccess({
-        id: authData.user.id, 
-        email: authData.user.email, 
-        full_name: fullName
-      });
+      onSuccess(data);
       
       // Reset form
       setEmail('');
