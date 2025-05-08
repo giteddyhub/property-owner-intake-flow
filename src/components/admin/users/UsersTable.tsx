@@ -89,7 +89,10 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                 <TableCell className="text-right">
                   <AdminActionButton 
                     isAdmin={isAdmin}
-                    onClick={(e) => handleActionClick(e, user)}
+                    onClick={() => {
+                      // Create a wrapper function with no parameters to match the expected type
+                      onAdminToggle(user);
+                    }}
                   />
                 </TableCell>
               </TableRow>
