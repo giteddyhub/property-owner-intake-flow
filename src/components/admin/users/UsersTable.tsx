@@ -90,9 +90,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                   <AdminActionButton 
                     isAdmin={isAdmin}
                     onClick={() => {
-                      // We need to create a function without parameters that calls our handler
-                      const event = new MouseEvent('click');
-                      handleActionClick(event as React.MouseEvent, user);
+                      // Instead of creating a synthetic event, just call onAdminToggle directly
+                      // This avoids the type issue with MouseEvent vs React.MouseEvent
+                      onAdminToggle(user);
                     }}
                   />
                 </TableCell>
