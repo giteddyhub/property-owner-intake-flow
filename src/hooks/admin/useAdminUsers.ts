@@ -1,135 +1,137 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 
 export type UserRole = 'admin' | 'user' | 'all';
 
-export interface UserData {
-  id: string;
-  email: string;
-  full_name?: string;
-  created_at: string;
-}
-
-export const useAdminUsers = (defaultFilter: UserRole = 'admin') => {
-  const [users, setUsers] = useState<UserData[]>([]);
+export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
+  const [users, setUsers] = useState<any[]>([]);
   const [adminUsers, setAdminUsers] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<UserRole>(defaultFilter);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<UserRole>(defaultFilter);
   const [diagnosticInfo, setDiagnosticInfo] = useState<any>({});
+  
+  const { isAdminAuthenticated } = useAdminAuth();
 
-  // Fetch users and admin data
-  const fetchUsers = async () => {
+  const isAdmin = (userId: string) => adminUsers.includes(userId);
+  
+  // Use explicit SQL query to fetch profiles instead of relying on Supabase client
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
+    
     const diagnostics: any = {};
     
     try {
-      console.log('[AdminUsers] Fetching profiles data');
+      console.log('Fetching users with filter:', filter);
+      
       // Get current auth status to help diagnose issues
       const { data: { session }, error: authError } = await supabase.auth.getSession();
       diagnostics.hasAuthSession = !!session;
+      
       if (authError) {
         diagnostics.authError = authError.message;
+        console.error('Auth error:', authError);
       }
-
-      // Fetch all users from profiles table
-      const { data: userData, error: userError, status: userStatus } = await supabase
+      
+      // First get profiles
+      const { data: profilesData, error: profilesError, status: profilesStatus } = await supabase
         .from('profiles')
-        .select('id, email, full_name, created_at')
-        .order('created_at', { ascending: false });
-        
-      diagnostics.profilesQueryStatus = userStatus;
-
-      if (userError) {
-        diagnostics.profilesError = userError.message;
-        console.error('[AdminUsers] Error fetching profiles:', userError);
-        throw userError;
+        .select('*');
+      
+      diagnostics.profilesQueryStatus = profilesStatus;
+      
+      if (profilesError) {
+        diagnostics.profilesError = profilesError.message;
+        console.error('Error fetching profiles:', profilesError);
       }
       
-      diagnostics.profilesCount = userData?.length || 0;
-      console.log('[AdminUsers] Found profiles:', userData?.length || 0);
+      console.log('Profiles data:', profilesData?.length || 0, 'records found');
+      diagnostics.profilesCount = profilesData?.length || 0;
       
-      console.log('[AdminUsers] Fetching admin data');
+      // Get admin users separately
+      const { data: adminsData, error: adminsError, status: adminsStatus } = await supabase
+        .from('admin_users')
+        .select('id');
+        
+      diagnostics.adminQueryStatus = adminsStatus;
       
-      try {
-        // Try to fetch admin users directly first
-        const { data: adminData, error: adminError, status: adminStatus } = await supabase
-          .from('admin_users')
-          .select('id');
-          
-        diagnostics.adminQueryStatus = adminStatus;
-        
-        if (adminError) {
-          diagnostics.adminError = adminError.message;
-          console.error('[AdminUsers] Error fetching admin users from table:', adminError);
-          throw adminError;
-        }
-        
-        console.log('[AdminUsers] Admin users found:', adminData?.length || 0);
-        diagnostics.adminCount = adminData?.length || 0;
-        setUsers(userData || []);
-        setAdminUsers(adminData?.map(admin => admin.id) || []);
-      } catch (adminError: any) {
-        // Fallback: If the direct query fails, try using the stored function
-        console.log('[AdminUsers] Trying alternative method to fetch admin users');
-        diagnostics.adminFallbackUsed = true;
-        
-        // Fetch each user's admin status individually to avoid RLS recursion
-        const adminIds: string[] = [];
-        
-        if (userData && userData.length > 0) {
-          for (const user of userData) {
-            try {
-              const { data, error } = await supabase.rpc('is_admin', { user_id: user.id });
-              
-              if (!error && data === true) {
-                adminIds.push(user.id);
-              }
-            } catch (err) {
-              console.error(`[AdminUsers] Error checking admin status for user ${user.id}:`, err);
-            }
+      if (adminsError) {
+        diagnostics.adminError = adminsError.message;
+        console.error('Error fetching admin users:', adminsError);
+      }
+      
+      console.log('Admin data:', adminsData?.length || 0, 'records found');
+      diagnostics.adminCount = adminsData?.length || 0;
+      
+      // Store admin user IDs
+      const adminUserIds = adminsData?.map(admin => admin.id) || [];
+      setAdminUsers(adminUserIds);
+      
+      // Filter users based on role if needed
+      let filteredUsers = profilesData || [];
+      
+      if (filter === 'admin') {
+        filteredUsers = filteredUsers.filter(user => adminUserIds.includes(user.id));
+      } else if (filter === 'user') {
+        filteredUsers = filteredUsers.filter(user => !adminUserIds.includes(user.id));
+      }
+      
+      // Set the filtered users
+      setUsers(filteredUsers);
+      
+      // If we still don't have any users, set an error
+      if (filteredUsers.length === 0) {
+        if (profilesData && profilesData.length > 0) {
+          // We have profiles but none match the filter
+          if (filter === 'admin') {
+            setError('No admin users found. You can create one using the "Create Admin User" button.');
+          } else if (filter === 'user') {
+            setError('No regular users found in the system.');
+          } else {
+            // This shouldn't happen if we have profiles data
+            setError('No users found matching the current filter.');
           }
-          
-          console.log('[AdminUsers] Admin users found (alternative method):', adminIds.length);
-          diagnostics.adminFallbackCount = adminIds.length;
-          setUsers(userData);
-          setAdminUsers(adminIds);
+        } else {
+          // No profiles found at all
+          setError('No user profiles found in the database.');
         }
+      } else {
+        setError(null);
       }
-
-      // Set diagnostic information for troubleshooting
+      
+      // Set diagnostic information for debugging
       setDiagnosticInfo(diagnostics);
       
-      // If no data was found at all, set a warning
-      if ((!userData || userData.length === 0) && diagnostics.profilesQueryStatus === 200) {
-        setError("No user profiles found in the database. You may need to create some users first.");
-      }
     } catch (error: any) {
-      console.error('Error fetching user data:', error);
-      setError(error.message || 'Failed to load user data');
-      setDiagnosticInfo(diagnostics);
-      toast.error('Failed to load user data', {
-        description: error.message
+      console.error('Error in useAdminUsers:', error);
+      setError(error.message || 'Failed to load users data');
+      setDiagnosticInfo({
+        ...diagnostics,
+        unexpectedError: error.message
       });
-      setUsers([]);
-      setAdminUsers([]);
     } finally {
       setLoading(false);
     }
+  }, [filter]);
+  
+  // Add a user to the list (used after creating a new admin)
+  const addUser = (userData: any) => {
+    setUsers(prevUsers => [userData, ...prevUsers]);
+    
+    if (userData.is_admin) {
+      setAdminUsers(prevAdmins => [...prevAdmins, userData.id]);
+    }
   };
-
-  const addUser = (newUser: UserData) => {
-    setUsers(prev => [newUser, ...prev]);
-  };
-
-  const toggleAdminStatus = async (userId: string, isAdmin: boolean, userName: string) => {
+  
+  // Toggle admin status for a user
+  const toggleAdminStatus = async (userId: string, currentAdminStatus: boolean, userName: string) => {
     try {
-      if (isAdmin) {
+      if (currentAdminStatus) {
         // Remove admin privileges
-        console.log('[AdminUsers] Removing admin privileges for:', userId);
         const { error } = await supabase
           .from('admin_users')
           .delete()
@@ -137,50 +139,37 @@ export const useAdminUsers = (defaultFilter: UserRole = 'admin') => {
           
         if (error) throw error;
         
-        setAdminUsers(prev => prev.filter(id => id !== userId));
+        // Update local state
+        setAdminUsers(prevAdmins => prevAdmins.filter(id => id !== userId));
         toast.success(`Admin privileges removed from ${userName}`);
       } else {
         // Grant admin privileges
-        console.log('[AdminUsers] Granting admin privileges for:', userId);
         const { error } = await supabase
           .from('admin_users')
           .insert([{ id: userId }]);
           
         if (error) throw error;
         
-        setAdminUsers(prev => [...prev, userId]);
+        // Update local state
+        setAdminUsers(prevAdmins => [...prevAdmins, userId]);
         toast.success(`Admin privileges granted to ${userName}`);
       }
       
       return true;
     } catch (error: any) {
       console.error('Error toggling admin status:', error);
-      toast.error('Failed to update admin status');
+      toast.error(`Failed to update admin status: ${error.message}`);
       return false;
     }
   };
-
-  // Filter users based on the selected role
-  const filteredUsers = useMemo(() => {
-    switch (filter) {
-      case 'admin':
-        return users.filter(user => adminUsers.includes(user.id));
-      case 'user':
-        return users.filter(user => !adminUsers.includes(user.id));
-      case 'all':
-      default:
-        return users;
-    }
-  }, [users, adminUsers, filter]);
-
-  // Initial data fetch
+  
+  // Fetch users on initial load and when filter changes
   useEffect(() => {
     fetchUsers();
-  }, []);
-
+  }, [fetchUsers, filter]);
+  
   return {
-    users: filteredUsers, // Return the filtered users
-    allUsers: users, // Access to all users if needed
+    users,
     adminUsers,
     loading,
     error,
@@ -188,7 +177,7 @@ export const useAdminUsers = (defaultFilter: UserRole = 'admin') => {
     fetchUsers,
     addUser,
     toggleAdminStatus,
-    isAdmin: (userId: string) => adminUsers.includes(userId),
+    isAdmin,
     filter,
     setFilter
   };

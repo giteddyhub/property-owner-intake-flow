@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { AdminActionButton } from '@/components/admin/accounts/AccountAdminDialog';
 import {
   Table,
@@ -11,6 +11,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 interface UserData {
   id: string;
@@ -26,6 +27,7 @@ interface UsersTableProps {
   diagnosticInfo?: any;
   onAdminToggle: (user: UserData) => void;
   onRowClick: (userId: string) => void;
+  onRefresh?: () => void;
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({ 
@@ -35,7 +37,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   error,
   diagnosticInfo,
   onAdminToggle,
-  onRowClick
+  onRowClick,
+  onRefresh
 }) => {
   if (loading) {
     return (
@@ -86,6 +89,15 @@ export const UsersTable: React.FC<UsersTableProps> = ({
             </div>
           </div>
         )}
+        
+        {onRefresh && (
+          <div className="mt-4">
+            <Button variant="outline" onClick={onRefresh} size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Data
+            </Button>
+          </div>
+        )}
       </Alert>
     );
   }
@@ -114,10 +126,25 @@ export const UsersTable: React.FC<UsersTableProps> = ({
               {diagnosticInfo.adminCount !== undefined && (
                 <div>Admin Count: {diagnosticInfo.adminCount}</div>
               )}
-              {diagnosticInfo.adminFallbackUsed && (
-                <div>Admin Fallback Used: Yes (Count: {diagnosticInfo.adminFallbackCount || 0})</div>
+              {diagnosticInfo.authError && (
+                <div className="text-red-500">Auth Error: {diagnosticInfo.authError}</div>
+              )}
+              {diagnosticInfo.profilesError && (
+                <div className="text-red-500">Profiles Error: {diagnosticInfo.profilesError}</div>
+              )}
+              {diagnosticInfo.adminError && (
+                <div className="text-red-500">Admin Error: {diagnosticInfo.adminError}</div>
               )}
             </div>
+          </div>
+        )}
+        
+        {onRefresh && (
+          <div className="mt-4">
+            <Button variant="outline" onClick={onRefresh} size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Data
+            </Button>
           </div>
         )}
       </div>

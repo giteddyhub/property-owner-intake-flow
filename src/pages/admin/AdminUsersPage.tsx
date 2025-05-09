@@ -18,6 +18,7 @@ import { UsersTable } from '@/components/admin/users/UsersTable';
 import { CreateAdminUserForm } from '@/components/admin/users/CreateAdminUserForm';
 import { useAdminUsers, UserRole } from '@/hooks/admin/useAdminUsers';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 
 const AdminUsersPage: React.FC = () => {
   const { 
@@ -80,6 +81,7 @@ const AdminUsersPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
+    toast.info("Refreshing users data...");
     fetchUsers();
   };
 
@@ -143,6 +145,7 @@ const AdminUsersPage: React.FC = () => {
               diagnosticInfo={diagnosticInfo}
               onAdminToggle={handleOpenAdminDialog}
               onRowClick={handleRowClick}
+              onRefresh={handleRefresh}
             />
           </CardContent>
         </Card>
