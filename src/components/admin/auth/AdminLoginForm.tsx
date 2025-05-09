@@ -8,6 +8,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 import { useNavigate } from 'react-router-dom';
+import { AdminClearSessionButton } from './AdminClearSessionButton';
 
 interface AdminLoginFormProps {
   initialEmail?: string;
@@ -20,6 +21,7 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ initialEmail = '
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +43,11 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ initialEmail = '
         navigate('/admin');
       } else {
         setAuthError('Invalid credentials or account not found');
+        setShowHelp(true); // Show help on failed login
       }
     } catch (error: any) {
       setAuthError(error.message || 'An error occurred during sign in');
+      setShowHelp(true); // Show help on error
     } finally {
       setIsSubmitting(false);
     }
@@ -100,6 +104,16 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ initialEmail = '
           'Sign in as Administrator'
         )}
       </Button>
+      
+      {showHelp && (
+        <div className="mt-6 p-4 bg-blue-50 rounded-md border border-blue-100">
+          <h4 className="font-medium text-blue-700 mb-2">Having trouble signing in?</h4>
+          <p className="text-sm text-blue-600 mb-3">
+            If you're experiencing login issues, try clearing your session data and trying again.
+          </p>
+          <AdminClearSessionButton />
+        </div>
+      )}
     </form>
   );
 };

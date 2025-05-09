@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -25,6 +25,7 @@ type AdminAuthContextType = {
   adminLogin: (email: string, password: string) => Promise<boolean>;
   adminLogout: () => Promise<void>;
   checkAdminSession: () => Promise<boolean>;
+  resetVerification: () => void;
 };
 
 // Create the context with a default value
@@ -60,21 +61,36 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isAdminLoading, setIsAdminLoading] = useState<boolean>(true);
   const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
   
+  // Add verification state tracking
+  const [verificationAttempts, setVerificationAttempts] = useState(0);
+  const verificationInProgress = useRef(false);
+  const maxVerificationAttempts = 3;
+  
   const navigate = useNavigate();
   
-  // Check if admin session is valid on initial load
-  useEffect(() => {
-    const validateSession = async () => {
-      await checkAdminSession();
-      setIsAdminLoading(false);
-    };
-    
-    validateSession();
+  // Reset verification state
+  const resetVerification = useCallback(() => {
+    setVerificationAttempts(0);
+    verificationInProgress.current = false;
   }, []);
   
-  const checkAdminSession = async (): Promise<boolean> => {
+  // Memoize checkAdminSession to prevent recreation on every render
+  const checkAdminSession = useCallback(async (): Promise<boolean> => {
+    // Prevent multiple simultaneous verification attempts
+    if (verificationInProgress.current) {
+      console.log('Admin session verification already in progress, skipping');
+      return !!admin;
+    }
+    
     // Clear any previous errors
     setAdminLoginError(null);
+    
+    // If max verification attempts reached, prevent further attempts
+    if (verificationAttempts >= maxVerificationAttempts) {
+      console.warn(`Maximum verification attempts (${maxVerificationAttempts}) reached`);
+      setIsAdminLoading(false);
+      return false;
+    }
     
     // If no session token, not authenticated
     if (!adminSession?.token) {
@@ -84,6 +100,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
     
     try {
+      verificationInProgress.current = true;
+      setVerificationAttempts(prev => prev + 1);
+      
+      console.log(`Verifying admin session (attempt ${verificationAttempts + 1}/${maxVerificationAttempts})`);
+      
       const { data, error } = await supabase.functions.invoke('admin-session', {
         body: { token: adminSession.token }
       });
@@ -93,23 +114,45 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setAdmin(null);
         setAdminSession(null);
         localStorage.removeItem('admin_session');
+        verificationInProgress.current = false;
         return false;
       }
       
       setAdmin(data.admin);
+      verificationInProgress.current = false;
       return true;
     } catch (error: any) {
       console.error('Error checking admin session:', error);
       setAdmin(null);
       setAdminSession(null);
       localStorage.removeItem('admin_session');
+      verificationInProgress.current = false;
       return false;
     }
-  };
+  }, [admin, adminSession, verificationAttempts]);
+  
+  // Check if admin session is valid on initial load
+  useEffect(() => {
+    const validateSession = async () => {
+      // Only check if we have a stored session and haven't reached max attempts
+      if (storedSession?.token && verificationAttempts < maxVerificationAttempts) {
+        await checkAdminSession();
+      } else if (!storedSession?.token) {
+        // No stored session, so we're not loading anymore
+        console.log('No stored admin session found');
+      }
+      
+      // Always set loading to false after initial check
+      setIsAdminLoading(false);
+    };
+    
+    validateSession();
+  }, [checkAdminSession, storedSession, verificationAttempts]);
   
   const adminLogin = async (email: string, password: string): Promise<boolean> => {
     setIsAdminLoading(true);
     setAdminLoginError(null);
+    resetVerification();
     
     try {
       const { data, error } = await supabase.functions.invoke('admin-login', {
@@ -164,6 +207,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setAdmin(null);
       setAdminSession(null);
       localStorage.removeItem('admin_session');
+      resetVerification();
       setIsAdminLoading(false);
       navigate('/admin/login');
     }
@@ -179,7 +223,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         adminLoginError,
         adminLogin,
         adminLogout,
-        checkAdminSession
+        checkAdminSession,
+        resetVerification
       }}
     >
       {children}

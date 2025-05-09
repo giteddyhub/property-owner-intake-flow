@@ -3,15 +3,22 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminLoginForm } from '@/components/admin/auth/AdminLoginForm';
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
+import LoadingOverlay from '@/components/ui/loading-overlay';
+import { AdminClearSessionButton } from '@/components/admin/auth/AdminClearSessionButton';
 
 const AdminLoginPage: React.FC = () => {
   const { user } = useAuth();
-  const { admin, isAdminAuthenticated, isAdminLoading } = useAdminAuth();
+  const { admin, isAdminAuthenticated, isAdminLoading, resetVerification } = useAdminAuth();
   const navigate = useNavigate();
+
+  // Reset verification state when accessing login page
+  React.useEffect(() => {
+    resetVerification();
+  }, [resetVerification]);
 
   // Check if admin is already logged in
   React.useEffect(() => {
@@ -62,10 +69,23 @@ const AdminLoginPage: React.FC = () => {
         <CardContent>
           <AdminLoginForm />
         </CardContent>
-        <CardFooter>
-          <p className="text-xs text-muted-foreground text-center w-full">
+        <CardFooter className="flex flex-col">
+          <p className="text-xs text-muted-foreground text-center w-full mb-4">
             This area is restricted to authorized administrators only.
           </p>
+          <div className="text-center w-full">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                localStorage.removeItem('admin_session');
+                resetVerification();
+                window.location.reload();
+              }}
+            >
+              Having trouble? Reset Session
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>
