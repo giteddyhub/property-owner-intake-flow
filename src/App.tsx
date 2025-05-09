@@ -12,7 +12,7 @@ import LoginPage from './pages/LoginPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AuthProvider, useAuth } from './contexts/auth/AuthContext';
-import { AdminAuthProvider } from './contexts/admin/AdminAuthContext';
+import { AdminAuthProvider, useAdminAuth } from './contexts/admin/AdminAuthContext';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
@@ -45,36 +45,16 @@ const AdminRoutes = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Admin route component - redirects to dashboard if not admin
+// Admin route component - redirects to admin login if not authenticated as admin
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, isAdmin, checkAdminStatus } = useAuth();
+  const { isAdminAuthenticated, isAdminLoading } = useAdminAuth();
   const location = useLocation();
-  const [isCheckingAdmin, setIsCheckingAdmin] = React.useState(true);
   
-  React.useEffect(() => {
-    const verifyAdmin = async () => {
-      setIsCheckingAdmin(true);
-      await checkAdminStatus();
-      setIsCheckingAdmin(false);
-    };
-    
-    if (user && !loading) {
-      verifyAdmin();
-    } else if (!loading) {
-      setIsCheckingAdmin(false);
-    }
-  }, [user, loading, checkAdminStatus]);
-  
-  if (loading || isCheckingAdmin) {
+  if (isAdminLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  if (!user) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
-  }
-  
-  if (!isAdmin) {
-    // If logged in but not admin, redirect to admin login
+  if (!isAdminAuthenticated) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
