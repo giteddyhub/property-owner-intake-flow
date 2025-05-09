@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AccountData } from '@/types/admin';
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 
 export const useAccountsData = () => {
   const [accounts, setAccounts] = useState<AccountData[]>([]);
@@ -13,6 +14,7 @@ export const useAccountsData = () => {
   const [adminUsers, setAdminUsers] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [diagnosticInfo, setDiagnosticInfo] = useState<any>({});
+  const { adminSession } = useAdminAuth();
 
   // Filter accounts based on search query
   const filteredAccounts = accounts.filter(account => {
@@ -41,6 +43,15 @@ export const useAccountsData = () => {
     try {
       console.log('Fetching all profiles...');
       
+      // Set up headers with admin token if available
+      const headers: Record<string, string> = {};
+      if (adminSession?.token) {
+        headers['x-admin-token'] = adminSession.token;
+        console.log('Using admin token for authentication');
+      } else {
+        console.warn('No admin token available');
+      }
+      
       // Get current auth status to help diagnose issues
       const { data: { session }, error: authError } = await supabase.auth.getSession();
       diagnostics.hasAuthSession = !!session;
@@ -52,7 +63,8 @@ export const useAccountsData = () => {
       const { data: profilesData, error: profilesError, status: profilesStatus } = await supabase
         .from('profiles')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .headers(headers);
 
       diagnostics.profilesQueryStatus = profilesStatus;
       
@@ -68,7 +80,8 @@ export const useAccountsData = () => {
       // Get admin users separately
       const { data: adminsData, error: adminsError, status: adminsStatus } = await supabase
         .from('admin_users')
-        .select('id');
+        .select('id')
+        .headers(headers);
       
       diagnostics.adminQueryStatus = adminsStatus;
       
@@ -105,7 +118,8 @@ export const useAccountsData = () => {
             const { count: submissionsCount, error: submissionsError } = await supabase
               .from('form_submissions')
               .select('*', { count: 'exact', head: true })
-              .eq('user_id', profile.id);
+              .eq('user_id', profile.id)
+              .headers(headers);
             
             if (submissionsError) {
               console.error('Error fetching submissions count:', submissionsError);
@@ -115,7 +129,8 @@ export const useAccountsData = () => {
             const { count: propertiesCount, error: propertiesError } = await supabase
               .from('properties')
               .select('*', { count: 'exact', head: true })
-              .eq('user_id', profile.id);
+              .eq('user_id', profile.id)
+              .headers(headers);
             
             if (propertiesError) {
               console.error('Error fetching properties count:', propertiesError);
@@ -125,7 +140,8 @@ export const useAccountsData = () => {
             const { count: ownersCount, error: ownersError } = await supabase
               .from('owners')
               .select('*', { count: 'exact', head: true })
-              .eq('user_id', profile.id);
+              .eq('user_id', profile.id)
+              .headers(headers);
             
             if (ownersError) {
               console.error('Error fetching owners count:', ownersError);
@@ -175,7 +191,7 @@ export const useAccountsData = () => {
   // Initial data fetch
   useEffect(() => {
     fetchAccounts();
-  }, []);
+  }, [adminSession]);
 
   return {
     accounts,

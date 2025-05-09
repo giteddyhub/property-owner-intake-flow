@@ -957,6 +957,10 @@ export type Database = {
           is_super_admin: boolean
         }[]
       }
+      validate_admin_token_for_access: {
+        Args: { admin_token: string }
+        Returns: boolean
+      }
       verify_admin_password: {
         Args: { email: string; password: string }
         Returns: string

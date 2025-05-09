@@ -14,7 +14,7 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
   const [filter, setFilter] = useState<UserRole>(defaultFilter);
   const [diagnosticInfo, setDiagnosticInfo] = useState<any>({});
   
-  const { isAdminAuthenticated } = useAdminAuth();
+  const { isAdminAuthenticated, adminSession } = useAdminAuth();
 
   const isAdmin = (userId: string) => adminUsers.includes(userId);
   
@@ -37,10 +37,20 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
         console.error('Auth error:', authError);
       }
       
+      // Set up headers with admin token if available
+      const headers: Record<string, string> = {};
+      if (adminSession?.token) {
+        headers['x-admin-token'] = adminSession.token;
+        console.log('Using admin token for authentication');
+      } else {
+        console.warn('No admin token available');
+      }
+      
       // First get profiles
       const { data: profilesData, error: profilesError, status: profilesStatus } = await supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .headers(headers);
       
       diagnostics.profilesQueryStatus = profilesStatus;
       
@@ -55,7 +65,8 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
       // Get admin users separately
       const { data: adminsData, error: adminsError, status: adminsStatus } = await supabase
         .from('admin_users')
-        .select('id');
+        .select('id')
+        .headers(headers);
         
       diagnostics.adminQueryStatus = adminsStatus;
       
@@ -116,7 +127,7 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, adminSession]);
   
   // Add a user to the list (used after creating a new admin)
   const addUser = (userData: any) => {
