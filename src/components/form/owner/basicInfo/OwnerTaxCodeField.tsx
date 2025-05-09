@@ -25,6 +25,7 @@ const OwnerTaxCodeField: React.FC<OwnerTaxCodeFieldProps> = ({
             </TooltipTrigger>
             <StandardTooltipContent>
               <p>The "Codice Fiscale" is a unique identifier issued by the Italian government. It's required for tax purposes, property transactions, and official documents in Italy.</p>
+              <p className="mt-2">It consists of <strong>16 characters</strong> (letters and numbers) representing personal data including name, birth date, and birthplace.</p>
               <p className="mt-2 font-medium">Example: RSSMRA80A01H501W</p>
             </StandardTooltipContent>
           </Tooltip>
