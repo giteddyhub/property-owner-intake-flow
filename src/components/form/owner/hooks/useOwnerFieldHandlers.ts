@@ -87,9 +87,30 @@ export const useOwnerFieldHandlers = (setCurrentOwner: React.Dispatch<React.SetS
     }
   };
 
+  // New handler for US state field
+  const handleStateChange = (state: string) => {
+    setCurrentOwner(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        state
+      }
+    }));
+  };
+
+  // New handler for special US state fields
+  const handleSpecialStateChange = (field: string, value: string) => {
+    setCurrentOwner(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   return {
     handleInputChange,
     handleOwnerChange,
-    handleSelectChange
+    handleSelectChange,
+    handleStateChange,
+    handleSpecialStateChange
   };
 };

@@ -12,6 +12,8 @@ import {
 import { usePropertyForm } from './context/PropertyFormContext';
 import { PROVINCES } from './propertyUtils';
 
+// We don't need US states here since properties are only in Italy
+
 const PropertyAddressSection: React.FC = () => {
   const { currentProperty, handleInputChange, handleSelectChange } = usePropertyForm();
   const { address } = currentProperty;

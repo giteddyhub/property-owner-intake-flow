@@ -7,6 +7,7 @@ export interface Address {
   city: string;
   zip: string;
   country: string;
+  state?: string; // Added state field for US addresses
 }
 
 // Updated ItalianResidenceDetails interface to include address fields
@@ -28,6 +29,8 @@ export interface Owner {
   maritalStatus: MaritalStatus;
   isResidentInItaly: boolean;
   italianResidenceDetails?: ItalianResidenceDetails;
+  stateOfBirth?: string; // For US-born individuals
+  stateOfCitizenship?: string; // For US citizens
 }
 
 // Property document type
