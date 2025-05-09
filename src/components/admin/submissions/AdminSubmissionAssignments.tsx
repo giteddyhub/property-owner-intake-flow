@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 
 interface Assignment {
   id: string;
@@ -44,14 +44,25 @@ interface AdminSubmissionAssignmentsProps {
 export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProps> = ({ submissionId }) => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const { adminSession } = useAdminAuth();
 
   const fetchAssignments = async () => {
     setLoading(true);
     try {
+      // Set up headers with admin token if available
+      let options = {};
+      if (adminSession?.token) {
+        options = {
+          headers: {
+            'x-admin-token': adminSession.token
+          }
+        };
+      }
+      
       // First get assignments
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('owner_property_assignments')
-        .select('*')
+        .select('*', options)
         .eq('form_submission_id', submissionId);
       
       if (assignmentsError) throw assignmentsError;
@@ -68,14 +79,14 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
           // Get owner info
           const { data: ownerData } = await supabase
             .from('owners')
-            .select('first_name, last_name')
+            .select('first_name, last_name', options)
             .eq('id', assignment.owner_id)
             .single();
           
           // Get property info
           const { data: propertyData } = await supabase
             .from('properties')
-            .select('label')
+            .select('label', options)
             .eq('id', assignment.property_id)
             .single();
           
@@ -101,7 +112,7 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
 
   useEffect(() => {
     fetchAssignments();
-  }, [submissionId]);
+  }, [submissionId, adminSession]);
 
   // Format the date range for residency
   const formatResidencyPeriod = (assignment: Assignment) => {

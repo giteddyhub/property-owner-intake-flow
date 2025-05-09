@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 
 interface Owner {
   id: string;
@@ -49,13 +49,24 @@ interface AdminSubmissionOwnersProps {
 export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ submissionId }) => {
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
+  const { adminSession } = useAdminAuth();
 
   const fetchOwners = async () => {
     setLoading(true);
     try {
+      // Set up headers with admin token if available
+      let options = {};
+      if (adminSession?.token) {
+        options = {
+          headers: {
+            'x-admin-token': adminSession.token
+          }
+        };
+      }
+      
       const { data, error } = await supabase
         .from('owners')
-        .select('*')
+        .select('*', options)
         .eq('form_submission_id', submissionId)
         .order('created_at', { ascending: false });
       
@@ -74,7 +85,7 @@ export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ su
 
   useEffect(() => {
     fetchOwners();
-  }, [submissionId]);
+  }, [submissionId, adminSession]);
 
   // Format address to a string
   const formatAddress = (owner: Owner) => {
