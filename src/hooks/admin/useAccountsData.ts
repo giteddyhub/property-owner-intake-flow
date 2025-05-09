@@ -44,9 +44,13 @@ export const useAccountsData = () => {
       console.log('Fetching all profiles...');
       
       // Set up headers with admin token if available
-      const headers: Record<string, string> = {};
+      let options = {};
       if (adminSession?.token) {
-        headers['x-admin-token'] = adminSession.token;
+        options = {
+          headers: {
+            'x-admin-token': adminSession.token
+          }
+        };
         console.log('Using admin token for authentication');
       } else {
         console.warn('No admin token available');
@@ -62,9 +66,8 @@ export const useAccountsData = () => {
       // First get all user profiles
       const { data: profilesData, error: profilesError, status: profilesStatus } = await supabase
         .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .headers(headers);
+        .select('*', options)
+        .order('created_at', { ascending: false });
 
       diagnostics.profilesQueryStatus = profilesStatus;
       
@@ -80,8 +83,7 @@ export const useAccountsData = () => {
       // Get admin users separately
       const { data: adminsData, error: adminsError, status: adminsStatus } = await supabase
         .from('admin_users')
-        .select('id')
-        .headers(headers);
+        .select('id', options);
       
       diagnostics.adminQueryStatus = adminsStatus;
       
@@ -117,9 +119,8 @@ export const useAccountsData = () => {
             // Count submissions
             const { count: submissionsCount, error: submissionsError } = await supabase
               .from('form_submissions')
-              .select('*', { count: 'exact', head: true })
-              .eq('user_id', profile.id)
-              .headers(headers);
+              .select('*', { ...options, count: 'exact', head: true })
+              .eq('user_id', profile.id);
             
             if (submissionsError) {
               console.error('Error fetching submissions count:', submissionsError);
@@ -128,9 +129,8 @@ export const useAccountsData = () => {
             // Count properties
             const { count: propertiesCount, error: propertiesError } = await supabase
               .from('properties')
-              .select('*', { count: 'exact', head: true })
-              .eq('user_id', profile.id)
-              .headers(headers);
+              .select('*', { ...options, count: 'exact', head: true })
+              .eq('user_id', profile.id);
             
             if (propertiesError) {
               console.error('Error fetching properties count:', propertiesError);
@@ -139,9 +139,8 @@ export const useAccountsData = () => {
             // Count owners
             const { count: ownersCount, error: ownersError } = await supabase
               .from('owners')
-              .select('*', { count: 'exact', head: true })
-              .eq('user_id', profile.id)
-              .headers(headers);
+              .select('*', { ...options, count: 'exact', head: true })
+              .eq('user_id', profile.id);
             
             if (ownersError) {
               console.error('Error fetching owners count:', ownersError);

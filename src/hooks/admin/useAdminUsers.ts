@@ -38,9 +38,13 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
       }
       
       // Set up headers with admin token if available
-      const headers: Record<string, string> = {};
+      let options = {};
       if (adminSession?.token) {
-        headers['x-admin-token'] = adminSession.token;
+        options = {
+          headers: {
+            'x-admin-token': adminSession.token
+          }
+        };
         console.log('Using admin token for authentication');
       } else {
         console.warn('No admin token available');
@@ -49,8 +53,7 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
       // First get profiles
       const { data: profilesData, error: profilesError, status: profilesStatus } = await supabase
         .from('profiles')
-        .select('*')
-        .headers(headers);
+        .select('*', options);
       
       diagnostics.profilesQueryStatus = profilesStatus;
       
@@ -65,8 +68,7 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
       // Get admin users separately
       const { data: adminsData, error: adminsError, status: adminsStatus } = await supabase
         .from('admin_users')
-        .select('id')
-        .headers(headers);
+        .select('id', options);
         
       diagnostics.adminQueryStatus = adminsStatus;
       
