@@ -17,40 +17,65 @@ export const useAdminUsers = (defaultFilter: UserRole = 'admin') => {
   const [adminUsers, setAdminUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<UserRole>(defaultFilter);
+  const [error, setError] = useState<string | null>(null);
+  const [diagnosticInfo, setDiagnosticInfo] = useState<any>({});
 
   // Fetch users and admin data
   const fetchUsers = async () => {
     setLoading(true);
+    setError(null);
+    const diagnostics: any = {};
     
     try {
       console.log('[AdminUsers] Fetching profiles data');
+      // Get current auth status to help diagnose issues
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      diagnostics.hasAuthSession = !!session;
+      if (authError) {
+        diagnostics.authError = authError.message;
+      }
+
       // Fetch all users from profiles table
-      const { data: userData, error: userError } = await supabase
+      const { data: userData, error: userError, status: userStatus } = await supabase
         .from('profiles')
         .select('id, email, full_name, created_at')
         .order('created_at', { ascending: false });
         
-      if (userError) throw userError;
+      diagnostics.profilesQueryStatus = userStatus;
+
+      if (userError) {
+        diagnostics.profilesError = userError.message;
+        console.error('[AdminUsers] Error fetching profiles:', userError);
+        throw userError;
+      }
+      
+      diagnostics.profilesCount = userData?.length || 0;
+      console.log('[AdminUsers] Found profiles:', userData?.length || 0);
       
       console.log('[AdminUsers] Fetching admin data');
       
       try {
         // Try to fetch admin users directly first
-        const { data: adminData, error: adminError } = await supabase
+        const { data: adminData, error: adminError, status: adminStatus } = await supabase
           .from('admin_users')
           .select('id');
           
+        diagnostics.adminQueryStatus = adminStatus;
+        
         if (adminError) {
+          diagnostics.adminError = adminError.message;
           console.error('[AdminUsers] Error fetching admin users from table:', adminError);
           throw adminError;
         }
         
         console.log('[AdminUsers] Admin users found:', adminData?.length || 0);
+        diagnostics.adminCount = adminData?.length || 0;
         setUsers(userData || []);
         setAdminUsers(adminData?.map(admin => admin.id) || []);
-      } catch (adminError) {
+      } catch (adminError: any) {
         // Fallback: If the direct query fails, try using the stored function
         console.log('[AdminUsers] Trying alternative method to fetch admin users');
+        diagnostics.adminFallbackUsed = true;
         
         // Fetch each user's admin status individually to avoid RLS recursion
         const adminIds: string[] = [];
@@ -69,13 +94,26 @@ export const useAdminUsers = (defaultFilter: UserRole = 'admin') => {
           }
           
           console.log('[AdminUsers] Admin users found (alternative method):', adminIds.length);
+          diagnostics.adminFallbackCount = adminIds.length;
           setUsers(userData);
           setAdminUsers(adminIds);
         }
       }
+
+      // Set diagnostic information for troubleshooting
+      setDiagnosticInfo(diagnostics);
+      
+      // If no data was found at all, set a warning
+      if ((!userData || userData.length === 0) && diagnostics.profilesQueryStatus === 200) {
+        setError("No user profiles found in the database. You may need to create some users first.");
+      }
     } catch (error: any) {
       console.error('Error fetching user data:', error);
-      toast.error('Failed to load user data');
+      setError(error.message || 'Failed to load user data');
+      setDiagnosticInfo(diagnostics);
+      toast.error('Failed to load user data', {
+        description: error.message
+      });
       setUsers([]);
       setAdminUsers([]);
     } finally {
@@ -145,6 +183,8 @@ export const useAdminUsers = (defaultFilter: UserRole = 'admin') => {
     allUsers: users, // Access to all users if needed
     adminUsers,
     loading,
+    error,
+    diagnosticInfo,
     fetchUsers,
     addUser,
     toggleAdminStatus,

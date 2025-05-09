@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Filter } from 'lucide-react';
+import { UserPlus, Filter, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Dialog,
@@ -24,6 +24,9 @@ const AdminUsersPage: React.FC = () => {
     users, 
     adminUsers, 
     loading, 
+    error,
+    diagnosticInfo,
+    fetchUsers,
     addUser, 
     toggleAdminStatus, 
     isAdmin,
@@ -76,32 +79,42 @@ const AdminUsersPage: React.FC = () => {
     }
   };
 
+  const handleRefresh = () => {
+    fetchUsers();
+  };
+
   return (
     <AdminLayout pageTitle="User Management">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">{getPageTitle()}</h2>
-          <Dialog open={formOpen} onOpenChange={setFormOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Create Admin User
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Administrator Account</DialogTitle>
-                <DialogDescription>
-                  Create a new user account with administrative privileges.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <CreateAdminUserForm 
-                onSuccess={handleCreateAdminSuccess}
-                onCancel={() => setFormOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleRefresh} className="mr-2">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Data
+            </Button>
+            <Dialog open={formOpen} onOpenChange={setFormOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Create Admin User
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create Administrator Account</DialogTitle>
+                  <DialogDescription>
+                    Create a new user account with administrative privileges.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <CreateAdminUserForm 
+                  onSuccess={handleCreateAdminSuccess}
+                  onCancel={() => setFormOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         
         <Card>
@@ -126,6 +139,8 @@ const AdminUsersPage: React.FC = () => {
               users={users}
               adminUsers={adminUsers}
               loading={loading}
+              error={error}
+              diagnosticInfo={diagnosticInfo}
               onAdminToggle={handleOpenAdminDialog}
               onRowClick={handleRowClick}
             />

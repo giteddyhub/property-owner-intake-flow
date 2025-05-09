@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { AdminActionButton } from '@/components/admin/accounts/AccountAdminDialog';
 import {
   Table,
@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface UserData {
   id: string;
@@ -21,6 +22,8 @@ interface UsersTableProps {
   users: UserData[];
   adminUsers: string[];
   loading: boolean;
+  error?: string | null;
+  diagnosticInfo?: any;
   onAdminToggle: (user: UserData) => void;
   onRowClick: (userId: string) => void;
 }
@@ -29,6 +32,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   users, 
   adminUsers, 
   loading, 
+  error,
+  diagnosticInfo,
   onAdminToggle,
   onRowClick
 }) => {
@@ -40,10 +45,81 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     );
   }
 
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Error loading users</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+        
+        {diagnosticInfo && Object.keys(diagnosticInfo).length > 0 && (
+          <div className="mt-4 p-4 bg-muted/50 rounded-md">
+            <h4 className="text-sm font-semibold mb-2">Diagnostic Information</h4>
+            <div className="text-xs space-y-1">
+              {diagnosticInfo.hasAuthSession !== undefined && (
+                <div>Auth Session: {diagnosticInfo.hasAuthSession ? 'Yes' : 'No'}</div>
+              )}
+              {diagnosticInfo.profilesQueryStatus && (
+                <div>Profiles Query Status: {diagnosticInfo.profilesQueryStatus}</div>
+              )}
+              {diagnosticInfo.profilesCount !== undefined && (
+                <div>Profiles Count: {diagnosticInfo.profilesCount}</div>
+              )}
+              {diagnosticInfo.adminQueryStatus && (
+                <div>Admin Query Status: {diagnosticInfo.adminQueryStatus}</div>
+              )}
+              {diagnosticInfo.adminCount !== undefined && (
+                <div>Admin Count: {diagnosticInfo.adminCount}</div>
+              )}
+              {diagnosticInfo.adminFallbackUsed && (
+                <div>Admin Fallback Used: Yes (Count: {diagnosticInfo.adminFallbackCount || 0})</div>
+              )}
+              {diagnosticInfo.authError && (
+                <div className="text-red-500">Auth Error: {diagnosticInfo.authError}</div>
+              )}
+              {diagnosticInfo.profilesError && (
+                <div className="text-red-500">Profiles Error: {diagnosticInfo.profilesError}</div>
+              )}
+              {diagnosticInfo.adminError && (
+                <div className="text-red-500">Admin Error: {diagnosticInfo.adminError}</div>
+              )}
+            </div>
+          </div>
+        )}
+      </Alert>
+    );
+  }
+
   if (users.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        No users found in the system
+      <div className="text-center py-8">
+        <div className="text-muted-foreground mb-4">No users found in the system</div>
+        
+        {diagnosticInfo && Object.keys(diagnosticInfo).length > 0 && (
+          <div className="mt-4 mx-auto max-w-md p-4 bg-muted/50 rounded-md text-left">
+            <h4 className="text-sm font-semibold mb-2">Diagnostic Information</h4>
+            <div className="text-xs space-y-1">
+              {diagnosticInfo.hasAuthSession !== undefined && (
+                <div>Auth Session: {diagnosticInfo.hasAuthSession ? 'Yes' : 'No'}</div>
+              )}
+              {diagnosticInfo.profilesQueryStatus && (
+                <div>Profiles Query Status: {diagnosticInfo.profilesQueryStatus}</div>
+              )}
+              {diagnosticInfo.profilesCount !== undefined && (
+                <div>Profiles Count: {diagnosticInfo.profilesCount}</div>
+              )}
+              {diagnosticInfo.adminQueryStatus && (
+                <div>Admin Query Status: {diagnosticInfo.adminQueryStatus}</div>
+              )}
+              {diagnosticInfo.adminCount !== undefined && (
+                <div>Admin Count: {diagnosticInfo.adminCount}</div>
+              )}
+              {diagnosticInfo.adminFallbackUsed && (
+                <div>Admin Fallback Used: Yes (Count: {diagnosticInfo.adminFallbackCount || 0})</div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -89,9 +165,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                 <TableCell className="text-right">
                   <AdminActionButton 
                     isAdmin={isAdmin}
-                    onClick={() => {
-                      // Instead of creating a synthetic event, just call onAdminToggle directly
-                      // This avoids the type issue with MouseEvent vs React.MouseEvent
+                    onClick={(e) => {
+                      e.stopPropagation();
                       onAdminToggle(user);
                     }}
                   />

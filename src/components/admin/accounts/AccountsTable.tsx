@@ -14,7 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { AccountData } from '@/types/admin';
-import { Mail, FileText, Home, Users as UsersIcon } from 'lucide-react';
+import { Mail, FileText, Home, Users as UsersIcon, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface AccountsTableProps {
   loading: boolean;
@@ -25,6 +26,8 @@ interface AccountsTableProps {
   itemsPerPage: number;
   totalPages: number;
   setCurrentPage: (page: number) => void;
+  error?: string | null;
+  diagnosticInfo?: any;
 }
 
 export const AccountsTable: React.FC<AccountsTableProps> = ({
@@ -35,7 +38,9 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
   filteredAccounts,
   itemsPerPage,
   totalPages,
-  setCurrentPage
+  setCurrentPage,
+  error,
+  diagnosticInfo
 }) => {
   // Calculate pagination values
   const indexOfFirstItem = (currentPage - 1) * itemsPerPage + 1;
@@ -54,6 +59,48 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
       setCurrentPage(currentPage + 1);
     }
   };
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Error loading accounts</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+        
+        {diagnosticInfo && Object.keys(diagnosticInfo).length > 0 && (
+          <div className="mt-4 p-4 bg-muted/50 rounded-md">
+            <h4 className="text-sm font-semibold mb-2">Diagnostic Information</h4>
+            <div className="text-xs space-y-1">
+              {diagnosticInfo.hasAuthSession !== undefined && (
+                <div>Auth Session: {diagnosticInfo.hasAuthSession ? 'Yes' : 'No'}</div>
+              )}
+              {diagnosticInfo.profilesQueryStatus && (
+                <div>Profiles Query Status: {diagnosticInfo.profilesQueryStatus}</div>
+              )}
+              {diagnosticInfo.profilesCount !== undefined && (
+                <div>Profiles Count: {diagnosticInfo.profilesCount}</div>
+              )}
+              {diagnosticInfo.adminQueryStatus && (
+                <div>Admin Query Status: {diagnosticInfo.adminQueryStatus}</div>
+              )}
+              {diagnosticInfo.adminCount !== undefined && (
+                <div>Admin Count: {diagnosticInfo.adminCount}</div>
+              )}
+              {diagnosticInfo.authError && (
+                <div className="text-red-500">Auth Error: {diagnosticInfo.authError}</div>
+              )}
+              {diagnosticInfo.profilesError && (
+                <div className="text-red-500">Profiles Error: {diagnosticInfo.profilesError}</div>
+              )}
+              {diagnosticInfo.adminError && (
+                <div className="text-red-500">Admin Error: {diagnosticInfo.adminError}</div>
+              )}
+            </div>
+          </div>
+        )}
+      </Alert>
+    );
+  }
 
   return (
     <div className="bg-white rounded-md shadow overflow-hidden">
@@ -83,8 +130,33 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
             ))
           ) : currentItems.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
-                No account records found.
+              <TableCell colSpan={6} className="h-24">
+                <div className="text-center">
+                  <p className="text-muted-foreground mb-4">No account records found.</p>
+                  
+                  {diagnosticInfo && Object.keys(diagnosticInfo).length > 0 && (
+                    <div className="mt-4 mx-auto max-w-md p-4 bg-muted/50 rounded-md text-left">
+                      <h4 className="text-sm font-semibold mb-2">Diagnostic Information</h4>
+                      <div className="text-xs space-y-1">
+                        {diagnosticInfo.hasAuthSession !== undefined && (
+                          <div>Auth Session: {diagnosticInfo.hasAuthSession ? 'Yes' : 'No'}</div>
+                        )}
+                        {diagnosticInfo.profilesQueryStatus && (
+                          <div>Profiles Query Status: {diagnosticInfo.profilesQueryStatus}</div>
+                        )}
+                        {diagnosticInfo.profilesCount !== undefined && (
+                          <div>Profiles Count: {diagnosticInfo.profilesCount}</div>
+                        )}
+                        {diagnosticInfo.adminQueryStatus && (
+                          <div>Admin Query Status: {diagnosticInfo.adminQueryStatus}</div>
+                        )}
+                        {diagnosticInfo.adminCount !== undefined && (
+                          <div>Admin Count: {diagnosticInfo.adminCount}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ) : (

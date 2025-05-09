@@ -6,12 +6,16 @@ import { AccountsFilterBar } from '@/components/admin/accounts/AccountsFilterBar
 import { AccountStatsCards } from '@/components/admin/accounts/AccountStatsCards';
 import { AccountsTable } from '@/components/admin/accounts/AccountsTable';
 import { useAccountsData } from '@/hooks/admin/useAccountsData';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 const AdminAccountsPage: React.FC = () => {
   const navigate = useNavigate();
   const { 
     accounts,
     loading,
+    error,
+    diagnosticInfo,
     searchQuery,
     setSearchQuery,
     currentPage,
@@ -45,6 +49,8 @@ const AdminAccountsPage: React.FC = () => {
         {/* Accounts Table */}
         <AccountsTable 
           loading={loading}
+          error={error}
+          diagnosticInfo={diagnosticInfo}
           currentItems={currentItems}
           handleViewAccount={handleViewAccount}
           currentPage={currentPage}

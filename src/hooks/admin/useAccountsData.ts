@@ -11,6 +11,8 @@ export const useAccountsData = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [adminUsers, setAdminUsers] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [diagnosticInfo, setDiagnosticInfo] = useState<any>({});
 
   // Filter accounts based on search query
   const filteredAccounts = accounts.filter(account => {
@@ -33,32 +35,50 @@ export const useAccountsData = () => {
   // Fetch accounts with related data
   const fetchAccounts = async () => {
     setLoading(true);
+    setError(null);
+    const diagnostics: any = {};
+    
     try {
       console.log('Fetching all profiles...');
       
+      // Get current auth status to help diagnose issues
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      diagnostics.hasAuthSession = !!session;
+      if (authError) {
+        diagnostics.authError = authError.message;
+      }
+      
       // First get all user profiles
-      const { data: profilesData, error: profilesError } = await supabase
+      const { data: profilesData, error: profilesError, status: profilesStatus } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
+      diagnostics.profilesQueryStatus = profilesStatus;
+      
       if (profilesError) {
+        diagnostics.profilesError = profilesError.message;
         console.error('Error fetching profiles:', profilesError);
         throw profilesError;
       }
 
       console.log('Profiles data:', profilesData?.length || 0, 'records found');
+      diagnostics.profilesCount = profilesData?.length || 0;
       
       // Get admin users separately
-      const { data: adminsData, error: adminsError } = await supabase
+      const { data: adminsData, error: adminsError, status: adminsStatus } = await supabase
         .from('admin_users')
         .select('id');
       
+      diagnostics.adminQueryStatus = adminsStatus;
+      
       if (adminsError) {
+        diagnostics.adminError = adminsError.message;
         console.error('Error fetching admin users:', adminsError);
       }
       
       console.log('Admin data:', adminsData?.length || 0, 'records found');
+      diagnostics.adminCount = adminsData?.length || 0;
         
       // Store admin user IDs in state
       const adminUserIds = adminsData?.map(admin => admin.id) || [];
@@ -66,6 +86,13 @@ export const useAccountsData = () => {
 
       if (!profilesData || profilesData.length === 0) {
         setAccounts([]);
+        setDiagnosticInfo(diagnostics);
+        
+        // No profiles found, but the query was successful
+        if (profilesStatus === 200) {
+          setError("No user profiles found in the database. You may need to create some users first.");
+        }
+        
         setLoading(false);
         return;
       }
@@ -127,8 +154,11 @@ export const useAccountsData = () => {
       
       console.log('Enhanced accounts:', enhancedAccounts.length);
       setAccounts(enhancedAccounts);
+      setDiagnosticInfo(diagnostics);
     } catch (error: any) {
       console.error('Error fetching accounts:', error);
+      setError(error.message || 'Failed to fetch accounts data');
+      setDiagnosticInfo(diagnostics);
       toast.error('Failed to fetch accounts data', {
         description: error.message
       });
@@ -150,6 +180,8 @@ export const useAccountsData = () => {
   return {
     accounts,
     loading,
+    error,
+    diagnosticInfo,
     searchQuery,
     setSearchQuery,
     currentPage,
