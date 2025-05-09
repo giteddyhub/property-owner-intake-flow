@@ -124,11 +124,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     );
   }
 
-  const handleActionClick = (e: React.MouseEvent, user: UserData) => {
-    e.stopPropagation(); // Prevent row click from being triggered
-    onAdminToggle(user);
-  };
-
   return (
     <div className="border rounded-md">
       <Table>

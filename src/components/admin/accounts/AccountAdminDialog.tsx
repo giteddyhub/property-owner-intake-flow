@@ -58,7 +58,7 @@ export const AccountAdminDialog: React.FC<AccountAdminDialogProps> = ({
 
 export const AdminActionButton: React.FC<{
   isAdmin: boolean;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;  // Updated to accept a mouse event parameter
 }> = ({ isAdmin, onClick }) => {
   return (
     <Button 
