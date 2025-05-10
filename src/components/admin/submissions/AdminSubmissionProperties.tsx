@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -13,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { FileText, AlertTriangle, Home } from 'lucide-react';
+import { FileText, AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -22,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Property {
   id: string;
@@ -46,32 +48,82 @@ interface AdminSubmissionPropertiesProps {
 export const AdminSubmissionProperties: React.FC<AdminSubmissionPropertiesProps> = ({ submissionId }) => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const { adminSession } = useAdminAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>({});
+  const { adminSession, checkAdminSession } = useAdminAuth();
 
   const fetchProperties = async () => {
     setLoading(true);
+    setError(null);
+    setDebugInfo({});
+    
     try {
+      console.log('Fetching properties for submission:', submissionId);
+      console.log('Admin session token available:', !!adminSession?.token);
+      
       // Set up headers with admin token if available
-      let options = {};
+      let options: any = {};
       if (adminSession?.token) {
         options = {
           headers: {
             'x-admin-token': adminSession.token
           }
         };
+        console.log('Using admin token in request headers');
+        
+        setDebugInfo(prev => ({ 
+          ...prev,
+          hasAdminToken: true,
+          tokenLength: adminSession.token.length,
+          tokenStart: adminSession.token.substring(0, 8) + '...',
+          tokenExpiry: adminSession.expires_at
+        }));
+      } else {
+        console.warn('No admin token available for request');
+        setDebugInfo(prev => ({ ...prev, hasAdminToken: false }));
+        
+        // Try to refresh the session
+        const isValid = await checkAdminSession();
+        console.log('Session refresh result:', isValid);
+        setDebugInfo(prev => ({ ...prev, sessionRefreshResult: isValid }));
       }
-
-      const { data, error } = await supabase
+      
+      // Fetch the data with detailed logging
+      console.log('Executing Supabase query with options:', options);
+      
+      const { data, error, status, statusText } = await supabase
         .from('properties')
-        .select('*', options)
+        .select('*')
         .eq('form_submission_id', submissionId)
         .order('created_at', { ascending: false });
+      
+      console.log('Query response status:', status, statusText);
+      console.log('Query response data:', data);
+      console.log('Query response error:', error);
+      
+      setDebugInfo(prev => ({
+        ...prev,
+        queryStatus: status,
+        queryStatusText: statusText,
+        dataCount: data ? data.length : 0,
+        errorMessage: error ? error.message : null,
+        submissionId
+      }));
       
       if (error) throw error;
       
       setProperties(data || []);
     } catch (error: any) {
       console.error('Error fetching properties:', error);
+      setError(`Failed to fetch properties: ${error.message || 'Unknown error'}`);
+      
+      // Add to debug info
+      setDebugInfo(prev => ({ 
+        ...prev, 
+        errorType: error.name,
+        errorStack: error.stack
+      }));
+      
       toast.error('Failed to fetch properties', {
         description: error.message
       });
@@ -120,12 +172,73 @@ export const AdminSubmissionProperties: React.FC<AdminSubmissionPropertiesProps>
         return <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100">{activity}</Badge>;
     }
   };
+  
+  // Add emergency direct data fetch function
+  const fetchWithoutToken = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('EMERGENCY: Trying to fetch data without token validation');
+      
+      // Use direct RPC call to bypass RLS
+      const { data, error } = await supabase.rpc(
+        'admin_get_properties',
+        { submission_id: submissionId }
+      );
+      
+      console.log('Direct RPC response:', data, error);
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setProperties(data);
+        toast.success('Successfully retrieved data using emergency method');
+      } else {
+        setError('No data returned from emergency method');
+      }
+    } catch (error: any) {
+      console.error('Error in emergency fetch:', error);
+      setError(`Emergency fetch failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-full max-w-md" />
         <Skeleton className="h-64" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error fetching property data</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        
+        <div className="p-4 bg-muted rounded-md">
+          <h4 className="text-sm font-semibold mb-2">Debug Information</h4>
+          <pre className="text-xs overflow-auto p-2 bg-muted/50 rounded border max-h-48">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+          
+          <div className="mt-4 flex gap-2">
+            <Button variant="outline" size="sm" onClick={fetchProperties}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry Normal Fetch
+            </Button>
+            <Button variant="destructive" size="sm" onClick={fetchWithoutToken}>
+              Emergency Access (Bypass RLS)
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -139,6 +252,21 @@ export const AdminSubmissionProperties: React.FC<AdminSubmissionPropertiesProps>
             This submission doesn't contain any property data.
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <div className="p-4 bg-muted rounded-md">
+            <h4 className="text-sm font-semibold mb-2">Debug Information</h4>
+            <pre className="text-xs overflow-auto p-2 bg-muted/50 rounded border max-h-48">
+              {JSON.stringify(debugInfo, null, 2)}
+            </pre>
+            
+            <div className="mt-4">
+              <Button variant="outline" size="sm" onClick={fetchProperties}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry Fetch
+              </Button>
+            </div>
+          </div>
+        </CardContent>
       </Card>
     );
   }

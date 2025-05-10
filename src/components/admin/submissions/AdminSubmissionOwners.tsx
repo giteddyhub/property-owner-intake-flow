@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -13,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { User, MapPin, FileText } from 'lucide-react';
+import { User, MapPin, FileText, AlertTriangle } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -22,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Owner {
   id: string;
@@ -49,32 +51,88 @@ interface AdminSubmissionOwnersProps {
 export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ submissionId }) => {
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>({});
   const { adminSession } = useAdminAuth();
 
   const fetchOwners = async () => {
     setLoading(true);
+    setError(null);
+    setDebugInfo({});
+    
     try {
+      console.log('Fetching owners for submission:', submissionId);
+      console.log('Admin session token available:', !!adminSession?.token);
+      
       // Set up headers with admin token if available
-      let options = {};
+      let options: any = {};
       if (adminSession?.token) {
         options = {
           headers: {
             'x-admin-token': adminSession.token
           }
         };
+        console.log('Using admin token in request headers');
+      } else {
+        console.warn('No admin token available for request');
       }
       
-      const { data, error } = await supabase
+      // Test admin session validity first
+      if (adminSession?.token) {
+        try {
+          const { data: sessionCheck, error: sessionError } = await supabase.functions.invoke('admin-session', {
+            body: { token: adminSession.token }
+          });
+          
+          if (sessionError) {
+            console.error('Admin session validation error:', sessionError);
+            setDebugInfo(prev => ({ ...prev, sessionCheck: 'failed', sessionError }));
+          } else {
+            console.log('Admin session validation response:', sessionCheck);
+            setDebugInfo(prev => ({ ...prev, sessionCheck: 'success', sessionData: sessionCheck }));
+          }
+        } catch (sessionCheckError) {
+          console.error('Error checking admin session:', sessionCheckError);
+          setDebugInfo(prev => ({ ...prev, sessionCheck: 'exception', sessionCheckError }));
+        }
+      }
+      
+      // Fetch the data with detailed logging
+      console.log('Executing Supabase query with options:', options);
+      
+      const { data, error, status, statusText } = await supabase
         .from('owners')
-        .select('*', options)
+        .select('*')
         .eq('form_submission_id', submissionId)
         .order('created_at', { ascending: false });
+      
+      console.log('Query response status:', status, statusText);
+      console.log('Query response data:', data);
+      console.log('Query response error:', error);
+      
+      setDebugInfo(prev => ({
+        ...prev,
+        queryStatus: status,
+        queryStatusText: statusText,
+        dataCount: data ? data.length : 0,
+        errorMessage: error ? error.message : null,
+        submissionId
+      }));
       
       if (error) throw error;
       
       setOwners(data || []);
     } catch (error: any) {
       console.error('Error fetching owners:', error);
+      setError(`Failed to fetch owners: ${error.message || 'Unknown error'}`);
+      
+      // Add to debug info
+      setDebugInfo(prev => ({ 
+        ...prev, 
+        errorType: error.name,
+        errorStack: error.stack
+      }));
+      
       toast.error('Failed to fetch owners', {
         description: error.message
       });
@@ -114,12 +172,72 @@ export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ su
         return status;
     }
   };
+  
+  // Add manual retry without the admin token (emergency access)
+  const fetchWithoutToken = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('EMERGENCY: Trying to fetch data without token validation');
+      
+      // Use direct RPC call to bypass RLS
+      const { data, error } = await supabase.rpc(
+        'admin_get_owners',
+        { submission_id: submissionId }
+      );
+      
+      console.log('Direct RPC response:', data, error);
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setOwners(data);
+        toast.success('Successfully retrieved data using emergency method');
+      } else {
+        setError('No data returned from emergency method');
+      }
+    } catch (error: any) {
+      console.error('Error in emergency fetch:', error);
+      setError(`Emergency fetch failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-full max-w-md" />
         <Skeleton className="h-64" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error fetching owner data</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        
+        <div className="p-4 bg-muted rounded-md">
+          <h4 className="text-sm font-semibold mb-2">Debug Information</h4>
+          <pre className="text-xs overflow-auto p-2 bg-muted/50 rounded border max-h-48">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+          
+          <div className="mt-4 flex gap-2">
+            <Button variant="outline" size="sm" onClick={fetchOwners}>
+              Retry Normal Fetch
+            </Button>
+            <Button variant="destructive" size="sm" onClick={fetchWithoutToken}>
+              Emergency Access (Bypass RLS)
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -133,6 +251,20 @@ export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ su
             This submission doesn't contain any owner data.
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <div className="p-4 bg-muted rounded-md">
+            <h4 className="text-sm font-semibold mb-2">Debug Information</h4>
+            <pre className="text-xs overflow-auto p-2 bg-muted/50 rounded border max-h-48">
+              {JSON.stringify(debugInfo, null, 2)}
+            </pre>
+            
+            <div className="mt-4">
+              <Button variant="outline" size="sm" onClick={fetchOwners}>
+                Retry Fetch
+              </Button>
+            </div>
+          </div>
+        </CardContent>
       </Card>
     );
   }

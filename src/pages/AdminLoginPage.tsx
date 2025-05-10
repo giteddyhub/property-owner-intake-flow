@@ -9,11 +9,13 @@ import { AdminLoginForm } from '@/components/admin/auth/AdminLoginForm';
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import { AdminClearSessionButton } from '@/components/admin/auth/AdminClearSessionButton';
+import { AdminSessionDebugger } from '@/components/admin/auth/AdminSessionDebugger';
 
 const AdminLoginPage: React.FC = () => {
   const { user } = useAuth();
   const { admin, isAdminAuthenticated, isAdminLoading, resetVerification } = useAdminAuth();
   const navigate = useNavigate();
+  const [showDebugger, setShowDebugger] = React.useState(false);
 
   // Reset verification state when accessing login page
   React.useEffect(() => {
@@ -73,7 +75,7 @@ const AdminLoginPage: React.FC = () => {
           <p className="text-xs text-muted-foreground text-center w-full mb-4">
             This area is restricted to authorized administrators only.
           </p>
-          <div className="text-center w-full">
+          <div className="text-center w-full space-y-4">
             <Button 
               variant="outline" 
               size="sm" 
@@ -85,7 +87,19 @@ const AdminLoginPage: React.FC = () => {
             >
               Having trouble? Reset Session
             </Button>
+            
+            <div>
+              <Button 
+                variant="link" 
+                size="sm"
+                onClick={() => setShowDebugger(!showDebugger)}
+              >
+                {showDebugger ? 'Hide Diagnostics' : 'Show Diagnostics'}
+              </Button>
+            </div>
           </div>
+          
+          {showDebugger && <AdminSessionDebugger />}
         </CardFooter>
       </Card>
     </div>
