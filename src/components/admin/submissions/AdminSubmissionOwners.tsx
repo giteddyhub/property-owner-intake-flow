@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -181,8 +180,9 @@ export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ su
     try {
       console.log('EMERGENCY: Trying to fetch data without token validation');
       
-      // Use direct RPC call to bypass RLS - explicitly type the return value
-      const { data, error } = await supabase.rpc<Owner[]>(
+      // Use direct RPC call to bypass RLS with proper type parameters
+      // First parameter is input type, second is return type
+      const { data, error } = await supabase.rpc<{submission_id: string}, Owner[]>(
         'admin_get_owners',
         { submission_id: submissionId }
       );
@@ -192,6 +192,7 @@ export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ su
       if (error) throw error;
       
       if (data && Array.isArray(data) && data.length > 0) {
+        // Now TypeScript knows data is Owner[]
         setOwners(data);
         toast.success('Successfully retrieved data using emergency method');
       } else {

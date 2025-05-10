@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       }
     }
     
-    // Check if admin_get functions are available
+    // Check if admin_get functions are available and test them
     if (action === 'check_admin_functions') {
       try {
         // Get list of available functions
@@ -132,8 +132,37 @@ Deno.serve(async (req) => {
           );
         }
         
+        // Try to execute a test call for each function to verify they work
+        const testResults = [];
+        if (Array.isArray(functions)) {
+          for (const func of functions) {
+            try {
+              // Try calling the function with a dummy submission ID
+              const testId = '00000000-0000-0000-0000-000000000000';
+              const { data: testResult, error: testError } = await adminClient.rpc(
+                func.name,
+                { submission_id: testId }
+              );
+              
+              testResults.push({
+                function: func.name,
+                success: !testError,
+                error: testError ? testError.message : null,
+                returnType: Array.isArray(testResult) ? 'array' : typeof testResult
+              });
+            } catch (e) {
+              testResults.push({
+                function: func.name,
+                success: false,
+                error: e.message,
+                exception: true
+              });
+            }
+          }
+        }
+        
         return new Response(
-          JSON.stringify({ functions }),
+          JSON.stringify({ functions, testResults }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } catch (e) {
@@ -143,6 +172,54 @@ Deno.serve(async (req) => {
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+    }
+    
+    // Generate SQL for admin function
+    if (action === 'generate_admin_get_function') {
+      const { table, filter_column } = params;
+      
+      if (!table || !filter_column) {
+        return new Response(
+          JSON.stringify({ error: 'Missing required parameters (table and filter_column)' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Get table definition
+      const { data: tableInfo, error: tableError } = await adminClient.rpc(
+        'pg_get_table_def', 
+        { table_name: table }
+      );
+      
+      if (tableError) {
+        return new Response(
+          JSON.stringify({ error: `Failed to get table definition: ${tableError.message}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Generate SQL for function
+      const functionName = `admin_get_${table}`;
+      const sql = `
+CREATE OR REPLACE FUNCTION public.${functionName}(submission_id uuid)
+RETURNS SETOF public.${table}
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT * FROM public.${table}
+  WHERE ${filter_column} = submission_id
+  ORDER BY created_at DESC;
+$$;
+`;
+      
+      return new Response(
+        JSON.stringify({ 
+          sql,
+          table: table,
+          tableInfo: tableInfo 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     
     return new Response(

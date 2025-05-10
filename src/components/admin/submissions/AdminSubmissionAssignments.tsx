@@ -149,8 +149,9 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
     try {
       console.log('EMERGENCY: Trying to fetch assignment data without token validation');
       
-      // Use direct RPC call to bypass RLS with correct type
-      const { data, error } = await supabase.rpc<any[]>(
+      // Use direct RPC call to bypass RLS with correct type parameters
+      // First parameter is input type, second is return type
+      const { data, error } = await supabase.rpc<{submission_id: string}, Assignment[]>(
         'admin_get_assignments',
         { submission_id: submissionId }
       );
@@ -160,8 +161,7 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
       if (error) throw error;
       
       if (data && Array.isArray(data) && data.length > 0) {
-        // Need to join with owner and property data separately since we're using a direct RPC call
-        // This will at least get the basic assignment data
+        // Now TypeScript knows data is Assignment[]
         setAssignments(data);
         toast.success('Successfully retrieved assignment data using emergency method');
       } else {
