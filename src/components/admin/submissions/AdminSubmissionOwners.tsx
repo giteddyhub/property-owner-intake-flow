@@ -181,8 +181,8 @@ export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ su
     try {
       console.log('EMERGENCY: Trying to fetch data without token validation');
       
-      // Use direct RPC call to bypass RLS
-      const { data, error } = await supabase.rpc(
+      // Use direct RPC call to bypass RLS - explicitly type the return value
+      const { data, error } = await supabase.rpc<Owner[]>(
         'admin_get_owners',
         { submission_id: submissionId }
       );
@@ -191,7 +191,7 @@ export const AdminSubmissionOwners: React.FC<AdminSubmissionOwnersProps> = ({ su
       
       if (error) throw error;
       
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         setOwners(data);
         toast.success('Successfully retrieved data using emergency method');
       } else {

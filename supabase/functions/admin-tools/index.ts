@@ -71,61 +71,78 @@ Deno.serve(async (req) => {
         );
       }
       
-      // Check if the token exists in admin_sessions table
-      const { data: sessionData, error: sessionError } = await adminClient
-        .from('admin_sessions')
-        .select('id, admin_id, expires_at, created_at')
-        .eq('token', token)
-        .single();
+      try {
+        // First use the validate_admin_token_details function
+        const { data: tokenDetails, error: tokenDetailsError } = await adminClient.rpc(
+          'validate_admin_token_details',
+          { token }
+        );
         
-      if (sessionError) {
-        console.error('Error validating session:', sessionError);
+        if (tokenDetailsError) {
+          console.error('Error validating token details:', tokenDetailsError);
+          return new Response(
+            JSON.stringify({ 
+              valid: false,
+              error: 'Failed to validate token details',
+              details: tokenDetailsError
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // Return the full token details
+        return new Response(
+          JSON.stringify({
+            valid: tokenDetails.valid,
+            details: tokenDetails,
+            timestamp: new Date().toISOString()
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (e) {
+        console.error('Unexpected error in token validation:', e);
         return new Response(
           JSON.stringify({ 
-            error: 'Failed to validate session',
-            details: sessionError 
+            valid: false,
+            error: 'Exception during validation',
+            details: e.message
           }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      if (!sessionData) {
-        return new Response(
-          JSON.stringify({ valid: false, reason: 'No matching session found' }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
-      // Check if session is expired
-      const now = new Date();
-      const expires = new Date(sessionData.expires_at);
-      const isExpired = expires < now;
-      
-      // Get admin details
-      const { data: adminData, error: adminError } = await adminClient
-        .from('admin_credentials')
-        .select('id, email, full_name')
-        .eq('id', sessionData.admin_id)
-        .single();
+    }
+    
+    // Check if admin_get functions are available
+    if (action === 'check_admin_functions') {
+      try {
+        // Get list of available functions
+        const { data: functions, error: functionsError } = await adminClient.rpc(
+          'pg_get_funcs', 
+          { pattern: 'admin_get_%' }
+        );
         
-      if (adminError) {
-        console.error('Error fetching admin details:', adminError);
+        if (functionsError) {
+          console.error('Error listing functions:', functionsError);
+          return new Response(
+            JSON.stringify({ 
+              error: 'Failed to list admin functions',
+              details: functionsError
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        return new Response(
+          JSON.stringify({ functions }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (e) {
+        console.error('Unexpected error checking functions:', e);
+        return new Response(
+          JSON.stringify({ error: 'Exception checking functions', details: e.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-      
-      return new Response(
-        JSON.stringify({
-          valid: !isExpired,
-          session: {
-            id: sessionData.id,
-            created_at: sessionData.created_at,
-            expires_at: sessionData.expires_at,
-            is_expired: isExpired,
-            time_remaining: isExpired ? 'Expired' : `${Math.round((expires.getTime() - now.getTime()) / (60 * 1000))} minutes`
-          },
-          admin: adminData || null
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
     
     return new Response(

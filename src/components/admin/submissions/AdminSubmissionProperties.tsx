@@ -181,8 +181,8 @@ export const AdminSubmissionProperties: React.FC<AdminSubmissionPropertiesProps>
     try {
       console.log('EMERGENCY: Trying to fetch data without token validation');
       
-      // Use direct RPC call to bypass RLS
-      const { data, error } = await supabase.rpc(
+      // Use direct RPC call to bypass RLS - explicitly type the return value
+      const { data, error } = await supabase.rpc<Property[]>(
         'admin_get_properties',
         { submission_id: submissionId }
       );
@@ -191,7 +191,7 @@ export const AdminSubmissionProperties: React.FC<AdminSubmissionPropertiesProps>
       
       if (error) throw error;
       
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         setProperties(data);
         toast.success('Successfully retrieved data using emergency method');
       } else {

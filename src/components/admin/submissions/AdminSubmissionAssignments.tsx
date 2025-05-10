@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Link, User, Home, AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Link as LinkIcon, RefreshCw, User, Home } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -25,18 +25,22 @@ import {
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// Define the shape of an assignment record
 interface Assignment {
   id: string;
-  property_id: string;
   owner_id: string;
+  property_id: string;
   ownership_percentage: number;
   resident_at_property: boolean;
   resident_from_date: string | null;
   resident_to_date: string | null;
   tax_credits: number | null;
+  created_at: string;
+  // Joined fields
   owner_first_name?: string;
   owner_last_name?: string;
   property_label?: string;
+  property_address?: string;
 }
 
 interface AdminSubmissionAssignmentsProps {
@@ -68,110 +72,52 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
           }
         };
         console.log('Using admin token in request headers');
-        
-        // Add token info to debug data
-        setDebugInfo(prev => ({
-          ...prev,
-          hasAdminToken: true,
-          tokenLength: adminSession.token.length,
-          tokenStart: adminSession.token.substring(0, 8) + '...'
-        }));
       } else {
         console.warn('No admin token available for request');
-        setDebugInfo(prev => ({ ...prev, hasAdminToken: false }));
       }
+
+      // Fetch the data with detailed logging
+      console.log('Executing Supabase query with options:', options);
       
-      // First get assignments
-      console.log('Executing assignments query with options:', options);
-      const { data: assignmentsData, error: assignmentsError, status, statusText } = await supabase
+      const { data, error, status, statusText } = await supabase
         .from('owner_property_assignments')
-        .select('*')
-        .eq('form_submission_id', submissionId);
+        .select(`
+          *,
+          owners:owner_id (first_name, last_name),
+          properties:property_id (label, address_street, address_comune)
+        `)
+        .eq('form_submission_id', submissionId)
+        .order('created_at', { ascending: false });
       
-      console.log('Assignments query response status:', status, statusText);
-      console.log('Assignments query response data:', assignmentsData);
-      console.log('Assignments query response error:', assignmentsError);
+      console.log('Query response status:', status, statusText);
+      console.log('Query response data:', data);
+      console.log('Query response error:', error);
       
       setDebugInfo(prev => ({
         ...prev,
         queryStatus: status,
         queryStatusText: statusText,
-        dataCount: assignmentsData ? assignmentsData.length : 0,
-        errorMessage: assignmentsError ? assignmentsError.message : null,
+        dataCount: data ? data.length : 0,
+        errorMessage: error ? error.message : null,
         submissionId
       }));
       
-      if (assignmentsError) throw assignmentsError;
+      if (error) throw error;
       
-      if (!assignmentsData || assignmentsData.length === 0) {
-        setAssignments([]);
-        setLoading(false);
-        return;
-      }
+      // Transform the data to include the joined fields
+      const transformedData = (data || []).map(item => {
+        return {
+          ...item,
+          owner_first_name: item.owners?.first_name || 'Unknown',
+          owner_last_name: item.owners?.last_name || 'Owner',
+          property_label: item.properties?.label || 'Unknown Property',
+          property_address: item.properties ? 
+            `${item.properties.address_street}, ${item.properties.address_comune}` : 
+            'No address'
+        };
+      });
       
-      // Fetch owner and property details for each assignment
-      const enhancedAssignments = await Promise.all(
-        assignmentsData.map(async (assignment) => {
-          // Get owner info with error handling
-          let ownerData = null;
-          try {
-            const { data, error } = await supabase
-              .from('owners')
-              .select('first_name, last_name')
-              .eq('id', assignment.owner_id)
-              .single();
-              
-            if (error) {
-              console.error(`Error fetching owner ${assignment.owner_id}:`, error);
-              setDebugInfo(prev => ({ 
-                ...prev, 
-                ownerErrors: [...(prev.ownerErrors || []), {
-                  id: assignment.owner_id,
-                  error: error.message
-                }]
-              }));
-            } else {
-              ownerData = data;
-            }
-          } catch (error) {
-            console.error(`Exception fetching owner ${assignment.owner_id}:`, error);
-          }
-          
-          // Get property info with error handling
-          let propertyData = null;
-          try {
-            const { data, error } = await supabase
-              .from('properties')
-              .select('label')
-              .eq('id', assignment.property_id)
-              .single();
-              
-            if (error) {
-              console.error(`Error fetching property ${assignment.property_id}:`, error);
-              setDebugInfo(prev => ({ 
-                ...prev, 
-                propertyErrors: [...(prev.propertyErrors || []), {
-                  id: assignment.property_id,
-                  error: error.message
-                }]
-              }));
-            } else {
-              propertyData = data;
-            }
-          } catch (error) {
-            console.error(`Exception fetching property ${assignment.property_id}:`, error);
-          }
-          
-          return {
-            ...assignment,
-            owner_first_name: ownerData?.first_name,
-            owner_last_name: ownerData?.last_name,
-            property_label: propertyData?.label
-          };
-        })
-      );
-      
-      setAssignments(enhancedAssignments);
+      setAssignments(transformedData);
     } catch (error: any) {
       console.error('Error fetching assignments:', error);
       setError(`Failed to fetch assignments: ${error.message || 'Unknown error'}`);
@@ -194,110 +140,33 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
   useEffect(() => {
     fetchAssignments();
   }, [submissionId, adminSession]);
-
-  // Format the date range for residency
-  const formatResidencyPeriod = (assignment: Assignment) => {
-    if (!assignment.resident_at_property) return 'Not Resident';
-    
-    if (assignment.resident_from_date && assignment.resident_to_date) {
-      return `${format(new Date(assignment.resident_from_date), 'MMM dd, yyyy')} - ${format(new Date(assignment.resident_to_date), 'MMM dd, yyyy')}`;
-    }
-    
-    if (assignment.resident_from_date) {
-      return `From ${format(new Date(assignment.resident_from_date), 'MMM dd, yyyy')}`;
-    }
-    
-    if (assignment.resident_to_date) {
-      return `Until ${format(new Date(assignment.resident_to_date), 'MMM dd, yyyy')}`;
-    }
-    
-    return 'Full Year';
-  };
   
-  // Emergency fetch without RLS
+  // Add manual retry without the admin token (emergency access)
   const fetchWithoutToken = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      console.log('EMERGENCY: Trying to fetch assignments without token validation');
+      console.log('EMERGENCY: Trying to fetch assignment data without token validation');
       
-      // Use the admin-tools edge function to fetch data
-      const { data: response, error: funcError } = await supabase.functions.invoke('admin-tools', {
-        body: { 
-          action: 'direct_fetch', 
-          params: { 
-            table: 'owner_property_assignments',
-            id_column: 'form_submission_id',
-            id_value: submissionId,
-            orderBy: { column: 'created_at', ascending: false }
-          } 
-        }
-      });
-      
-      if (funcError) throw funcError;
-      
-      if (!response || !response.data || !response.data.length) {
-        setError('No assignments found with emergency method');
-        return;
-      }
-      
-      // Now enhance with owner and property data
-      const assignmentsWithDetails = await Promise.all(
-        response.data.map(async (assignment: any) => {
-          // Get owner info with error handling
-          let ownerData = null;
-          try {
-            const { data: ownerResponse } = await supabase.functions.invoke('admin-tools', {
-              body: { 
-                action: 'direct_fetch', 
-                params: { 
-                  table: 'owners',
-                  id_column: 'id',
-                  id_value: assignment.owner_id
-                } 
-              }
-            });
-            
-            if (ownerResponse?.data?.length) {
-              ownerData = ownerResponse.data[0];
-            }
-          } catch (error) {
-            console.error(`Error fetching owner ${assignment.owner_id}:`, error);
-          }
-          
-          // Get property info with error handling
-          let propertyData = null;
-          try {
-            const { data: propertyResponse } = await supabase.functions.invoke('admin-tools', {
-              body: { 
-                action: 'direct_fetch', 
-                params: { 
-                  table: 'properties',
-                  id_column: 'id',
-                  id_value: assignment.property_id
-                } 
-              }
-            });
-            
-            if (propertyResponse?.data?.length) {
-              propertyData = propertyResponse.data[0];
-            }
-          } catch (error) {
-            console.error(`Error fetching property ${assignment.property_id}:`, error);
-          }
-          
-          return {
-            ...assignment,
-            owner_first_name: ownerData?.first_name,
-            owner_last_name: ownerData?.last_name,
-            property_label: propertyData?.label
-          };
-        })
+      // Use direct RPC call to bypass RLS with correct type
+      const { data, error } = await supabase.rpc<any[]>(
+        'admin_get_assignments',
+        { submission_id: submissionId }
       );
       
-      setAssignments(assignmentsWithDetails);
-      toast.success('Successfully retrieved assignments using emergency method');
+      console.log('Direct RPC response:', data, error);
+      
+      if (error) throw error;
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        // Need to join with owner and property data separately since we're using a direct RPC call
+        // This will at least get the basic assignment data
+        setAssignments(data);
+        toast.success('Successfully retrieved assignment data using emergency method');
+      } else {
+        setError('No assignment data returned from emergency method');
+      }
     } catch (error: any) {
       console.error('Error in emergency fetch:', error);
       setError(`Emergency fetch failed: ${error.message}`);
@@ -332,7 +201,7 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
           
           <div className="mt-4 flex gap-2">
             <Button variant="outline" size="sm" onClick={fetchAssignments}>
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className="h-4 w-4 mr-2" />
               Retry Normal Fetch
             </Button>
             <Button variant="destructive" size="sm" onClick={fetchWithoutToken}>
@@ -362,7 +231,7 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
             
             <div className="mt-4">
               <Button variant="outline" size="sm" onClick={fetchAssignments}>
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Fetch
               </Button>
             </div>
@@ -377,6 +246,7 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Assignments ({assignments.length})</h3>
         <Button variant="outline" size="sm" onClick={fetchAssignments}>
+          <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
@@ -386,9 +256,8 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
           <TableRow>
             <TableHead>Owner</TableHead>
             <TableHead>Property</TableHead>
-            <TableHead>Ownership</TableHead>
+            <TableHead className="hidden lg:table-cell">Ownership</TableHead>
             <TableHead className="hidden md:table-cell">Residency</TableHead>
-            <TableHead className="hidden lg:table-cell">Tax Credits</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -398,21 +267,29 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
               <TableCell>
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span>
-                    {assignment.owner_first_name} {assignment.owner_last_name || '(Unknown)'}
-                  </span>
+                  <div>
+                    <div className="font-medium">
+                      {assignment.owner_first_name} {assignment.owner_last_name}
+                    </div>
+                    <div className="text-xs text-muted-foreground font-mono">
+                      {assignment.owner_id.substring(0, 8)}...
+                    </div>
+                  </div>
                 </div>
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Home className="h-4 w-4 text-muted-foreground" />
-                  <span>{assignment.property_label || '(Unknown Property)'}</span>
+                  <div>
+                    <div className="font-medium">{assignment.property_label}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {assignment.property_address}
+                    </div>
+                  </div>
                 </div>
               </TableCell>
-              <TableCell>
-                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-                  {assignment.ownership_percentage}%
-                </Badge>
+              <TableCell className="hidden lg:table-cell">
+                <Badge variant="outline">{assignment.ownership_percentage}%</Badge>
               </TableCell>
               <TableCell className="hidden md:table-cell">
                 {assignment.resident_at_property ? (
@@ -420,24 +297,15 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
                     Resident
                   </Badge>
                 ) : (
-                  <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100">
-                    Not Resident
+                  <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
+                    Non-Resident
                   </Badge>
-                )}
-                <div className="text-xs text-muted-foreground mt-1">
-                  {formatResidencyPeriod(assignment)}
-                </div>
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {assignment.tax_credits ? (
-                  <div className="font-medium">€{assignment.tax_credits.toLocaleString()}</div>
-                ) : (
-                  <span className="text-muted-foreground text-sm">None</span>
                 )}
               </TableCell>
               <TableCell>
                 <Button variant="outline" size="sm">
-                  View Details
+                  <LinkIcon className="h-4 w-4 mr-2" />
+                  Details
                 </Button>
               </TableCell>
             </TableRow>
