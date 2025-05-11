@@ -60,6 +60,98 @@ Deno.serve(async (req) => {
       );
     }
     
+    // Direct table insertion using admin client
+    if (action === 'direct_insert') {
+      const { table, data: insertData } = params;
+      
+      if (!table || !insertData) {
+        return new Response(
+          JSON.stringify({ error: 'Missing required parameters' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      const { data, error } = await adminClient
+        .from(table)
+        .insert(insertData)
+        .select();
+      
+      if (error) {
+        console.error(`Error inserting into ${table}:`, error);
+        return new Response(
+          JSON.stringify({ error: `Failed to insert into ${table}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ data }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Direct table update using admin client
+    if (action === 'direct_update') {
+      const { table, id_column, id_value, data: updateData } = params;
+      
+      if (!table || !id_column || !id_value || !updateData) {
+        return new Response(
+          JSON.stringify({ error: 'Missing required parameters' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      const { data, error } = await adminClient
+        .from(table)
+        .update(updateData)
+        .eq(id_column, id_value)
+        .select();
+      
+      if (error) {
+        console.error(`Error updating ${table}:`, error);
+        return new Response(
+          JSON.stringify({ error: `Failed to update ${table}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ data }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Direct table deletion using admin client
+    if (action === 'direct_delete') {
+      const { table, id_column, id_value } = params;
+      
+      if (!table || !id_column || !id_value) {
+        return new Response(
+          JSON.stringify({ error: 'Missing required parameters' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      const { data, error } = await adminClient
+        .from(table)
+        .delete()
+        .eq(id_column, id_value)
+        .select();
+      
+      if (error) {
+        console.error(`Error deleting from ${table}:`, error);
+        return new Response(
+          JSON.stringify({ error: `Failed to delete from ${table}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ data }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     // Run diagnostics on admin session
     if (action === 'validate_admin_session') {
       const { token } = params;

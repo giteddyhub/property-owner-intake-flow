@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -88,31 +87,38 @@ export const AdminSubmissionProperties: React.FC<AdminSubmissionPropertiesProps>
         setDebugInfo(prev => ({ ...prev, sessionRefreshResult: isValid }));
       }
       
-      // Fetch the data with detailed logging
-      console.log('Executing Supabase query with options:', options);
+      // Use the admin-tools edge function to fetch data
+      const { data: response, error: fnError } = await supabase.functions.invoke('admin-tools', {
+        body: {
+          action: 'direct_fetch',
+          params: {
+            table: 'properties',
+            id_column: 'form_submission_id',
+            id_value: submissionId,
+            orderBy: { column: 'created_at', ascending: false }
+          }
+        }
+      });
       
-      const { data, error, status, statusText } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('form_submission_id', submissionId)
-        .order('created_at', { ascending: false });
+      console.log('Edge function response:', response);
       
-      console.log('Query response status:', status, statusText);
-      console.log('Query response data:', data);
-      console.log('Query response error:', error);
+      if (fnError) {
+        console.error('Edge function error:', fnError);
+        throw new Error(`Edge function error: ${fnError.message}`);
+      }
+      
+      if (!response || !response.data) {
+        throw new Error('No data returned from edge function');
+      }
       
       setDebugInfo(prev => ({
         ...prev,
-        queryStatus: status,
-        queryStatusText: statusText,
-        dataCount: data ? data.length : 0,
-        errorMessage: error ? error.message : null,
+        edgeFunctionResponse: response,
+        dataCount: response.data ? response.data.length : 0,
         submissionId
       }));
       
-      if (error) throw error;
-      
-      setProperties(data || []);
+      setProperties(response.data || []);
     } catch (error: any) {
       console.error('Error fetching properties:', error);
       setError(`Failed to fetch properties: ${error.message || 'Unknown error'}`);
@@ -179,22 +185,23 @@ export const AdminSubmissionProperties: React.FC<AdminSubmissionPropertiesProps>
     setError(null);
     
     try {
-      console.log('EMERGENCY: Trying to fetch data without token validation');
+      console.log('EMERGENCY: Trying to fetch data using admin-tools edge function');
       
-      // Use direct RPC call to bypass RLS with proper type parameters
-      // First parameter is input type, second is return type
-      const { data, error } = await supabase.rpc<{submission_id: string}, Property[]>(
-        'admin_get_properties',
-        { submission_id: submissionId }
-      );
+      const { data: response, error: fnError } = await supabase.functions.invoke('admin-tools', {
+        body: {
+          action: 'direct_fetch',
+          params: {
+            table: 'properties',
+            id_column: 'form_submission_id',
+            id_value: submissionId
+          }
+        }
+      });
       
-      console.log('Direct RPC response:', data, error);
+      if (fnError) throw fnError;
       
-      if (error) throw error;
-      
-      if (data && Array.isArray(data) && data.length > 0) {
-        // Now TypeScript knows data is Property[]
-        setProperties(data);
+      if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+        setProperties(response.data);
         toast.success('Successfully retrieved data using emergency method');
       } else {
         setError('No data returned from emergency method');

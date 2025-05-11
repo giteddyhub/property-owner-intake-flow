@@ -76,43 +76,79 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
         console.warn('No admin token available for request');
       }
 
-      // Fetch the data with detailed logging
-      console.log('Executing Supabase query with options:', options);
+      // Use the admin-tools edge function to fetch data
+      const { data: response, error: fnError } = await supabase.functions.invoke('admin-tools', {
+        body: {
+          action: 'direct_fetch',
+          params: {
+            table: 'owner_property_assignments',
+            id_column: 'form_submission_id',
+            id_value: submissionId,
+            orderBy: { column: 'created_at', ascending: false }
+          }
+        }
+      });
       
-      const { data, error, status, statusText } = await supabase
-        .from('owner_property_assignments')
-        .select(`
-          *,
-          owners:owner_id (first_name, last_name),
-          properties:property_id (label, address_street, address_comune)
-        `)
-        .eq('form_submission_id', submissionId)
-        .order('created_at', { ascending: false });
+      console.log('Edge function response:', response);
       
-      console.log('Query response status:', status, statusText);
-      console.log('Query response data:', data);
-      console.log('Query response error:', error);
+      if (fnError) {
+        console.error('Edge function error:', fnError);
+        throw new Error(`Edge function error: ${fnError.message}`);
+      }
+      
+      if (!response || !response.data) {
+        throw new Error('No data returned from edge function');
+      }
       
       setDebugInfo(prev => ({
         ...prev,
-        queryStatus: status,
-        queryStatusText: statusText,
-        dataCount: data ? data.length : 0,
-        errorMessage: error ? error.message : null,
+        edgeFunctionResponse: response,
+        dataCount: response.data ? response.data.length : 0,
         submissionId
       }));
       
-      if (error) throw error;
-      
       // Transform the data to include the joined fields
-      const transformedData = (data || []).map(item => {
+      const rawAssignments = response.data || [];
+      
+      // Fetch additional data for owners and properties
+      const ownerIds = [...new Set(rawAssignments.map(a => a.owner_id))];
+      const propertyIds = [...new Set(rawAssignments.map(a => a.property_id))];
+      
+      // Get owner details
+      const { data: ownersData } = await supabase
+        .from('owners')
+        .select('id, first_name, last_name')
+        .in('id', ownerIds);
+      
+      // Get property details
+      const { data: propertiesData } = await supabase
+        .from('properties')
+        .select('id, label, address_street, address_comune')
+        .in('id', propertyIds);
+      
+      // Create lookup maps
+      const ownerMap = (ownersData || []).reduce((acc, owner) => {
+        acc[owner.id] = owner;
+        return acc;
+      }, {} as Record<string, any>);
+      
+      const propertyMap = (propertiesData || []).reduce((acc, property) => {
+        acc[property.id] = property;
+        return acc;
+      }, {} as Record<string, any>);
+      
+      // Transform the data
+      const transformedData = rawAssignments.map(item => {
+        const owner = ownerMap[item.owner_id] || {};
+        const property = propertyMap[item.property_id] || {};
+        
         return {
           ...item,
-          owner_first_name: item.owners?.first_name || 'Unknown',
-          owner_last_name: item.owners?.last_name || 'Owner',
-          property_label: item.properties?.label || 'Unknown Property',
-          property_address: item.properties ? 
-            `${item.properties.address_street}, ${item.properties.address_comune}` : 
+          owner_first_name: owner.first_name || 'Unknown',
+          owner_last_name: owner.last_name || 'Owner',
+          property_label: property.label || 'Unknown Property',
+          property_address: property.address_street && property.address_comune ? 
+            `${property.address_street}, ${property.address_comune}` : 
             'No address'
         };
       });
@@ -147,22 +183,24 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
     setError(null);
     
     try {
-      console.log('EMERGENCY: Trying to fetch assignment data without token validation');
+      console.log('EMERGENCY: Trying to fetch assignment data using admin-tools edge function');
       
-      // Use direct RPC call to bypass RLS with correct type parameters
-      // First parameter is input type, second is return type
-      const { data, error } = await supabase.rpc<{submission_id: string}, Assignment[]>(
-        'admin_get_assignments',
-        { submission_id: submissionId }
-      );
+      const { data: response, error: fnError } = await supabase.functions.invoke('admin-tools', {
+        body: {
+          action: 'direct_fetch',
+          params: {
+            table: 'owner_property_assignments',
+            id_column: 'form_submission_id',
+            id_value: submissionId
+          }
+        }
+      });
       
-      console.log('Direct RPC response:', data, error);
+      if (fnError) throw fnError;
       
-      if (error) throw error;
-      
-      if (data && Array.isArray(data) && data.length > 0) {
-        // Now TypeScript knows data is Assignment[]
-        setAssignments(data);
+      if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+        // Process and transform data as needed
+        setAssignments(response.data);
         toast.success('Successfully retrieved assignment data using emergency method');
       } else {
         setError('No assignment data returned from emergency method');
