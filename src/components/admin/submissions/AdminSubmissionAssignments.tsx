@@ -111,20 +111,20 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
       const rawAssignments = response.data || [];
       
       // Fetch additional data for owners and properties
-      const ownerIds = [...new Set(rawAssignments.map(a => a.owner_id))];
-      const propertyIds = [...new Set(rawAssignments.map(a => a.property_id))];
+      const ownerIds = [...new Set(rawAssignments.map((a: Assignment) => a.owner_id))];
+      const propertyIds = [...new Set(rawAssignments.map((a: Assignment) => a.property_id))];
       
       // Get owner details
       const { data: ownersData } = await supabase
         .from('owners')
         .select('id, first_name, last_name')
-        .in('id', ownerIds);
+        .in('id', ownerIds as string[]);
       
       // Get property details
       const { data: propertiesData } = await supabase
         .from('properties')
         .select('id, label, address_street, address_comune')
-        .in('id', propertyIds);
+        .in('id', propertyIds as string[]);
       
       // Create lookup maps
       const ownerMap = (ownersData || []).reduce((acc, owner) => {
@@ -138,7 +138,7 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
       }, {} as Record<string, any>);
       
       // Transform the data
-      const transformedData = rawAssignments.map(item => {
+      const transformedData = rawAssignments.map((item: Assignment) => {
         const owner = ownerMap[item.owner_id] || {};
         const property = propertyMap[item.property_id] || {};
         
