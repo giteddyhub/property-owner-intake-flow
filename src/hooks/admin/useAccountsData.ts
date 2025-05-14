@@ -41,20 +41,7 @@ export const useAccountsData = () => {
     const diagnostics: any = {};
     
     try {
-      console.log('Fetching all profiles...');
-      
-      // Set up headers with admin token if available
-      let options = {};
-      if (adminSession?.token) {
-        options = {
-          headers: {
-            'x-admin-token': adminSession.token
-          }
-        };
-        console.log('Using admin token for authentication');
-      } else {
-        console.warn('No admin token available');
-      }
+      console.log('Fetching all profiles using admin tools edge function...');
       
       // Get current auth status to help diagnose issues
       const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -63,112 +50,63 @@ export const useAccountsData = () => {
         diagnostics.authError = authError.message;
       }
       
-      // First get all user profiles
-      const { data: profilesData, error: profilesError, status: profilesStatus } = await supabase
-        .from('profiles')
-        .select('*', options)
-        .order('created_at', { ascending: false });
-
-      diagnostics.profilesQueryStatus = profilesStatus;
-      
-      if (profilesError) {
-        diagnostics.profilesError = profilesError.message;
-        console.error('Error fetching profiles:', profilesError);
-        throw profilesError;
-      }
-
-      console.log('Profiles data:', profilesData?.length || 0, 'records found');
-      diagnostics.profilesCount = profilesData?.length || 0;
-      
-      // Get admin users separately
-      const { data: adminsData, error: adminsError, status: adminsStatus } = await supabase
-        .from('admin_users')
-        .select('id', options);
-      
-      diagnostics.adminQueryStatus = adminsStatus;
-      
-      if (adminsError) {
-        diagnostics.adminError = adminsError.message;
-        console.error('Error fetching admin users:', adminsError);
+      // Set up headers with admin token if available
+      const options: any = {};
+      if (adminSession?.token) {
+        options.headers = {
+          'x-admin-token': adminSession.token
+        };
+        console.log('Using admin token for authentication');
+      } else {
+        console.warn('No admin token available');
+        diagnostics.noAdminToken = true;
       }
       
-      console.log('Admin data:', adminsData?.length || 0, 'records found');
-      diagnostics.adminCount = adminsData?.length || 0;
+      // Call the admin-tools edge function instead of direct database access
+      const { data, error: functionError } = await supabase.functions.invoke('admin-tools', {
+        body: { 
+          action: 'fetch_admin_users'
+        },
+        headers: options.headers
+      });
+      
+      if (functionError) {
+        diagnostics.functionError = functionError.message;
+        console.error('Error calling admin-tools function:', functionError);
+        throw new Error(`Edge function error: ${functionError.message}`);
+      }
+      
+      if (!data) {
+        throw new Error('No data returned from admin-tools function');
+      }
+      
+      // Update diagnostics with information from the function response
+      diagnostics.profileCount = data.profileCount || 0;
+      diagnostics.adminCount = data.adminCount || 0;
+      diagnostics.edgeFunctionSuccess = true;
+      
+      if (data.error) {
+        throw new Error(`Edge function reported error: ${data.error}`);
+      }
+      
+      // Get the profiles data from response
+      const profilesData = data.data || [];
+      console.log('Profiles data:', profilesData.length, 'records found');
+      
+      // Extract admin user IDs
+      const adminUserIds = profilesData
+        .filter(profile => profile.is_admin)
+        .map(profile => profile.id);
         
-      // Store admin user IDs in state
-      const adminUserIds = adminsData?.map(admin => admin.id) || [];
       setAdminUsers(adminUserIds);
-
-      if (!profilesData || profilesData.length === 0) {
-        setAccounts([]);
-        setDiagnosticInfo(diagnostics);
-        
-        // No profiles found, but the query was successful
-        if (profilesStatus === 200) {
-          setError("No user profiles found in the database. You may need to create some users first.");
-        }
-        
-        setLoading(false);
-        return;
-      }
-
-      // Fetch additional information for each account
-      const enhancedAccounts = await Promise.all(
-        profilesData.map(async (profile) => {
-          try {
-            // Count submissions
-            const { count: submissionsCount, error: submissionsError } = await supabase
-              .from('form_submissions')
-              .select('*', { ...options, count: 'exact', head: true })
-              .eq('user_id', profile.id);
-            
-            if (submissionsError) {
-              console.error('Error fetching submissions count:', submissionsError);
-            }
-            
-            // Count properties
-            const { count: propertiesCount, error: propertiesError } = await supabase
-              .from('properties')
-              .select('*', { ...options, count: 'exact', head: true })
-              .eq('user_id', profile.id);
-            
-            if (propertiesError) {
-              console.error('Error fetching properties count:', propertiesError);
-            }
-            
-            // Count owners
-            const { count: ownersCount, error: ownersError } = await supabase
-              .from('owners')
-              .select('*', { ...options, count: 'exact', head: true })
-              .eq('user_id', profile.id);
-            
-            if (ownersError) {
-              console.error('Error fetching owners count:', ownersError);
-            }
-            
-            return {
-              ...profile,
-              submissions_count: submissionsCount || 0,
-              properties_count: propertiesCount || 0,
-              owners_count: ownersCount || 0,
-              is_admin: adminUserIds.includes(profile.id)
-            };
-          } catch (error) {
-            console.error(`Error enhancing profile ${profile.id}:`, error);
-            // Return the profile with default counts if there's an error
-            return {
-              ...profile,
-              submissions_count: 0,
-              properties_count: 0,
-              owners_count: 0,
-              is_admin: adminUserIds.includes(profile.id)
-            };
-          }
-        })
-      );
       
-      console.log('Enhanced accounts:', enhancedAccounts.length);
-      setAccounts(enhancedAccounts);
+      // Set accounts directly from enhanced profiles data
+      setAccounts(profilesData);
+      
+      if (profilesData.length === 0) {
+        setError("No user profiles found in the database. You may need to create some users first.");
+      }
+      
       setDiagnosticInfo(diagnostics);
     } catch (error: any) {
       console.error('Error fetching accounts:', error);

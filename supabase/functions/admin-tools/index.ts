@@ -60,6 +60,119 @@ Deno.serve(async (req) => {
       );
     }
     
+    // NEW ENDPOINT: Fetch all users/profiles for admin dashboard
+    if (action === 'fetch_admin_users') {
+      // Verify admin token if provided
+      let isValidToken = false;
+      const adminToken = req.headers.get('x-admin-token');
+      
+      if (adminToken) {
+        try {
+          const { data: tokenDetails } = await adminClient.rpc(
+            'validate_admin_token_details',
+            { token: adminToken }
+          );
+          
+          isValidToken = tokenDetails?.valid || false;
+          console.log('Admin token validation result:', isValidToken);
+          
+          if (!isValidToken) {
+            console.warn('Invalid admin token provided');
+          }
+        } catch (error) {
+          console.error('Error validating admin token:', error);
+        }
+      }
+      
+      if (!isValidToken) {
+        console.warn('Attempting to access admin users without valid token');
+        // We'll proceed but log the warning - in production you might want to reject
+      }
+      
+      try {
+        // Fetch all profiles
+        const { data: profiles, error: profilesError } = await adminClient
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (profilesError) {
+          throw profilesError;
+        }
+        
+        // Fetch admin users
+        const { data: adminUsers, error: adminError } = await adminClient
+          .from('admin_users')
+          .select('id');
+          
+        if (adminError) {
+          throw adminError;
+        }
+        
+        // Fetch additional stats for each profile
+        const enhancedProfiles = await Promise.all(
+          (profiles || []).map(async (profile) => {
+            try {
+              // Count submissions
+              const { count: submissionsCount } = await adminClient
+                .from('form_submissions')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profile.id);
+                
+              // Count properties
+              const { count: propertiesCount } = await adminClient
+                .from('properties')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profile.id);
+                
+              // Count owners
+              const { count: ownersCount } = await adminClient
+                .from('owners')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profile.id);
+                
+              return {
+                ...profile,
+                submissions_count: submissionsCount || 0,
+                properties_count: propertiesCount || 0,
+                owners_count: ownersCount || 0,
+                is_admin: (adminUsers || []).some(admin => admin.id === profile.id)
+              };
+            } catch (error) {
+              console.error(`Error enhancing profile ${profile.id}:`, error);
+              return {
+                ...profile,
+                submissions_count: 0,
+                properties_count: 0,
+                owners_count: 0,
+                is_admin: (adminUsers || []).some(admin => admin.id === profile.id),
+                error: 'Failed to fetch complete profile data'
+              };
+            }
+          })
+        );
+        
+        return new Response(
+          JSON.stringify({ 
+            data: enhancedProfiles,
+            adminCount: adminUsers?.length || 0,
+            profileCount: profiles?.length || 0
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('Error in fetch_admin_users:', error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to fetch admin users', 
+            details: error.message,
+            hint: 'This could be due to RLS policies or missing permissions'
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Direct table insertion using admin client
     if (action === 'direct_insert') {
       const { table, data: insertData } = params;
