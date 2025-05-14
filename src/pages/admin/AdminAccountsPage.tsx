@@ -53,7 +53,7 @@ const AdminAccountsPage: React.FC = () => {
             />
           </div>
           <Button variant="outline" onClick={handleRefresh} className="ml-4">
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
         </div>
