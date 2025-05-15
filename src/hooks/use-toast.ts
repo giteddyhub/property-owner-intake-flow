@@ -1,66 +1,48 @@
 
-import { toast as sonnerToast, type ToastT, type ExternalToast } from "sonner";
-import React from "react";
+import { ReactNode } from "react";
+import { toast as sonnerToast, type Toast } from "sonner";
 
-export type ToastProps = React.ComponentPropsWithoutRef<typeof sonnerToast>;
+export interface ToastT extends Toast {
+  title?: ReactNode;
+  description?: ReactNode;
+  action?: ReactNode;
+  type?: "success" | "info" | "warning" | "error";
+}
 
-// Modified toast function that includes common toast methods
-const toast = Object.assign(
-  function toast({
-    type,
-    title,
+export function toast(props: ToastT) {
+  const { title, description, action, type, ...options } = props;
+  
+  const toastOptions: Toast = {
+    ...options
+  };
+  
+  // Map type to style if provided
+  if (type) {
+    switch (type) {
+      case "error":
+        toastOptions.style = { backgroundColor: "var(--destructive)", color: "var(--destructive-foreground)" };
+        break;
+      case "warning":
+        toastOptions.style = { backgroundColor: "var(--warning)", color: "var(--warning-foreground)" };
+        break;
+      case "info":
+        toastOptions.style = { backgroundColor: "var(--info)", color: "var(--info-foreground)" };
+        break;
+      case "success":
+        toastOptions.style = { backgroundColor: "var(--success)", color: "var(--success-foreground)" };
+        break;
+    }
+  }
+  
+  return sonnerToast(title as string, {
     description,
     action,
-    ...props
-  }: Omit<ToastT, 'id'> & {
-    title?: React.ReactNode
-    description?: React.ReactNode
-    action?: React.ReactNode
-  }) {
-    // Create a common props object that includes everything passed
-    const toastProps = {
-      description,
-      action,
-      ...props,
-    };
-
-    switch (type) {
-      case "success":
-        return sonnerToast.success(title, toastProps);
-      case "info":
-        return sonnerToast.info(title, toastProps);
-      case "warning":
-        return sonnerToast.warning(title, toastProps);
-      case "error":
-        return sonnerToast.error(title, toastProps);
-      default:
-        return sonnerToast(title, toastProps);
-    }
-  },
-  {
-    // Add direct access to the sonnerToast methods
-    success: sonnerToast.success,
-    error: sonnerToast.error,
-    info: sonnerToast.info,
-    warning: sonnerToast.warning,
-    promise: sonnerToast.promise,
-    loading: sonnerToast.loading,
-    dismiss: sonnerToast.dismiss
-  }
-);
-
-export { toast };
+    ...toastOptions
+  });
+}
 
 export const useToast = () => {
   return {
-    toast,
-    dismiss: sonnerToast.dismiss,
-    error: sonnerToast.error,
-    success: sonnerToast.success,
-    info: sonnerToast.info,
-    warning: sonnerToast.warning,
-    promise: sonnerToast.promise,
-    loading: sonnerToast.loading,
-    custom: sonnerToast
+    toast
   };
 };

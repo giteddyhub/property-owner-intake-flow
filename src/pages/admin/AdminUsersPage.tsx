@@ -59,8 +59,8 @@ const AdminUsersPage: React.FC = () => {
     const success = await toggleAdminStatus(userId, isUserAdmin, userName);
     if (success) {
       setAdminDialogOpen(false);
-      // Refresh the users list after a brief delay to allow the database to update
-      setTimeout(() => fetchUsers(), 300);
+      // After successful toggle, immediately refresh the users list
+      fetchUsers();
     }
   };
 

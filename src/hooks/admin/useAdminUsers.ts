@@ -246,8 +246,15 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
           throw error;
         }
         
-        // Update local state
+        // Update local state immediately
         setAdminUsers(prevAdmins => prevAdmins.filter(id => id !== userId));
+        
+        // Update the users array to reflect the admin status change
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === userId ? { ...user, is_admin: false } : user
+          )
+        );
         
         toast({
           title: "Admin Status Removed",
@@ -266,8 +273,15 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
           throw error;
         }
         
-        // Update local state
+        // Update local state immediately
         setAdminUsers(prevAdmins => [...prevAdmins, userId]);
+        
+        // Update the users array to reflect the admin status change
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === userId ? { ...user, is_admin: true } : user
+          )
+        );
         
         toast({
           title: "Admin Status Granted",
@@ -281,7 +295,6 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
     } catch (error: any) {
       console.error('Error toggling admin status:', error);
       
-      // Fix for TypeScript error: replacing variant with type
       toast({
         title: "Operation Failed",
         description: `Failed to update admin status: ${error.message}`,
