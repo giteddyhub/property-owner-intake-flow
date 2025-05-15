@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -279,11 +280,14 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
       return true;
     } catch (error: any) {
       console.error('Error toggling admin status:', error);
+      
+      // Fix for TypeScript error: replacing variant with type
       toast({
         title: "Operation Failed",
         description: `Failed to update admin status: ${error.message}`,
-        variant: "destructive"
+        type: "error"
       });
+      
       return false;
     }
   };
