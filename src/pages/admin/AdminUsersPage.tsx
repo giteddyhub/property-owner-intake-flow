@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Filter, RefreshCw } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Dialog,
@@ -18,7 +18,8 @@ import { UsersTable } from '@/components/admin/users/UsersTable';
 import { CreateAdminUserForm } from '@/components/admin/users/CreateAdminUserForm';
 import { useAdminUsers, UserRole } from '@/hooks/admin/useAdminUsers';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
+import { ActionsToolbar } from '@/components/dashboard/ActionsToolbar';
 
 const AdminUsersPage: React.FC = () => {
   const { 
@@ -81,7 +82,10 @@ const AdminUsersPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    toast.info("Refreshing users data...");
+    toast({
+      title: "Refreshing Data",
+      description: "Fetching the latest users data..."
+    });
     fetchUsers();
   };
 
@@ -91,10 +95,7 @@ const AdminUsersPage: React.FC = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">{getPageTitle()}</h2>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleRefresh} className="mr-2">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Data
-            </Button>
+            <ActionsToolbar onRefresh={handleRefresh} />
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
               <DialogTrigger asChild>
                 <Button>

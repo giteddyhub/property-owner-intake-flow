@@ -50,6 +50,64 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
         console.warn('No admin token available');
       }
       
+      // Try using the admin-tools edge function first
+      try {
+        const { data: adminToolsData, error: adminToolsError } = await supabase.functions.invoke('admin-tools', {
+          body: { 
+            action: 'fetch_admin_users'
+          },
+          headers: adminSession?.token ? {
+            'x-admin-token': adminSession.token
+          } : undefined
+        });
+        
+        if (!adminToolsError && adminToolsData) {
+          console.log('Successfully fetched users data from admin-tools function');
+          diagnostics.dataSource = 'admin-tools';
+          diagnostics.usersCount = adminToolsData?.data?.length || 0;
+          
+          // Set the admin users
+          const adminIds = adminToolsData?.data
+            ?.filter((user: any) => user.is_admin)
+            .map((user: any) => user.id) || [];
+            
+          setAdminUsers(adminIds);
+          
+          // Filter users based on role if needed
+          let filteredUsers = adminToolsData?.data || [];
+          
+          if (filter === 'admin') {
+            filteredUsers = filteredUsers.filter((user: any) => user.is_admin);
+          } else if (filter === 'user') {
+            filteredUsers = filteredUsers.filter((user: any) => !user.is_admin);
+          }
+          
+          setUsers(filteredUsers);
+          
+          if (filteredUsers.length === 0) {
+            if (filter === 'admin') {
+              setError('No admin users found. You can create one using the "Create Admin User" button.');
+            } else if (filter === 'user') {
+              setError('No regular users found in the system.');
+            } else {
+              setError('No users found matching the current filter.');
+            }
+          }
+          
+          setLoading(false);
+          return;
+        } else {
+          console.warn('Error fetching from admin-tools:', adminToolsError);
+          diagnostics.adminToolsError = adminToolsError?.message || 'Unknown error';
+        }
+      } catch (edgeFunctionError: any) {
+        console.error('Failed to call admin-tools edge function:', edgeFunctionError);
+        diagnostics.edgeFunctionError = edgeFunctionError.message;
+      }
+      
+      // If edge function failed, fall back to direct queries
+      console.log('Falling back to direct profile queries...');
+      
       // First get profiles
       const { data: profilesData, error: profilesError, status: profilesStatus } = await supabase
         .from('profiles')
@@ -96,7 +154,7 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
       // Set the filtered users
       setUsers(filteredUsers);
       
-      // If we still don't have any users, set an error
+      // If we still don't have any users, try the mockup data as last resort
       if (filteredUsers.length === 0) {
         if (profilesData && profilesData.length > 0) {
           // We have profiles but none match the filter
@@ -105,15 +163,46 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
           } else if (filter === 'user') {
             setError('No regular users found in the system.');
           } else {
-            // This shouldn't happen if we have profiles data
             setError('No users found matching the current filter.');
           }
         } else {
-          // No profiles found at all
-          setError('No user profiles found in the database.');
+          // Create mock data if we have no profiles at all
+          const mockUsers = [
+            {
+              id: 'mock-1',
+              full_name: 'Admin User',
+              email: 'admin@example.com',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            },
+            {
+              id: 'mock-2',
+              full_name: 'Test User',
+              email: 'user@example.com',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ];
+          
+          if (filter === 'admin') {
+            setUsers([mockUsers[0]]);
+            setAdminUsers(['mock-1']);
+            diagnostics.usingMockData = true;
+            diagnostics.mockDataFilter = 'admin';
+          } else if (filter === 'user') {
+            setUsers([mockUsers[1]]);
+            setAdminUsers(['mock-1']);
+            diagnostics.usingMockData = true;
+            diagnostics.mockDataFilter = 'user';
+          } else {
+            setUsers(mockUsers);
+            setAdminUsers(['mock-1']);
+            diagnostics.usingMockData = true;
+            diagnostics.mockDataFilter = 'all';
+          }
+          
+          setError('Using mock data. No real user profiles found in the database.');
         }
-      } else {
-        setError(null);
       }
       
       // Set diagnostic information for debugging
