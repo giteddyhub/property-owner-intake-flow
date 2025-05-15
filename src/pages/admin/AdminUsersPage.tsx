@@ -42,6 +42,7 @@ const AdminUsersPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const handleOpenAdminDialog = (user: any) => {
+    console.log("Opening admin dialog for user:", user);
     setSelectedUser(user);
     setAdminDialogOpen(true);
   };
@@ -53,15 +54,23 @@ const AdminUsersPage: React.FC = () => {
     const isUserAdmin = isAdmin(userId);
     const userName = selectedUser.full_name || selectedUser.email;
     
+    console.log(`Toggling admin status for ${userName} (${userId}). Current status: ${isUserAdmin ? 'admin' : 'user'}`);
+    
     const success = await toggleAdminStatus(userId, isUserAdmin, userName);
     if (success) {
       setAdminDialogOpen(false);
+      // Refresh the users list after a brief delay to allow the database to update
+      setTimeout(() => fetchUsers(), 300);
     }
   };
 
   const handleCreateAdminSuccess = (userData: any) => {
     addUser(userData);
     setFormOpen(false);
+    toast({
+      title: "Admin Created",
+      description: "New admin user has been created successfully"
+    });
   };
 
   const handleRowClick = (userId: string) => {

@@ -1,7 +1,6 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 
 export type UserRole = 'admin' | 'user' | 'all';
@@ -232,6 +231,8 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
   // Toggle admin status for a user
   const toggleAdminStatus = async (userId: string, currentAdminStatus: boolean, userName: string) => {
     try {
+      console.log(`Attempting to ${currentAdminStatus ? 'remove' : 'grant'} admin status for user ${userId} (${userName})`);
+      
       if (currentAdminStatus) {
         // Remove admin privileges
         const { error } = await supabase
@@ -239,28 +240,50 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all') => {
           .delete()
           .eq('id', userId);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error removing admin status:', error);
+          throw error;
+        }
         
         // Update local state
         setAdminUsers(prevAdmins => prevAdmins.filter(id => id !== userId));
-        toast.success(`Admin privileges removed from ${userName}`);
+        
+        toast({
+          title: "Admin Status Removed",
+          description: `Admin privileges removed from ${userName}`,
+        });
+        
+        console.log(`Successfully removed admin status from ${userName}`);
       } else {
         // Grant admin privileges
         const { error } = await supabase
           .from('admin_users')
           .insert([{ id: userId }]);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error granting admin status:', error);
+          throw error;
+        }
         
         // Update local state
         setAdminUsers(prevAdmins => [...prevAdmins, userId]);
-        toast.success(`Admin privileges granted to ${userName}`);
+        
+        toast({
+          title: "Admin Status Granted",
+          description: `Admin privileges granted to ${userName}`,
+        });
+        
+        console.log(`Successfully granted admin status to ${userName}`);
       }
       
       return true;
     } catch (error: any) {
       console.error('Error toggling admin status:', error);
-      toast.error(`Failed to update admin status: ${error.message}`);
+      toast({
+        title: "Operation Failed",
+        description: `Failed to update admin status: ${error.message}`,
+        variant: "destructive"
+      });
       return false;
     }
   };

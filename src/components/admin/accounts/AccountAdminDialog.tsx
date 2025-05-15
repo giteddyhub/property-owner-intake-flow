@@ -27,6 +27,12 @@ export const AccountAdminDialog: React.FC<AccountAdminDialogProps> = ({
   accountName,
   isAdmin
 }) => {
+  const handleConfirm = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log(`Confirming admin status change for ${accountName}. Current status: ${isAdmin ? 'admin' : 'user'}`);
+    onConfirm();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -46,7 +52,7 @@ export const AccountAdminDialog: React.FC<AccountAdminDialogProps> = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button 
             variant={isAdmin ? "destructive" : "default"}
-            onClick={onConfirm}
+            onClick={handleConfirm}
           >
             {isAdmin ? "Remove Admin" : "Grant Admin"}
           </Button>
@@ -58,13 +64,19 @@ export const AccountAdminDialog: React.FC<AccountAdminDialogProps> = ({
 
 export const AdminActionButton: React.FC<{
   isAdmin: boolean;
-  onClick: (e: React.MouseEvent) => void;  // Updated to accept a mouse event parameter
+  onClick: (e: React.MouseEvent) => void;
 }> = ({ isAdmin, onClick }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log(`Admin action button clicked. Current status: ${isAdmin ? 'admin' : 'user'}`);
+    onClick(e);
+  };
+
   return (
     <Button 
       variant={isAdmin ? "outline" : "default"}
       size="sm"
-      onClick={onClick}
+      onClick={handleClick}
     >
       {isAdmin ? (
         <>
