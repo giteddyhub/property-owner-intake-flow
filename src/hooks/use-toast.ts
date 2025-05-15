@@ -1,19 +1,30 @@
 
 import { ReactNode } from "react";
-import { toast as sonnerToast, type Toast as SonnerToast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 
-export interface ToastT extends SonnerToast {
+// Define our own Toast type based on sonner's parameters
+export interface ToastT {
   title?: ReactNode;
   description?: ReactNode;
   action?: ReactNode;
   type?: "success" | "info" | "warning" | "error";
+  id?: string;
+  dismissible?: boolean;
+  duration?: number;
+  position?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "top-center" | "bottom-center";
+  icon?: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  onAutoClose?: (id: string) => void;
+  onDismiss?: (id: string) => void;
+  onClose?: (id: string) => void;
 }
 
 // Create a custom toast function with methods
 const customToast = (props: ToastT) => {
   const { title, description, action, type, ...options } = props;
   
-  const toastOptions: SonnerToast = {
+  const toastOptions: any = {
     ...options
   };
   
