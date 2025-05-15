@@ -1,18 +1,19 @@
 
 import { ReactNode } from "react";
-import { toast as sonnerToast, type Toast } from "sonner";
+import { toast as sonnerToast, type Toast as SonnerToast } from "sonner";
 
-export interface ToastT extends Toast {
+export interface ToastT extends SonnerToast {
   title?: ReactNode;
   description?: ReactNode;
   action?: ReactNode;
   type?: "success" | "info" | "warning" | "error";
 }
 
-export function toast(props: ToastT) {
+// Create a custom toast function with methods
+const customToast = (props: ToastT) => {
   const { title, description, action, type, ...options } = props;
   
-  const toastOptions: Toast = {
+  const toastOptions: SonnerToast = {
     ...options
   };
   
@@ -39,7 +40,15 @@ export function toast(props: ToastT) {
     action,
     ...toastOptions
   });
-}
+};
+
+// Add custom methods to make it compatible with previous usage
+export const toast = Object.assign(customToast, {
+  error: (message: string) => sonnerToast.error(message),
+  success: (message: string) => sonnerToast.success(message),
+  info: (message: string) => sonnerToast.info(message),
+  warning: (message: string) => sonnerToast.warning(message)
+});
 
 export const useToast = () => {
   return {

@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { LoadingScreen } from '@/components/dashboard/LoadingScreen';
 import { useDashboardData } from '@/hooks/useDashboardData';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 const DashboardPage = () => {
   const { user, signOut, checkAdminStatus } = useAuth();
