@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useFormContext } from '@/contexts/FormContext';
@@ -6,11 +5,14 @@ import { ArrowRight, Home, Calendar, Euro, Percent, FileText, ScanFace, LayoutDa
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Link } from 'react-router-dom';
-
 const WelcomeStep: React.FC = () => {
-  const { nextStep } = useFormContext();
-  const { user, isAdmin } = useAuth();
-  
+  const {
+    nextStep
+  } = useFormContext();
+  const {
+    user,
+    isAdmin
+  } = useAuth();
   const handleGetStarted = () => {
     nextStep();
     window.scrollTo({
@@ -18,16 +20,13 @@ const WelcomeStep: React.FC = () => {
       behavior: 'smooth'
     });
   };
-  
-  return (
-    <div className="text-center max-w-2xl mx-auto py-6 animate-fade-in">
+  return <div className="text-center max-w-2xl mx-auto py-6 animate-fade-in">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-form-400 mb-2 relative inline-block">Italian Tax Profile</h1>
         <h2 className="text-xl text-form-300 font-medium">for property owners</h2>
       </div>
       
-      {isAdmin && (
-        <div className="mb-6">
+      {isAdmin && <div className="mb-6">
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -41,8 +40,7 @@ const WelcomeStep: React.FC = () => {
               </Link>
             </CardContent>
           </Card>
-        </div>
-      )}
+        </div>}
       
       <Card className="mb-10 text-left shadow-lg border-form-200 overflow-hidden">
         <div className="bg-gradient-to-r from-form-300/10 to-form-200 py-3 px-6 border-b border-form-200">
@@ -50,10 +48,7 @@ const WelcomeStep: React.FC = () => {
         </div>
         
         <CardContent className="p-6">
-          <p className="mb-4 text-form-400/90">
-            This form will guide you through the process of registering property ownership information 
-            for tax purposes in Italy. Please have the following information ready:
-          </p>
+          <p className="mb-4 text-form-400/90">This form will guide you through the process of registering property and income ownership information for Italian tax purposes. Please have the following information ready:</p>
           
           <ul className="space-y-3 mb-6 list-none">
             <li className="flex items-start group transition-all duration-300 hover:translate-x-1">
@@ -129,8 +124,6 @@ const WelcomeStep: React.FC = () => {
         Get Started
         <ArrowRight className="h-4 w-4" />
       </Button>
-    </div>
-  );
+    </div>;
 };
-
 export default WelcomeStep;
