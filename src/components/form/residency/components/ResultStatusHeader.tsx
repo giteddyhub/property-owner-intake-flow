@@ -14,7 +14,7 @@ const ResultStatusHeader: React.FC<ResultStatusHeaderProps> = ({ status, strengt
     switch (status) {
       case 'likely-resident':
         return {
-          icon: <CheckCircle2 className="h-12 w-12 text-red-500" />,
+          icon: <XCircle className="h-12 w-12 text-red-500" />,
           title: 'Likely a Tax Resident',
           description: 'Based on your answers, you are likely to be considered a tax resident in Italy.',
           color: 'red',
@@ -22,7 +22,7 @@ const ResultStatusHeader: React.FC<ResultStatusHeaderProps> = ({ status, strengt
         };
       case 'likely-non-resident':
         return {
-          icon: <XCircle className="h-12 w-12 text-green-500" />,
+          icon: <CheckCircle2 className="h-12 w-12 text-green-500" />,
           title: 'Likely Not a Tax Resident',
           description: 'Based on your answers, you are likely not considered a tax resident in Italy.',
           color: 'green',
