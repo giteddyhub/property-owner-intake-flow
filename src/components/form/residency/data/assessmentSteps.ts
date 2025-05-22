@@ -15,7 +15,7 @@ const assessmentSteps: Record<string, AssessmentStep> = {
       { 
         id: 'no', 
         label: 'No',
-        nextStep: 'spent-183-days' 
+        nextStep: 'spent-182-days' 
       },
       { 
         id: 'dont-know', 
@@ -37,12 +37,12 @@ const assessmentSteps: Record<string, AssessmentStep> = {
       {
         id: 'no-not-registered',
         label: 'No, I am not registered',
-        nextStep: 'spent-183-days',
+        nextStep: 'spent-182-days',
       },
       {
         id: 'still-not-sure',
         label: 'I\'m still not sure',
-        nextStep: 'spent-183-days',
+        nextStep: 'spent-182-days',
       }
     ]
   },
@@ -52,30 +52,30 @@ const assessmentSteps: Record<string, AssessmentStep> = {
     description: 'Your registration date affects your tax residency status.',
     options: [
       {
-        id: 'registered-over-183',
-        label: 'I\'ve been registered for the majority of the tax period (over 183 days this year)',
+        id: 'registered-over-182',
+        label: 'I\'ve been registered for the majority of the tax period (more than 182 days this year)',
         resultStrength: 1,
         resultStatus: 'likely-resident',
       },
       {
-        id: 'registered-less-183',
-        label: 'I\'ve been registered for less than 183 days this year',
+        id: 'registered-less-182',
+        label: 'I\'ve been registered for 182 days or less this year',
         nextStep: 'civil-union',
       }
     ]
   },
-  'spent-183-days': {
-    id: 'spent-183-days',
-    question: 'Have you spent more than 183 days in Italy?',
-    description: 'The 183-day rule is one of the key criteria used to determine tax residency in Italy.',
+  'spent-182-days': {
+    id: 'spent-182-days',
+    question: 'Have you spent more than 182 days in Italy?',
+    description: 'The 182+ day rule is one of the key criteria used to determine tax residency in Italy.',
     options: [
       {
-        id: 'yes-over-183',
+        id: 'yes-over-182',
         label: 'Yes',
         nextStep: 'civil-union',
       },
       {
-        id: 'no-under-183',
+        id: 'no-under-182',
         label: 'No',
         nextStep: 'civil-union-2',
       }

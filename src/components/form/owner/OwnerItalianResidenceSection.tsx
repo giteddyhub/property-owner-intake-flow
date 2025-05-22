@@ -85,7 +85,7 @@ const OwnerItalianResidenceSection: React.FC<OwnerItalianResidenceSectionProps> 
             <StandardTooltipContent>
               <p>A person is considered an Italian tax resident if they meet at least one of these conditions:</p>
               <ul className="list-disc pl-5 mt-1 space-y-1">
-                <li>Registered with the Italian Registry Office for most of the tax period (183+ days)</li>
+                <li>Registered with the Italian Registry Office for most of the tax period (more than 182 days)</li>
                 <li>Have their habitual abode in Italy</li>
                 <li>Establish their main center of business and interests in Italy</li>
               </ul>

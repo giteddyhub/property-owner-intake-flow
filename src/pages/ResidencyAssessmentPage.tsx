@@ -36,7 +36,7 @@ const ResidencyAssessmentPage: React.FC = () => {
                     <div>
                       <h3 className="font-medium text-gray-900">Registry Office Registration</h3>
                       <p className="text-gray-600 mt-1">
-                        You are registered with the Italian Registry Office (Anagrafe) for the majority of the tax period (at least 183 days in a calendar year).
+                        You are registered with the Italian Registry Office (Anagrafe) for the majority of the tax period (more than 182 days in a calendar year).
                       </p>
                     </div>
                   </div>
@@ -78,7 +78,7 @@ const ResidencyAssessmentPage: React.FC = () => {
                     <h3 className="font-medium text-gray-900 mb-2">You likely ARE an Italian tax resident if:</h3>
                     <ul className="list-disc pl-5 space-y-2 text-gray-600">
                       <li>You're registered with the local municipality (Comune) in Italy</li>
-                      <li>You spend more than 183 days per year in Italy</li>
+                      <li>You spend more than 182 days per year in Italy</li>
                       <li>Your family lives permanently in Italy while you work abroad</li>
                       <li>You own property in Italy that serves as your primary home</li>
                       <li>You have an Italian work contract and work primarily in Italy</li>
@@ -88,7 +88,7 @@ const ResidencyAssessmentPage: React.FC = () => {
                   <div>
                     <h3 className="font-medium text-gray-900 mb-2">You likely are NOT an Italian tax resident if:</h3>
                     <ul className="list-disc pl-5 space-y-2 text-gray-600">
-                      <li>You're a foreign national who spent less than 183 days in Italy</li>
+                      <li>You're a foreign national who spent 182 days or fewer in Italy</li>
                       <li>You have no registered address in Italy</li>
                       <li>Your primary economic interests and business activities are outside Italy</li>
                       <li>You own property in Italy but it's used only for vacations</li>
