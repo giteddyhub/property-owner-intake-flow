@@ -16,10 +16,6 @@ import {
 import { AccountInfoCard } from '@/components/admin/accounts/AccountInfoCard';
 import { AccountDetailSkeleton } from '@/components/admin/accounts/AccountDetailSkeleton';
 import { AccountNotFound } from '@/components/admin/accounts/AccountNotFound';
-import { 
-  AccountAdminDialog,
-  AdminActionButton
-} from '@/components/admin/accounts/AccountAdminDialog';
 
 // Tab components
 import { AccountSubmissionsTab } from '@/components/admin/accounts/tabs/AccountSubmissionsTab';
@@ -58,7 +54,6 @@ const AdminAccountDetailPage = () => {
   const [owners, setOwners] = useState<OwnerData[]>([]);
   const [assignments, setAssignments] = useState<AssignmentData[]>([]);
   const [payments, setPayments] = useState<PaymentData[]>([]);
-  const [confirmAdminToggle, setConfirmAdminToggle] = useState(false);
   
   useEffect(() => {
     if (!id) return;
@@ -88,11 +83,11 @@ const AdminAccountDetailPage = () => {
         return;
       }
 
-      // Check if user is an admin
+      // Check if user is an admin by checking admin_credentials table
       const { data: adminData, error: adminError } = await supabase
-        .from('admin_users')
+        .from('admin_credentials')
         .select('*')
-        .eq('id', id)
+        .eq('email', profile.email)
         .maybeSingle();
         
       if (adminError) {
@@ -136,7 +131,7 @@ const AdminAccountDetailPage = () => {
         throw ownersError;
       }
       
-      // Fetch assignments with property and owner details
+      // Fetch assignments with property and owner details - fix the relationship query
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('owner_property_assignments')
         .select(`
@@ -213,40 +208,6 @@ const AdminAccountDetailPage = () => {
     }
   };
 
-  const handleToggleAdmin = async () => {
-    if (!account) return;
-    
-    try {
-      if (account.is_admin) {
-        // Remove admin privileges
-        const { error } = await supabase
-          .from('admin_users')
-          .delete()
-          .eq('id', account.id);
-          
-        if (error) throw error;
-        
-        setAccount({ ...account, is_admin: false });
-        toast.success('Admin privileges removed');
-      } else {
-        // Grant admin privileges
-        const { error } = await supabase
-          .from('admin_users')
-          .insert([{ id: account.id }]);
-          
-        if (error) throw error;
-        
-        setAccount({ ...account, is_admin: true });
-        toast.success('Admin privileges granted');
-      }
-    } catch (error: any) {
-      console.error('Error toggling admin status:', error);
-      toast.error('Failed to update admin status');
-    } finally {
-      setConfirmAdminToggle(false);
-    }
-  };
-
   // Navigate back to accounts page
   const goBackToAccounts = () => navigate('/admin/accounts');
 
@@ -274,19 +235,6 @@ const AdminAccountDetailPage = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Accounts
           </Button>
-          
-          <AdminActionButton 
-            isAdmin={account.is_admin}
-            onClick={() => setConfirmAdminToggle(true)}
-          />
-          
-          <AccountAdminDialog
-            open={confirmAdminToggle}
-            onOpenChange={setConfirmAdminToggle}
-            onConfirm={handleToggleAdmin}
-            accountName={account.full_name || account.email}
-            isAdmin={account.is_admin}
-          />
         </div>
         
         <AccountInfoCard 

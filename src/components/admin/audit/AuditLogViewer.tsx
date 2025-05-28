@@ -34,6 +34,14 @@ export const AuditLogViewer: React.FC = () => {
     return 'secondary';
   };
 
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  const handleRetry = () => {
+    refetch();
+  };
+
   if (loading) {
     return (
       <Card>
@@ -51,7 +59,7 @@ export const AuditLogViewer: React.FC = () => {
           <div className="text-center text-red-600">
             <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
             <p>Failed to load audit logs: {error}</p>
-            <Button onClick={refetch} className="mt-4">
+            <Button onClick={handleRetry} className="mt-4">
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
             </Button>
@@ -69,7 +77,7 @@ export const AuditLogViewer: React.FC = () => {
             <Shield className="h-5 w-5" />
             Admin Audit Log
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={refetch}>
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
