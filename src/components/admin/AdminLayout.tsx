@@ -12,6 +12,7 @@ import { ContextualHelp } from './help/ContextualHelp';
 import { ProgressiveLoader } from './loading/ProgressiveLoader';
 import { AdminErrorBoundary } from './error/AdminErrorBoundary';
 import { useKeyboardShortcuts } from '@/hooks/admin/useKeyboardShortcuts';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -150,19 +151,21 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, pageTitle })
   
   return (
     <AdminErrorBoundary>
-      <div className="min-h-screen bg-background flex w-full">
-        <AdminSidebar />
-        <div className="flex-1 flex flex-col">
-          <AdminHeader pageTitle={pageTitle} />
-          <div className="p-6 flex-1 overflow-auto">
-            <div className="flex items-center justify-between mb-4">
-              <AdminBreadcrumb />
-              <ContextualHelp section={getSection()} />
+      <SidebarProvider defaultOpen={true}>
+        <div className="min-h-screen bg-background flex w-full">
+          <AdminSidebar />
+          <SidebarInset className="flex-1">
+            <AdminHeader pageTitle={pageTitle} />
+            <div className="p-6 flex-1 overflow-auto">
+              <div className="flex items-center justify-between mb-4">
+                <AdminBreadcrumb />
+                <ContextualHelp section={getSection()} />
+              </div>
+              {children}
             </div>
-            {children}
-          </div>
+          </SidebarInset>
         </div>
-      </div>
+      </SidebarProvider>
     </AdminErrorBoundary>
   );
 };
