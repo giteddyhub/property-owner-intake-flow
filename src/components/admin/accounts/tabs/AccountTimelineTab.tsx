@@ -112,12 +112,12 @@ export const AccountTimelineTab: React.FC<AccountTimelineTabProps> = ({
     // Account creation milestone
     {
       id: 'account-created',
-      type: 'milestone',
+      type: 'milestone' as const,
       title: 'Account Created',
       description: 'User registered on the platform',
       date: accountCreatedAt,
       icon: <Calendar className="h-4 w-4 text-blue-600" />,
-      status: 'completed'
+      status: 'completed' as const
     },
     // Submissions
     ...submissions.map(submission => ({
