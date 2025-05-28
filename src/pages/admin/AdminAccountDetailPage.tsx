@@ -43,6 +43,10 @@ const AdminAccountDetailPage = () => {
     );
   }
 
+  // Calculate enhanced metrics
+  const hasCompletedSetup = submissions.some(s => s.is_primary_submission && s.state === 'completed');
+  const totalPaymentAmount = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
   return (
     <AdminLayout pageTitle={`Account: ${account.full_name || account.email}`}>
       <div className="p-6">
@@ -57,9 +61,13 @@ const AdminAccountDetailPage = () => {
           propertiesCount={properties.length}
           ownersCount={owners.length}
           paymentsCount={payments.length}
+          activitiesCount={activities.length}
+          hasCompletedSetup={hasCompletedSetup}
+          totalPaymentAmount={totalPaymentAmount}
         />
         
         <AccountDetailTabs
+          account={account}
           submissions={submissions}
           properties={properties}
           owners={owners}
