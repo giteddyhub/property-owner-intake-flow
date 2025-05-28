@@ -99,7 +99,7 @@ export const useAccountDetails = (id: string | undefined) => {
         is_primary_submission: submission.id === profile.primary_submission_id
       })) || [];
       
-      // Fetch user activities
+      // Fetch user activities with type casting to handle the metadata field
       const { data: activitiesData, error: activitiesError } = await supabase
         .from('user_activities')
         .select('*')
@@ -111,6 +111,12 @@ export const useAccountDetails = (id: string | undefined) => {
         console.error('Error fetching activities:', activitiesError);
         // Don't throw error for activities as it's not critical
       }
+      
+      // Convert activities data to match our UserActivityData interface
+      const typedActivities: UserActivityData[] = activitiesData?.map(activity => ({
+        ...activity,
+        metadata: (activity.metadata as any) || {}
+      })) || [];
       
       // Fetch properties
       const { data: propertiesData, error: propertiesError } = await supabase
@@ -202,7 +208,7 @@ export const useAccountDetails = (id: string | undefined) => {
       setOwners(ownersData || []);
       setAssignments(enhancedAssignments);
       setPayments(paymentsData);
-      setActivities(activitiesData || []);
+      setActivities(typedActivities);
 
       console.log('Account details loaded successfully:', {
         profile: profile.email,
@@ -212,7 +218,7 @@ export const useAccountDetails = (id: string | undefined) => {
         owners: ownersData?.length || 0,
         assignments: enhancedAssignments.length,
         payments: paymentsData.length,
-        activities: activitiesData?.length || 0
+        activities: typedActivities.length || 0
       });
 
     } catch (error: any) {
