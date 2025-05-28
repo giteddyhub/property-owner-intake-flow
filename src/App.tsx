@@ -12,7 +12,6 @@ import { AdminRoutes } from './components/routing/AdminRoutes';
 import { AdminRoute } from './components/routing/AdminRoute';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import { AdminUsersPage } from './pages/AdminUsersPage';
 import AdminAccountsPage from './pages/admin/AdminAccountsPage';
 import AdminAccountDetailPage from './pages/admin/AdminAccountDetailPage';
 import AdminSubmissionsPage from './pages/admin/AdminSubmissionsPage';
@@ -56,14 +55,6 @@ function App() {
                     element={
                       <AdminRoute>
                         <AdminDashboardPage />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/users"
-                    element={
-                      <AdminRoute>
-                        <AdminUsersPage />
                       </AdminRoute>
                     }
                   />

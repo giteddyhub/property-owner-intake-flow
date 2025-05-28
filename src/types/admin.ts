@@ -2,7 +2,7 @@
 export interface AccountData {
   id: string;
   email: string;
-  full_name: string;
+  full_name?: string; // Make this optional to match the profile data
   created_at: string;
   updated_at: string;
   submissions_count: number;

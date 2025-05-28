@@ -136,8 +136,8 @@ const AdminAccountDetailPage = () => {
         .from('owner_property_assignments')
         .select(`
           *,
-          properties:property_id (label),
-          owners:owner_id (first_name, last_name)
+          property:properties!owner_property_assignments_property_id_fkey (label),
+          owner:owners!owner_property_assignments_owner_id_fkey (first_name, last_name)
         `)
         .eq('user_id', id)
         .order('created_at', { ascending: false });
@@ -184,9 +184,9 @@ const AdminAccountDetailPage = () => {
       
       const enhancedAssignments = assignmentsData?.map(assignment => ({
         ...assignment,
-        property_label: assignment.properties?.label || 'Unknown Property',
-        owner_name: assignment.owners ? 
-          `${assignment.owners.first_name} ${assignment.owners.last_name}` : 'Unknown Owner'
+        property_label: assignment.property?.label || 'Unknown Property',
+        owner_name: assignment.owner ? 
+          `${assignment.owner.first_name} ${assignment.owner.last_name}` : 'Unknown Owner'
       })) || [];
       
       setAccount({
