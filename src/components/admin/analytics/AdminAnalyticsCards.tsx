@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AdminAnalytics } from '@/hooks/admin/useAdminAnalytics';
+import { RealTimeAnalytics } from '@/hooks/admin/useRealTimeAnalytics';
 import { Users, Home, ClipboardList, FileText, TrendingUp, UserCheck } from 'lucide-react';
 
 interface AdminAnalyticsCardsProps {
-  analytics: AdminAnalytics;
+  analytics: RealTimeAnalytics;
 }
 
 export const AdminAnalyticsCards: React.FC<AdminAnalyticsCardsProps> = ({ analytics }) => {
