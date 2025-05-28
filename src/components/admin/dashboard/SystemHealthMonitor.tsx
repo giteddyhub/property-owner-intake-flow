@@ -15,7 +15,14 @@ import {
   RefreshCw,
   Clock
 } from 'lucide-react';
-import { SystemHealth } from '@/hooks/admin/useRealTimeAnalytics';
+
+interface SystemHealth {
+  databaseStatus: 'healthy' | 'warning' | 'error';
+  apiResponseTime: number;
+  errorRate: number;
+  uptime: number;
+  lastChecked: string;
+}
 
 interface SystemHealthMonitorProps {
   systemHealth: SystemHealth;
