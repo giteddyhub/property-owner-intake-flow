@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminAccountsPage from '@/pages/admin/AdminAccountsPage';
 import AdminSubmissionDetailPage from '@/pages/admin/AdminSubmissionDetailPage';
 import AdminAccountDetailPage from '@/pages/admin/AdminAccountDetailPage';
+import AdminSettingsPage from '@/pages/admin/AdminSettingsPage';
 
 export const AppRoutes: React.FC = () => {
   const location = useLocation();
@@ -97,7 +99,7 @@ export const AppRoutes: React.FC = () => {
         <Navigate to="/admin/accounts" replace />
       } />
       
-      {/* New Accounts Routes */}
+      {/* Accounts Routes */}
       <Route path="/admin/accounts" element={
         <AdminRoutes>
           <AdminRoute>
@@ -122,10 +124,11 @@ export const AppRoutes: React.FC = () => {
         </AdminRoutes>
       } />
       
+      {/* Add the new Settings route */}
       <Route path="/admin/settings" element={
         <AdminRoutes>
           <AdminRoute>
-            <AdminDashboardPage />
+            <AdminSettingsPage />
           </AdminRoute>
         </AdminRoutes>
       } />
