@@ -1,23 +1,24 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Dashboard } from './pages/Dashboard';
-import { LoginPage } from './pages/LoginPage';
+import LoginPage from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { AuthRoutes } from './components/routing/AuthRoutes';
 import { ProtectedRoute } from './components/routing/ProtectedRoute';
 import { AdminRoutes } from './components/routing/AdminRoutes';
 import { AdminRoute } from './components/routing/AdminRoute';
-import { AdminLoginPage } from './pages/AdminLoginPage';
-import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import AdminLoginPage from './pages/AdminLoginPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
-import { AdminAccountsPage } from './pages/admin/AdminAccountsPage';
-import { AdminAccountDetailPage } from './pages/admin/AdminAccountDetailPage';
+import AdminAccountsPage from './pages/admin/AdminAccountsPage';
+import AdminAccountDetailPage from './pages/admin/AdminAccountDetailPage';
 import { AdminSubmissionsPage } from './pages/admin/AdminSubmissionsPage';
-import { AdminSubmissionDetailPage } from './pages/admin/AdminSubmissionDetailPage';
-import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
+import AdminSubmissionDetailPage from './pages/admin/AdminSubmissionDetailPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminErrorBoundary } from './components/admin/AdminErrorBoundary';
 import AdminSecurityPage from './pages/admin/AdminSecurityPage';
@@ -26,7 +27,7 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClient.Provider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
       <Router>
         <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
           <AdminRoutes>
@@ -125,7 +126,7 @@ function App() {
           </AdminRoutes>
         </ThemeProvider>
       </Router>
-    </QueryClient.Provider>
+    </QueryClientProvider>
   );
 }
 
