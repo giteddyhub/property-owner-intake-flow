@@ -20,15 +20,15 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, Filter, X, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
-import { FilterOptions } from '@/hooks/admin/useAdvancedFiltering';
+import { FilterOptions, SortByField } from '@/hooks/admin/useAdvancedFiltering';
 
 interface AdvancedFiltersProps {
   filters: FilterOptions;
   setFilters: (filters: FilterOptions) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  sortBy: string;
-  setSortBy: (sort: string) => void;
+  sortBy: SortByField;
+  setSortBy: (sort: SortByField) => void;
   sortOrder: 'asc' | 'desc';
   setSortOrder: (order: 'asc' | 'desc') => void;
   resetFilters: () => void;
@@ -168,7 +168,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             <div className="flex gap-1">
               <Select
                 value={sortBy}
-                onValueChange={setSortBy}
+                onValueChange={(value) => setSortBy(value as SortByField)}
               >
                 <SelectTrigger className="flex-1">
                   <SelectValue />

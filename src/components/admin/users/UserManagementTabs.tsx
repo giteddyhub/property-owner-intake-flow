@@ -9,7 +9,7 @@ import { UsersTable } from './UsersTable';
 import { UserEngagementAnalytics } from './UserEngagementAnalytics';
 import { UserImportExport } from './UserImportExport';
 import { UserRole } from '@/hooks/admin/useAdminUsers';
-import { FilterOptions } from '@/hooks/admin/useAdvancedFiltering';
+import { FilterOptions, SortByField } from '@/hooks/admin/useAdvancedFiltering';
 
 interface UserManagementTabsProps {
   activeTab: string;
@@ -23,8 +23,8 @@ interface UserManagementTabsProps {
   setFilters: (filters: FilterOptions) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  sortBy: string;
-  setSortBy: (sort: string) => void;
+  sortBy: SortByField;
+  setSortBy: (sort: SortByField) => void;
   sortOrder: 'asc' | 'desc';
   setSortOrder: (order: 'asc' | 'desc') => void;
   resetFilters: () => void;

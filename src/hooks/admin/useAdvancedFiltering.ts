@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { format, subDays, isAfter, isBefore } from 'date-fns';
 
@@ -19,6 +18,8 @@ export interface FilterOptions {
     to: Date | null;
   };
 }
+
+export type SortByField = 'name' | 'email' | 'created_at' | 'last_login' | 'activity';
 
 export interface UserWithMetrics {
   id: string;
@@ -45,7 +46,7 @@ export const useAdvancedFiltering = (users: any[], adminUsers: string[]) => {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'email' | 'created_at' | 'last_login' | 'activity'>('created_at');
+  const [sortBy, setSortBy] = useState<SortByField>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Enhanced users with metrics

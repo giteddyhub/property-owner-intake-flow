@@ -95,7 +95,7 @@ const AdminUsersPage: React.FC = () => {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           sortBy={sortBy}
-          setSortBy={(sort: string) => setSortBy(sort as any)}
+          setSortBy={setSortBy}
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
           resetFilters={resetFilters}
