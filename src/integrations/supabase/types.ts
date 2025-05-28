@@ -684,6 +684,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          primary_submission_id: string | null
           updated_at: string
         }
         Insert: {
@@ -691,6 +692,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          primary_submission_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -698,9 +700,18 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          primary_submission_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_primary_submission_id_fkey"
+            columns: ["primary_submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       properties: {
         Row: {
@@ -964,6 +975,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activities: {
+        Row: {
+          activity_description: string | null
+          activity_type: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          activity_description?: string | null
+          activity_type: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          activity_description?: string | null
+          activity_type?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
@@ -1057,6 +1109,17 @@ export type Database = {
           details?: Json
         }
         Returns: boolean
+      }
+      log_user_activity: {
+        Args: {
+          user_id: string
+          activity_type: string
+          activity_description?: string
+          entity_type?: string
+          entity_id?: string
+          metadata?: Json
+        }
+        Returns: string
       }
       migrate_existing_admins: {
         Args: { default_password: string }

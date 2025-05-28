@@ -9,6 +9,7 @@ export interface AccountData {
   properties_count: number;
   owners_count: number;
   is_admin?: boolean;
+  primary_submission_id?: string; // New field for tracking initial form completion
 }
 
 export interface OwnerData {
@@ -55,4 +56,28 @@ export interface PaymentData {
   stripe_payment_id: string | null;
   has_document_retrieval: boolean | null;
   created_at: string;
+}
+
+// New interface for user activities
+export interface UserActivityData {
+  id: string;
+  user_id: string;
+  activity_type: string;
+  activity_description?: string;
+  entity_type?: string;
+  entity_id?: string;
+  metadata: Record<string, any>;
+  created_at: string;
+}
+
+// Enhanced submission interface to distinguish primary submissions
+export interface SubmissionData {
+  id: string;
+  user_id: string;
+  submitted_at: string;
+  state: string;
+  pdf_generated: boolean;
+  pdf_url: string | null;
+  has_document_retrieval: boolean;
+  is_primary_submission: boolean; // New field to identify the initial form completion
 }

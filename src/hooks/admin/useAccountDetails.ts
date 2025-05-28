@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { OwnerData, PropertyData, AssignmentData, PaymentData } from '@/types/admin';
+import { OwnerData, PropertyData, AssignmentData, PaymentData, UserActivityData } from '@/types/admin';
 
 interface AccountDetails {
   id: string;
@@ -12,6 +12,7 @@ interface AccountDetails {
   created_at: string;
   updated_at: string;
   is_admin: boolean;
+  primary_submission_id?: string;
 }
 
 interface FormSubmission {
@@ -20,6 +21,7 @@ interface FormSubmission {
   state: string;
   pdf_generated: boolean;
   pdf_url: string | null;
+  is_primary_submission: boolean;
 }
 
 export const useAccountDetails = (id: string | undefined) => {
@@ -31,6 +33,7 @@ export const useAccountDetails = (id: string | undefined) => {
   const [owners, setOwners] = useState<OwnerData[]>([]);
   const [assignments, setAssignments] = useState<AssignmentData[]>([]);
   const [payments, setPayments] = useState<PaymentData[]>([]);
+  const [activities, setActivities] = useState<UserActivityData[]>([]);
 
   const fetchAccountDetails = async () => {
     if (!id) return;
@@ -47,10 +50,10 @@ export const useAccountDetails = (id: string | undefined) => {
         return;
       }
 
-      // Fetch account profile data
+      // Fetch account profile data with primary submission info
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, form_submissions!primary_submission_id(id, state)')
         .eq('id', id)
         .single();
         
@@ -76,7 +79,7 @@ export const useAccountDetails = (id: string | undefined) => {
         console.error('Error checking admin status:', adminError);
       }
       
-      // Fetch meaningful submissions (exclude tax_filing_init which are just session initializations)
+      // Fetch form submissions with enhanced logic
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('form_submissions')
         .select('*')
@@ -88,6 +91,25 @@ export const useAccountDetails = (id: string | undefined) => {
       if (submissionsError) {
         console.error('Error fetching submissions:', submissionsError);
         throw submissionsError;
+      }
+      
+      // Enhanced submissions with primary submission flag
+      const enhancedSubmissions = submissionsData?.map(submission => ({
+        ...submission,
+        is_primary_submission: submission.id === profile.primary_submission_id
+      })) || [];
+      
+      // Fetch user activities
+      const { data: activitiesData, error: activitiesError } = await supabase
+        .from('user_activities')
+        .select('*')
+        .eq('user_id', id)
+        .order('created_at', { ascending: false })
+        .limit(50); // Limit to recent activities
+        
+      if (activitiesError) {
+        console.error('Error fetching activities:', activitiesError);
+        // Don't throw error for activities as it's not critical
       }
       
       // Fetch properties
@@ -175,19 +197,22 @@ export const useAccountDetails = (id: string | undefined) => {
         ...profile,
         is_admin: !!adminData
       });
-      setSubmissions(submissionsData || []);
+      setSubmissions(enhancedSubmissions);
       setProperties(propertiesData || []);
       setOwners(ownersData || []);
       setAssignments(enhancedAssignments);
       setPayments(paymentsData);
+      setActivities(activitiesData || []);
 
       console.log('Account details loaded successfully:', {
         profile: profile.email,
-        submissions: submissionsData?.length || 0,
+        submissions: enhancedSubmissions.length || 0,
+        primarySubmission: profile.primary_submission_id,
         properties: propertiesData?.length || 0,
         owners: ownersData?.length || 0,
         assignments: enhancedAssignments.length,
-        payments: paymentsData.length
+        payments: paymentsData.length,
+        activities: activitiesData?.length || 0
       });
 
     } catch (error: any) {
@@ -213,6 +238,7 @@ export const useAccountDetails = (id: string | undefined) => {
     owners,
     assignments,
     payments,
+    activities,
     refetch: fetchAccountDetails
   };
 };

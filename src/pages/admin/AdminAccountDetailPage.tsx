@@ -20,7 +20,8 @@ const AdminAccountDetailPage = () => {
     properties,
     owners,
     assignments,
-    payments
+    payments,
+    activities
   } = useAccountDetails(id);
 
   // Navigate back to accounts page
@@ -64,6 +65,7 @@ const AdminAccountDetailPage = () => {
           owners={owners}
           assignments={assignments}
           payments={payments}
+          activities={activities}
         />
       </div>
     </AdminLayout>
