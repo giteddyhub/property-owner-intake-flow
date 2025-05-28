@@ -4,7 +4,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Search, Download, Filter } from 'lucide-react';
+import { UserPlus, Search, Download, Filter, BarChart3, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Dialog,
@@ -25,7 +25,11 @@ import {
 import { AccountAdminDialog } from '@/components/admin/accounts/AccountAdminDialog';
 import { UsersTable } from '@/components/admin/users/UsersTable';
 import { CreateAdminUserForm } from '@/components/admin/users/CreateAdminUserForm';
+import { AdvancedFilters } from '@/components/admin/users/AdvancedFilters';
+import { UserEngagementAnalytics } from '@/components/admin/users/UserEngagementAnalytics';
+import { UserImportExport } from '@/components/admin/users/UserImportExport';
 import { useAdminUsers, UserRole } from '@/hooks/admin/useAdminUsers';
+import { useAdvancedFiltering } from '@/hooks/admin/useAdvancedFiltering';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
 import { ActionsToolbar } from '@/components/dashboard/ActionsToolbar';
@@ -43,20 +47,30 @@ const AdminUsersPage: React.FC = () => {
     isAdmin,
     filter,
     setFilter
-  } = useAdminUsers('all'); // Changed default to 'all' for better overview
+  } = useAdminUsers('all');
+  
+  const {
+    filters,
+    setFilters,
+    searchQuery,
+    setSearchQuery,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    filteredUsers,
+    usersWithMetrics,
+    resetFilters,
+    applyQuickFilter
+  } = useAdvancedFiltering(users, adminUsers);
   
   const navigate = useNavigate();
   const [formOpen, setFormOpen] = useState(false);
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-
-  // Filter users based on search query
-  const filteredUsers = users.filter(user => 
-    user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState('users');
 
   const handleOpenAdminDialog = (user: any) => {
     console.log("Opening admin dialog for user:", user);
@@ -76,7 +90,6 @@ const AdminUsersPage: React.FC = () => {
     const success = await toggleAdminStatus(userId, isUserAdmin, userName);
     if (success) {
       setAdminDialogOpen(false);
-      // After successful toggle, refresh the users list
       fetchUsers();
     }
   };
@@ -155,6 +168,12 @@ const AdminUsersPage: React.FC = () => {
     });
   };
 
+  const handleImportComplete = (importedUsers: any[]) => {
+    // Add imported users to the list
+    importedUsers.forEach(user => addUser(user));
+    fetchUsers(); // Refresh to get updated data
+  };
+
   return (
     <AdminLayout pageTitle="User Management">
       <div className="space-y-6">
@@ -186,79 +205,126 @@ const AdminUsersPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Search and Filter Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="flex items-center gap-2 flex-1 max-w-md">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search users by name or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1"
-            />
-          </div>
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="import-export" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Import/Export
+            </TabsTrigger>
+          </TabsList>
 
-          <div className="flex items-center gap-2">
-            {selectedUsers.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    Bulk Actions ({selectedUsers.length})
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuLabel>Bulk Actions</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => handleBulkAction('Export')}>
-                    Export Selected
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleBulkAction('Disable')}>
-                    Disable Accounts
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleBulkAction('Enable')}>
-                    Enable Accounts
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            <Button variant="outline" onClick={handleExportUsers}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          </div>
-        </div>
-        
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>{getPageTitle()} ({filteredUsers.length})</CardTitle>
-              <Tabs 
-                value={filter} 
-                onValueChange={(value) => setFilter(value as UserRole)}
-                className="w-auto"
+          <TabsContent value="users" className="space-y-6">
+            {/* Advanced Filters Toggle */}
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
               >
-                <TabsList>
-                  <TabsTrigger value="all">All Users</TabsTrigger>
-                  <TabsTrigger value="admin">Admins</TabsTrigger>
-                  <TabsTrigger value="user">Regular Users</TabsTrigger>
-                </TabsList>
-              </Tabs>
+                <Filter className="h-4 w-4" />
+                {showFilters ? 'Hide' : 'Show'} Advanced Filters
+              </Button>
+
+              <div className="flex items-center gap-2">
+                {selectedUsers.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        Bulk Actions ({selectedUsers.length})
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Bulk Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleBulkAction('Export')}>
+                        Export Selected
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkAction('Disable')}>
+                        Disable Accounts
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkAction('Enable')}>
+                        Enable Accounts
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+
+                <Button variant="outline" onClick={handleExportUsers}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <UsersTable
-              users={filteredUsers}
-              adminUsers={adminUsers}
-              loading={loading}
-              error={error}
-              diagnosticInfo={diagnosticInfo}
-              onAdminToggle={handleOpenAdminDialog}
-              onRowClick={handleRowClick}
-              onRefresh={handleRefresh}
+
+            {/* Advanced Filters */}
+            {showFilters && (
+              <AdvancedFilters
+                filters={filters}
+                setFilters={setFilters}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                resetFilters={resetFilters}
+                applyQuickFilter={applyQuickFilter}
+                resultCount={filteredUsers.length}
+              />
+            )}
+            
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Users ({filteredUsers.length})</CardTitle>
+                  <Tabs 
+                    value={filter} 
+                    onValueChange={(value) => setFilter(value as UserRole)}
+                    className="w-auto"
+                  >
+                    <TabsList>
+                      <TabsTrigger value="all">All Users</TabsTrigger>
+                      <TabsTrigger value="admin">Admins</TabsTrigger>
+                      <TabsTrigger value="user">Regular Users</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <UsersTable
+                  users={filteredUsers}
+                  adminUsers={adminUsers}
+                  loading={loading}
+                  error={error}
+                  diagnosticInfo={diagnosticInfo}
+                  onAdminToggle={handleOpenAdminDialog}
+                  onRowClick={handleRowClick}
+                  onRefresh={handleRefresh}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <UserEngagementAnalytics users={usersWithMetrics} />
+          </TabsContent>
+
+          <TabsContent value="import-export">
+            <UserImportExport 
+              users={usersWithMetrics} 
+              onImportComplete={handleImportComplete}
             />
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
       </div>
       
       {selectedUser && (
