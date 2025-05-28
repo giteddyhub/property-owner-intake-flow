@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { CheckCircle, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { AdminActionButton } from '@/components/admin/accounts/AccountAdminDialog';
+import { AdvancedUserActions } from '@/components/admin/users/AdvancedUserActions';
 import {
   Table,
   TableBody,
@@ -185,13 +185,21 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                    )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <AdminActionButton 
-                    isAdmin={isAdmin}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAdminToggle(user);
-                    }}
-                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <AdminActionButton 
+                      isAdmin={isAdmin}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAdminToggle(user);
+                      }}
+                    />
+                    <AdvancedUserActions
+                      userId={user.id}
+                      userEmail={user.email}
+                      isAdmin={isAdmin}
+                      onActionComplete={onRefresh}
+                    />
+                  </div>
                 </TableCell>
               </TableRow>
             );

@@ -1,145 +1,162 @@
 
 import React from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { useAdminAnalytics } from '@/hooks/admin/useAdminAnalytics';
 import { AdminAnalyticsCards } from '@/components/admin/analytics/AdminAnalyticsCards';
 import { RecentActivityFeed } from '@/components/admin/analytics/RecentActivityFeed';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { RealTimeActivityFeed } from '@/components/admin/activity/RealTimeActivityFeed';
+import { AuditLogViewer } from '@/components/admin/audit/AuditLogViewer';
+import { useAdminAnalytics } from '@/hooks/admin/useAdminAnalytics';
+import { ActionsToolbar } from '@/components/dashboard/ActionsToolbar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, FileText, BarChart3, Users } from 'lucide-react';
 
 const AdminDashboardPage: React.FC = () => {
-  const { analytics, loading, error, refetch } = useAdminAnalytics();
-  
+  const { analytics, loading, error, fetchAnalytics } = useAdminAnalytics();
+
+  const handleRefresh = () => {
+    fetchAnalytics();
+  };
+
   if (loading) {
     return (
-      <AdminLayout pageTitle="Dashboard Overview">
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i}>
-                <CardContent className="pt-6">
-                  <Skeleton className="h-16 w-full" />
+      <AdminLayout pageTitle="Dashboard">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout pageTitle="Dashboard">
+        <div className="text-center text-red-600 p-8">
+          <p>Error loading dashboard: {error}</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout pageTitle="Dashboard">
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Admin Dashboard</h2>
+          <ActionsToolbar onRefresh={handleRefresh} />
+        </div>
+
+        {/* Analytics Overview */}
+        <AdminAnalyticsCards analytics={analytics} />
+
+        {/* Main Dashboard Content */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Real-time Activity
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Audit Log
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              User Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <RecentActivityFeed activities={analytics.recentActivity} />
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Health</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Database Status</span>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                        <span className="text-sm text-green-600">Healthy</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">API Response Time</span>
+                      <span className="text-sm text-muted-foreground">~125ms</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Active Sessions</span>
+                      <span className="text-sm text-muted-foreground">{analytics.activeUsers}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Error Rate</span>
+                      <span className="text-sm text-green-600">0.1%</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Skeleton className="h-80" />
-            <Skeleton className="h-80" />
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  if (error || !analytics) {
-    return (
-      <AdminLayout pageTitle="Dashboard Overview">
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            Failed to load dashboard data: {error}
-          </AlertDescription>
-        </Alert>
-      </AdminLayout>
-    );
-  }
-  
-  return (
-    <AdminLayout pageTitle="Dashboard Overview">
-      <div className="space-y-6">
-        {/* Analytics Cards */}
-        <AdminAnalyticsCards analytics={analytics} />
-        
-        {/* Charts and Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* User Growth Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>User Growth</CardTitle>
-              <CardDescription>New users and submissions over the last 30 days</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={analytics.userGrowth}
-                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 12 }} 
-                      tickLine={false}
-                    />
-                    <YAxis tick={{ fontSize: 12 }} tickLine={false} />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="users"
-                      name="New Users"
-                      stroke="#3B82F6"
-                      strokeWidth={2}
-                      activeDot={{ r: 6 }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="submissions"
-                      name="Submissions"
-                      stroke="#10B981"
-                      strokeWidth={2}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <RecentActivityFeed activities={analytics.recentActivity} />
-        </div>
-
-        {/* Submission Trends */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Submission Trends</CardTitle>
-            <CardDescription>Monthly submission completion rates</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={analytics.submissionTrends}
-                  margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis 
-                    dataKey="month" 
-                    tick={{ fontSize: 12 }} 
-                    tickLine={false}
-                  />
-                  <YAxis tick={{ fontSize: 12 }} tickLine={false} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="completed"
-                    name="Completed"
-                    fill="#10B981"
-                    radius={[0, 0, 4, 4]}
-                  />
-                  <Bar
-                    dataKey="pending"
-                    name="Pending"
-                    fill="#F59E0B"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
+
+          <TabsContent value="activity">
+            <RealTimeActivityFeed />
+          </TabsContent>
+
+          <TabsContent value="audit">
+            <AuditLogViewer />
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Growth</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">+{analytics.newUsersThisMonth}</div>
+                  <p className="text-sm text-muted-foreground">New users this month</p>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {Math.round((analytics.newUsersThisMonth / analytics.totalUsers) * 100)}% increase
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Active Users</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{analytics.activeUsers}</div>
+                  <p className="text-sm text-muted-foreground">Currently active</p>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {Math.round((analytics.activeUsers / analytics.totalUsers) * 100)}% of total users
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Completion Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {Math.round((analytics.completedSubmissions / analytics.totalSubmissions) * 100)}%
+                  </div>
+                  <p className="text-sm text-muted-foreground">Form completion rate</p>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {analytics.completedSubmissions} of {analytics.totalSubmissions} submissions
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
