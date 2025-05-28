@@ -6,6 +6,7 @@ import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AdminSidebar } from './AdminSidebar';
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
+import { ThemeToggle } from './theme/ThemeToggle';
 
 interface AdminHeaderProps {
   pageTitle: string;
@@ -33,7 +34,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ pageTitle }) => {
         <h1 className="text-xl font-semibold">{pageTitle}</h1>
       </div>
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
         <span className="text-sm text-muted-foreground hidden sm:inline-block mr-2">
           {admin?.email}
         </span>

@@ -7,6 +7,11 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { AdminBreadcrumb } from './navigation/AdminBreadcrumb';
+import { ContextualHelp } from './help/ContextualHelp';
+import { ProgressiveLoader } from './loading/ProgressiveLoader';
+import { AdminErrorBoundary } from './error/AdminErrorBoundary';
+import { useKeyboardShortcuts } from '@/hooks/admin/useKeyboardShortcuts';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -17,9 +22,35 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, pageTitle })
   const { admin, isAdminLoading, isAdminAuthenticated, checkAdminSession, resetVerification, adminLogout } = useAdminAuth();
   const [isVerifying, setIsVerifying] = useState(true);
   const [verificationFailed, setVerificationFailed] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<'initializing' | 'loading-data' | 'processing' | 'rendering' | 'complete'>('initializing');
   const navigate = useNavigate();
   
+  // Enable keyboard shortcuts for admin pages
+  useKeyboardShortcuts(true);
+  
+  // Get section from current path for contextual help
+  const getSection = () => {
+    const path = window.location.pathname;
+    if (path.includes('/users')) return 'users';
+    if (path.includes('/accounts')) return 'accounts';
+    if (path.includes('/settings')) return 'settings';
+    return 'dashboard';
+  };
+
   useEffect(() => {
+    // Progressive loading simulation
+    const stages: typeof loadingStage[] = ['initializing', 'loading-data', 'processing', 'rendering', 'complete'];
+    let currentStageIndex = 0;
+
+    const progressInterval = setInterval(() => {
+      if (currentStageIndex < stages.length - 1) {
+        currentStageIndex++;
+        setLoadingStage(stages[currentStageIndex]);
+      } else {
+        clearInterval(progressInterval);
+      }
+    }, 300);
+
     // Only verify once when the component mounts
     const verifyAdmin = async () => {
       try {
@@ -43,10 +74,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, pageTitle })
         });
       } finally {
         setIsVerifying(false);
+        setLoadingStage('complete');
       }
     };
     
     verifyAdmin();
+    
+    return () => clearInterval(progressInterval);
     // We intentionally don't include checkAdminSession in dependencies
     // to prevent infinite loops
   }, [isAdminLoading, isAdminAuthenticated]);
@@ -69,6 +103,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, pageTitle })
     resetVerification(); // Reset verification attempts counter
     setIsVerifying(true);
     setVerificationFailed(false);
+    setLoadingStage('initializing');
     
     try {
       const isValid = await checkAdminSession();
@@ -83,25 +118,20 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, pageTitle })
       setVerificationFailed(true);
     } finally {
       setIsVerifying(false);
+      setLoadingStage('complete');
     }
   };
   
-  if (isAdminLoading || isVerifying) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-        <span className="text-lg font-medium">Verifying administrator access...</span>
-        <p className="text-sm text-muted-foreground mt-2 mb-6">This may take a moment</p>
-      </div>
-    );
+  if (isAdminLoading || isVerifying || loadingStage !== 'complete') {
+    return <ProgressiveLoader stage={loadingStage} />;
   }
   
   if (verificationFailed || !isAdminAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 max-w-md w-full">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Authentication Failed</h2>
-          <p className="mb-6 text-gray-700">
+          <p className="mb-6 text-gray-700 dark:text-gray-300">
             Your administrator session could not be verified or has expired.
           </p>
           <div className="flex flex-col gap-3">
@@ -119,14 +149,20 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, pageTitle })
   }
   
   return (
-    <div className="min-h-screen bg-background flex">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col">
-        <AdminHeader pageTitle={pageTitle} />
-        <div className="p-6 flex-1 overflow-auto">
-          {children}
+    <AdminErrorBoundary>
+      <div className="min-h-screen bg-background flex w-full">
+        <AdminSidebar />
+        <div className="flex-1 flex flex-col">
+          <AdminHeader pageTitle={pageTitle} />
+          <div className="p-6 flex-1 overflow-auto">
+            <div className="flex items-center justify-between mb-4">
+              <AdminBreadcrumb />
+              <ContextualHelp section={getSection()} />
+            </div>
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </AdminErrorBoundary>
   );
 };
