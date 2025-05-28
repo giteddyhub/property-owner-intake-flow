@@ -9,7 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { Home, Users, Clipboard, Settings, BarChart3 } from 'lucide-react';
+import { Home, Users, Clipboard, Settings, BarChart3, ListChecks, Shield } from 'lucide-react';
 
 interface BreadcrumbItem {
   label: string;
@@ -17,49 +17,80 @@ interface BreadcrumbItem {
   icon?: React.ReactNode;
 }
 
-const breadcrumbConfig: Record<string, BreadcrumbItem[]> = {
-  '/admin': [
-    { label: 'Dashboard', icon: <Home className="h-4 w-4" /> }
-  ],
-  '/admin/users': [
-    { label: 'Dashboard', href: '/admin', icon: <Home className="h-4 w-4" /> },
-    { label: 'Users', icon: <Users className="h-4 w-4" /> }
-  ],
-  '/admin/accounts': [
-    { label: 'Dashboard', href: '/admin', icon: <Home className="h-4 w-4" /> },
-    { label: 'Accounts', icon: <Clipboard className="h-4 w-4" /> }
-  ],
-  '/admin/settings': [
-    { label: 'Dashboard', href: '/admin', icon: <Home className="h-4 w-4" /> },
-    { label: 'Settings', icon: <Settings className="h-4 w-4" /> }
-  ]
-};
-
 export const AdminBreadcrumb: React.FC = () => {
   const location = useLocation();
   const path = location.pathname;
   
-  // Handle dynamic routes like /admin/accounts/:id
-  const matchingPath = Object.keys(breadcrumbConfig).find(route => {
-    if (route === path) return true;
-    if (route.includes(':')) {
-      const routePattern = route.replace(/:[^/]+/g, '[^/]+');
-      return new RegExp(`^${routePattern}$`).test(path);
+  const getBreadcrumbs = (): BreadcrumbItem[] => {
+    // Always start with Dashboard
+    const breadcrumbs: BreadcrumbItem[] = [];
+    
+    // Handle specific routes
+    if (path === '/admin') {
+      return [{ label: 'Dashboard', icon: <Home className="h-4 w-4" /> }];
     }
-    return path.startsWith(route) && route !== '/admin';
-  });
-
-  const breadcrumbs = breadcrumbConfig[matchingPath || '/admin'] || breadcrumbConfig['/admin'];
-
-  // Handle specific dynamic routes
-  if (path.includes('/admin/accounts/') && path !== '/admin/accounts') {
-    const accountId = path.split('/admin/accounts/')[1];
-    const baseBreadcrumbs = breadcrumbConfig['/admin/accounts'] || [];
-    breadcrumbs.push({
-      label: `Account ${accountId.substring(0, 8)}...`,
-      icon: <BarChart3 className="h-4 w-4" />
+    
+    // Add Dashboard as first item for all non-dashboard pages
+    breadcrumbs.push({ 
+      label: 'Dashboard', 
+      href: '/admin', 
+      icon: <Home className="h-4 w-4" /> 
     });
-  }
+    
+    if (path.startsWith('/admin/users')) {
+      breadcrumbs.push({ 
+        label: 'Users', 
+        icon: <Users className="h-4 w-4" />,
+        ...(path === '/admin/users' ? {} : { href: '/admin/users' })
+      });
+    } else if (path.startsWith('/admin/accounts')) {
+      breadcrumbs.push({ 
+        label: 'Accounts', 
+        icon: <Clipboard className="h-4 w-4" />,
+        ...(path === '/admin/accounts' ? {} : { href: '/admin/accounts' })
+      });
+      
+      // Handle account detail page
+      const accountMatch = path.match(/^\/admin\/accounts\/([^\/]+)$/);
+      if (accountMatch) {
+        const accountId = accountMatch[1];
+        breadcrumbs.push({
+          label: `Account ${accountId.substring(0, 8)}...`,
+          icon: <BarChart3 className="h-4 w-4" />
+        });
+      }
+    } else if (path.startsWith('/admin/submissions')) {
+      breadcrumbs.push({ 
+        label: 'Submissions', 
+        icon: <ListChecks className="h-4 w-4" />,
+        ...(path === '/admin/submissions' ? {} : { href: '/admin/submissions' })
+      });
+      
+      // Handle submission detail page
+      const submissionMatch = path.match(/^\/admin\/submissions\/([^\/]+)$/);
+      if (submissionMatch) {
+        const submissionId = submissionMatch[1];
+        breadcrumbs.push({
+          label: `Submission ${submissionId.substring(0, 8)}...`,
+          icon: <BarChart3 className="h-4 w-4" />
+        });
+      }
+    } else if (path.startsWith('/admin/settings')) {
+      breadcrumbs.push({ 
+        label: 'Settings', 
+        icon: <Settings className="h-4 w-4" /> 
+      });
+    } else if (path.startsWith('/admin/security')) {
+      breadcrumbs.push({ 
+        label: 'Security', 
+        icon: <Shield className="h-4 w-4" /> 
+      });
+    }
+    
+    return breadcrumbs;
+  };
+
+  const breadcrumbs = getBreadcrumbs();
 
   if (breadcrumbs.length <= 1) {
     return null;
@@ -69,7 +100,7 @@ export const AdminBreadcrumb: React.FC = () => {
     <Breadcrumb className="mb-6">
       <BreadcrumbList>
         {breadcrumbs.map((item, index) => (
-          <React.Fragment key={index}>
+          <React.Fragment key={`${item.label}-${index}`}>
             <BreadcrumbItem>
               {index === breadcrumbs.length - 1 ? (
                 <BreadcrumbPage className="flex items-center gap-2">
