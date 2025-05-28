@@ -86,6 +86,17 @@ const getActivityIcon = (activityType: string) => {
   }
 };
 
+const getSubmissionStatus = (state: string): 'completed' | 'pending' | 'error' => {
+  switch (state) {
+    case 'completed':
+      return 'completed';
+    case 'error':
+      return 'error';
+    default:
+      return 'pending';
+  }
+};
+
 export const AccountTimelineTab: React.FC<AccountTimelineTabProps> = ({
   submissions,
   activities,
@@ -116,8 +127,7 @@ export const AccountTimelineTab: React.FC<AccountTimelineTabProps> = ({
       description: `Form submission ${submission.state}${submission.pdf_generated ? ' (PDF generated)' : ''}`,
       date: submission.submitted_at,
       icon: submission.is_primary_submission ? <Star className="h-4 w-4 text-yellow-600" /> : getSubmissionIcon(submission.state),
-      status: submission.state === 'completed' ? 'completed' : 
-               submission.state === 'error' ? 'error' : 'pending',
+      status: getSubmissionStatus(submission.state),
       isPrimary: submission.is_primary_submission,
       action: (
         <Button
@@ -139,7 +149,7 @@ export const AccountTimelineTab: React.FC<AccountTimelineTabProps> = ({
       description: activity.activity_description || `${activity.entity_type || 'Entity'} ${activity.activity_type}`,
       date: activity.created_at,
       icon: getActivityIcon(activity.activity_type),
-      status: 'completed'
+      status: 'completed' as const
     }))
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
