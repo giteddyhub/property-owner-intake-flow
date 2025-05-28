@@ -95,7 +95,7 @@ export const useAdvancedUserManagement = () => {
       toast({
         title: "Action Failed",
         description: `Failed to execute ${action}: ${error.message}`,
-        variant: "destructive"
+        type: "error"
       });
       return false;
     } finally {
@@ -158,7 +158,7 @@ export const useAdvancedUserManagement = () => {
       toast({
         title: "Bulk Operation Failed",
         description: error.message,
-        variant: "destructive"
+        type: "error"
       });
     } finally {
       setLoading(false);

@@ -12,10 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, FileText, BarChart3, Users } from 'lucide-react';
 
 const AdminDashboardPage: React.FC = () => {
-  const { analytics, loading, error, fetchAnalytics } = useAdminAnalytics();
+  const { analytics, loading, error, refetch } = useAdminAnalytics();
 
   const handleRefresh = () => {
-    fetchAnalytics();
+    refetch();
   };
 
   if (loading) {
