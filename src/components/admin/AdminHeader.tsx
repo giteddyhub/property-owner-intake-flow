@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { UserDropdownMenu } from '@/components/dashboard/UserDropdownMenu';
+import { AdminUserDropdownMenu } from './AdminUserDropdownMenu';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AdminSidebar } from './AdminSidebar';
@@ -13,7 +13,7 @@ interface AdminHeaderProps {
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ pageTitle }) => {
-  const { admin, adminLogout } = useAdminAuth();
+  const { admin } = useAdminAuth();
   
   return (
     <header className="border-b border-border px-6 py-3 bg-background z-10 flex items-center justify-between">
@@ -39,7 +39,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ pageTitle }) => {
         <span className="text-sm text-muted-foreground hidden sm:inline-block mr-2">
           {admin?.email}
         </span>
-        <UserDropdownMenu onSignOut={adminLogout} isAdmin={true} />
+        <AdminUserDropdownMenu />
       </div>
     </header>
   );
