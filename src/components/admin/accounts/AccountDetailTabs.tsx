@@ -37,14 +37,54 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
   payments
 }) => {
   return (
-    <Tabs defaultValue="submissions" className="w-full">
-      <TabsList className="grid w-full grid-cols-5">
-        <TabsTrigger value="submissions">Submissions</TabsTrigger>
-        <TabsTrigger value="properties">Properties</TabsTrigger>
-        <TabsTrigger value="owners">Owners</TabsTrigger>
-        <TabsTrigger value="assignments">Assignments</TabsTrigger>
-        <TabsTrigger value="payments">Payments</TabsTrigger>
+    <Tabs defaultValue="overview" className="w-full">
+      <TabsList className="grid w-full grid-cols-6">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="submissions">
+          Form Submissions ({submissions.length})
+        </TabsTrigger>
+        <TabsTrigger value="properties">
+          Properties ({properties.length})
+        </TabsTrigger>
+        <TabsTrigger value="owners">
+          Owners ({owners.length})
+        </TabsTrigger>
+        <TabsTrigger value="assignments">
+          Assignments ({assignments.length})
+        </TabsTrigger>
+        <TabsTrigger value="payments">
+          Payments ({payments.length})
+        </TabsTrigger>
       </TabsList>
+      
+      <TabsContent value="overview">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <div className="bg-card p-4 rounded-lg border">
+            <h3 className="font-semibold text-sm text-muted-foreground">Form Submissions</h3>
+            <p className="text-2xl font-bold">{submissions.length}</p>
+            <p className="text-xs text-muted-foreground">
+              {submissions.filter(s => s.state === 'completed').length} completed
+            </p>
+          </div>
+          <div className="bg-card p-4 rounded-lg border">
+            <h3 className="font-semibold text-sm text-muted-foreground">Properties</h3>
+            <p className="text-2xl font-bold">{properties.length}</p>
+            <p className="text-xs text-muted-foreground">Properties managed</p>
+          </div>
+          <div className="bg-card p-4 rounded-lg border">
+            <h3 className="font-semibold text-sm text-muted-foreground">Owners</h3>
+            <p className="text-2xl font-bold">{owners.length}</p>
+            <p className="text-xs text-muted-foreground">Property owners</p>
+          </div>
+          <div className="bg-card p-4 rounded-lg border">
+            <h3 className="font-semibold text-sm text-muted-foreground">Payments</h3>
+            <p className="text-2xl font-bold">{payments.length}</p>
+            <p className="text-xs text-muted-foreground">
+              €{payments.reduce((sum, p) => sum + Number(p.amount || 0), 0).toFixed(2)} total
+            </p>
+          </div>
+        </div>
+      </TabsContent>
       
       <TabsContent value="submissions">
         <AccountSubmissionsTab submissions={submissions} />

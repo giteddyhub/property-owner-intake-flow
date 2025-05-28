@@ -39,7 +39,15 @@ export const useAccountDetails = (id: string | undefined) => {
     try {
       console.log(`Fetching account details for ID: ${id}`);
       
-      // Fetch the account details
+      // Get admin token from session storage
+      const adminToken = sessionStorage.getItem('admin_token');
+      if (!adminToken) {
+        toast.error('Admin session expired. Please log in again.');
+        navigate('/admin/login');
+        return;
+      }
+
+      // Fetch account profile data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -68,12 +76,13 @@ export const useAccountDetails = (id: string | undefined) => {
         console.error('Error checking admin status:', adminError);
       }
       
-      // Fetch submissions - Filter out tax_filing_init submissions
+      // Fetch meaningful submissions (exclude tax_filing_init which are just session initializations)
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('form_submissions')
         .select('*')
         .eq('user_id', id)
-        .neq('state', 'tax_filing_init')
+        .neq('state', 'tax_filing_init') // Exclude session initialization entries
+        .in('state', ['new', 'processing', 'completed', 'error']) // Only meaningful submissions
         .order('submitted_at', { ascending: false });
         
       if (submissionsError) {
@@ -105,13 +114,13 @@ export const useAccountDetails = (id: string | undefined) => {
         throw ownersError;
       }
       
-      // Fetch assignments with property and owner details
+      // Fetch assignments with proper column hints to avoid relationship ambiguity
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('owner_property_assignments')
         .select(`
           *,
-          property:properties!owner_property_assignments_property_id_fkey (label),
-          owner:owners!owner_property_assignments_owner_id_fkey (first_name, last_name)
+          properties!owner_property_assignments_property_id_fkey (label),
+          owners!owner_property_assignments_owner_id_fkey (first_name, last_name)
         `)
         .eq('user_id', id)
         .order('created_at', { ascending: false });
@@ -121,7 +130,7 @@ export const useAccountDetails = (id: string | undefined) => {
         throw assignmentsError;
       }
       
-      // First fetch contact ID for the user
+      // Fetch contact ID for payments
       const { data: contactData, error: contactError } = await supabase
         .from('contacts')
         .select('id')
@@ -130,7 +139,6 @@ export const useAccountDetails = (id: string | undefined) => {
         
       if (contactError) {
         console.error('Error fetching contact ID:', contactError);
-        throw contactError;
       }
       
       let paymentsData = [];
@@ -150,17 +158,17 @@ export const useAccountDetails = (id: string | undefined) => {
           
         if (paymentsError) {
           console.error('Error fetching payments:', paymentsError);
-          throw paymentsError;
+        } else {
+          paymentsData = fetchedPayments || [];
         }
-        
-        paymentsData = fetchedPayments || [];
       }
       
+      // Process assignments data
       const enhancedAssignments = assignmentsData?.map(assignment => ({
         ...assignment,
-        property_label: assignment.property?.label || 'Unknown Property',
-        owner_name: assignment.owner ? 
-          `${assignment.owner.first_name} ${assignment.owner.last_name}` : 'Unknown Owner'
+        property_label: assignment.properties?.label || 'Unknown Property',
+        owner_name: assignment.owners ? 
+          `${assignment.owners.first_name} ${assignment.owners.last_name}` : 'Unknown Owner'
       })) || [];
       
       setAccount({
@@ -172,6 +180,16 @@ export const useAccountDetails = (id: string | undefined) => {
       setOwners(ownersData || []);
       setAssignments(enhancedAssignments);
       setPayments(paymentsData);
+
+      console.log('Account details loaded successfully:', {
+        profile: profile.email,
+        submissions: submissionsData?.length || 0,
+        properties: propertiesData?.length || 0,
+        owners: ownersData?.length || 0,
+        assignments: enhancedAssignments.length,
+        payments: paymentsData.length
+      });
+
     } catch (error: any) {
       console.error('Error fetching account details:', error);
       toast.error('Failed to load account details', {
