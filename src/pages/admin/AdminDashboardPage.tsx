@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { InteractiveDashboardWidget } from '@/components/admin/dashboard/InteractiveDashboardWidget';
+import { DashboardWidget } from '@/components/admin/dashboard/widget/DashboardWidget';
 import { SystemHealthMonitor } from '@/components/admin/dashboard/SystemHealthMonitor';
 import { ComprehensiveReporting } from '@/components/admin/dashboard/ComprehensiveReporting';
 import { useRealTimeAnalytics } from '@/hooks/admin/useRealTimeAnalytics';
@@ -72,7 +72,7 @@ const AdminDashboardPage: React.FC = () => {
 
         {/* Real-time Analytics Widgets */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <InteractiveDashboardWidget
+          <DashboardWidget
             title="Total Users"
             value={analytics.totalUsers}
             change={{
@@ -87,7 +87,7 @@ const AdminDashboardPage: React.FC = () => {
             drillDownType="chart"
           />
 
-          <InteractiveDashboardWidget
+          <DashboardWidget
             title="Total Submissions"
             value={analytics.totalSubmissions}
             change={{
@@ -102,7 +102,7 @@ const AdminDashboardPage: React.FC = () => {
             drillDownType="chart"
           />
 
-          <InteractiveDashboardWidget
+          <DashboardWidget
             title="Total Properties"
             value={analytics.totalProperties}
             status="info"
@@ -112,7 +112,7 @@ const AdminDashboardPage: React.FC = () => {
             drillDownType="chart"
           />
 
-          <InteractiveDashboardWidget
+          <DashboardWidget
             title="Total Revenue"
             value={`€${analytics.revenueMetrics.totalRevenue.toLocaleString()}`}
             change={{
