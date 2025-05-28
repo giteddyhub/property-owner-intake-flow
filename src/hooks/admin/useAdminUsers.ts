@@ -7,7 +7,7 @@ import { fetchUsersFromAdminTools, fetchUsersDirectly } from './utils/userDataSe
 import { filterUsersByRole, createMockUsers, getErrorMessage } from './utils/userFiltering';
 import { toggleUserAdminStatus } from './utils/adminStatusActions';
 
-export { UserRole } from './types/adminUserTypes';
+export type { UserRole } from './types/adminUserTypes';
 
 export const useAdminUsers = (defaultFilter: UserRole = 'all'): UseAdminUsersReturn => {
   const [users, setUsers] = useState<any[]>([]);
