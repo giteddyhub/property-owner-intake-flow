@@ -1,0 +1,221 @@
+
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { OwnerData, PropertyData, AssignmentData, PaymentData, UserActivityData } from '@/types/admin';
+
+interface AccountDetails {
+  id: string;
+  email: string;
+  full_name: string;
+  created_at: string;
+  updated_at: string;
+  is_admin: boolean;
+  primary_submission_id?: string;
+}
+
+interface FormSubmission {
+  id: string;
+  submitted_at: string;
+  state: string;
+  pdf_generated: boolean;
+  pdf_url: string | null;
+  is_primary_submission: boolean;
+}
+
+export const useOptimizedAccountDetails = (id: string | undefined) => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [account, setAccount] = useState<AccountDetails | null>(null);
+  const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
+  const [properties, setProperties] = useState<PropertyData[]>([]);
+  const [owners, setOwners] = useState<OwnerData[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentData[]>([]);
+  const [payments, setPayments] = useState<PaymentData[]>([]);
+  const [activities, setActivities] = useState<UserActivityData[]>([]);
+
+  const fetchOptimizedAccountDetails = async () => {
+    if (!id) return;
+    
+    setLoading(true);
+    try {
+      console.log(`Fetching optimized account details for ID: ${id}`);
+      
+      // Get admin token from session storage
+      const adminToken = sessionStorage.getItem('admin_token');
+      if (!adminToken) {
+        toast.error('Admin session expired. Please log in again.');
+        navigate('/admin/login');
+        return;
+      }
+
+      // Optimized parallel queries using the new indexes
+      const [
+        profileResult,
+        submissionsResult,
+        propertiesResult,
+        ownersResult,
+        assignmentsResult,
+        activitiesResult,
+        contactResult
+      ] = await Promise.all([
+        // Profile query (uses idx_profiles_email if needed)
+        supabase
+          .from('profiles')
+          .select('*, form_submissions!primary_submission_id(id, state)')
+          .eq('id', id)
+          .single(),
+        
+        // Submissions query (uses idx_form_submissions_user_id and idx_form_submissions_user_submitted)
+        supabase
+          .from('form_submissions')
+          .select('*')
+          .eq('user_id', id)
+          .neq('state', 'tax_filing_init')
+          .in('state', ['new', 'processing', 'completed', 'error'])
+          .order('submitted_at', { ascending: false }),
+        
+        // Properties query (uses idx_properties_user_id)
+        supabase
+          .from('properties')
+          .select('*')
+          .eq('user_id', id)
+          .order('created_at', { ascending: false }),
+        
+        // Owners query (uses idx_owners_user_id)
+        supabase
+          .from('owners')
+          .select('*')
+          .eq('user_id', id)
+          .order('created_at', { ascending: false }),
+        
+        // Assignments query (uses idx_assignments_user_id)
+        supabase
+          .from('owner_property_assignments')
+          .select(`
+            *,
+            properties!owner_property_assignments_property_id_fkey (label),
+            owners!owner_property_assignments_owner_id_fkey (first_name, last_name)
+          `)
+          .eq('user_id', id)
+          .order('created_at', { ascending: false }),
+        
+        // Activities query (uses idx_user_activities_user_created)
+        supabase
+          .from('user_activities')
+          .select('*')
+          .eq('user_id', id)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        
+        // Contact query for payments (uses idx_contacts_user_id)
+        supabase
+          .from('contacts')
+          .select('id')
+          .eq('user_id', id)
+          .limit(1)
+      ]);
+
+      if (profileResult.error) throw profileResult.error;
+      if (!profileResult.data) {
+        toast.error('Account not found');
+        navigate('/admin/accounts');
+        return;
+      }
+
+      const profile = profileResult.data;
+
+      // Check admin status
+      const { data: adminData } = await supabase
+        .from('admin_credentials')
+        .select('*')
+        .eq('email', profile.email)
+        .maybeSingle();
+
+      // Process submissions with primary flag
+      const enhancedSubmissions = submissionsResult.data?.map(submission => ({
+        ...submission,
+        is_primary_submission: submission.id === profile.primary_submission_id
+      })) || [];
+
+      // Process activities with type safety
+      const typedActivities: UserActivityData[] = activitiesResult.data?.map(activity => ({
+        ...activity,
+        metadata: (activity.metadata as any) || {}
+      })) || [];
+
+      // Process assignments with enhanced data
+      const enhancedAssignments = assignmentsResult.data?.map(assignment => ({
+        ...assignment,
+        property_label: assignment.properties?.label || 'Unknown Property',
+        owner_name: assignment.owners ? 
+          `${assignment.owners.first_name} ${assignment.owners.last_name}` : 'Unknown Owner'
+      })) || [];
+
+      // Fetch payments if contact exists (uses idx_purchases_contact_id)
+      let paymentsData = [];
+      if (contactResult.data && contactResult.data.length > 0) {
+        const contactId = contactResult.data[0].id;
+        
+        const { data: fetchedPayments } = await supabase
+          .from('purchases')
+          .select(`
+            *,
+            form_submissions:form_submission_id (state)
+          `)
+          .eq('contact_id', contactId)
+          .order('created_at', { ascending: false });
+          
+        paymentsData = fetchedPayments || [];
+      }
+
+      // Set all state
+      setAccount({
+        ...profile,
+        is_admin: !!adminData
+      });
+      setSubmissions(enhancedSubmissions);
+      setProperties(propertiesResult.data || []);
+      setOwners(ownersResult.data || []);
+      setAssignments(enhancedAssignments);
+      setPayments(paymentsData);
+      setActivities(typedActivities);
+
+      console.log('Optimized account details loaded:', {
+        profile: profile.email,
+        submissions: enhancedSubmissions.length,
+        properties: propertiesResult.data?.length || 0,
+        owners: ownersResult.data?.length || 0,
+        assignments: enhancedAssignments.length,
+        payments: paymentsData.length,
+        activities: typedActivities.length
+      });
+
+    } catch (error: any) {
+      console.error('Error fetching optimized account details:', error);
+      toast.error('Failed to load account details', {
+        description: error.message
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!id) return;
+    fetchOptimizedAccountDetails();
+  }, [id]);
+
+  return {
+    loading,
+    account,
+    submissions,
+    properties,
+    owners,
+    assignments,
+    payments,
+    activities,
+    refetch: fetchOptimizedAccountDetails
+  };
+};
