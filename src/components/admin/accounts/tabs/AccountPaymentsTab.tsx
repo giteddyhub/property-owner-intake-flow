@@ -23,44 +23,80 @@ import { formatCurrency, validatePayment } from './payments/utils';
 export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments }) => {
   const [expandedPayment, setExpandedPayment] = useState<string | null>(null);
 
-  // Enhanced logging and validation for debugging
+  // Enhanced debugging with more detailed logging
   useEffect(() => {
-    console.log(`[AccountPaymentsTab] 🎯 COMPONENT MOUNT/UPDATE:`, {
+    console.log(`[AccountPaymentsTab] 🎯 COMPONENT RENDER DEBUG:`, {
       paymentsReceived: payments,
       paymentsCount: payments?.length || 0,
       paymentsType: typeof payments,
       isArray: Array.isArray(payments),
-      firstPayment: payments?.length > 0 ? payments[0] : 'NO_PAYMENTS'
+      firstPayment: payments?.length > 0 ? payments[0] : 'NO_PAYMENTS',
+      allPaymentIds: payments?.map(p => p?.id) || [],
+      renderTimestamp: new Date().toISOString()
     });
 
-    // Validate each payment thoroughly
+    // Enhanced individual payment analysis
     if (Array.isArray(payments)) {
       payments.forEach((payment, index) => {
-        console.log(`[AccountPaymentsTab] 💳 Payment ${index + 1} validation:`, {
+        console.log(`[AccountPaymentsTab] 💳 PAYMENT ${index + 1} ANALYSIS:`, {
+          payment,
           id: payment?.id,
           hasId: !!payment?.id,
           amount: payment?.amount,
           amountType: typeof payment?.amount,
-          amountValid: !isNaN(Number(payment?.amount)),
+          amountValue: payment?.amount,
+          amountValid: payment?.amount !== null && payment?.amount !== undefined,
           status: payment?.payment_status,
           submissionId: payment?.form_submission_id,
           createdAt: payment?.created_at,
-          isValidObject: payment && typeof payment === 'object'
+          isValidObject: payment && typeof payment === 'object',
+          allKeys: payment ? Object.keys(payment) : 'no keys'
         });
+      });
+    } else {
+      console.error(`[AccountPaymentsTab] ❌ CRITICAL: payments prop is not an array!`, {
+        paymentsType: typeof payments,
+        paymentsValue: payments
       });
     }
   }, [payments]);
 
-  // Enhanced validation with comprehensive type checking
+  // Simplified validation
   const validPayments = useMemo(() => {
+    console.log(`[AccountPaymentsTab] 🔄 VALIDATION PROCESS STARTING...`);
+    
     if (!Array.isArray(payments)) {
-      console.error(`[AccountPaymentsTab] ❌ Payments is not an array:`, typeof payments, payments);
+      console.error(`[AccountPaymentsTab] ❌ FATAL: Payments is not an array:`, typeof payments, payments);
       return [];
     }
 
-    const filtered = payments.filter((payment, index) => validatePayment(payment, index));
+    console.log(`[AccountPaymentsTab] ✅ Payments is an array with ${payments.length} items`);
 
-    console.log(`[AccountPaymentsTab] ✅ Filtered ${filtered.length} valid payments from ${payments.length} total`);
+    // Use more lenient validation
+    const filtered = payments.filter((payment, index) => {
+      console.log(`[AccountPaymentsTab] 🔍 Validating payment ${index + 1}/${payments.length}:`, payment);
+      
+      if (!payment) {
+        console.error(`[AccountPaymentsTab] ❌ Payment ${index + 1} is null/undefined`);
+        return false;
+      }
+      
+      if (!payment.id) {
+        console.error(`[AccountPaymentsTab] ❌ Payment ${index + 1} missing ID:`, payment);
+        return false;
+      }
+      
+      console.log(`[AccountPaymentsTab] ✅ Payment ${index + 1} passed basic validation`);
+      return true;
+    });
+
+    console.log(`[AccountPaymentsTab] 🎯 VALIDATION COMPLETE:`, {
+      originalCount: payments.length,
+      validatedCount: filtered.length,
+      filteredOut: payments.length - filtered.length,
+      validPayments: filtered.map(p => ({ id: p.id, amount: p.amount }))
+    });
+
     return filtered;
   }, [payments]);
 
@@ -72,32 +108,25 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
     const total = validPayments.reduce((sum, payment) => {
       const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
       const validAmount = isNaN(amount) ? 0 : amount;
-      console.log(`[AccountPaymentsTab] Adding to total - payment ${payment.id}: ${validAmount}`);
+      console.log(`[AccountPaymentsTab] 💰 Adding to total - payment ${payment.id}: ${validAmount} (original: ${payment.amount})`);
       return sum + validAmount;
     }, 0);
 
-    console.log(`[AccountPaymentsTab] Total revenue calculated: ${total}`);
+    console.log(`[AccountPaymentsTab] 📊 TOTAL REVENUE CALCULATED:`, {
+      total,
+      paymentsUsed: validPayments.length,
+      calculation: validPayments.map(p => ({ id: p.id, amount: p.amount, parsed: parseFloat(String(p.amount)) }))
+    });
     return total;
   }, [validPayments]);
 
-  console.log(`[AccountPaymentsTab] 📊 FINAL RENDER STATE:`, {
+  console.log(`[AccountPaymentsTab] 🎬 FINAL RENDER STATE:`, {
     totalRevenue,
     validPaymentsCount: validPayments.length,
     originalPaymentsCount: payments?.length || 0,
     willShowTable: validPayments.length > 0,
+    expandedPayment,
     renderTimestamp: new Date().toISOString()
-  });
-
-  // Enhanced logging for each payment that will be rendered
-  validPayments.forEach((payment, index) => {
-    console.log(`[AccountPaymentsTab] Payment ${index + 1} render details:`, {
-      id: payment.id,
-      amount: payment.amount,
-      currency: payment.currency,
-      status: payment.payment_status,
-      created_at: payment.created_at,
-      form_submission_id: payment.form_submission_id
-    });
   });
 
   return (
@@ -119,7 +148,7 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
             <div className="space-y-2">
               <p>No payment records found for this user.</p>
               <p className="text-sm text-gray-500">
-                Debug info: Received {payments?.length || 0} payments, filtered to {validPayments.length} valid payments
+                Debug info: Received {payments?.length || 0} payments, validated {validPayments.length} payments
               </p>
               <p className="text-xs text-gray-400">
                 Check browser console for detailed payment validation logs

@@ -37,7 +37,10 @@ export const getPaymentStatusBadgeClass = (status: string) => {
   }
 };
 
+// Simplified validation function
 export const validatePayment = (payment: any, index: number): boolean => {
+  console.log(`[PaymentValidation] 🔍 Validating payment ${index + 1}:`, payment);
+  
   if (!payment) {
     console.error(`[PaymentValidation] Payment ${index + 1} is null/undefined`);
     return false;
@@ -53,15 +56,12 @@ export const validatePayment = (payment: any, index: number): boolean => {
     return false;
   }
 
+  // Simplified amount validation - just check if it exists
   if (payment.amount === null || payment.amount === undefined) {
     console.error(`[PaymentValidation] Payment ${index + 1} has null/undefined amount:`, payment.amount);
     return false;
   }
 
-  if (isNaN(Number(payment.amount))) {
-    console.error(`[PaymentValidation] Payment ${index + 1} has invalid amount:`, payment.amount);
-    return false;
-  }
-
+  console.log(`[PaymentValidation] ✅ Payment ${index + 1} is valid`);
   return true;
 };
