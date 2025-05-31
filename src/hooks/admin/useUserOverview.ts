@@ -40,7 +40,7 @@ export const useUserOverview = () => {
 
       if (ownersError) throw ownersError;
 
-      // Fetch properties
+      // Fetch properties with documents and document retrieval service info
       const { data: propertiesData, error: propertiesError } = await supabase
         .from('properties')
         .select('*')

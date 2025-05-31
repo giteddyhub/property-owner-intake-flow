@@ -33,6 +33,8 @@ export interface PropertyData {
   address_street: string;
   address_zip: string;
   created_at: string;
+  documents?: string[];
+  use_document_retrieval_service?: boolean;
 }
 
 export interface AssignmentData {
