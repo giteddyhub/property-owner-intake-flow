@@ -28,92 +28,92 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <AdminRoutes>
-            <AdminErrorBoundary>
-              <div className="min-h-screen bg-background">
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/signup" element={<SignupPage />} />
-                  
-                  {/* Protected routes */}
-                  <Route
-                    path="/"
-                    element={
-                      <AuthRoutes>
+          <AuthRoutes>
+            <AdminRoutes>
+              <AdminErrorBoundary>
+                <div className="min-h-screen bg-background">
+                  <Routes>
+                    {/* Public routes - now wrapped with AuthProvider */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    
+                    {/* Protected routes */}
+                    <Route
+                      path="/"
+                      element={
                         <ProtectedRoute>
                           <Dashboard />
                         </ProtectedRoute>
-                      </AuthRoutes>
-                    }
-                  />
-                  
-                  {/* Admin routes */}
-                  <Route path="/admin/login" element={<AdminLoginPage />} />
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>
-                        <AdminDashboardPage />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/accounts"
-                    element={
-                      <AdminRoute>
-                        <AdminAccountsPage />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/accounts/:id"
-                    element={
-                      <AdminRoute>
-                        <AdminAccountDetailPage />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/submissions"
-                    element={
-                      <AdminRoute>
-                        <AdminSubmissionsPage />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/submissions/:id"
-                    element={
-                      <AdminRoute>
-                        <AdminSubmissionDetailPage />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/settings"
-                    element={
-                      <AdminRoute>
-                        <AdminSettingsPage />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/security"
-                    element={
-                      <AdminRoute>
-                        <AdminSecurityPage />
-                      </AdminRoute>
-                    }
-                  />
-                  
-                  {/* Catch-all route */}
-                  <Route path="*" element={<div>Page not found</div>} />
-                </Routes>
-                <Toaster />
-              </div>
-            </AdminErrorBoundary>
-          </AdminRoutes>
+                      }
+                    />
+                    
+                    {/* Admin routes */}
+                    <Route path="/admin/login" element={<AdminLoginPage />} />
+                    <Route
+                      path="/admin"
+                      element={
+                        <AdminRoute>
+                          <AdminDashboardPage />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/accounts"
+                      element={
+                        <AdminRoute>
+                          <AdminAccountsPage />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/accounts/:id"
+                      element={
+                        <AdminRoute>
+                          <AdminAccountDetailPage />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/submissions"
+                      element={
+                        <AdminRoute>
+                          <AdminSubmissionsPage />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/submissions/:id"
+                      element={
+                        <AdminRoute>
+                          <AdminSubmissionDetailPage />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/settings"
+                      element={
+                        <AdminRoute>
+                          <AdminSettingsPage />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/security"
+                      element={
+                        <AdminRoute>
+                          <AdminSecurityPage />
+                        </AdminRoute>
+                      }
+                    />
+                    
+                    {/* Catch-all route */}
+                    <Route path="*" element={<div>Page not found</div>} />
+                  </Routes>
+                  <Toaster />
+                </div>
+              </AdminErrorBoundary>
+            </AdminRoutes>
+          </AuthRoutes>
         </ThemeProvider>
       </Router>
     </QueryClientProvider>
