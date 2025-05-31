@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -49,39 +50,76 @@ export const AccountPropertiesTab: React.FC<AccountPropertiesTabProps> = ({ prop
     }
 
     console.log('Raw occupancy statuses:', occupancyStatuses);
+    console.log('Type of occupancyStatuses:', typeof occupancyStatuses);
+    console.log('Is array:', Array.isArray(occupancyStatuses));
 
     try {
       // Handle different possible formats
-      const parsedStatuses = occupancyStatuses.map(status => {
-        console.log('Processing status:', status, 'Type:', typeof status);
-        
-        if (typeof status === 'string') {
-          try {
-            // Try to parse as JSON first
-            const parsed = JSON.parse(status);
-            console.log('Parsed JSON:', parsed);
-            return parsed;
-          } catch {
-            // If JSON parsing fails, treat as a simple string value
-            console.log('Not JSON, treating as string');
+      let parsedStatuses: any[] = [];
+
+      if (Array.isArray(occupancyStatuses)) {
+        parsedStatuses = occupancyStatuses.map((status, index) => {
+          console.log(`Processing status ${index}:`, status, 'Type:', typeof status);
+          
+          if (typeof status === 'string') {
+            try {
+              // Try to parse as JSON first
+              const parsed = JSON.parse(status);
+              console.log('Parsed JSON:', parsed);
+              return parsed;
+            } catch {
+              // If JSON parsing fails, treat as a simple string value
+              console.log('Not JSON, treating as string:', status);
+              return { status: status, months: 0 }; // Create a basic object structure
+            }
+          } else if (typeof status === 'object' && status !== null) {
+            console.log('Already an object:', status);
             return status;
           }
-        }
-        return status;
-      }).filter(Boolean);
+          return null;
+        }).filter(Boolean);
+      }
 
       console.log('Final parsed statuses:', parsedStatuses);
 
-      // If we have valid allocation objects, use the utility function
-      if (parsedStatuses.length > 0 && parsedStatuses[0] && typeof parsedStatuses[0] === 'object' && 'status' in parsedStatuses[0]) {
-        return formatOccupancyStatuses(parsedStatuses);
+      // If we have valid allocation objects with status and months, use the utility function
+      if (parsedStatuses.length > 0) {
+        const validAllocations = parsedStatuses.filter(allocation => 
+          allocation && 
+          typeof allocation === 'object' && 
+          ('status' in allocation || 'PERSONAL_USE' in allocation || 'LONG_TERM_RENT' in allocation || 'SHORT_TERM_RENT' in allocation)
+        );
+
+        if (validAllocations.length > 0) {
+          // Check if it's the old format with direct status properties
+          if ('PERSONAL_USE' in validAllocations[0] || 'LONG_TERM_RENT' in validAllocations[0] || 'SHORT_TERM_RENT' in validAllocations[0]) {
+            // Convert old format to new format
+            const converted = [];
+            const allocation = validAllocations[0];
+            if (allocation.PERSONAL_USE > 0) converted.push({ status: 'PERSONAL_USE', months: allocation.PERSONAL_USE });
+            if (allocation.LONG_TERM_RENT > 0) converted.push({ status: 'LONG_TERM_RENT', months: allocation.LONG_TERM_RENT });
+            if (allocation.SHORT_TERM_RENT > 0) converted.push({ status: 'SHORT_TERM_RENT', months: allocation.SHORT_TERM_RENT });
+            
+            return formatOccupancyStatuses(converted);
+          } else {
+            // Use the new format directly
+            return formatOccupancyStatuses(validAllocations);
+          }
+        }
       }
 
-      // Otherwise, try to format the raw strings
-      return parsedStatuses.join(', ');
+      // Fallback: try to display whatever we have
+      return occupancyStatuses.map(status => {
+        if (typeof status === 'string') {
+          return status;
+        }
+        return JSON.stringify(status);
+      }).join(', ');
+
     } catch (error) {
       console.error('Error parsing occupancy statuses:', error);
-      return 'Error parsing status';
+      console.error('Original data:', occupancyStatuses);
+      return `Raw: ${JSON.stringify(occupancyStatuses)}`;
     }
   };
 
