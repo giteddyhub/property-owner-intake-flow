@@ -21,6 +21,15 @@ export interface OwnerData {
   date_of_birth?: string;
   country_of_birth: string;
   citizenship: string;
+  marital_status: string;
+  address_street: string;
+  address_city: string;
+  address_zip: string;
+  address_country: string;
+  italian_residence_street?: string;
+  italian_residence_city?: string;
+  italian_residence_zip?: string;
+  italian_residence_comune_name?: string;
   created_at: string;
 }
 
@@ -32,6 +41,14 @@ export interface PropertyData {
   address_province: string;
   address_street: string;
   address_zip: string;
+  activity_2024: string;
+  purchase_price?: number;
+  purchase_date?: string;
+  sale_price?: number;
+  sale_date?: string;
+  rental_income?: number;
+  remodeling: boolean;
+  occupancy_statuses?: string[];
   created_at: string;
   documents?: string[];
   use_document_retrieval_service?: boolean;
