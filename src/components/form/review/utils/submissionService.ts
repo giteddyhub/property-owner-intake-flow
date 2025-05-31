@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 import type { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import type { ContactInfo, SubmissionResult } from './types';
@@ -63,7 +64,7 @@ export const submitFormData = async (
     const hasDocumentRetrievalService = properties.some(property => property.useDocumentRetrievalService);
     sessionStorage.setItem('hasDocumentRetrievalService', JSON.stringify(hasDocumentRetrievalService));
     
-    // Step 1: Create form submission entry
+    // Step 1: Create form submission entry (primary submission flag will be set by trigger)
     const { submissionId, error: submissionError } = await createFormSubmission(userId, hasDocumentRetrievalService);
     
     if (submissionError) {
@@ -72,6 +73,7 @@ export const submitFormData = async (
     
     // Store submission ID in sessionStorage
     sessionStorage.setItem('submissionId', submissionId);
+    console.log("[submissionService] Created submission with ID:", submissionId);
     
     // Step 2-4: Save form data (owners, properties, assignments)
     const { success, error: saveError } = await saveFormData(owners, properties, assignments, submissionId, userId);

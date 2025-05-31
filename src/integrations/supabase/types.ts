@@ -520,6 +520,7 @@ export type Database = {
         Row: {
           address_city: string
           address_country: string
+          address_state: string | null
           address_street: string
           address_zip: string
           citizenship: string
@@ -545,6 +546,7 @@ export type Database = {
         Insert: {
           address_city: string
           address_country: string
+          address_state?: string | null
           address_street: string
           address_zip: string
           citizenship: string
@@ -570,6 +572,7 @@ export type Database = {
         Update: {
           address_city?: string
           address_country?: string
+          address_state?: string | null
           address_street?: string
           address_zip?: string
           citizenship?: string
@@ -728,7 +731,7 @@ export type Database = {
           form_submission_id?: string | null
           id?: string
           label: string
-          occupancy_statuses: string[]
+          occupancy_statuses?: string[]
           property_type: string
           purchase_date?: string | null
           purchase_price?: number | null
