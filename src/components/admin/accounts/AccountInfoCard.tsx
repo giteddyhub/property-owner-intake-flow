@@ -2,7 +2,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Calendar, DollarSign, FileText } from 'lucide-react';
+import { User, DollarSign, FileText } from 'lucide-react';
 import { AccountData } from '@/types/admin';
 
 interface AccountInfoCardProps {
@@ -54,8 +54,8 @@ export const AccountInfoCard: React.FC<AccountInfoCardProps> = ({
         </CardContent>
       </Card>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Quick Stats - Removed Submissions Card */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -79,20 +79,6 @@ export const AccountInfoCard: React.FC<AccountInfoCardProps> = ({
               <div>
                 <p className="text-2xl font-bold">{ownersCount}</p>
                 <p className="text-xs text-muted-foreground">Owners</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Calendar className="h-4 w-4 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{submissionsCount}</p>
-                <p className="text-xs text-muted-foreground">Submissions</p>
               </div>
             </div>
           </CardContent>
