@@ -13,6 +13,9 @@ interface AccountDetails {
   updated_at: string;
   is_admin: boolean;
   primary_submission_id?: string;
+  total_revenue: number;
+  last_submission_date?: string;
+  recent_activities: number;
 }
 
 interface FormSubmission {
@@ -50,23 +53,35 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         return;
       }
 
+      // First, get user summary data from the optimized view
+      const { data: userSummary, error: summaryError } = await supabase
+        .from('admin_user_summary')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (summaryError || !userSummary) {
+        toast.error('Account not found');
+        navigate('/admin/accounts');
+        return;
+      }
+
+      // Check admin status using the streamlined approach
+      const { data: adminData } = await supabase
+        .from('admin_credentials')
+        .select('*')
+        .eq('email', userSummary.email)
+        .maybeSingle();
+
       // Optimized parallel queries using the new indexes
       const [
-        profileResult,
         submissionsResult,
         propertiesResult,
         ownersResult,
         assignmentsResult,
         activitiesResult
       ] = await Promise.all([
-        // Profile query (uses idx_profiles_email if needed)
-        supabase
-          .from('profiles')
-          .select('*, form_submissions!primary_submission_id(id, state)')
-          .eq('id', id)
-          .single(),
-        
-        // Submissions query (uses idx_form_submissions_user_id and idx_form_submissions_user_submitted)
+        // Uses idx_form_submissions_user_primary index
         supabase
           .from('form_submissions')
           .select('*')
@@ -75,21 +90,21 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           .in('state', ['new', 'processing', 'completed', 'error'])
           .order('submitted_at', { ascending: false }),
         
-        // Properties query (uses idx_properties_user_id)
+        // Uses idx_properties_user_created index
         supabase
           .from('properties')
           .select('*')
           .eq('user_id', id)
           .order('created_at', { ascending: false }),
         
-        // Owners query (uses idx_owners_user_id)
+        // Uses idx_owners_user_created index
         supabase
           .from('owners')
           .select('*')
           .eq('user_id', id)
           .order('created_at', { ascending: false }),
         
-        // Assignments query (uses idx_assignments_user_id)
+        // Uses idx_assignments_user_created index
         supabase
           .from('owner_property_assignments')
           .select(`
@@ -100,7 +115,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           .eq('user_id', id)
           .order('created_at', { ascending: false }),
         
-        // Activities query (uses idx_user_activities_user_created)
+        // Uses idx_user_activities_user_type_date index
         supabase
           .from('user_activities')
           .select('*')
@@ -109,26 +124,10 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           .limit(50)
       ]);
 
-      if (profileResult.error) throw profileResult.error;
-      if (!profileResult.data) {
-        toast.error('Account not found');
-        navigate('/admin/accounts');
-        return;
-      }
-
-      const profile = profileResult.data;
-
-      // Check admin status
-      const { data: adminData } = await supabase
-        .from('admin_credentials')
-        .select('*')
-        .eq('email', profile.email)
-        .maybeSingle();
-
       // Process submissions with primary flag
       const enhancedSubmissions = submissionsResult.data?.map(submission => ({
         ...submission,
-        is_primary_submission: submission.id === profile.primary_submission_id
+        is_primary_submission: submission.id === userSummary.primary_submission_id
       })) || [];
 
       // Process activities with type safety
@@ -145,11 +144,12 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           `${assignment.owners.first_name} ${assignment.owners.last_name}` : 'Unknown Owner'
       })) || [];
 
-      // Fetch payments using form_submission_id to link to users (no more contact_id)
+      // Fetch payments using optimized indexes
       let paymentsData = [];
       if (enhancedSubmissions.length > 0) {
         const submissionIds = enhancedSubmissions.map(s => s.id);
         
+        // Uses idx_purchases_submission_status index
         const { data: fetchedPayments } = await supabase
           .from('purchases')
           .select(`
@@ -162,10 +162,13 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         paymentsData = fetchedPayments || [];
       }
 
-      // Set all state
+      // Set all state using the optimized view data
       setAccount({
-        ...profile,
-        is_admin: !!adminData
+        ...userSummary,
+        updated_at: userSummary.created_at, // View doesn't track updated_at
+        is_admin: !!adminData,
+        total_revenue: Number(userSummary.total_revenue || 0),
+        recent_activities: userSummary.recent_activities || 0
       });
       setSubmissions(enhancedSubmissions);
       setProperties(propertiesResult.data || []);
@@ -175,13 +178,14 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
       setActivities(typedActivities);
 
       console.log('Optimized account details loaded:', {
-        profile: profile.email,
+        profile: userSummary.email,
         submissions: enhancedSubmissions.length,
         properties: propertiesResult.data?.length || 0,
         owners: ownersResult.data?.length || 0,
         assignments: enhancedAssignments.length,
         payments: paymentsData.length,
-        activities: typedActivities.length
+        activities: typedActivities.length,
+        dataSource: 'admin_user_summary_view'
       });
 
     } catch (error: any) {

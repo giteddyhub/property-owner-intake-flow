@@ -52,7 +52,7 @@ export const useOptimizedAdminData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Optimized query function that uses the new indexes
+  // Optimized query function using the new admin_user_summary view and indexes
   const fetchOptimizedAnalytics = useCallback(async () => {
     const startTime = Date.now();
     
@@ -60,45 +60,33 @@ export const useOptimizedAdminData = () => {
       setLoading(true);
       setError(null);
 
-      // Parallel queries for better performance, leveraging the new indexes
+      // Use the new admin_user_summary view for aggregated user data
       const [
-        usersResult,
+        userSummaryResult,
         submissionsResult,
-        propertiesResult,
-        ownersResult,
         activitiesResult,
         paymentsResult
       ] = await Promise.all([
-        // Optimized user count query using idx_profiles_created_at
+        // Leverages new view for user summary data
         supabase
-          .from('profiles')
-          .select('id, created_at', { count: 'exact' })
+          .from('admin_user_summary')
+          .select('*')
           .order('created_at', { ascending: false }),
         
-        // Optimized submissions query using idx_form_submissions_state and idx_form_submissions_submitted_at
+        // Optimized submissions query using new idx_form_submissions_state_date index
         supabase
           .from('form_submissions')
-          .select('id, state, submitted_at', { count: 'exact' })
+          .select('id, state, submitted_at')
           .order('submitted_at', { ascending: false }),
         
-        // Optimized properties count using idx_properties_created_at
-        supabase
-          .from('properties')
-          .select('id, property_type, created_at', { count: 'exact' }),
-        
-        // Optimized owners count using idx_owners_created_at
-        supabase
-          .from('owners')
-          .select('id', { count: 'exact' }),
-        
-        // Optimized recent activities using idx_user_activities_created_at
+        // Optimized recent activities using new idx_user_activities_user_type_date index
         supabase
           .from('user_activities')
           .select('id, user_id, activity_type, created_at')
           .order('created_at', { ascending: false })
           .limit(10),
         
-        // Optimized payments query using idx_purchases_created_at
+        // Optimized payments query using new idx_purchases_status_date index
         supabase
           .from('purchases')
           .select('amount, created_at, payment_status')
@@ -109,50 +97,44 @@ export const useOptimizedAdminData = () => {
       const endTime = Date.now();
       const responseTime = endTime - startTime;
 
-      if (usersResult.error) throw usersResult.error;
+      if (userSummaryResult.error) throw userSummaryResult.error;
       if (submissionsResult.error) throw submissionsResult.error;
-      if (propertiesResult.error) throw propertiesResult.error;
-      if (ownersResult.error) throw ownersResult.error;
       if (activitiesResult.error) throw activitiesResult.error;
       if (paymentsResult.error) throw paymentsResult.error;
 
-      // Calculate metrics with optimized data
-      const totalUsers = usersResult.count || 0;
-      const totalOwners = ownersResult.count || 0;
+      // Calculate metrics using the optimized view data
+      const userSummaries = userSummaryResult.data || [];
+      const totalUsers = userSummaries.length;
+      
+      // Aggregate totals from the view
+      const totalOwners = userSummaries.reduce((sum, user) => sum + (user.total_owners || 0), 0);
+      const totalProperties = userSummaries.reduce((sum, user) => sum + (user.total_properties || 0), 0);
+      const totalRevenue = userSummaries.reduce((sum, user) => sum + Number(user.total_revenue || 0), 0);
+      
       const currentMonth = new Date();
       currentMonth.setDate(1);
       currentMonth.setHours(0, 0, 0, 0);
       
-      const newUsersThisMonth = usersResult.data?.filter(user => 
+      const newUsersThisMonth = userSummaries.filter(user => 
         new Date(user.created_at) >= currentMonth
-      ).length || 0;
+      ).length;
 
-      const totalSubmissions = submissionsResult.count || 0;
+      const totalSubmissions = submissionsResult.data?.length || 0;
       const completedSubmissions = submissionsResult.data?.filter(s => s.state === 'completed').length || 0;
       const pendingSubmissions = submissionsResult.data?.filter(s => s.state !== 'completed').length || 0;
 
-      const totalProperties = propertiesResult.count || 0;
-
-      const totalRevenue = paymentsResult.data?.reduce((sum, payment) => 
-        sum + Number(payment.amount || 0), 0) || 0;
-      
       const monthlyRevenue = paymentsResult.data?.filter(payment =>
         new Date(payment.created_at) >= currentMonth
       ).reduce((sum, payment) => sum + Number(payment.amount || 0), 0) || 0;
 
-      // Active users (users with activity in last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const activeUsers = activitiesResult.data?.filter(activity =>
-        new Date(activity.created_at) >= thirtyDaysAgo
-      ).length || 0;
+      // Active users from the view's recent_activities count
+      const activeUsers = userSummaries.filter(user => (user.recent_activities || 0) > 0).length;
 
       // System health metrics
       const errorRate = responseTime > 1000 ? 2 : responseTime > 500 ? 1 : 0;
       const databaseStatus = responseTime > 2000 ? 'error' : responseTime > 1000 ? 'warning' : 'healthy';
 
-      // Generate mock growth data for the last 7 days
+      // Generate growth data for the last 7 days
       const userGrowthData = Array.from({ length: 7 }, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - (6 - i));
@@ -178,18 +160,27 @@ export const useOptimizedAdminData = () => {
         };
       });
 
-      // Generate property distribution
-      const propertyTypes = propertiesResult.data?.reduce((acc, property) => {
-        const type = property.property_type || 'Unknown';
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
+      // Property distribution (we'll need to query properties directly for this)
+      const { data: propertyTypes } = await supabase
+        .from('properties')
+        .select('property_type')
+        .order('property_type');
 
-      const propertyDistribution = Object.entries(propertyTypes).map(([type, count]) => ({
-        type,
-        count,
-        percentage: Math.round((count / totalProperties) * 100)
-      }));
+      const propertyDistribution = propertyTypes?.reduce((acc, property) => {
+        const type = property.property_type || 'Unknown';
+        const existing = acc.find(p => p.type === type);
+        if (existing) {
+          existing.count++;
+        } else {
+          acc.push({ type, count: 1, percentage: 0 });
+        }
+        return acc;
+      }, [] as Array<{ type: string; count: number; percentage: number }>) || [];
+
+      // Calculate percentages
+      propertyDistribution.forEach(item => {
+        item.percentage = Math.round((item.count / totalProperties) * 100);
+      });
 
       // Revenue metrics
       const averageOrderValue = totalRevenue > 0 && paymentsResult.data?.length ? 
@@ -228,11 +219,12 @@ export const useOptimizedAdminData = () => {
 
       setAnalytics(optimizedAnalytics);
       
-      console.log('Optimized analytics loaded:', {
+      console.log('Optimized analytics loaded using new database structure:', {
         responseTime: `${responseTime}ms`,
         totalUsers,
         totalOwners,
-        databaseStatus
+        databaseStatus,
+        viewRowsProcessed: userSummaries.length
       });
 
     } catch (error: any) {

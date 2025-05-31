@@ -13,6 +13,10 @@ export interface UserProfile {
   submissions_count: number;
   properties_count: number;
   owners_count: number;
+  primary_submission_id?: string;
+  total_revenue: number;
+  last_submission_date?: string;
+  recent_activities: number;
 }
 
 export const useCleanAdminData = () => {
@@ -54,30 +58,43 @@ export const useCleanAdminData = () => {
         timestamp: new Date().toISOString()
       });
 
-      // Use the admin-tools edge function for secure data access
-      const { data, error: functionError } = await supabase.functions.invoke('admin-tools', {
-        body: { 
-          action: 'fetch_user_profiles_with_stats'
-        },
-        headers: {
-          'x-admin-token': adminSession.token
-        }
-      });
+      // Use the new admin_user_summary view for optimized data access
+      const { data: userSummaries, error: viewError } = await supabase
+        .from('admin_user_summary')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (functionError) {
-        throw new Error(`Admin tools function error: ${functionError.message}`);
+      if (viewError) {
+        throw new Error(`Failed to fetch user summary data: ${viewError.message}`);
       }
 
-      if (!data || !data.profiles) {
-        throw new Error('No user data returned from admin tools');
+      if (!userSummaries) {
+        throw new Error('No user data returned from admin view');
       }
 
-      setUsers(data.profiles);
+      // Transform the view data to match our UserProfile interface
+      const transformedUsers: UserProfile[] = userSummaries.map(summary => ({
+        id: summary.id,
+        email: summary.email,
+        full_name: summary.full_name,
+        created_at: summary.created_at,
+        updated_at: summary.created_at, // View doesn't have updated_at, use created_at
+        submissions_count: summary.total_submissions || 0,
+        properties_count: summary.total_properties || 0,
+        owners_count: summary.total_owners || 0,
+        primary_submission_id: summary.primary_submission_id,
+        total_revenue: Number(summary.total_revenue || 0),
+        last_submission_date: summary.last_submission_date,
+        recent_activities: summary.recent_activities || 0
+      }));
+
+      setUsers(transformedUsers);
       
       // Log successful data retrieval
       await logAdminAction('user_data_retrieved', 'system', undefined, {
-        user_count: data.profiles.length,
-        timestamp: new Date().toISOString()
+        user_count: transformedUsers.length,
+        timestamp: new Date().toISOString(),
+        data_source: 'admin_user_summary_view'
       });
 
     } catch (error: any) {

@@ -166,45 +166,6 @@ export type Database = {
         }
         Relationships: []
       }
-      contacts: {
-        Row: {
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-          pdf_generated: boolean | null
-          pdf_url: string | null
-          state: string
-          submitted_at: string
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          full_name: string
-          id?: string
-          pdf_generated?: boolean | null
-          pdf_url?: string | null
-          state?: string
-          submitted_at?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          full_name?: string
-          id?: string
-          pdf_generated?: boolean | null
-          pdf_url?: string | null
-          state?: string
-          submitted_at?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       failed_jobs: {
         Row: {
           connection: string
@@ -273,6 +234,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_form_submissions_contact_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_user_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_form_submissions_contact_id"
             columns: ["user_id"]
@@ -490,6 +458,13 @@ export type Database = {
             foreignKeyName: "fk_assignments_user_id"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "admin_user_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_assignments_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -607,6 +582,13 @@ export type Database = {
             foreignKeyName: "fk_owners_user_id"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "admin_user_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_owners_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -687,6 +669,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_profiles_primary_submission"
+            columns: ["primary_submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_primary_submission_id_fkey"
             columns: ["primary_submission_id"]
@@ -772,6 +761,13 @@ export type Database = {
             columns: ["form_submission_id"]
             isOneToOne: false
             referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_properties_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_user_summary"
             referencedColumns: ["id"]
           },
           {
@@ -981,6 +977,13 @@ export type Database = {
             foreignKeyName: "user_activities_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "admin_user_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_activities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1021,7 +1024,38 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_user_summary: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          last_submission_date: string | null
+          primary_submission_id: string | null
+          recent_activities: number | null
+          total_assignments: number | null
+          total_owners: number | null
+          total_properties: number | null
+          total_revenue: number | null
+          total_submissions: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_profiles_primary_submission"
+            columns: ["primary_submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_primary_submission_id_fkey"
+            columns: ["primary_submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       create_admin_session: {
