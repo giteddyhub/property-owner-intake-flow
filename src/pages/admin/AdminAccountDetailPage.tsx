@@ -24,14 +24,19 @@ const AdminAccountDetailPage = () => {
     activities
   } = useOptimizedAccountDetails(id);
 
-  console.log(`[AdminAccountDetailPage] 🎯 Page rendering with:`, {
-    id,
+  console.log(`[AdminAccountDetailPage] 🎯 Page render with final data:`, {
+    userId: id,
     loading,
+    accountEmail: account?.email,
+    submissionsCount: submissions.length,
     paymentsCount: payments.length,
-    accountEmail: account?.email
+    paymentsExist: payments.length > 0,
+    paymentData: payments.map(p => ({ 
+      id: p.id, 
+      amount: p.amount, 
+      status: p.payment_status 
+    }))
   });
-
-  console.log(`[AdminAccountDetailPage] 💰 Payments data:`, payments);
 
   // Navigate back to accounts page
   const goBackToAccounts = () => navigate('/admin/accounts');
@@ -59,10 +64,16 @@ const AdminAccountDetailPage = () => {
     return sum + (isNaN(amount) ? 0 : amount);
   }, 0);
 
-  console.log(`[AdminAccountDetailPage] 📊 Calculated metrics:`, {
+  console.log(`[AdminAccountDetailPage] 📊 Final UI calculations:`, {
     hasCompletedSetup,
     totalPaymentAmount,
-    paymentsForCalculation: payments.map(p => ({ id: p.id, amount: p.amount, numeric: Number(p.amount || 0) }))
+    paymentsForUI: payments.length,
+    calculationDetails: payments.map(p => ({ 
+      id: p.id, 
+      originalAmount: p.amount, 
+      numericAmount: Number(p.amount || 0),
+      isValid: !isNaN(Number(p.amount || 0))
+    }))
   });
 
   return (

@@ -3,55 +3,70 @@ import { supabase } from '@/integrations/supabase/client';
 import { PaymentData } from '@/types/admin';
 
 export const fetchPayments = async (submissionIds: string[]): Promise<PaymentData[]> => {
-  console.log(`[paymentsService] Starting fetchPayments with ${submissionIds.length} submission IDs:`, submissionIds);
+  console.log(`[paymentsService] 🔍 Starting payment fetch for ${submissionIds.length} submission IDs:`);
+  submissionIds.forEach((id, index) => {
+    console.log(`[paymentsService]   ${index + 1}. ${id}`);
+  });
   
   if (submissionIds.length === 0) {
-    console.log(`[paymentsService] No submission IDs provided, returning empty array`);
+    console.log(`[paymentsService] ⚠️ No submission IDs provided, returning empty array`);
     return [];
   }
 
-  // Fetch all payments for the given submission IDs
-  const { data, error } = await supabase
-    .from('purchases')
-    .select(`
-      *,
-      form_submissions:form_submission_id (state)
-    `)
-    .in('form_submission_id', submissionIds)
-    .order('created_at', { ascending: false });
+  try {
+    // Fetch ALL payments for the given submission IDs
+    const { data: paymentsData, error: paymentsError } = await supabase
+      .from('purchases')
+      .select(`
+        *,
+        form_submissions:form_submission_id (state)
+      `)
+      .in('form_submission_id', submissionIds)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('[paymentsService] Error fetching payments:', error);
-    throw error; // Throw error instead of returning empty array to surface issues
-  }
-
-  console.log(`[paymentsService] Raw payment data from database:`, data);
-  console.log(`[paymentsService] Found ${data?.length || 0} payments`);
-
-  if (!data || data.length === 0) {
-    console.log(`[paymentsService] No payments found for submission IDs:`, submissionIds);
-    return [];
-  }
-
-  // Log each payment with detailed information
-  data.forEach((payment, index) => {
-    console.log(`[paymentsService] Payment ${index + 1}:`, {
-      id: payment.id,
-      amount: payment.amount,
-      amountType: typeof payment.amount,
-      currency: payment.currency,
-      payment_status: payment.payment_status,
-      stripe_session_id: payment.stripe_session_id,
-      form_submission_id: payment.form_submission_id,
-      created_at: payment.created_at
-    });
-    
-    // Specifically check for the €295 payment
-    if (payment.amount && (Number(payment.amount) === 295 || payment.amount.toString().includes('295'))) {
-      console.log(`[paymentsService] ⭐ FOUND €295 PAYMENT:`, payment);
+    if (paymentsError) {
+      console.error('[paymentsService] ❌ Error fetching payments:', paymentsError);
+      throw paymentsError;
     }
-  });
 
-  console.log(`[paymentsService] Successfully returning ${data.length} payments`);
-  return data;
+    console.log(`[paymentsService] ✅ Raw payment query result:`, paymentsData);
+
+    if (!paymentsData || paymentsData.length === 0) {
+      console.log(`[paymentsService] ⚠️ No payments found for submission IDs:`, submissionIds);
+      return [];
+    }
+
+    // Log detailed payment information
+    console.log(`[paymentsService] 💰 Found ${paymentsData.length} payments:`);
+    paymentsData.forEach((payment, index) => {
+      console.log(`[paymentsService]   Payment ${index + 1}:`, {
+        id: payment.id,
+        amount: payment.amount,
+        amountType: typeof payment.amount,
+        amountValue: Number(payment.amount || 0),
+        currency: payment.currency,
+        status: payment.payment_status,
+        submissionId: payment.form_submission_id,
+        createdAt: payment.created_at
+      });
+    });
+
+    // Check for the specific payments we know should exist
+    const paidPayments = paymentsData.filter(p => p.payment_status === 'paid');
+    const highValuePayments = paymentsData.filter(p => Number(p.amount || 0) > 200);
+    
+    console.log(`[paymentsService] 🎯 Analysis:`, {
+      totalPayments: paymentsData.length,
+      paidPayments: paidPayments.length,
+      highValuePayments: highValuePayments.length,
+      totalAmount: paymentsData.reduce((sum, p) => sum + Number(p.amount || 0), 0)
+    });
+
+    console.log(`[paymentsService] ✅ Successfully returning ${paymentsData.length} payments`);
+    return paymentsData;
+
+  } catch (error) {
+    console.error('[paymentsService] ❌ Unexpected error in fetchPayments:', error);
+    throw error;
+  }
 };

@@ -33,25 +33,29 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
     
     setLoading(true);
     try {
-      console.log(`[useOptimizedAccountDetails] Starting fetch for user ID: ${id}`);
+      console.log(`[useOptimizedAccountDetails] 🚀 Starting comprehensive fetch for user ID: ${id}`);
       
       // Validate admin session
       const isSessionValid = await validateSession();
       if (!isSessionValid) return;
 
       // Fetch user summary data
-      console.log(`[useOptimizedAccountDetails] Fetching user summary...`);
+      console.log(`[useOptimizedAccountDetails] 📋 Fetching user summary...`);
       const userSummary = await fetchUserSummary(id);
-      console.log(`[useOptimizedAccountDetails] User summary:`, userSummary);
+      console.log(`[useOptimizedAccountDetails] ✅ User summary fetched:`, {
+        email: userSummary.email,
+        primarySubmissionId: userSummary.primary_submission_id,
+        totalSubmissions: userSummary.total_submissions,
+        totalRevenue: userSummary.total_revenue
+      });
 
       // Check admin status
       const isAdmin = await checkAdminStatus(userSummary.email);
-      console.log(`[useOptimizedAccountDetails] Admin status for ${userSummary.email}:`, isAdmin);
 
-      // Fetch all data in parallel using optimized queries
-      console.log(`[useOptimizedAccountDetails] Fetching parallel data...`);
+      // Fetch all parallel data
+      console.log(`[useOptimizedAccountDetails] 🔄 Fetching parallel data...`);
       const [
-        enhancedSubmissions,
+        fetchedSubmissions,
         propertiesData,
         ownersData,
         enhancedAssignments,
@@ -64,73 +68,90 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         fetchActivities(id)
       ]);
 
-      console.log(`[useOptimizedAccountDetails] ✅ Submissions fetched:`, enhancedSubmissions.length, enhancedSubmissions);
-      console.log(`[useOptimizedAccountDetails] ✅ Properties fetched:`, propertiesData.length);
-      console.log(`[useOptimizedAccountDetails] ✅ Owners fetched:`, ownersData.length);
-      console.log(`[useOptimizedAccountDetails] ✅ Assignments fetched:`, enhancedAssignments.length);
-      console.log(`[useOptimizedAccountDetails] ✅ Activities fetched:`, typedActivities.length);
-
-      // Extract submission IDs for payment fetch - this is critical!
-      const submissionIds = enhancedSubmissions.map(s => s.id);
-      console.log(`[useOptimizedAccountDetails] 🔍 Submission IDs for payment fetch:`, submissionIds);
-      console.log(`[useOptimizedAccountDetails] 🔍 Total submission IDs count:`, submissionIds.length);
-
-      // Fetch payments based on ALL submissions (no filtering)
-      let paymentsData: PaymentData[] = [];
-      if (submissionIds.length > 0) {
-        console.log(`[useOptimizedAccountDetails] 💰 Fetching payments for submissions...`);
-        paymentsData = await fetchPayments(submissionIds);
-        console.log(`[useOptimizedAccountDetails] ✅ Payments fetched:`, paymentsData.length, paymentsData);
-      } else {
-        console.log(`[useOptimizedAccountDetails] ⚠️ No submission IDs found, skipping payment fetch`);
-      }
-
-      // Log payment details for debugging
-      console.log(`[useOptimizedAccountDetails] 📊 Payment summary:`, {
-        totalPayments: paymentsData.length,
-        paymentDetails: paymentsData.map(p => ({
-          id: p.id,
-          amount: p.amount,
-          currency: p.currency,
-          status: p.payment_status,
-          submission_id: p.form_submission_id
-        }))
-      });
-
-      // Set all state
-      const accountData = {
-        ...userSummary,
-        updated_at: userSummary.created_at,
-        is_admin: isAdmin,
-        total_revenue: Number(userSummary.total_revenue || 0),
-        recent_activities: userSummary.recent_activities || 0,
-        submissions_count: enhancedSubmissions.length,
-        properties_count: propertiesData.length,
-        owners_count: ownersData.length
-      };
-
-      console.log(`[useOptimizedAccountDetails] 🎯 Setting final state:`, {
-        account: accountData.email,
-        submissions: enhancedSubmissions.length,
-        payments: paymentsData.length,
+      console.log(`[useOptimizedAccountDetails] ✅ Parallel data fetched:`, {
+        submissions: fetchedSubmissions.length,
         properties: propertiesData.length,
         owners: ownersData.length,
         assignments: enhancedAssignments.length,
         activities: typedActivities.length
       });
 
+      // Extract ALL submission IDs for payment fetch
+      const submissionIds = fetchedSubmissions.map(s => s.id);
+      console.log(`[useOptimizedAccountDetails] 🔑 Extracted ${submissionIds.length} submission IDs for payment fetch:`);
+      submissionIds.forEach((id, index) => {
+        const submission = fetchedSubmissions.find(s => s.id === id);
+        console.log(`[useOptimizedAccountDetails]   ${index + 1}. ${id} (state: ${submission?.state})`);
+      });
+
+      // Fetch payments for ALL submissions
+      let paymentsData: PaymentData[] = [];
+      if (submissionIds.length > 0) {
+        console.log(`[useOptimizedAccountDetails] 💳 Fetching payments for all submissions...`);
+        paymentsData = await fetchPayments(submissionIds);
+        console.log(`[useOptimizedAccountDetails] ✅ Payments fetch completed:`, {
+          totalPayments: paymentsData.length,
+          paymentIds: paymentsData.map(p => p.id),
+          amounts: paymentsData.map(p => ({ id: p.id, amount: p.amount, status: p.payment_status }))
+        });
+      } else {
+        console.log(`[useOptimizedAccountDetails] ⚠️ No submissions found, skipping payment fetch`);
+      }
+
+      // Calculate metrics
+      const hasCompletedSetup = fetchedSubmissions.some(s => s.is_primary_submission && s.state === 'completed');
+      const totalPaymentAmount = paymentsData.reduce((sum, p) => {
+        const amount = Number(p.amount || 0);
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
+
+      console.log(`[useOptimizedAccountDetails] 📊 Final calculations:`, {
+        hasCompletedSetup,
+        totalPaymentAmount,
+        paymentsBreakdown: paymentsData.map(p => ({
+          id: p.id,
+          amount: p.amount,
+          numericAmount: Number(p.amount || 0),
+          status: p.payment_status
+        }))
+      });
+
+      // Prepare account data
+      const accountData = {
+        ...userSummary,
+        updated_at: userSummary.created_at,
+        is_admin: isAdmin,
+        total_revenue: totalPaymentAmount, // Use calculated amount instead of summary
+        recent_activities: userSummary.recent_activities || 0,
+        submissions_count: fetchedSubmissions.length,
+        properties_count: propertiesData.length,
+        owners_count: ownersData.length
+      };
+
+      // Set all state
+      console.log(`[useOptimizedAccountDetails] 🎯 Setting final state:`, {
+        account: accountData.email,
+        submissions: fetchedSubmissions.length,
+        payments: paymentsData.length,
+        properties: propertiesData.length,
+        owners: ownersData.length,
+        assignments: enhancedAssignments.length,
+        activities: typedActivities.length,
+        calculatedRevenue: totalPaymentAmount
+      });
+
       setAccount(accountData);
-      setSubmissions(enhancedSubmissions);
+      setSubmissions(fetchedSubmissions);
       setProperties(propertiesData);
       setOwners(ownersData);
       setAssignments(enhancedAssignments);
       setPayments(paymentsData);
       setActivities(typedActivities);
 
-      console.log(`[useOptimizedAccountDetails] ✅ State set successfully. Final payments count:`, paymentsData.length);
+      console.log(`[useOptimizedAccountDetails] ✅ State update completed successfully!`);
 
     } catch (error: any) {
-      console.error('[useOptimizedAccountDetails] ❌ Error fetching optimized account details:', error);
+      console.error('[useOptimizedAccountDetails] ❌ Error fetching account details:', error);
       
       if (error.message === 'Account not found') {
         toast.error('Account not found');

@@ -42,14 +42,26 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
   payments,
   activities
 }) => {
-  console.log(`[AccountDetailTabs] 📋 Rendering tabs with data:`, {
-    payments: payments.length,
-    properties: properties.length,
-    owners: owners.length,
-    assignments: assignments.length
+  console.log(`[AccountDetailTabs] 📋 Rendering tabs with comprehensive data:`, {
+    submissionsCount: submissions.length,
+    paymentsCount: payments.length,
+    propertiesCount: properties.length,
+    ownersCount: owners.length,
+    assignmentsCount: assignments.length
   });
   
-  console.log(`[AccountDetailTabs] 💰 Payments received:`, payments);
+  console.log(`[AccountDetailTabs] 📝 Submissions breakdown:`, 
+    submissions.map(s => ({ id: s.id, state: s.state, isPrimary: s.is_primary_submission }))
+  );
+  
+  console.log(`[AccountDetailTabs] 💰 Payments detailed view:`, 
+    payments.map(p => ({ 
+      id: p.id, 
+      amount: p.amount, 
+      status: p.payment_status,
+      submissionId: p.form_submission_id 
+    }))
+  );
   
   return (
     <Tabs defaultValue="properties" className="w-full">
