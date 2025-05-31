@@ -14,7 +14,7 @@ export const saveContactInfo = async (
     console.log("[contactService] Updating profile with contact info for user:", userId);
     
     const profileData = {
-      full_name: `${contactInfo.firstName} ${contactInfo.lastName}`.trim(),
+      full_name: contactInfo.fullName,
       email: contactInfo.email,
       updated_at: new Date().toISOString()
     };
@@ -65,14 +65,8 @@ export const getContactInfo = async (userId: string): Promise<ContactInfo | null
       return null;
     }
     
-    // Parse full name back into first and last name
-    const nameParts = (profile.full_name || '').split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-    
     return {
-      firstName,
-      lastName,
+      fullName: profile.full_name || '',
       email: profile.email
     };
   } catch (error) {

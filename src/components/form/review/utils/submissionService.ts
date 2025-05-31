@@ -1,5 +1,6 @@
 
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import type { ContactInfo, SubmissionResult } from './types';
 import { submissionTracker } from './submissionTracker';
@@ -81,7 +82,7 @@ export const submitFormData = async (
       .upsert(
         {
           id: userId,
-          full_name: `${contactInfo.firstName} ${contactInfo.lastName}`.trim(),
+          full_name: contactInfo.fullName,
           email: contactInfo.email,
           updated_at: new Date().toISOString()
         },
