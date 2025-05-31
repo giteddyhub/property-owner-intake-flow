@@ -1,13 +1,13 @@
 
 import React from 'react';
-import AdminLayout from '@/components/admin/AdminLayout';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { PaymentVerificationPanel } from '@/components/admin/payments/PaymentVerificationPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings, Database, Shield, Users } from 'lucide-react';
 
 const AdminSettingsPage = () => {
   return (
-    <AdminLayout>
+    <AdminLayout pageTitle="Settings">
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
