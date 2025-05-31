@@ -16,6 +16,17 @@ import {
   fetchPayments,
   fetchPaymentsByUserId
 } from './accountDetails/accountDetailsService';
+import { fetchPaymentsDirectQuery } from './accountDetails/paymentsService';
+
+// Enhanced type guard for payment validation
+const isValidPaymentData = (payment: any): payment is PaymentData => {
+  return payment && 
+         typeof payment.id === 'string' && 
+         payment.id.length > 0 &&
+         payment.amount !== null && 
+         payment.amount !== undefined &&
+         !isNaN(Number(payment.amount));
+};
 
 export const useOptimizedAccountDetails = (id: string | undefined) => {
   const navigate = useNavigate();
@@ -76,8 +87,9 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         activities: typedActivities.length
       });
 
-      // Enhanced payment fetching with validation
+      // Enhanced payment fetching with multiple strategies and comprehensive error handling
       let paymentsData: PaymentData[] = [];
+      let paymentsFetchSuccess = false;
       
       // Strategy 1: Extract submission IDs and fetch payments
       const submissionIds = fetchedSubmissions.map(s => s.id);
@@ -92,6 +104,19 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         try {
           console.log(`[useOptimizedAccountDetails] 💳 Strategy 1: Fetching payments for all submissions...`);
           paymentsData = await fetchPayments(submissionIds);
+          
+          // Validate payments with type guards
+          const validatedPayments = paymentsData.filter(payment => {
+            const isValid = isValidPaymentData(payment);
+            if (!isValid) {
+              console.error(`[useOptimizedAccountDetails] ❌ Invalid payment detected in Strategy 1:`, payment);
+            }
+            return isValid;
+          });
+          
+          paymentsData = validatedPayments;
+          paymentsFetchSuccess = paymentsData.length > 0;
+          
           console.log(`[useOptimizedAccountDetails] ✅ Strategy 1 completed:`, {
             totalPayments: paymentsData.length,
             paymentDetails: paymentsData.map(p => ({ 
@@ -103,15 +128,29 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           });
         } catch (error) {
           console.error(`[useOptimizedAccountDetails] ❌ Strategy 1 failed:`, error);
+          paymentsFetchSuccess = false;
           paymentsData = [];
         }
       }
 
       // Strategy 2: Fallback - Fetch payments directly by user ID if Strategy 1 failed or returned no results
-      if (paymentsData.length === 0) {
+      if (!paymentsFetchSuccess) {
         try {
           console.log(`[useOptimizedAccountDetails] 🔄 Strategy 2: Fetching payments directly by user ID...`);
           paymentsData = await fetchPaymentsByUserId(id);
+          
+          // Validate payments again
+          const validatedPayments = paymentsData.filter(payment => {
+            const isValid = isValidPaymentData(payment);
+            if (!isValid) {
+              console.error(`[useOptimizedAccountDetails] ❌ Invalid payment detected in Strategy 2:`, payment);
+            }
+            return isValid;
+          });
+          
+          paymentsData = validatedPayments;
+          paymentsFetchSuccess = paymentsData.length > 0;
+          
           console.log(`[useOptimizedAccountDetails] ✅ Strategy 2 completed:`, {
             totalPayments: paymentsData.length,
             paymentDetails: paymentsData.map(p => ({ 
@@ -122,21 +161,62 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           });
         } catch (error) {
           console.error(`[useOptimizedAccountDetails] ❌ Strategy 2 failed:`, error);
+          paymentsFetchSuccess = false;
+          paymentsData = [];
+        }
+      }
+
+      // Strategy 3: Ultimate fallback - Direct database query
+      if (!paymentsFetchSuccess) {
+        try {
+          console.log(`[useOptimizedAccountDetails] 🎯 Strategy 3: Direct query as ultimate fallback...`);
+          paymentsData = await fetchPaymentsDirectQuery(id);
+          
+          // Final validation
+          const validatedPayments = paymentsData.filter(payment => {
+            const isValid = isValidPaymentData(payment);
+            if (!isValid) {
+              console.error(`[useOptimizedAccountDetails] ❌ Invalid payment detected in Strategy 3:`, payment);
+            }
+            return isValid;
+          });
+          
+          paymentsData = validatedPayments;
+          paymentsFetchSuccess = paymentsData.length > 0;
+          
+          console.log(`[useOptimizedAccountDetails] ✅ Strategy 3 completed:`, {
+            totalPayments: paymentsData.length,
+            paymentDetails: paymentsData.map(p => ({ 
+              id: p.id, 
+              amount: p.amount, 
+              status: p.payment_status 
+            }))
+          });
+        } catch (error) {
+          console.error(`[useOptimizedAccountDetails] ❌ Strategy 3 failed:`, error);
+          paymentsFetchSuccess = false;
           paymentsData = [];
         }
       }
 
       // Final validation and error reporting
-      if (paymentsData.length === 0) {
-        console.warn(`[useOptimizedAccountDetails] ⚠️ No payments found using any strategy for user ${id}`);
-        console.warn(`[useOptimizedAccountDetails] 🔍 Debug info:`, {
+      if (!paymentsFetchSuccess || paymentsData.length === 0) {
+        console.error(`[useOptimizedAccountDetails] 🚨 CRITICAL: All payment fetching strategies failed for user ${id}`);
+        console.error(`[useOptimizedAccountDetails] 🔍 Debug info:`, {
           userId: id,
           userEmail: userSummary.email,
           submissionsFound: fetchedSubmissions.length,
           submissionIds: submissionIds,
           submissionStates: fetchedSubmissions.map(s => s.state),
-          strategiesAttempted: 2
+          strategiesAttempted: 3
         });
+        
+        // Show error toast to user
+        toast.error('Payment data could not be loaded', {
+          description: 'All payment retrieval strategies failed. Check console for details.'
+        });
+      } else {
+        console.log(`[useOptimizedAccountDetails] 🎉 SUCCESS: Payments retrieved successfully using one of the strategies`);
       }
 
       // Calculate metrics with enhanced validation
@@ -160,7 +240,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         paymentsCount: paymentsData.length,
         submissionsProcessed: fetchedSubmissions.length,
         paymentsBySubmission: paymentsData.reduce((acc, p) => {
-          acc[p.form_submission_id] = (acc[p.form_submission_id] || 0) + 1;
+          acc[p.form_submission_id || 'null'] = (acc[p.form_submission_id || 'null'] || 0) + 1;
           return acc;
         }, {} as Record<string, number>)
       });
@@ -176,7 +256,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         owners_count: ownersData.length
       };
 
-      // Set all state with comprehensive logging
+      // Set all state with comprehensive logging and validation
       console.log(`[useOptimizedAccountDetails] 🎯 Setting final state:`, {
         account: accountData.email,
         submissions: fetchedSubmissions.length,
@@ -188,12 +268,19 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         calculatedRevenue: totalPaymentAmount
       });
 
+      // Validate payments one more time before setting state
+      if (!Array.isArray(paymentsData)) {
+        console.error(`[useOptimizedAccountDetails] ❌ CRITICAL: paymentsData is not an array:`, paymentsData);
+        setPayments([]);
+      } else {
+        setPayments(paymentsData);
+      }
+
       setAccount(accountData);
       setSubmissions(fetchedSubmissions);
       setProperties(propertiesData);
       setOwners(ownersData);
       setAssignments(enhancedAssignments);
-      setPayments(paymentsData);
       setActivities(typedActivities);
 
       console.log(`[useOptimizedAccountDetails] ✅ State update completed successfully!`);
