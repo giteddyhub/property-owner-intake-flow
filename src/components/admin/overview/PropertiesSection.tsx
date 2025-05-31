@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,29 +20,46 @@ export const PropertiesSection: React.FC<PropertiesSectionProps> = ({ properties
     document.body.removeChild(link);
   };
 
-  // Helper function to parse and format occupancy statuses from database format
+  // Improved helper function to parse and format occupancy statuses from database format
   const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined) => {
     if (!occupancyStatuses || occupancyStatuses.length === 0) {
       return 'Not specified';
     }
 
+    console.log('Raw occupancy statuses:', occupancyStatuses);
+
     try {
-      // Parse the occupancy statuses from string format to proper objects
+      // Handle different possible formats
       const parsedStatuses = occupancyStatuses.map(status => {
+        console.log('Processing status:', status, 'Type:', typeof status);
+        
         if (typeof status === 'string') {
           try {
-            return JSON.parse(status);
+            // Try to parse as JSON first
+            const parsed = JSON.parse(status);
+            console.log('Parsed JSON:', parsed);
+            return parsed;
           } catch {
-            return null;
+            // If JSON parsing fails, treat as a simple string value
+            console.log('Not JSON, treating as string');
+            return status;
           }
         }
         return status;
       }).filter(Boolean);
 
-      return formatOccupancyStatuses(parsedStatuses);
+      console.log('Final parsed statuses:', parsedStatuses);
+
+      // If we have valid allocation objects, use the utility function
+      if (parsedStatuses.length > 0 && parsedStatuses[0] && typeof parsedStatuses[0] === 'object' && 'status' in parsedStatuses[0]) {
+        return formatOccupancyStatuses(parsedStatuses);
+      }
+
+      // Otherwise, try to format the raw strings
+      return parsedStatuses.join(', ');
     } catch (error) {
       console.error('Error parsing occupancy statuses:', error);
-      return 'Not specified';
+      return 'Error parsing status';
     }
   };
 
