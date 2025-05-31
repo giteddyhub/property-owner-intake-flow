@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { OwnerData, PropertyData, AssignmentData, PaymentData, UserActivityData } from '@/types/admin';
 import { AccountDetails, FormSubmission } from './types';
@@ -46,7 +45,7 @@ export const checkAdminStatus = async (email: string): Promise<boolean> => {
 export const fetchSubmissions = async (userId: string, primarySubmissionId?: string): Promise<FormSubmission[]> => {
   console.log(`[accountDetailsService] Fetching submissions for user: ${userId}, primary: ${primarySubmissionId}`);
   
-  // First, let's get ALL submissions for this user to see what exists
+  // First, get all submissions for this user
   const { data: allSubmissions, error: allSubmissionsError } = await supabase
     .from('form_submissions')
     .select('*')
@@ -55,33 +54,58 @@ export const fetchSubmissions = async (userId: string, primarySubmissionId?: str
 
   if (allSubmissionsError) {
     console.error('[accountDetailsService] Error fetching all submissions:', allSubmissionsError);
-  } else {
-    console.log(`[accountDetailsService] Found ${allSubmissions?.length || 0} total submissions for user ${userId}:`, 
-      allSubmissions?.map(s => ({ id: s.id, state: s.state, submitted_at: s.submitted_at }))
-    );
+    throw allSubmissionsError;
   }
 
-  // Now get the filtered submissions (exclude only the initialization state)
-  const { data: submissionsData, error: submissionsError } = await supabase
-    .from('form_submissions')
-    .select('*')
-    .eq('user_id', userId)
-    .neq('state', 'tax_filing_init') // Only exclude session initialization entries
-    .order('submitted_at', { ascending: false });
-
-  if (submissionsError) {
-    console.error('[accountDetailsService] Error fetching filtered submissions:', submissionsError);
-    throw submissionsError;
-  }
-
-  console.log(`[accountDetailsService] Found ${submissionsData?.length || 0} valid submissions for user ${userId}:`, 
-    submissionsData?.map(s => ({ id: s.id, state: s.state, submitted_at: s.submitted_at }))
+  console.log(`[accountDetailsService] Found ${allSubmissions?.length || 0} total submissions for user ${userId}:`, 
+    allSubmissions?.map(s => ({ id: s.id, state: s.state, submitted_at: s.submitted_at }))
   );
 
-  return submissionsData?.map(submission => ({
+  if (!allSubmissions || allSubmissions.length === 0) {
+    return [];
+  }
+
+  // Get submission IDs to check for payments
+  const submissionIds = allSubmissions.map(s => s.id);
+  
+  // Check which submissions have payments
+  const { data: paymentsData, error: paymentsError } = await supabase
+    .from('purchases')
+    .select('form_submission_id')
+    .in('form_submission_id', submissionIds);
+
+  if (paymentsError) {
+    console.error('[accountDetailsService] Error fetching payments for submissions:', paymentsError);
+  }
+
+  const submissionsWithPayments = new Set(paymentsData?.map(p => p.form_submission_id) || []);
+  
+  console.log(`[accountDetailsService] Found payments for submissions:`, Array.from(submissionsWithPayments));
+
+  // Filter submissions: exclude tax_filing_init ONLY if they don't have payments
+  const filteredSubmissions = allSubmissions.filter(submission => {
+    // Always include if it has payments
+    if (submissionsWithPayments.has(submission.id)) {
+      console.log(`[accountDetailsService] Including submission ${submission.id} (${submission.state}) - has payments`);
+      return true;
+    }
+    
+    // For submissions without payments, exclude tax_filing_init state
+    if (submission.state === 'tax_filing_init') {
+      console.log(`[accountDetailsService] Excluding submission ${submission.id} (${submission.state}) - no payments`);
+      return false;
+    }
+    
+    console.log(`[accountDetailsService] Including submission ${submission.id} (${submission.state}) - valid state`);
+    return true;
+  });
+
+  console.log(`[accountDetailsService] Final filtered submissions count: ${filteredSubmissions.length}`);
+
+  return filteredSubmissions.map(submission => ({
     ...submission,
     is_primary_submission: submission.id === primarySubmissionId
-  })) || [];
+  }));
 };
 
 export const fetchProperties = async (userId: string): Promise<PropertyData[]> => {
