@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { OwnerData, PropertyData, AssignmentData, PaymentData, UserActivityData } from '@/types/admin';
 import { AccountDetails, FormSubmission } from './types';
@@ -94,17 +93,41 @@ export const fetchAssignments = async (userId: string): Promise<AssignmentData[]
 };
 
 export const fetchActivities = async (userId: string): Promise<UserActivityData[]> => {
-  const { data } = await supabase
+  console.log(`[accountDetailsService] Fetching activities for user: ${userId}`);
+  
+  const { data, error } = await supabase
     .from('user_activities')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(50);
 
-  return data?.map(activity => ({
-    ...activity,
-    metadata: (activity.metadata as any) || {}
-  })) || [];
+  if (error) {
+    console.error('[accountDetailsService] Error fetching activities:', error);
+    return [];
+  }
+
+  console.log(`[accountDetailsService] Raw activities data:`, data);
+  console.log(`[accountDetailsService] Found ${data?.length || 0} activities for user ${userId}`);
+
+  const typedActivities = data?.map(activity => {
+    console.log(`[accountDetailsService] Processing activity:`, {
+      id: activity.id,
+      activity_type: activity.activity_type,
+      activity_description: activity.activity_description,
+      entity_type: activity.entity_type,
+      created_at: activity.created_at,
+      metadata: activity.metadata
+    });
+
+    return {
+      ...activity,
+      metadata: (activity.metadata as any) || {}
+    };
+  }) || [];
+
+  console.log(`[accountDetailsService] Returning ${typedActivities.length} typed activities`);
+  return typedActivities;
 };
 
 export const fetchPayments = async (submissionIds: string[]): Promise<PaymentData[]> => {

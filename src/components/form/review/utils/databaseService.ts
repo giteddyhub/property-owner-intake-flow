@@ -8,6 +8,62 @@ import { submissionTracker } from './submissionTracker';
 import { toast } from 'sonner';
 
 /**
+ * Enhanced activity logging function with better error handling
+ */
+const logUserActivity = async (
+  userId: string,
+  activityType: string,
+  activityDescription: string,
+  entityType?: string,
+  entityId?: string,
+  metadata?: Record<string, any>
+) => {
+  try {
+    console.log(`[databaseService] Logging activity for user ${userId}:`, {
+      activityType,
+      activityDescription,
+      entityType,
+      entityId,
+      metadata
+    });
+
+    const { data, error } = await supabase.rpc('log_user_activity', {
+      user_id: userId,
+      activity_type: activityType,
+      activity_description: activityDescription,
+      entity_type: entityType || null,
+      entity_id: entityId || null,
+      metadata: metadata || {}
+    });
+
+    if (error) {
+      console.error('[databaseService] Failed to log user activity:', error);
+      // Try direct insert as fallback
+      const { error: insertError } = await supabase
+        .from('user_activities')
+        .insert({
+          user_id: userId,
+          activity_type: activityType,
+          activity_description: activityDescription,
+          entity_type: entityType || null,
+          entity_id: entityId || null,
+          metadata: metadata || {}
+        });
+      
+      if (insertError) {
+        console.error('[databaseService] Direct insert also failed:', insertError);
+      } else {
+        console.log('[databaseService] Activity logged via direct insert');
+      }
+    } else {
+      console.log('[databaseService] Activity logged successfully via RPC:', data);
+    }
+  } catch (error) {
+    console.error('[databaseService] Exception during activity logging:', error);
+  }
+};
+
+/**
  * Creates a form submission entry in the database
  */
 export const createFormSubmission = async (
@@ -48,23 +104,19 @@ export const createFormSubmission = async (
     // Store submission ID in our tracker to prevent duplicates
     submissionTracker.storeSubmissionId(userId, submissionId);
     
-    // Log activity for form submission creation
-    try {
-      await supabase.rpc('log_user_activity', {
-        user_id: userId,
-        activity_type: 'submission_created',
-        activity_description: 'User completed initial form submission',
-        entity_type: 'form_submission',
-        entity_id: submissionId,
-        metadata: {
-          has_document_retrieval: hasDocumentRetrievalService,
-          submission_state: 'new'
-        }
-      });
-    } catch (activityError) {
-      console.warn('[databaseService] Failed to log activity:', activityError);
-      // Don't fail the submission for activity logging errors
-    }
+    // Enhanced activity logging for form submission creation
+    await logUserActivity(
+      userId,
+      'submission_created',
+      'User completed initial form submission',
+      'form_submission',
+      submissionId,
+      {
+        has_document_retrieval: hasDocumentRetrievalService,
+        submission_state: 'new',
+        timestamp: new Date().toISOString()
+      }
+    );
     
     return { submissionId };
   } catch (error) {
@@ -124,22 +176,21 @@ export const saveFormData = async (
     const ownerIdMap = await saveOwners(owners, submissionId, userId);
     console.log("[databaseService] Owner ID mapping:", ownerIdMap);
     
-    // Log activity for owners creation
+    // Enhanced activity logging for owners creation
     if (owners.length > 0) {
-      try {
-        await supabase.rpc('log_user_activity', {
-          user_id: userId,
-          activity_type: 'owner_added',
-          activity_description: `Added ${owners.length} property owner(s)`,
-          entity_type: 'owner',
-          metadata: {
-            owner_count: owners.length,
-            submission_id: submissionId
-          }
-        });
-      } catch (activityError) {
-        console.warn('[databaseService] Failed to log owner activity:', activityError);
-      }
+      await logUserActivity(
+        userId,
+        'owner_added',
+        `Added ${owners.length} property owner(s)`,
+        'owner',
+        undefined,
+        {
+          owner_count: owners.length,
+          submission_id: submissionId,
+          owner_names: owners.map(o => `${o.first_name} ${o.last_name}`),
+          timestamp: new Date().toISOString()
+        }
+      );
     }
     
     // Save properties and get ID mappings
@@ -147,22 +198,22 @@ export const saveFormData = async (
     const propertyIdMap = await saveProperties(properties, submissionId, userId);
     console.log("[databaseService] Property ID mapping:", propertyIdMap);
     
-    // Log activity for properties creation
+    // Enhanced activity logging for properties creation
     if (properties.length > 0) {
-      try {
-        await supabase.rpc('log_user_activity', {
-          user_id: userId,
-          activity_type: 'property_added',
-          activity_description: `Added ${properties.length} property/properties`,
-          entity_type: 'property',
-          metadata: {
-            property_count: properties.length,
-            submission_id: submissionId
-          }
-        });
-      } catch (activityError) {
-        console.warn('[databaseService] Failed to log property activity:', activityError);
-      }
+      await logUserActivity(
+        userId,
+        'property_added',
+        `Added ${properties.length} property/properties`,
+        'property',
+        undefined,
+        {
+          property_count: properties.length,
+          submission_id: submissionId,
+          property_labels: properties.map(p => p.label),
+          property_types: properties.map(p => p.property_type),
+          timestamp: new Date().toISOString()
+        }
+      );
     }
     
     // Save owner-property assignments
@@ -170,22 +221,21 @@ export const saveFormData = async (
     await saveAssignments(assignments, ownerIdMap, propertyIdMap, submissionId, userId);
     console.log("[databaseService] Assignments saved successfully");
     
-    // Log activity for assignments creation
+    // Enhanced activity logging for assignments creation
     if (assignments.length > 0) {
-      try {
-        await supabase.rpc('log_user_activity', {
-          user_id: userId,
-          activity_type: 'assignment_created',
-          activity_description: `Created ${assignments.length} owner-property assignment(s)`,
-          entity_type: 'assignment',
-          metadata: {
-            assignment_count: assignments.length,
-            submission_id: submissionId
-          }
-        });
-      } catch (activityError) {
-        console.warn('[databaseService] Failed to log assignment activity:', activityError);
-      }
+      await logUserActivity(
+        userId,
+        'assignment_created',
+        `Created ${assignments.length} owner-property assignment(s)`,
+        'assignment',
+        undefined,
+        {
+          assignment_count: assignments.length,
+          submission_id: submissionId,
+          total_ownership_percentage: assignments.reduce((sum, a) => sum + (a.ownership_percentage || 0), 0),
+          timestamp: new Date().toISOString()
+        }
+      );
     }
     
     return { success: true };
