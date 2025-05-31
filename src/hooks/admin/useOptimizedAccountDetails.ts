@@ -76,15 +76,16 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         activities: typedActivities.length
       });
 
-      // COMPREHENSIVE PAYMENT FETCHING WITH MULTIPLE STRATEGIES
+      // Enhanced payment fetching with validation
       let paymentsData: PaymentData[] = [];
       
       // Strategy 1: Extract submission IDs and fetch payments
       const submissionIds = fetchedSubmissions.map(s => s.id);
-      console.log(`[useOptimizedAccountDetails] 🔑 Strategy 1: Extracted ${submissionIds.length} submission IDs for payment fetch:`);
-      submissionIds.forEach((id, index) => {
-        const submission = fetchedSubmissions.find(s => s.id === id);
-        console.log(`[useOptimizedAccountDetails]   ${index + 1}. ${id} (state: ${submission?.state})`);
+      console.log(`[useOptimizedAccountDetails] 🔑 Strategy 1: Extracted ${submissionIds.length} submission IDs for payment fetch`);
+      
+      // Log submission details for debugging
+      fetchedSubmissions.forEach((submission, index) => {
+        console.log(`[useOptimizedAccountDetails]   ${index + 1}. ${submission.id} (state: ${submission.state}, created: ${submission.created_at})`);
       });
 
       if (submissionIds.length > 0) {
@@ -93,8 +94,12 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           paymentsData = await fetchPayments(submissionIds);
           console.log(`[useOptimizedAccountDetails] ✅ Strategy 1 completed:`, {
             totalPayments: paymentsData.length,
-            paymentIds: paymentsData.map(p => p.id),
-            amounts: paymentsData.map(p => ({ id: p.id, amount: p.amount, status: p.payment_status }))
+            paymentDetails: paymentsData.map(p => ({ 
+              id: p.id, 
+              amount: p.amount, 
+              status: p.payment_status,
+              submissionId: p.form_submission_id 
+            }))
           });
         } catch (error) {
           console.error(`[useOptimizedAccountDetails] ❌ Strategy 1 failed:`, error);
@@ -109,7 +114,11 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           paymentsData = await fetchPaymentsByUserId(id);
           console.log(`[useOptimizedAccountDetails] ✅ Strategy 2 completed:`, {
             totalPayments: paymentsData.length,
-            paymentIds: paymentsData.map(p => p.id)
+            paymentDetails: paymentsData.map(p => ({ 
+              id: p.id, 
+              amount: p.amount, 
+              status: p.payment_status 
+            }))
           });
         } catch (error) {
           console.error(`[useOptimizedAccountDetails] ❌ Strategy 2 failed:`, error);
@@ -125,6 +134,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           userEmail: userSummary.email,
           submissionsFound: fetchedSubmissions.length,
           submissionIds: submissionIds,
+          submissionStates: fetchedSubmissions.map(s => s.state),
           strategiesAttempted: 2
         });
       }
@@ -148,13 +158,11 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         hasCompletedSetup,
         totalPaymentAmount,
         paymentsCount: paymentsData.length,
-        paymentsBreakdown: paymentsData.map(p => ({
-          id: p.id,
-          amount: p.amount,
-          numericAmount: Number(p.amount || 0),
-          status: p.payment_status,
-          submissionId: p.form_submission_id
-        }))
+        submissionsProcessed: fetchedSubmissions.length,
+        paymentsBySubmission: paymentsData.reduce((acc, p) => {
+          acc[p.form_submission_id] = (acc[p.form_submission_id] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>)
       });
 
       // Prepare account data
@@ -162,7 +170,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         ...userSummary,
         updated_at: userSummary.created_at,
         is_admin: isAdmin,
-        total_revenue: totalPaymentAmount, // Use calculated amount instead of summary
+        total_revenue: totalPaymentAmount,
         recent_activities: userSummary.recent_activities || 0,
         properties_count: propertiesData.length,
         owners_count: ownersData.length
@@ -177,8 +185,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         owners: ownersData.length,
         assignments: enhancedAssignments.length,
         activities: typedActivities.length,
-        calculatedRevenue: totalPaymentAmount,
-        paymentDataSample: paymentsData.length > 0 ? paymentsData[0] : 'NO_PAYMENTS'
+        calculatedRevenue: totalPaymentAmount
       });
 
       setAccount(accountData);
@@ -190,8 +197,6 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
       setActivities(typedActivities);
 
       console.log(`[useOptimizedAccountDetails] ✅ State update completed successfully!`);
-      
-      // Final verification log
       console.log(`[useOptimizedAccountDetails] 🔍 Final verification - payments in state:`, paymentsData.length);
 
     } catch (error: any) {
