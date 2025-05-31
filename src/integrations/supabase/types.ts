@@ -434,7 +434,7 @@ export type Database = {
           resident_to_date: string | null
           tax_credits: number | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -448,7 +448,7 @@ export type Database = {
           resident_to_date?: string | null
           tax_credits?: number | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -462,7 +462,7 @@ export type Database = {
           resident_to_date?: string | null
           tax_credits?: number | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -540,7 +540,7 @@ export type Database = {
           state_of_birth: string | null
           state_of_citizenship: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           address_city: string
@@ -565,7 +565,7 @@ export type Database = {
           state_of_birth?: string | null
           state_of_citizenship?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           address_city?: string
@@ -590,7 +590,7 @@ export type Database = {
           state_of_birth?: string | null
           state_of_citizenship?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -715,7 +715,7 @@ export type Database = {
           sale_price: number | null
           updated_at: string
           use_document_retrieval_service: boolean | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           activity_2024: string
@@ -738,7 +738,7 @@ export type Database = {
           sale_price?: number | null
           updated_at?: string
           use_document_retrieval_service?: boolean | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           activity_2024?: string
@@ -761,7 +761,7 @@ export type Database = {
           sale_price?: number | null
           updated_at?: string
           use_document_retrieval_service?: boolean | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -792,7 +792,7 @@ export type Database = {
           amount: number
           created_at: string
           currency: string
-          form_submission_id: string | null
+          form_submission_id: string
           has_document_retrieval: boolean | null
           id: string
           payment_status: string
@@ -804,7 +804,7 @@ export type Database = {
           amount: number
           created_at?: string
           currency?: string
-          form_submission_id?: string | null
+          form_submission_id: string
           has_document_retrieval?: boolean | null
           id?: string
           payment_status?: string
@@ -816,7 +816,7 @@ export type Database = {
           amount?: number
           created_at?: string
           currency?: string
-          form_submission_id?: string | null
+          form_submission_id?: string
           has_document_retrieval?: boolean | null
           id?: string
           payment_status?: string

@@ -87,7 +87,6 @@ export const createPurchaseEntry = async (
     const { data: purchase, error: purchaseError } = await supabase
       .from('purchases')
       .insert({
-        contact_id: submissionId,
         form_submission_id: submissionId,
         payment_status: 'pending',
         has_document_retrieval: hasDocumentRetrievalService,
