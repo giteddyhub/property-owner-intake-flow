@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { OwnerData, PropertyData, AssignmentData, PaymentData, UserActivityData } from '@/types/admin';
 import { AccountDetails, FormSubmission } from './types';
@@ -24,7 +25,11 @@ export const fetchUserSummary = async (id: string): Promise<AccountDetails> => {
     primary_submission_id: userSummary.primary_submission_id,
     total_revenue: Number(userSummary.total_revenue || 0),
     last_submission_date: userSummary.last_submission_date,
-    recent_activities: userSummary.recent_activities || 0
+    recent_activities: userSummary.recent_activities || 0,
+    // Add the missing properties with default values (will be overridden later)
+    submissions_count: 0,
+    properties_count: 0,
+    owners_count: 0
   };
 };
 
