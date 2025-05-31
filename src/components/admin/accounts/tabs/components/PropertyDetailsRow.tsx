@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -17,18 +16,37 @@ export const PropertyDetailsRow: React.FC<PropertyDetailsRowProps> = ({
   property,
   onDownloadDocument
 }) => {
-  const getDocumentName = (doc: string, index: number) => {
+  const parseDocumentData = (doc: string, index: number) => {
+    try {
+      // Try to parse as JSON first
+      const parsed = JSON.parse(doc);
+      
+      if (parsed && typeof parsed === 'object') {
+        // Extract URL and name from the parsed object
+        const url = parsed.url || parsed.path || doc;
+        const name = parsed.name || parsed.originalName || `${property.label.replace(/\s+/g, '_')}_document_${index + 1}`;
+        
+        return { url, name };
+      }
+    } catch (error) {
+      // Not JSON, treat as legacy format
+      console.log('Document is not JSON, treating as legacy format:', doc);
+    }
+    
+    // Fallback for legacy string format
+    const url = doc;
+    let name = `${property.label.replace(/\s+/g, '_')}_document_${index + 1}`;
+    
     // Try to extract filename from URL or path
     if (doc.includes('/')) {
       const parts = doc.split('/');
       const lastPart = parts[parts.length - 1];
       if (lastPart && lastPart.includes('.')) {
-        return lastPart;
+        name = lastPart;
       }
     }
     
-    // Fallback to generic name
-    return `${property.label.replace(/\s+/g, '_')}_document_${index + 1}`;
+    return { url, name };
   };
 
   return (
@@ -89,7 +107,7 @@ export const PropertyDetailsRow: React.FC<PropertyDetailsRowProps> = ({
               </h4>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {property.documents.map((doc, index) => {
-                  const documentName = getDocumentName(doc, index);
+                  const { url, name } = parseDocumentData(doc, index);
                   return (
                     <Button
                       key={index}
@@ -98,12 +116,12 @@ export const PropertyDetailsRow: React.FC<PropertyDetailsRowProps> = ({
                       className="justify-start h-auto p-3"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDownloadDocument(doc, documentName);
+                        onDownloadDocument(url, name);
                       }}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <Download className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate text-xs">{documentName}</span>
+                        <span className="truncate text-xs">{name}</span>
                       </div>
                     </Button>
                   );

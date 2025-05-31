@@ -7,7 +7,9 @@ export const useDocumentDownload = () => {
     try {
       let downloadUrl: string;
       
-      // Check if documentData is already a full URL
+      console.log('Downloading document:', { documentData, fileName });
+      
+      // Check if documentData is already a full URL (starts with http)
       if (documentData.startsWith('http')) {
         downloadUrl = documentData;
       } else {
@@ -19,15 +21,17 @@ export const useDocumentDownload = () => {
         downloadUrl = data.publicUrl;
       }
 
+      console.log('Download URL:', downloadUrl);
+
       // Test if the file exists by making a HEAD request
       try {
         const response = await fetch(downloadUrl, { method: 'HEAD' });
         if (!response.ok) {
-          throw new Error('File not found');
+          throw new Error(`File not found: ${response.status} ${response.statusText}`);
         }
       } catch (error) {
         console.error('Document not accessible:', error);
-        toast.error('Document is not available for download');
+        toast.error(`Document is not available for download: ${error instanceof Error ? error.message : 'Unknown error'}`);
         return;
       }
 
@@ -43,10 +47,10 @@ export const useDocumentDownload = () => {
       link.click();
       document.body.removeChild(link);
       
-      toast.success('Document download started');
+      toast.success(`Download started: ${fileName}`);
     } catch (error) {
       console.error('Error downloading document:', error);
-      toast.error('Failed to download document');
+      toast.error(`Failed to download document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
