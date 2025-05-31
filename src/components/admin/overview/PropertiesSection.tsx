@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Download } from 'lucide-react';
 import { PropertyData } from '@/types/admin';
 import { formatOccupancyStatuses } from '@/components/form/property/utils/occupancyUtils';
+import { formatActivityType } from '@/components/form/property/utils/activityUtils';
 
 interface PropertiesSectionProps {
   properties: PropertyData[];
@@ -21,44 +22,32 @@ export const PropertiesSection: React.FC<PropertiesSectionProps> = ({ properties
     document.body.removeChild(link);
   };
 
-  // Improved helper function to parse and format occupancy statuses from database format
+  // Helper function to parse and format occupancy statuses from database format
   const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined) => {
     if (!occupancyStatuses || occupancyStatuses.length === 0) {
       return 'Not specified';
     }
-
-    console.log('Raw occupancy statuses:', occupancyStatuses);
-    console.log('Type of occupancyStatuses:', typeof occupancyStatuses);
-    console.log('Is array:', Array.isArray(occupancyStatuses));
 
     try {
       // Handle different possible formats
       let parsedStatuses: any[] = [];
 
       if (Array.isArray(occupancyStatuses)) {
-        parsedStatuses = occupancyStatuses.map((status, index) => {
-          console.log(`Processing status ${index}:`, status, 'Type:', typeof status);
-          
+        parsedStatuses = occupancyStatuses.map((status) => {
           if (typeof status === 'string') {
             try {
               // Try to parse as JSON first
-              const parsed = JSON.parse(status);
-              console.log('Parsed JSON:', parsed);
-              return parsed;
+              return JSON.parse(status);
             } catch {
               // If JSON parsing fails, treat as a simple string value
-              console.log('Not JSON, treating as string:', status);
-              return { status: status, months: 0 }; // Create a basic object structure
+              return { status: status, months: 0 };
             }
           } else if (typeof status === 'object' && status !== null) {
-            console.log('Already an object:', status);
             return status;
           }
           return null;
         }).filter(Boolean);
       }
-
-      console.log('Final parsed statuses:', parsedStatuses);
 
       // If we have valid allocation objects with status and months, use the utility function
       if (parsedStatuses.length > 0) {
@@ -96,8 +85,7 @@ export const PropertiesSection: React.FC<PropertiesSectionProps> = ({ properties
 
     } catch (error) {
       console.error('Error parsing occupancy statuses:', error);
-      console.error('Original data:', occupancyStatuses);
-      return `Raw: ${JSON.stringify(occupancyStatuses)}`;
+      return 'Not specified';
     }
   };
 
@@ -117,6 +105,14 @@ export const PropertiesSection: React.FC<PropertiesSectionProps> = ({ properties
                 </div>
                 <Badge variant="outline" className="text-xs">
                   {property.property_type}
+                </Badge>
+              </div>
+              
+              {/* Activity 2024 */}
+              <div className="mt-2 pt-2 border-t">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Activity 2024:</p>
+                <Badge variant="secondary" className="text-xs">
+                  {formatActivityType(property.activity_2024)}
                 </Badge>
               </div>
               
