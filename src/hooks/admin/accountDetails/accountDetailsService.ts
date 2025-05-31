@@ -6,4 +6,4 @@ export { fetchProperties } from './propertiesService';
 export { fetchOwners } from './ownersService';
 export { fetchAssignments } from './assignmentsService';
 export { fetchActivities } from './activitiesService';
-export { fetchPayments } from './paymentsService';
+export { fetchPayments, fetchPaymentsByUserId } from './paymentsService';

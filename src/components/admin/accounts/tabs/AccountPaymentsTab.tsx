@@ -25,10 +25,19 @@ interface AccountPaymentsTabProps {
 }
 
 export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments }) => {
-  console.log(`[AccountPaymentsTab] Rendering with payments:`, payments);
-  console.log(`[AccountPaymentsTab] Payments count:`, payments.length);
+  console.log(`[AccountPaymentsTab] 🎯 RENDERING WITH PAYMENTS:`, {
+    paymentsReceived: payments,
+    paymentsCount: payments?.length || 0,
+    paymentsType: typeof payments,
+    isArray: Array.isArray(payments),
+    firstPayment: payments?.length > 0 ? payments[0] : 'NO_PAYMENTS'
+  });
   
   const [expandedPayment, setExpandedPayment] = useState<string | null>(null);
+
+  // Enhanced validation
+  const validPayments = Array.isArray(payments) ? payments.filter(p => p && p.id) : [];
+  console.log(`[AccountPaymentsTab] ✅ Valid payments after filtering:`, validPayments.length);
 
   const togglePaymentExpansion = (paymentId: string) => {
     setExpandedPayment(expandedPayment === paymentId ? null : paymentId);
@@ -67,23 +76,28 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
     }
   };
 
-  const totalRevenue = payments.reduce((sum, payment) => {
+  const totalRevenue = validPayments.reduce((sum, payment) => {
     const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
     const validAmount = isNaN(amount) ? 0 : amount;
     console.log(`[AccountPaymentsTab] Adding to total - payment ${payment.id}: ${validAmount}`);
     return sum + validAmount;
   }, 0);
 
-  console.log(`[AccountPaymentsTab] Calculated total revenue:`, totalRevenue);
+  console.log(`[AccountPaymentsTab] 📊 FINAL RENDER STATE:`, {
+    totalRevenue,
+    validPaymentsCount: validPayments.length,
+    willShowTable: validPayments.length > 0
+  });
 
-  // Log each payment for debugging
-  payments.forEach((payment, index) => {
+  // Enhanced logging for each payment
+  validPayments.forEach((payment, index) => {
     console.log(`[AccountPaymentsTab] Payment ${index + 1} details:`, {
       id: payment.id,
       amount: payment.amount,
       currency: payment.currency,
       status: payment.payment_status,
-      created_at: payment.created_at
+      created_at: payment.created_at,
+      form_submission_id: payment.form_submission_id
     });
   });
 
@@ -92,18 +106,23 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
-          Payments
+          Payments {validPayments.length > 0 && `(${validPayments.length})`}
         </CardTitle>
         <CardDescription>
-          {payments.length === 0 
+          {validPayments.length === 0 
             ? 'This user has no payment records.' 
-            : `${payments.length} payment(s) found for this user. Total revenue: ${formatCurrency(totalRevenue)}`}
+            : `${validPayments.length} payment(s) found for this user. Total revenue: ${formatCurrency(totalRevenue)}`}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {payments.length === 0 ? (
+        {validPayments.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            No payment records found for this user.
+            <div className="space-y-2">
+              <p>No payment records found for this user.</p>
+              <p className="text-sm text-gray-500">
+                Debug info: Received {payments?.length || 0} payments, filtered to {validPayments.length} valid payments
+              </p>
+            </div>
           </div>
         ) : (
           <Table>
@@ -118,7 +137,7 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
               </TableRow>
             </TableHeader>
             <TableBody>
-              {payments.map(payment => {
+              {validPayments.map(payment => {
                 console.log(`[AccountPaymentsTab] Rendering payment row:`, payment);
                 
                 const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
