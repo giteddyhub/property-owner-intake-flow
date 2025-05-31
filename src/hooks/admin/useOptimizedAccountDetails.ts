@@ -45,7 +45,6 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
       console.log(`[useOptimizedAccountDetails] ✅ User summary fetched:`, {
         email: userSummary.email,
         primarySubmissionId: userSummary.primary_submission_id,
-        totalSubmissions: userSummary.total_submissions,
         totalRevenue: userSummary.total_revenue
       });
 
