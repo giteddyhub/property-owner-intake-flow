@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { format } from 'date-fns';
 import { 
@@ -13,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { AccountData } from '@/types/admin';
-import { Mail, FileText, Home, Users as UsersIcon, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Mail, FileText, Home, Users as UsersIcon, AlertTriangle, RefreshCw, Eye } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface AccountsTableProps {
@@ -28,6 +29,7 @@ interface AccountsTableProps {
   error?: string | null;
   diagnosticInfo?: any;
   onRefresh?: () => void;
+  onShowUserOverview?: (userId: string, context?: { type: 'property' | 'owner' | 'assignment'; id: string }) => void;
 }
 
 export const AccountsTable: React.FC<AccountsTableProps> = ({
@@ -41,7 +43,8 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
   setCurrentPage,
   error,
   diagnosticInfo,
-  onRefresh
+  onRefresh,
+  onShowUserOverview
 }) => {
   // Calculate pagination values
   const indexOfFirstItem = (currentPage - 1) * itemsPerPage + 1;
@@ -217,13 +220,25 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleViewAccount(account.id)}
-                  >
-                    View Details
-                  </Button>
+                  <div className="flex gap-2">
+                    {onShowUserOverview && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => onShowUserOverview(account.id)}
+                        title="Quick Overview"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewAccount(account.id)}
+                    >
+                      View Details
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))

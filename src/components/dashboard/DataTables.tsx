@@ -15,7 +15,8 @@ interface DataTablesProps {
   assignments: OwnerPropertyAssignment[];
   activeFilter: string;
   onRefresh: () => void;
-  userId: string; // Added userId prop
+  userId: string;
+  onShowUserOverview?: (userId: string, context?: { type: 'property' | 'owner' | 'assignment'; id: string }) => void;
 }
 
 export const DataTables: React.FC<DataTablesProps> = ({ 
@@ -24,7 +25,8 @@ export const DataTables: React.FC<DataTablesProps> = ({
   assignments,
   activeFilter,
   onRefresh,
-  userId // Accept userId prop
+  userId,
+  onShowUserOverview
 }) => {
   console.log("Assignments data in DataTables:", assignments);
   
@@ -32,10 +34,18 @@ export const DataTables: React.FC<DataTablesProps> = ({
   return (
     <div className="w-full">
       {activeFilter === 'properties' && (
-        <PropertiesTable properties={properties} onRefresh={onRefresh} />
+        <PropertiesTable 
+          properties={properties} 
+          onRefresh={onRefresh}
+          onShowUserOverview={onShowUserOverview}
+        />
       )}
       {activeFilter === 'owners' && (
-        <OwnersTable owners={owners} onRefresh={onRefresh} />
+        <OwnersTable 
+          owners={owners} 
+          onRefresh={onRefresh}
+          onShowUserOverview={onShowUserOverview}
+        />
       )}
       {activeFilter === 'assignments' && (
         <AssignmentsTable 
@@ -43,7 +53,8 @@ export const DataTables: React.FC<DataTablesProps> = ({
           owners={owners} 
           properties={properties}
           onRefresh={onRefresh} 
-          userId={userId} // Pass userId
+          userId={userId}
+          onShowUserOverview={onShowUserOverview}
         />
       )}
     </div>
