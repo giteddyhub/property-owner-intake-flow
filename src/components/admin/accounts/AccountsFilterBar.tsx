@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 interface AccountsFilterBarProps {
   searchQuery: string;
@@ -13,9 +12,7 @@ interface AccountsFilterBarProps {
 
 export const AccountsFilterBar: React.FC<AccountsFilterBarProps> = ({ 
   searchQuery, 
-  setSearchQuery, 
-  fetchAccounts, 
-  loading 
+  setSearchQuery 
 }) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -24,7 +21,7 @@ export const AccountsFilterBar: React.FC<AccountsFilterBarProps> = ({
         <p className="text-muted-foreground">View and manage all user accounts in the system.</p>
       </div>
       
-      <div className="flex gap-2 w-full md:w-auto">
+      <div className="w-full md:w-auto">
         <div className="relative w-full md:w-[300px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -36,14 +33,6 @@ export const AccountsFilterBar: React.FC<AccountsFilterBarProps> = ({
             }}
           />
         </div>
-        <Button 
-          variant="outline" 
-          onClick={fetchAccounts} 
-          disabled={loading}
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          <span className="sr-only">Refresh</span>
-        </Button>
       </div>
     </div>
   );
