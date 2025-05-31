@@ -42,6 +42,9 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
   payments,
   activities
 }) => {
+  console.log(`[AccountDetailTabs] Received payments:`, payments);
+  console.log(`[AccountDetailTabs] Payments length:`, payments.length);
+  
   return (
     <Tabs defaultValue="properties" className="w-full">
       <TabsList className="grid w-full grid-cols-4">

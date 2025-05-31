@@ -3,9 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { PaymentData } from '@/types/admin';
 
 export const fetchPayments = async (submissionIds: string[]): Promise<PaymentData[]> => {
-  if (submissionIds.length === 0) return [];
+  console.log(`[paymentsService] Starting fetchPayments with submission IDs:`, submissionIds);
+  
+  if (submissionIds.length === 0) {
+    console.log(`[paymentsService] No submission IDs provided, returning empty array`);
+    return [];
+  }
 
-  console.log('Fetching payments for submission IDs:', submissionIds);
+  console.log(`[paymentsService] Fetching payments for ${submissionIds.length} submission IDs:`, submissionIds);
 
   const { data, error } = await supabase
     .from('purchases')
@@ -17,26 +22,37 @@ export const fetchPayments = async (submissionIds: string[]): Promise<PaymentDat
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching payments:', error);
+    console.error('[paymentsService] Error fetching payments:', error);
     return [];
   }
 
-  console.log('Raw payment data from database:', data);
+  console.log(`[paymentsService] Raw payment data from database:`, data);
+  console.log(`[paymentsService] Found ${data?.length || 0} payments`);
 
   // Log each payment to debug the amount and status issues
   data?.forEach((payment, index) => {
-    console.log(`Payment ${index + 1}:`, {
+    console.log(`[paymentsService] Payment ${index + 1}:`, {
       id: payment.id,
       amount: payment.amount,
       amountType: typeof payment.amount,
+      amountValue: payment.amount,
       currency: payment.currency,
       payment_status: payment.payment_status,
       stripe_session_id: payment.stripe_session_id,
       stripe_payment_id: payment.stripe_payment_id,
       has_document_retrieval: payment.has_document_retrieval,
+      form_submission_id: payment.form_submission_id,
       created_at: payment.created_at
     });
+    
+    // Check if this is the missing 295 EUR payment
+    if (payment.amount && (Number(payment.amount) === 295 || payment.amount.toString().includes('295'))) {
+      console.log(`[paymentsService] ⭐ FOUND POTENTIAL 295 EUR PAYMENT:`, payment);
+    }
   });
 
-  return data || [];
+  const processedPayments = data || [];
+  console.log(`[paymentsService] Returning ${processedPayments.length} payments`);
+  
+  return processedPayments;
 };

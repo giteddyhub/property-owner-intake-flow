@@ -25,6 +25,9 @@ interface AccountPaymentsTabProps {
 }
 
 export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments }) => {
+  console.log(`[AccountPaymentsTab] Rendering with payments:`, payments);
+  console.log(`[AccountPaymentsTab] Payments count:`, payments.length);
+  
   const [expandedPayment, setExpandedPayment] = useState<string | null>(null);
 
   const togglePaymentExpansion = (paymentId: string) => {
@@ -32,9 +35,12 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
   };
 
   const formatCurrency = (amount: number | string, currency: string = 'eur') => {
+    console.log(`[AccountPaymentsTab] Formatting currency - amount:`, amount, 'type:', typeof amount, 'currency:', currency);
+    
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     
     if (isNaN(numericAmount) || numericAmount === null || numericAmount === undefined) {
+      console.log(`[AccountPaymentsTab] Invalid amount, returning €0.00`);
       return '€0.00';
     }
 
@@ -43,7 +49,9 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
       currency: currency.toUpperCase() || 'EUR',
     });
     
-    return formatter.format(numericAmount);
+    const formatted = formatter.format(numericAmount);
+    console.log(`[AccountPaymentsTab] Formatted ${numericAmount} as ${formatted}`);
+    return formatted;
   };
 
   const getPaymentStatusBadgeClass = (status: string) => {
@@ -61,8 +69,23 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
 
   const totalRevenue = payments.reduce((sum, payment) => {
     const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
-    return sum + (isNaN(amount) ? 0 : amount);
+    const validAmount = isNaN(amount) ? 0 : amount;
+    console.log(`[AccountPaymentsTab] Adding to total - payment ${payment.id}: ${validAmount}`);
+    return sum + validAmount;
   }, 0);
+
+  console.log(`[AccountPaymentsTab] Calculated total revenue:`, totalRevenue);
+
+  // Log each payment for debugging
+  payments.forEach((payment, index) => {
+    console.log(`[AccountPaymentsTab] Payment ${index + 1} details:`, {
+      id: payment.id,
+      amount: payment.amount,
+      currency: payment.currency,
+      status: payment.payment_status,
+      created_at: payment.created_at
+    });
+  });
 
   return (
     <Card>
@@ -96,6 +119,8 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
             </TableHeader>
             <TableBody>
               {payments.map(payment => {
+                console.log(`[AccountPaymentsTab] Rendering payment row:`, payment);
+                
                 const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
                 const isValidAmount = !isNaN(amount) && amount > 0;
                 
@@ -173,6 +198,10 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
                                 >
                                   {payment.payment_status}
                                 </Badge>
+                              </div>
+                              <div>
+                                <span className="font-medium text-muted-foreground">Form Submission ID:</span>
+                                <p className="font-mono text-xs">{payment.form_submission_id || 'N/A'}</p>
                               </div>
                               <div>
                                 <span className="font-medium text-muted-foreground">Document Retrieval:</span>

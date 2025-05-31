@@ -33,19 +33,23 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
     
     setLoading(true);
     try {
-      console.log(`Fetching optimized account details for ID: ${id}`);
+      console.log(`[useOptimizedAccountDetails] Starting fetch for user ID: ${id}`);
       
       // Validate admin session
       const isSessionValid = await validateSession();
       if (!isSessionValid) return;
 
       // Fetch user summary data
+      console.log(`[useOptimizedAccountDetails] Fetching user summary...`);
       const userSummary = await fetchUserSummary(id);
+      console.log(`[useOptimizedAccountDetails] User summary:`, userSummary);
 
       // Check admin status
       const isAdmin = await checkAdminStatus(userSummary.email);
+      console.log(`[useOptimizedAccountDetails] Admin status for ${userSummary.email}:`, isAdmin);
 
       // Fetch all data in parallel using optimized queries
+      console.log(`[useOptimizedAccountDetails] Fetching parallel data...`);
       const [
         enhancedSubmissions,
         propertiesData,
@@ -60,12 +64,28 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         fetchActivities(id)
       ]);
 
+      console.log(`[useOptimizedAccountDetails] Submissions fetched:`, enhancedSubmissions);
+      console.log(`[useOptimizedAccountDetails] Properties fetched:`, propertiesData.length);
+      console.log(`[useOptimizedAccountDetails] Owners fetched:`, ownersData.length);
+      console.log(`[useOptimizedAccountDetails] Assignments fetched:`, enhancedAssignments.length);
+      console.log(`[useOptimizedAccountDetails] Activities fetched:`, typedActivities.length);
+
       // Fetch payments based on submissions
       const submissionIds = enhancedSubmissions.map(s => s.id);
+      console.log(`[useOptimizedAccountDetails] Submission IDs for payment fetch:`, submissionIds);
+      
       const paymentsData = await fetchPayments(submissionIds);
+      console.log(`[useOptimizedAccountDetails] Payments fetched:`, paymentsData);
+      console.log(`[useOptimizedAccountDetails] Payment details:`, paymentsData.map(p => ({
+        id: p.id,
+        amount: p.amount,
+        currency: p.currency,
+        status: p.payment_status,
+        submission_id: p.form_submission_id
+      })));
 
       // Set all state
-      setAccount({
+      const accountData = {
         ...userSummary,
         updated_at: userSummary.created_at, // View doesn't track updated_at
         is_admin: isAdmin,
@@ -75,7 +95,12 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         submissions_count: enhancedSubmissions.length,
         properties_count: propertiesData.length,
         owners_count: ownersData.length
-      });
+      };
+
+      console.log(`[useOptimizedAccountDetails] Setting account data:`, accountData);
+      console.log(`[useOptimizedAccountDetails] Setting payments data:`, paymentsData);
+
+      setAccount(accountData);
       setSubmissions(enhancedSubmissions);
       setProperties(propertiesData);
       setOwners(ownersData);
@@ -95,7 +120,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
       });
 
     } catch (error: any) {
-      console.error('Error fetching optimized account details:', error);
+      console.error('[useOptimizedAccountDetails] Error fetching optimized account details:', error);
       
       if (error.message === 'Account not found') {
         toast.error('Account not found');
