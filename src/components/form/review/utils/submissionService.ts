@@ -75,7 +75,25 @@ export const submitFormData = async (
     sessionStorage.setItem('submissionId', submissionId);
     console.log("[submissionService] Created submission with ID:", submissionId);
     
-    // Step 2-4: Save form data (owners, properties, assignments)
+    // Step 2: Update user profile with contact information (replaces old contacts table)
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: userId,
+          full_name: `${contactInfo.firstName} ${contactInfo.lastName}`.trim(),
+          email: contactInfo.email,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'id' }
+      );
+    
+    if (profileError) {
+      console.warn("[submissionService] Failed to update profile:", profileError);
+      // Don't fail the submission for profile update errors
+    }
+    
+    // Step 3-5: Save form data (owners, properties, assignments)
     const { success, error: saveError } = await saveFormData(owners, properties, assignments, submissionId, userId);
     
     if (!success || saveError) {

@@ -1,35 +1,82 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ContactInfo } from './types';
+import type { ContactInfo } from './types';
 
-export const saveContactInfo = async (contactInfo: ContactInfo, userId: string | null = null): Promise<string> => {
-  console.log("Saving contact information:", contactInfo, "User ID:", userId);
-  
-  // Create a form submission entry 
-  const submissionData = {
-    user_id: userId,
-    submitted_at: new Date().toISOString(),
-    state: 'new'
-  };
-  
-  const { data, error } = await supabase
-    .from('form_submissions')
-    .insert(submissionData)
-    .select();
+/**
+ * Creates or updates a user profile with contact information
+ * This replaces the old contacts table functionality
+ */
+export const saveContactInfo = async (
+  contactInfo: ContactInfo,
+  userId: string
+): Promise<{ success: boolean; error?: Error }> => {
+  try {
+    console.log("[contactService] Updating profile with contact info for user:", userId);
     
-  if (error) {
-    console.error("Error saving form submission:", error);
-    throw new Error(`Error saving form submission: ${error.message}`);
+    const profileData = {
+      full_name: `${contactInfo.firstName} ${contactInfo.lastName}`.trim(),
+      email: contactInfo.email,
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log("[contactService] Updating profile data:", profileData);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(
+        { id: userId, ...profileData },
+        { onConflict: 'id' }
+      );
+    
+    if (error) {
+      console.error("[contactService] Error updating profile:", error);
+      throw new Error(`Failed to save contact information: ${error.message}`);
+    }
+    
+    console.log("[contactService] Profile updated successfully");
+    
+    return { success: true };
+  } catch (error) {
+    console.error("[contactService] Error saving contact info:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error : new Error('Unknown error saving contact info')
+    };
   }
-  
-  const submissionId = data?.[0]?.id;
-  if (!submissionId) {
-    console.error("Form submission was saved but no ID was returned");
-    throw new Error("Failed to get database ID for submission");
+};
+
+/**
+ * Retrieves contact information from the user's profile
+ */
+export const getContactInfo = async (userId: string): Promise<ContactInfo | null> => {
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("[contactService] Error fetching profile:", error);
+      return null;
+    }
+    
+    if (!profile) {
+      return null;
+    }
+    
+    // Parse full name back into first and last name
+    const nameParts = (profile.full_name || '').split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    
+    return {
+      firstName,
+      lastName,
+      email: profile.email
+    };
+  } catch (error) {
+    console.error("[contactService] Error getting contact info:", error);
+    return null;
   }
-  
-  // Store submission ID in session storage for the success page
-  sessionStorage.setItem('submissionId', submissionId);
-  
-  return submissionId;
 };

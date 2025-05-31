@@ -46,51 +46,18 @@ Deno.serve(async (req) => {
     const { action } = await req.json();
 
     if (action === 'fetch_user_profiles_with_stats') {
-      // Fetch user profiles with submission, property, and owner counts
-      const { data: profiles, error: profilesError } = await adminClient
-        .from('profiles')
-        .select(`
-          id,
-          email,
-          full_name,
-          created_at,
-          updated_at
-        `)
+      // Use the new admin_user_summary view for optimized data access
+      const { data: userSummaries, error: summaryError } = await adminClient
+        .from('admin_user_summary')
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (profilesError) {
-        throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
+      if (summaryError) {
+        throw new Error(`Failed to fetch user summary data: ${summaryError.message}`);
       }
 
-      // For each profile, get counts of related entities
-      const profilesWithStats = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          const [submissionsResult, propertiesResult, ownersResult] = await Promise.all([
-            adminClient
-              .from('form_submissions')
-              .select('id', { count: 'exact' })
-              .eq('user_id', profile.id),
-            adminClient
-              .from('properties')
-              .select('id', { count: 'exact' })
-              .eq('user_id', profile.id),
-            adminClient
-              .from('owners')
-              .select('id', { count: 'exact' })
-              .eq('user_id', profile.id)
-          ]);
-
-          return {
-            ...profile,
-            submissions_count: submissionsResult.count || 0,
-            properties_count: propertiesResult.count || 0,
-            owners_count: ownersResult.count || 0
-          };
-        })
-      );
-
       return new Response(
-        JSON.stringify({ profiles: profilesWithStats }),
+        JSON.stringify({ profiles: userSummaries || [] }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

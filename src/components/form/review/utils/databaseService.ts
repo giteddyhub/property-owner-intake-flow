@@ -6,7 +6,6 @@ import { saveAssignments } from './assignmentService';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { submissionTracker } from './submissionTracker';
 import { toast } from 'sonner';
-import { SubmissionResult } from './types';
 
 /**
  * Creates a form submission entry in the database
