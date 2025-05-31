@@ -23,48 +23,53 @@ import { formatCurrency } from './payments/utils';
 export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments }) => {
   const [expandedPayment, setExpandedPayment] = useState<string | null>(null);
 
-  // Comprehensive debugging
+  // Ultra-comprehensive debugging
   useEffect(() => {
-    console.log(`[AccountPaymentsTab] 🎯 COMPONENT RENDER - PAYMENTS DEBUG:`, {
-      paymentsReceived: payments,
-      paymentsCount: payments?.length || 0,
-      paymentsType: typeof payments,
-      isArray: Array.isArray(payments),
-      timestamp: new Date().toISOString()
-    });
+    console.log(`[AccountPaymentsTab] 🎯 COMPONENT RENDER - ULTIMATE PAYMENTS DEBUG`);
+    console.log(`[AccountPaymentsTab] 📦 Payments received:`, payments);
+    console.log(`[AccountPaymentsTab] 📊 Payments type:`, typeof payments);
+    console.log(`[AccountPaymentsTab] 🔍 Is Array:`, Array.isArray(payments));
+    console.log(`[AccountPaymentsTab] 📈 Count:`, payments?.length || 0);
+    console.log(`[AccountPaymentsTab] ⏰ Timestamp:`, new Date().toISOString());
 
     if (Array.isArray(payments) && payments.length > 0) {
-      console.log(`[AccountPaymentsTab] 💳 DETAILED PAYMENT ANALYSIS:`);
+      console.log(`[AccountPaymentsTab] 💳 DETAILED PAYMENT BREAKDOWN:`);
       payments.forEach((payment, index) => {
-        console.log(`[AccountPaymentsTab] Payment ${index + 1}:`, {
+        console.log(`[AccountPaymentsTab] 💰 Payment ${index + 1}:`, {
           id: payment?.id,
           amount: payment?.amount,
           status: payment?.payment_status,
           submissionId: payment?.form_submission_id,
           createdAt: payment?.created_at,
-          fullPayment: payment
+          currency: payment?.currency,
+          hasDocRetrieval: payment?.has_document_retrieval,
+          stripeSessionId: payment?.stripe_session_id,
+          fullPaymentObject: payment
         });
       });
     } else {
-      console.log(`[AccountPaymentsTab] ⚠️ NO PAYMENTS or INVALID DATA:`, {
+      console.log(`[AccountPaymentsTab] ❌ NO PAYMENTS FOUND OR INVALID DATA:`, {
         paymentsValue: payments,
         isNull: payments === null,
         isUndefined: payments === undefined,
-        isEmpty: Array.isArray(payments) && payments.length === 0
+        isEmpty: Array.isArray(payments) && payments.length === 0,
+        actualValue: payments
       });
     }
   }, [payments]);
 
-  // Very simple validation - just check if it's an object with an id
+  // Extremely simple validation - just check if it's an object with an id
   const validPayments = useMemo(() => {
-    console.log(`[AccountPaymentsTab] 🔄 VALIDATION STARTING...`);
+    console.log(`[AccountPaymentsTab] 🔄 VALIDATION PHASE STARTING...`);
     
     if (!Array.isArray(payments)) {
-      console.error(`[AccountPaymentsTab] ❌ Payments is not an array:`, typeof payments, payments);
+      console.error(`[AccountPaymentsTab] ❌ CRITICAL: Payments is not an array:`, typeof payments, payments);
       return [];
     }
 
     const filtered = payments.filter((payment, index) => {
+      console.log(`[AccountPaymentsTab] 🧪 Validating payment ${index + 1}:`, payment);
+      
       if (!payment || typeof payment !== 'object') {
         console.error(`[AccountPaymentsTab] ❌ Payment ${index + 1} is not a valid object:`, payment);
         return false;
@@ -74,15 +79,31 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
         console.error(`[AccountPaymentsTab] ❌ Payment ${index + 1} missing ID:`, payment);
         return false;
       }
+
+      if (payment.amount === null || payment.amount === undefined) {
+        console.error(`[AccountPaymentsTab] ❌ Payment ${index + 1} has no amount:`, payment.amount);
+        return false;
+      }
       
-      console.log(`[AccountPaymentsTab] ✅ Payment ${index + 1} is valid:`, payment.id);
+      console.log(`[AccountPaymentsTab] ✅ Payment ${index + 1} is VALID:`, {
+        id: payment.id,
+        amount: payment.amount,
+        status: payment.payment_status
+      });
       return true;
     });
 
     console.log(`[AccountPaymentsTab] 🎯 VALIDATION COMPLETE:`, {
       originalCount: payments.length,
       validatedCount: filtered.length,
-      validPayments: filtered.map(p => ({ id: p.id, amount: p.amount, status: p.payment_status }))
+      rejectedCount: payments.length - filtered.length,
+      validPaymentIds: filtered.map(p => p.id),
+      validPayments: filtered.map(p => ({ 
+        id: p.id, 
+        amount: p.amount, 
+        status: p.payment_status,
+        submissionId: p.form_submission_id 
+      }))
     });
 
     return filtered;
@@ -96,13 +117,18 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
     const total = validPayments.reduce((sum, payment) => {
       const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
       const validAmount = isNaN(amount) ? 0 : amount;
+      console.log(`[AccountPaymentsTab] 💰 Adding to total: ${validAmount} (from ${payment.amount})`);
       return sum + validAmount;
     }, 0);
 
-    console.log(`[AccountPaymentsTab] 📊 TOTAL REVENUE:`, {
+    console.log(`[AccountPaymentsTab] 📊 TOTAL REVENUE CALCULATION:`, {
       total,
       paymentsUsed: validPayments.length,
-      breakdown: validPayments.map(p => ({ id: p.id, amount: p.amount }))
+      breakdown: validPayments.map(p => ({ 
+        id: p.id, 
+        originalAmount: p.amount,
+        numericAmount: typeof p.amount === 'string' ? parseFloat(p.amount) : p.amount
+      }))
     });
     return total;
   }, [validPayments]);
@@ -111,7 +137,8 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
     totalRevenue,
     validPaymentsCount: validPayments.length,
     originalPaymentsCount: payments?.length || 0,
-    willShowTable: validPayments.length > 0
+    willShowTable: validPayments.length > 0,
+    renderingPayments: validPayments.length > 0
   });
 
   return (
@@ -137,6 +164,9 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
               </p>
               <p className="text-xs text-gray-400">
                 Check browser console for detailed debugging information
+              </p>
+              <p className="text-xs text-gray-300 mt-2 font-mono">
+                Debug: payments={JSON.stringify(payments?.slice(0, 2))}
               </p>
             </div>
           </div>

@@ -7,21 +7,30 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 // Create a specialized admin client that includes admin token headers
 export const createAdminClient = (adminToken?: string) => {
+  console.log('[adminClient] 🔑 Creating admin client with token:', adminToken ? 'YES' : 'NO');
+  
   const options = adminToken ? {
     global: {
       headers: {
-        'x-admin-token': adminToken
+        'x-admin-token': adminToken,
+        'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
       }
     }
-  } : undefined;
+  } : {
+    global: {
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
+      }
+    }
+  };
 
   const client = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, options);
   
   // Log token usage for debugging
   if (adminToken) {
-    console.log('[adminClient] Creating admin client with token:', adminToken.substring(0, 20) + '...');
+    console.log('[adminClient] ✅ Creating admin client with token:', adminToken.substring(0, 20) + '...');
   } else {
-    console.log('[adminClient] Creating admin client without token');
+    console.log('[adminClient] ⚠️ Creating admin client without token');
   }
 
   return client;
@@ -35,12 +44,16 @@ export const getAdminToken = (): string | null => {
       const adminSession = JSON.parse(adminSessionStr);
       const token = adminSession.session?.token || null;
       if (token) {
-        console.log('[adminClient] Retrieved admin token from localStorage:', token.substring(0, 20) + '...');
+        console.log('[adminClient] ✅ Retrieved admin token from localStorage:', token.substring(0, 20) + '...');
+      } else {
+        console.log('[adminClient] ❌ No token found in admin session');
       }
       return token;
+    } else {
+      console.log('[adminClient] ❌ No admin session found in localStorage');
     }
   } catch (error) {
-    console.error('Error getting admin token:', error);
+    console.error('[adminClient] ❌ Error getting admin token:', error);
   }
   return null;
 };
@@ -49,7 +62,10 @@ export const getAdminToken = (): string | null => {
 export const getAuthenticatedAdminClient = () => {
   const adminToken = getAdminToken();
   if (!adminToken) {
+    console.error('[adminClient] ❌ No admin token available, throwing error');
     throw new Error('No admin token available');
   }
+  
+  console.log('[adminClient] 🚀 Creating authenticated admin client');
   return createAdminClient(adminToken);
 };
