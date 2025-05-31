@@ -23,4 +23,6 @@ export interface FormSubmission {
   pdf_generated: boolean;
   pdf_url: string | null;
   is_primary_submission: boolean;
+  created_at: string; // Added missing property
+  user_id: string; // Added missing property for consistency
 }
