@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { User, Home, Users, FileText, ExternalLink } from 'lucide-react';
+import { User, Home, Users, FileText, ExternalLink, Download } from 'lucide-react';
 import { AccountData, OwnerData, PropertyData, AssignmentData } from '@/types/admin';
 
 interface UserOverviewModalProps {
@@ -44,6 +44,17 @@ export const UserOverviewModal: React.FC<UserOverviewModalProps> = ({
   const handleViewFullAccount = () => {
     onOpenChange(false);
     navigate(`/admin/accounts/${userId}`);
+  };
+
+  const handleDownloadDocument = (documentUrl: string, documentName: string) => {
+    // Create a temporary anchor element to trigger download
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = documentName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getContextualInfo = () => {
@@ -109,7 +120,7 @@ export const UserOverviewModal: React.FC<UserOverviewModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -151,38 +162,14 @@ export const UserOverviewModal: React.FC<UserOverviewModalProps> = ({
 
           <Separator />
 
-          {/* Activity Summary */}
-          <div>
-            <h3 className="font-semibold text-lg mb-3">Activity Summary</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <FileText className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
-                <div className="text-2xl font-bold">{account.submissions_count}</div>
-                <div className="text-xs text-muted-foreground">Submissions</div>
-              </div>
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <Home className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
-                <div className="text-2xl font-bold">{account.properties_count}</div>
-                <div className="text-xs text-muted-foreground">Properties</div>
-              </div>
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <Users className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
-                <div className="text-2xl font-bold">{account.owners_count}</div>
-                <div className="text-xs text-muted-foreground">Owners</div>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
           {/* Properties Overview */}
-          {properties.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-lg mb-3">Properties ({properties.length})</h3>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
+          <div>
+            <h3 className="font-semibold text-lg mb-3">Properties ({properties.length})</h3>
+            {properties.length > 0 ? (
+              <div className="space-y-3 max-h-64 overflow-y-auto">
                 {properties.map((property) => (
-                  <div key={property.id} className="p-2 border rounded-md">
-                    <div className="flex justify-between items-start">
+                  <div key={property.id} className="p-3 border rounded-md hover:bg-muted/50 cursor-pointer">
+                    <div className="flex justify-between items-start mb-2">
                       <div>
                         <p className="font-medium text-sm">{property.label}</p>
                         <p className="text-xs text-muted-foreground">
@@ -193,23 +180,57 @@ export const UserOverviewModal: React.FC<UserOverviewModalProps> = ({
                         {property.property_type}
                       </Badge>
                     </div>
+                    
+                    {/* Property Documents */}
+                    {property.documents && property.documents.length > 0 && (
+                      <div className="mt-2 pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Documents:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {property.documents.map((doc, index) => (
+                            <Button
+                              key={index}
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                              onClick={() => handleDownloadDocument(doc, `${property.label}_doc_${index + 1}`)}
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Doc {index + 1}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {property.use_document_retrieval_service && (
+                      <div className="mt-2 pt-2 border-t">
+                        <Badge variant="secondary" className="text-xs">
+                          Document Retrieval Service
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No properties found.</p>
+            )}
+          </div>
+
+          <Separator />
 
           {/* Owners Overview */}
-          {owners.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-lg mb-3">Owners ({owners.length})</h3>
+          <div>
+            <h3 className="font-semibold text-lg mb-3">Owners ({owners.length})</h3>
+            {owners.length > 0 ? (
               <div className="space-y-2 max-h-32 overflow-y-auto">
                 {owners.map((owner) => (
-                  <div key={owner.id} className="p-2 border rounded-md">
+                  <div key={owner.id} className="p-2 border rounded-md hover:bg-muted/50 cursor-pointer">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-medium text-sm">{owner.first_name} {owner.last_name}</p>
                         <p className="text-xs text-muted-foreground">{owner.italian_tax_code}</p>
+                        <p className="text-xs text-muted-foreground">{owner.citizenship}</p>
                       </div>
                       <Badge variant={owner.is_resident_in_italy ? "default" : "secondary"} className="text-xs">
                         {owner.is_resident_in_italy ? 'IT Resident' : 'Non-Resident'}
@@ -218,16 +239,20 @@ export const UserOverviewModal: React.FC<UserOverviewModalProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No owners found.</p>
+            )}
+          </div>
+
+          <Separator />
 
           {/* Assignments Overview */}
-          {assignments.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-lg mb-3">Property-Owner Assignments ({assignments.length})</h3>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
+          <div>
+            <h3 className="font-semibold text-lg mb-3">Property-Owner Assignments ({assignments.length})</h3>
+            {assignments.length > 0 ? (
+              <div className="space-y-2 max-h-40 overflow-y-auto">
                 {assignments.map((assignment) => (
-                  <div key={assignment.id} className="p-2 border rounded-md">
+                  <div key={assignment.id} className="p-2 border rounded-md hover:bg-muted/50 cursor-pointer">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-medium text-sm">{assignment.property_label}</p>
@@ -247,8 +272,10 @@ export const UserOverviewModal: React.FC<UserOverviewModalProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No assignments found.</p>
+            )}
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-4 border-t">

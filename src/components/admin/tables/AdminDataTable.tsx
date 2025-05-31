@@ -34,6 +34,21 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
     return <div className="p-8 text-center text-muted-foreground">No data available</div>;
   }
 
+  const handleRowClick = (row: any, event: React.MouseEvent) => {
+    // Don't trigger row click if clicking on a button or action
+    const target = event.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="button"]')) {
+      return;
+    }
+
+    // Trigger user overview if available and row has user_id
+    if (onShowUserOverview && row.user_id && contextType) {
+      onShowUserOverview(row.user_id, { type: contextType, id: row.id });
+    } else if (onRowClick && row.id) {
+      onRowClick(row.id, row);
+    }
+  };
+
   return (
     <div className="border rounded-md overflow-hidden">
       <table className="w-full">
@@ -49,7 +64,11 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
         </thead>
         <tbody>
           {data.map((row, index) => (
-            <tr key={row.id || index} className="border-t hover:bg-muted/50">
+            <tr 
+              key={row.id || index} 
+              className="border-t hover:bg-muted/50 cursor-pointer"
+              onClick={(event) => handleRowClick(row, event)}
+            >
               {columns.map((column) => (
                 <td key={column.key} className={`px-4 py-3 ${column.className || ''}`}>
                   {column.render ? column.render(row[column.key], row) : row[column.key]}
@@ -61,7 +80,10 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onShowUserOverview(row.user_id, contextType ? { type: contextType, id: row.id } : undefined)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onShowUserOverview(row.user_id, contextType ? { type: contextType, id: row.id } : undefined);
+                      }}
                       title="Quick User Overview"
                     >
                       <Eye className="h-4 w-4" />
@@ -71,7 +93,10 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => onRowClick(row.id, row)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRowClick(row.id, row);
+                      }}
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       Details
