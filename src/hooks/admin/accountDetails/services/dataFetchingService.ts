@@ -10,19 +10,7 @@ import {
   fetchAssignments,
   fetchActivities
 } from '../accountDetailsService';
-import { fetchPayments, fetchPaymentsByUserId, fetchPaymentsDirectQuery } from '../paymentsService';
-
-// Enhanced type guard for payment validation
-const isValidPaymentData = (payment: any): payment is PaymentData => {
-  console.log(`[dataFetchingService] 🔍 Final payment validation:`, payment);
-  const isValid = payment && 
-         typeof payment.id === 'string' && 
-         payment.id.length > 0 &&
-         payment.amount !== null && 
-         payment.amount !== undefined;
-  console.log(`[dataFetchingService] ✅ Payment validation result:`, isValid);
-  return isValid;
-};
+import { fetchPayments, fetchPaymentsByUserId, fetchPaymentsDirectQuery } from './paymentsService';
 
 export interface FetchedData {
   userSummary: any;
@@ -74,8 +62,8 @@ export const fetchAccountData = async (userId: string): Promise<FetchedData> => 
     activities: typedActivities.length
   });
 
-  // Fetch payments with enhanced debugging and multiple strategies
-  const payments = await fetchPaymentsWithEnhancedDebugging(userId, fetchedSubmissions);
+  // Fetch payments with all strategies
+  const payments = await fetchPaymentsComprehensively(userId, fetchedSubmissions);
 
   return {
     userSummary,
@@ -89,77 +77,63 @@ export const fetchAccountData = async (userId: string): Promise<FetchedData> => 
   };
 };
 
-const fetchPaymentsWithEnhancedDebugging = async (
+const fetchPaymentsComprehensively = async (
   userId: string, 
   submissions: FormSubmission[]
 ): Promise<PaymentData[]> => {
-  console.log(`[dataFetchingService] 💳 ENHANCED PAYMENT DEBUGGING for user: ${userId}`);
+  console.log(`[dataFetchingService] 💳 COMPREHENSIVE PAYMENT FETCH for user: ${userId}`);
+  console.log(`[dataFetchingService] 📝 Available submissions:`, submissions.map(s => ({ id: s.id, state: s.state })));
   
   let paymentsData: PaymentData[] = [];
-  let paymentsFetchSuccess = false;
   
-  // Strategy 1: Use submission IDs
-  const submissionIds = submissions.map(s => s.id);
-  console.log(`[dataFetchingService] 🔑 Strategy 1: Using ${submissionIds.length} submission IDs:`, submissionIds);
-  
+  // Strategy 1: Use submission IDs if available
+  const submissionIds = submissions.map(s => s.id).filter(Boolean);
   if (submissionIds.length > 0) {
+    console.log(`[dataFetchingService] 🔑 Strategy 1: Fetching by submission IDs:`, submissionIds);
     try {
-      console.log(`[dataFetchingService] 💳 Strategy 1: Fetching payments by submission IDs...`);
       paymentsData = await fetchPayments(submissionIds);
-      paymentsFetchSuccess = paymentsData.length > 0;
+      console.log(`[dataFetchingService] ✅ Strategy 1 result: ${paymentsData.length} payments`);
       
-      console.log(`[dataFetchingService] ✅ Strategy 1 result:`, {
-        success: paymentsFetchSuccess,
-        paymentsCount: paymentsData.length,
-        payments: paymentsData.map(p => ({ id: p.id, amount: p.amount, status: p.payment_status }))
-      });
+      if (paymentsData.length > 0) {
+        console.log(`[dataFetchingService] 🎯 SUCCESS with Strategy 1!`);
+        return paymentsData;
+      }
     } catch (error) {
       console.error(`[dataFetchingService] ❌ Strategy 1 failed:`, error);
     }
   }
 
   // Strategy 2: Direct user query
-  if (!paymentsFetchSuccess) {
-    try {
-      console.log(`[dataFetchingService] 🔄 Strategy 2: Direct user query...`);
-      paymentsData = await fetchPaymentsByUserId(userId);
-      paymentsFetchSuccess = paymentsData.length > 0;
-      
-      console.log(`[dataFetchingService] ✅ Strategy 2 result:`, {
-        success: paymentsFetchSuccess,
-        paymentsCount: paymentsData.length
-      });
-    } catch (error) {
-      console.error(`[dataFetchingService] ❌ Strategy 2 failed:`, error);
+  console.log(`[dataFetchingService] 🔄 Strategy 2: Direct user query...`);
+  try {
+    paymentsData = await fetchPaymentsByUserId(userId);
+    console.log(`[dataFetchingService] ✅ Strategy 2 result: ${paymentsData.length} payments`);
+    
+    if (paymentsData.length > 0) {
+      console.log(`[dataFetchingService] 🎯 SUCCESS with Strategy 2!`);
+      return paymentsData;
     }
+  } catch (error) {
+    console.error(`[dataFetchingService] ❌ Strategy 2 failed:`, error);
   }
 
   // Strategy 3: Ultimate fallback
-  if (!paymentsFetchSuccess) {
-    try {
-      console.log(`[dataFetchingService] 🚨 Strategy 3: Ultimate fallback...`);
-      paymentsData = await fetchPaymentsDirectQuery(userId);
-      paymentsFetchSuccess = paymentsData.length > 0;
-      
-      console.log(`[dataFetchingService] ✅ Strategy 3 result:`, {
-        success: paymentsFetchSuccess,
-        paymentsCount: paymentsData.length
-      });
-    } catch (error) {
-      console.error(`[dataFetchingService] ❌ Strategy 3 failed:`, error);
+  console.log(`[dataFetchingService] 🚨 Strategy 3: Ultimate fallback...`);
+  try {
+    paymentsData = await fetchPaymentsDirectQuery(userId);
+    console.log(`[dataFetchingService] ✅ Strategy 3 result: ${paymentsData.length} payments`);
+    
+    if (paymentsData.length > 0) {
+      console.log(`[dataFetchingService] 🎯 SUCCESS with Strategy 3!`);
+      return paymentsData;
     }
+  } catch (error) {
+    console.error(`[dataFetchingService] ❌ Strategy 3 failed:`, error);
   }
 
-  // Final validation and reporting
-  const finalValidatedPayments = paymentsData.filter(payment => isValidPaymentData(payment));
+  // All strategies failed
+  console.error(`[dataFetchingService] ❌ ALL PAYMENT FETCH STRATEGIES FAILED for user: ${userId}`);
+  console.log(`[dataFetchingService] 📊 Final summary: 0 payments found despite trying all methods`);
   
-  console.log(`[dataFetchingService] 🎯 FINAL PAYMENT SUMMARY:`, {
-    originalCount: paymentsData.length,
-    validatedCount: finalValidatedPayments.length,
-    userId,
-    success: finalValidatedPayments.length > 0,
-    samplePayment: finalValidatedPayments.length > 0 ? finalValidatedPayments[0] : 'none'
-  });
-
-  return finalValidatedPayments;
+  return [];
 };
