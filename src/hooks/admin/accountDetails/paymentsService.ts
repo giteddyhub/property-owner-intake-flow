@@ -27,6 +27,7 @@ export const fetchPayments = async (submissionIds: string[]): Promise<PaymentDat
   try {
     // Use authenticated admin client with proper headers
     const adminClient = getAuthenticatedAdminClient();
+    console.log('[paymentsService] 🔑 Using authenticated admin client for payments query');
     
     // Enhanced query with better error handling
     const { data: paymentsData, error: paymentsError } = await adminClient
@@ -53,6 +54,12 @@ export const fetchPayments = async (submissionIds: string[]): Promise<PaymentDat
 
     if (paymentsError) {
       console.error('[paymentsService] ❌ Error fetching payments:', paymentsError);
+      console.error('[paymentsService] ❌ Error details:', {
+        message: paymentsError.message,
+        details: paymentsError.details,
+        hint: paymentsError.hint,
+        code: paymentsError.code
+      });
       throw new Error(`Payment fetch failed: ${paymentsError.message}`);
     }
 
@@ -101,6 +108,7 @@ export const fetchPaymentsByUserId = async (userId: string): Promise<PaymentData
   
   try {
     const adminClient = getAuthenticatedAdminClient();
+    console.log('[paymentsService] 🔑 Using authenticated admin client for user payments query');
     
     // Get all submissions for this user first
     const { data: userSubmissions, error: submissionsError } = await adminClient
@@ -135,6 +143,7 @@ export const fetchPaymentsDirectQuery = async (userId: string): Promise<PaymentD
   
   try {
     const adminClient = getAuthenticatedAdminClient();
+    console.log('[paymentsService] 🔑 Using authenticated admin client for direct payments query');
     
     // Direct JOIN query to get payments for user
     const { data: paymentsData, error: paymentsError } = await adminClient
@@ -161,6 +170,12 @@ export const fetchPaymentsDirectQuery = async (userId: string): Promise<PaymentD
 
     if (paymentsError) {
       console.error('[paymentsService] ❌ Direct query error:', paymentsError);
+      console.error('[paymentsService] ❌ Direct query error details:', {
+        message: paymentsError.message,
+        details: paymentsError.details,
+        hint: paymentsError.hint,
+        code: paymentsError.code
+      });
       throw new Error(`Direct payment query failed: ${paymentsError.message}`);
     }
 

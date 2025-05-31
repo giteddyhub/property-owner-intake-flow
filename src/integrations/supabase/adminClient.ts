@@ -15,7 +15,16 @@ export const createAdminClient = (adminToken?: string) => {
     }
   } : undefined;
 
-  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, options);
+  const client = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, options);
+  
+  // Log token usage for debugging
+  if (adminToken) {
+    console.log('[adminClient] Creating admin client with token:', adminToken.substring(0, 20) + '...');
+  } else {
+    console.log('[adminClient] Creating admin client without token');
+  }
+
+  return client;
 };
 
 // Helper function to get admin token from localStorage
@@ -24,7 +33,11 @@ export const getAdminToken = (): string | null => {
     const adminSessionStr = localStorage.getItem('admin_session');
     if (adminSessionStr) {
       const adminSession = JSON.parse(adminSessionStr);
-      return adminSession.session?.token || null;
+      const token = adminSession.session?.token || null;
+      if (token) {
+        console.log('[adminClient] Retrieved admin token from localStorage:', token.substring(0, 20) + '...');
+      }
+      return token;
     }
   } catch (error) {
     console.error('Error getting admin token:', error);
