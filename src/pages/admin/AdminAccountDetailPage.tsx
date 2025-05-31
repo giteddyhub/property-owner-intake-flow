@@ -24,14 +24,14 @@ const AdminAccountDetailPage = () => {
     activities
   } = useOptimizedAccountDetails(id);
 
-  console.log(`[AdminAccountDetailPage] Rendering with payments:`, payments);
-  console.log(`[AdminAccountDetailPage] Payments count:`, payments.length);
-  console.log(`[AdminAccountDetailPage] Payment details:`, payments.map(p => ({
-    id: p.id,
-    amount: p.amount,
-    currency: p.currency,
-    status: p.payment_status
-  })));
+  console.log(`[AdminAccountDetailPage] 🎯 Page rendering with:`, {
+    id,
+    loading,
+    paymentsCount: payments.length,
+    accountEmail: account?.email
+  });
+
+  console.log(`[AdminAccountDetailPage] 💰 Payments data:`, payments);
 
   // Navigate back to accounts page
   const goBackToAccounts = () => navigate('/admin/accounts');
@@ -52,11 +52,18 @@ const AdminAccountDetailPage = () => {
     );
   }
 
-  // Calculate enhanced metrics
+  // Calculate enhanced metrics with proper validation
   const hasCompletedSetup = submissions.some(s => s.is_primary_submission && s.state === 'completed');
-  const totalPaymentAmount = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const totalPaymentAmount = payments.reduce((sum, p) => {
+    const amount = Number(p.amount || 0);
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
 
-  console.log(`[AdminAccountDetailPage] Total payment amount calculated:`, totalPaymentAmount);
+  console.log(`[AdminAccountDetailPage] 📊 Calculated metrics:`, {
+    hasCompletedSetup,
+    totalPaymentAmount,
+    paymentsForCalculation: payments.map(p => ({ id: p.id, amount: p.amount, numeric: Number(p.amount || 0) }))
+  });
 
   return (
     <AdminLayout pageTitle={`Account: ${account.full_name || account.email}`}>

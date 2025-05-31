@@ -42,8 +42,14 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
   payments,
   activities
 }) => {
-  console.log(`[AccountDetailTabs] Received payments:`, payments);
-  console.log(`[AccountDetailTabs] Payments length:`, payments.length);
+  console.log(`[AccountDetailTabs] 📋 Rendering tabs with data:`, {
+    payments: payments.length,
+    properties: properties.length,
+    owners: owners.length,
+    assignments: assignments.length
+  });
+  
+  console.log(`[AccountDetailTabs] 💰 Payments received:`, payments);
   
   return (
     <Tabs defaultValue="properties" className="w-full">
