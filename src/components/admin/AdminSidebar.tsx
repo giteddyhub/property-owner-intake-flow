@@ -2,7 +2,7 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, Settings, ListChecks, Shield, LayoutDashboard } from 'lucide-react';
+import { Home, Settings, Shield, LayoutDashboard } from 'lucide-react';
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 import { usePermissionSystem, Permission } from '@/hooks/admin/usePermissionSystem';
 import {
@@ -33,12 +33,6 @@ export const AdminSidebar: React.FC = () => {
       label: 'Accounts',
       href: '/admin/accounts',
       permission: 'accounts.view' as Permission
-    },
-    {
-      icon: ListChecks,
-      label: 'Submissions',
-      href: '/admin/submissions',
-      permission: 'submissions.view' as Permission
     },
     {
       icon: Settings,
