@@ -158,22 +158,12 @@ export const useAccountDetails = (id: string | undefined) => {
         throw assignmentsError;
       }
       
-      // Fetch contact ID for payments
-      const { data: contactData, error: contactError } = await supabase
-        .from('contacts')
-        .select('id')
-        .eq('user_id', id)
-        .limit(1);
-        
-      if (contactError) {
-        console.error('Error fetching contact ID:', contactError);
-      }
-      
+      // Fetch payments using form_submission_id to link to user (no more contact_id)
       let paymentsData = [];
       
-      // If contact ID is found, fetch payments data
-      if (contactData && contactData.length > 0) {
-        const contactId = contactData[0].id;
+      // If submissions exist, fetch payments data using form_submission_id
+      if (enhancedSubmissions && enhancedSubmissions.length > 0) {
+        const submissionIds = enhancedSubmissions.map(s => s.id);
         
         const { data: fetchedPayments, error: paymentsError } = await supabase
           .from('purchases')
@@ -181,7 +171,7 @@ export const useAccountDetails = (id: string | undefined) => {
             *,
             form_submissions:form_submission_id (state)
           `)
-          .eq('contact_id', contactId)
+          .in('form_submission_id', submissionIds)
           .order('created_at', { ascending: false });
           
         if (paymentsError) {

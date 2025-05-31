@@ -57,8 +57,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         propertiesResult,
         ownersResult,
         assignmentsResult,
-        activitiesResult,
-        contactResult
+        activitiesResult
       ] = await Promise.all([
         // Profile query (uses idx_profiles_email if needed)
         supabase
@@ -107,14 +106,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           .select('*')
           .eq('user_id', id)
           .order('created_at', { ascending: false })
-          .limit(50),
-        
-        // Contact query for payments (uses idx_contacts_user_id)
-        supabase
-          .from('contacts')
-          .select('id')
-          .eq('user_id', id)
-          .limit(1)
+          .limit(50)
       ]);
 
       if (profileResult.error) throw profileResult.error;
@@ -153,10 +145,10 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
           `${assignment.owners.first_name} ${assignment.owners.last_name}` : 'Unknown Owner'
       })) || [];
 
-      // Fetch payments if contact exists (uses idx_purchases_contact_id)
+      // Fetch payments using form_submission_id to link to users (no more contact_id)
       let paymentsData = [];
-      if (contactResult.data && contactResult.data.length > 0) {
-        const contactId = contactResult.data[0].id;
+      if (enhancedSubmissions.length > 0) {
+        const submissionIds = enhancedSubmissions.map(s => s.id);
         
         const { data: fetchedPayments } = await supabase
           .from('purchases')
@@ -164,7 +156,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
             *,
             form_submissions:form_submission_id (state)
           `)
-          .eq('contact_id', contactId)
+          .in('form_submission_id', submissionIds)
           .order('created_at', { ascending: false });
           
         paymentsData = fetchedPayments || [];
