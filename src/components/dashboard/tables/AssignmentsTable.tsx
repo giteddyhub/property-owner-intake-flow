@@ -1,20 +1,16 @@
 
 import React from 'react';
-import { Owner, Property, OwnerPropertyAssignment } from '@/components/dashboard/types';
-import { AddButton } from '@/components/dashboard/tables/ActionButtons';
-import { DetailsPopover } from '@/components/dashboard/details/DetailsPopover';
-import { AssignmentDetails } from '@/components/dashboard/details/AssignmentDetails';
-import AssignmentDrawer from '@/components/dashboard/drawers/AssignmentDrawer';
-import { DeleteAssignmentDialog } from './assignment/DeleteAssignmentDialog';
-import { AssignmentsTableContent } from './assignment/AssignmentsTableContent';
-import { useAssignmentsTable } from '@/hooks/useAssignmentsTable';
+import { OwnerPropertyAssignment, Owner, Property } from '@/components/dashboard/types';
+import { AdminDataTable } from '@/components/admin/tables/AdminDataTable';
+import { Badge } from '@/components/ui/badge';
 
 interface AssignmentsTableProps {
   assignments: OwnerPropertyAssignment[];
   owners: Owner[];
   properties: Property[];
-  onRefresh?: () => void;
+  onRefresh: () => void;
   userId: string;
+  onShowUserOverview?: (userId: string, context?: { type: 'property' | 'owner' | 'assignment'; id: string }) => void;
 }
 
 export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({ 
@@ -22,85 +18,59 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   owners, 
   properties,
   onRefresh,
-  userId
+  userId,
+  onShowUserOverview 
 }) => {
-  const {
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    selectedAssignment,
-    setSelectedAssignment,
-    drawerOpen,
-    setDrawerOpen,
-    isCreating,
-    detailsOpen,
-    setDetailsOpen,
-    isActionClick,
-    setIsActionClick,
-    handleEdit,
-    handleDelete,
-    handleAdd,
-    handleAssignmentSaved,
-    handleRowClick
-  } = useAssignmentsTable({ assignments, onRefresh });
-  
-  const getOwnerById = (id: string): Owner | undefined => {
-    return owners.find(owner => owner.id === id);
-  };
-  
-  const getPropertyById = (id: string): Property | undefined => {
-    return properties.find(property => property.id === id);
-  };
+  // Enrich assignments with owner and property data
+  const enrichedAssignments = assignments.map(assignment => {
+    const owner = owners.find(o => o.id === assignment.ownerId);
+    const property = properties.find(p => p.id === assignment.propertyId);
+    
+    return {
+      ...assignment,
+      ownerName: owner ? `${owner.firstName} ${owner.lastName}` : 'Unknown Owner',
+      propertyLabel: property?.label || 'Unknown Property'
+    };
+  });
+
+  const columns = [
+    {
+      key: 'propertyLabel',
+      header: 'Property',
+      className: 'font-medium'
+    },
+    {
+      key: 'ownerName',
+      header: 'Owner',
+      className: 'font-medium'
+    },
+    {
+      key: 'ownershipPercentage',
+      header: 'Ownership %',
+      render: (percentage: number) => `${percentage}%`
+    },
+    {
+      key: 'residentAtProperty',
+      header: 'Resident',
+      render: (resident: boolean) => (
+        <Badge variant={resident ? "default" : "secondary"}>
+          {resident ? 'Yes' : 'No'}
+        </Badge>
+      )
+    },
+    {
+      key: 'taxCredits',
+      header: 'Tax Credits',
+      render: (credits: number) => credits ? `€${credits.toLocaleString()}` : '-'
+    }
+  ];
 
   return (
-    <>
-      <div className="flex justify-start mb-4">
-        <AddButton onClick={handleAdd} label="Add Assignment" />
-      </div>
-
-      <AssignmentsTableContent
-        assignments={assignments}
-        owners={owners}
-        properties={properties}
-        onRowClick={handleRowClick}
-        onEdit={handleEdit}
-        onDelete={setSelectedAssignment}
-        onActionClick={() => setIsActionClick(true)}
-      />
-      
-      {selectedAssignment && (
-        <DetailsPopover
-          trigger={<div />}
-          open={detailsOpen}
-          onOpenChange={(open) => {
-            // Only update state if we're closing it or opening it properly
-            if (!open || selectedAssignment) {
-              setDetailsOpen(open);
-            }
-          }}
-        >
-          <AssignmentDetails 
-            assignment={selectedAssignment} 
-            owner={getOwnerById(selectedAssignment.ownerId)} 
-            property={getPropertyById(selectedAssignment.propertyId)} 
-          />
-        </DetailsPopover>
-      )}
-      
-      <DeleteAssignmentDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleDelete}
-      />
-      
-      <AssignmentDrawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        assignment={isCreating ? undefined : selectedAssignment || undefined}
-        properties={properties}
-        owners={owners}
-        onSuccess={handleAssignmentSaved}
-        userId={userId}
-      />
-    </>
+    <AdminDataTable
+      data={enrichedAssignments}
+      columns={columns}
+      onShowUserOverview={onShowUserOverview}
+      contextType="assignment"
+    />
   );
 };

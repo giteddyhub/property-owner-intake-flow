@@ -49,13 +49,18 @@ export const useUserOverview = () => {
 
       if (propertiesError) throw propertiesError;
 
-      // Fetch assignments with joined data
+      // Fetch assignments with explicit column selection to avoid ambiguity
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('owner_property_assignments')
         .select(`
-          *,
-          owner:owners!inner(first_name, last_name),
-          property:properties!inner(label)
+          id,
+          property_id,
+          owner_id,
+          ownership_percentage,
+          resident_at_property,
+          created_at,
+          properties!inner(label),
+          owners!inner(first_name, last_name)
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -69,13 +74,27 @@ export const useUserOverview = () => {
         owner_id: assignment.owner_id,
         ownership_percentage: assignment.ownership_percentage,
         resident_at_property: assignment.resident_at_property,
-        property_label: assignment.property?.label || 'Unknown Property',
-        owner_name: assignment.owner ? `${assignment.owner.first_name} ${assignment.owner.last_name}` : 'Unknown Owner',
+        property_label: (assignment.properties as any)?.label || 'Unknown Property',
+        owner_name: (assignment.owners as any) ? `${(assignment.owners as any).first_name} ${(assignment.owners as any).last_name}` : 'Unknown Owner',
         created_at: assignment.created_at
       })) || [];
 
+      // Transform account data to match AccountData interface
+      const transformedAccount: AccountData | undefined = accountData ? {
+        id: accountData.id,
+        email: accountData.email,
+        full_name: accountData.full_name,
+        created_at: accountData.created_at,
+        updated_at: accountData.created_at, // Use created_at as fallback
+        submissions_count: Number(accountData.total_submissions || 0),
+        properties_count: Number(accountData.total_properties || 0),
+        owners_count: Number(accountData.total_owners || 0),
+        is_admin: false,
+        primary_submission_id: accountData.primary_submission_id
+      } : undefined;
+
       setData({
-        account: accountData || undefined,
+        account: transformedAccount,
         owners: ownersData || [],
         properties: propertiesData || [],
         assignments: transformedAssignments
