@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Calendar, DollarSign, FileText } from 'lucide-react';
 import { AccountData } from '@/types/admin';
@@ -38,7 +37,7 @@ export const AccountInfoCard: React.FC<AccountInfoCardProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <span className="text-sm font-medium text-muted-foreground">Name</span>
               <p className="font-medium">{account.full_name || 'No Name'}</p>
@@ -50,12 +49,6 @@ export const AccountInfoCard: React.FC<AccountInfoCardProps> = ({
             <div>
               <span className="text-sm font-medium text-muted-foreground">Created</span>
               <p className="font-medium">{format(new Date(account.created_at), 'MMM dd, yyyy')}</p>
-            </div>
-            <div>
-              <span className="text-sm font-medium text-muted-foreground">Status</span>
-              <Badge variant={hasCompletedSetup ? "default" : "secondary"}>
-                {hasCompletedSetup ? 'Active' : 'Setup Pending'}
-              </Badge>
             </div>
           </div>
         </CardContent>

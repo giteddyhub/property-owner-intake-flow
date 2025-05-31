@@ -8,8 +8,6 @@ import { AccountNotFound } from '@/components/admin/accounts/AccountNotFound';
 import { AccountDetailHeader } from '@/components/admin/accounts/AccountDetailHeader';
 import { AccountDetailTabs } from '@/components/admin/accounts/AccountDetailTabs';
 import { useOptimizedAccountDetails } from '@/hooks/admin/useOptimizedAccountDetails';
-import { Badge } from '@/components/ui/badge';
-import { Zap } from 'lucide-react';
 
 const AdminAccountDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,15 +50,11 @@ const AdminAccountDetailPage = () => {
   return (
     <AdminLayout pageTitle={`Account: ${account.full_name || account.email}`}>
       <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <AccountDetailHeader 
             accountName={account.full_name || account.email}
             onBack={goBackToAccounts}
           />
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Zap className="h-3 w-3" />
-            Optimized View
-          </Badge>
         </div>
         
         <AccountInfoCard 
