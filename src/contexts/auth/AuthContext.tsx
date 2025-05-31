@@ -147,3 +147,9 @@ export const useAuth = () => {
   }
   return context;
 };
+
+// Export useUser helper hook
+export const useUser = () => {
+  const { user } = useAuth();
+  return { user, setUser: () => {} }; // setUser is handled internally by auth actions
+};

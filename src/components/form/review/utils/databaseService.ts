@@ -187,7 +187,7 @@ export const saveFormData = async (
         {
           owner_count: owners.length,
           submission_id: submissionId,
-          owner_names: owners.map(o => `${o.first_name} ${o.last_name}`),
+          owner_names: owners.map(o => `${o.firstName} ${o.lastName}`),
           timestamp: new Date().toISOString()
         }
       );
@@ -210,7 +210,7 @@ export const saveFormData = async (
           property_count: properties.length,
           submission_id: submissionId,
           property_labels: properties.map(p => p.label),
-          property_types: properties.map(p => p.property_type),
+          property_types: properties.map(p => p.propertyType),
           timestamp: new Date().toISOString()
         }
       );
@@ -232,7 +232,7 @@ export const saveFormData = async (
         {
           assignment_count: assignments.length,
           submission_id: submissionId,
-          total_ownership_percentage: assignments.reduce((sum, a) => sum + (a.ownership_percentage || 0), 0),
+          total_ownership_percentage: assignments.reduce((sum, a) => sum + (a.ownershipPercentage || 0), 0),
           timestamp: new Date().toISOString()
         }
       );

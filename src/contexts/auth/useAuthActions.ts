@@ -130,6 +130,7 @@ export const useAuthActions = () => {
     signOut,
     resetPassword,
     updatePassword,
+    loading,
     updateProfile: async (updates: { full_name?: string; email?: string }) => {
       try {
         setLoading(true);
