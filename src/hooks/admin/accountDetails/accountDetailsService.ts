@@ -44,13 +44,39 @@ export const checkAdminStatus = async (email: string): Promise<boolean> => {
 };
 
 export const fetchSubmissions = async (userId: string, primarySubmissionId?: string): Promise<FormSubmission[]> => {
-  const { data: submissionsData } = await supabase
+  console.log(`[accountDetailsService] Fetching submissions for user: ${userId}, primary: ${primarySubmissionId}`);
+  
+  // First, let's get ALL submissions for this user to see what exists
+  const { data: allSubmissions, error: allSubmissionsError } = await supabase
     .from('form_submissions')
     .select('*')
     .eq('user_id', userId)
-    .neq('state', 'tax_filing_init')
-    .in('state', ['new', 'processing', 'completed', 'error'])
     .order('submitted_at', { ascending: false });
+
+  if (allSubmissionsError) {
+    console.error('[accountDetailsService] Error fetching all submissions:', allSubmissionsError);
+  } else {
+    console.log(`[accountDetailsService] Found ${allSubmissions?.length || 0} total submissions for user ${userId}:`, 
+      allSubmissions?.map(s => ({ id: s.id, state: s.state, submitted_at: s.submitted_at }))
+    );
+  }
+
+  // Now get the filtered submissions (exclude only the initialization state)
+  const { data: submissionsData, error: submissionsError } = await supabase
+    .from('form_submissions')
+    .select('*')
+    .eq('user_id', userId)
+    .neq('state', 'tax_filing_init') // Only exclude session initialization entries
+    .order('submitted_at', { ascending: false });
+
+  if (submissionsError) {
+    console.error('[accountDetailsService] Error fetching filtered submissions:', submissionsError);
+    throw submissionsError;
+  }
+
+  console.log(`[accountDetailsService] Found ${submissionsData?.length || 0} valid submissions for user ${userId}:`, 
+    submissionsData?.map(s => ({ id: s.id, state: s.state, submitted_at: s.submitted_at }))
+  );
 
   return submissionsData?.map(submission => ({
     ...submission,
