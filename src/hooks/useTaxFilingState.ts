@@ -76,50 +76,15 @@ export const useTaxFilingState = () => {
       
       console.log('Created form submission with ID:', formSubmission.id);
       
-      // Create a contacts entry if it doesn't exist yet
-      const { data: contactData, error: contactError } = await supabase
-        .from('contacts')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-        
-      let contactId;
-      
-      if (contactError || !contactData) {
-        console.log('No contact found, creating one');
-        // Create a new contact if none exists
-        const { data: newContact, error: newContactError } = await supabase
-          .from('contacts')
-          .insert({
-            user_id: userId,
-            full_name: profileData.full_name || '',
-            email: profileData.email || '',
-            submitted_at: new Date().toISOString(),
-          })
-          .select('id')
-          .single();
-          
-        if (newContactError) {
-          console.error('Failed to create contact:', newContactError);
-          throw newContactError;
-        }
-        
-        contactId = newContact.id;
-      } else {
-        contactId = contactData.id;
-      }
-      
-      console.log('Using contact ID:', contactId);
-      
       // Define a default amount for the purchase entry
       const defaultAmount = 0;
       
-      // Create the purchase using insert without the user_id field which doesn't exist in the table
+      // Create the purchase entry directly without needing a separate contact
+      // since the form_submission already contains the user_id reference
       try {
         const { data: purchase, error: purchaseError } = await supabase
           .from('purchases')
           .insert({
-            contact_id: contactId, 
             form_submission_id: formSubmission.id,
             payment_status: 'pending',
             has_document_retrieval: hasDocumentRetrieval,
