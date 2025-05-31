@@ -7,17 +7,15 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 // Create a specialized admin client that includes admin token headers
 export const createAdminClient = (adminToken?: string) => {
-  const client = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-  
-  if (adminToken) {
-    // Add admin token to all requests
-    client.rest.headers = {
-      ...client.rest.headers,
-      'x-admin-token': adminToken
-    };
-  }
-  
-  return client;
+  const options = adminToken ? {
+    global: {
+      headers: {
+        'x-admin-token': adminToken
+      }
+    }
+  } : undefined;
+
+  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, options);
 };
 
 // Helper function to get admin token from localStorage
