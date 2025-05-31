@@ -10,6 +10,10 @@ export interface AccountDetails {
   total_revenue: number;
   last_submission_date?: string;
   recent_activities: number;
+  // Add missing properties for compatibility with AccountData
+  submissions_count: number;
+  properties_count: number;
+  owners_count: number;
 }
 
 export interface FormSubmission {

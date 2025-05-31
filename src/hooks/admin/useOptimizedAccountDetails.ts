@@ -70,7 +70,11 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         updated_at: userSummary.created_at, // View doesn't track updated_at
         is_admin: isAdmin,
         total_revenue: Number(userSummary.total_revenue || 0),
-        recent_activities: userSummary.recent_activities || 0
+        recent_activities: userSummary.recent_activities || 0,
+        // Map the counts for compatibility with AccountData
+        submissions_count: enhancedSubmissions.length,
+        properties_count: propertiesData.length,
+        owners_count: ownersData.length
       });
       setSubmissions(enhancedSubmissions);
       setProperties(propertiesData);
