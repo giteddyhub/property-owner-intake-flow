@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
@@ -7,7 +6,7 @@ import { AccountDetailSkeleton } from '@/components/admin/accounts/AccountDetail
 import { AccountNotFound } from '@/components/admin/accounts/AccountNotFound';
 import { AccountDetailHeader } from '@/components/admin/accounts/AccountDetailHeader';
 import { AccountDetailTabs } from '@/components/admin/accounts/AccountDetailTabs';
-import { useOptimizedAccountDetails } from '@/hooks/admin/useOptimizedAccountDetails';
+import { useOptimizedAccountDetails } from '@/hooks/admin/accountDetails/useOptimizedAccountDetails';
 
 const AdminAccountDetailPage = () => {
   const { id } = useParams<{ id: string }>();
