@@ -25,7 +25,9 @@ const SuccessPage = () => {
     loading: verifyLoading, 
     paymentStatus, 
     hasDocumentRetrieval, 
-    setHasDocumentRetrieval 
+    setHasDocumentRetrieval,
+    ownersCount: verifiedOwnersCount,
+    propertiesCount: verifiedPropertiesCount
   } = usePaymentVerification(sessionId);
   
   const { loading: checkoutLoading, handleCheckout } = useCheckout(hasDocumentRetrieval);
@@ -51,6 +53,10 @@ const SuccessPage = () => {
       setPropertiesCount(parseInt(storedPropertiesCount, 10) || 1);
     }
   }, [setHasDocumentRetrieval]);
+
+  // Use verified counts if available, otherwise fallback to session storage
+  const finalOwnersCount = verifiedOwnersCount || ownersCount;
+  const finalPropertiesCount = verifiedPropertiesCount || propertiesCount;
   
   const handleToggleDocumentRetrieval = () => {
     const newValue = !hasDocumentRetrieval;
@@ -74,8 +80,8 @@ const SuccessPage = () => {
           {/* Premium Service Offer Card */}
           {!sessionId && !paymentStatus && (
             <PremiumServiceCard
-              ownersCount={ownersCount}
-              propertiesCount={propertiesCount}
+              ownersCount={finalOwnersCount}
+              propertiesCount={finalPropertiesCount}
               hasDocumentRetrieval={hasDocumentRetrieval}
               loading={isLoading}
               onCheckout={handleCheckout}
@@ -89,8 +95,8 @@ const SuccessPage = () => {
           {paymentStatus === 'paid' && (
             <PaymentConfirmation 
               hasDocumentRetrieval={hasDocumentRetrieval}
-              ownersCount={ownersCount}
-              propertiesCount={propertiesCount}
+              ownersCount={finalOwnersCount}
+              propertiesCount={finalPropertiesCount}
             />
           )}
           

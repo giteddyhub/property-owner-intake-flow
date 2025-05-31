@@ -26,11 +26,18 @@ export const usePaymentVerification = (sessionId: string | null): UsePaymentVeri
       if (sessionId && !paymentVerified) {
         try {
           setLoading(true);
+          console.log('Verifying payment for session:', sessionId);
+          
           const { data, error } = await supabase.functions.invoke('verify-payment', {
             body: { sessionId },
           });
           
-          if (error) throw error;
+          if (error) {
+            console.error('Payment verification error:', error);
+            throw error;
+          }
+          
+          console.log('Payment verification response:', data);
           
           if (data.status === 'paid') {
             setPaymentStatus('paid');
@@ -50,12 +57,13 @@ export const usePaymentVerification = (sessionId: string | null): UsePaymentVeri
             toast.success('Payment successful! Thank you for your purchase.');
           } else {
             setPaymentStatus(data.status);
+            console.log('Payment status from Stripe:', data.status);
           }
           
           setPaymentVerified(true);
         } catch (error) {
           console.error('Error verifying payment:', error);
-          toast.error('Unable to verify payment status');
+          toast.error('Unable to verify payment status. Please contact support if you completed the payment.');
         } finally {
           setLoading(false);
         }
