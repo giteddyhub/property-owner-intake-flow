@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
@@ -56,15 +57,16 @@ const transformPropertyData = (dbProperty: any): Property => ({
   useDocumentRetrievalService: dbProperty.use_document_retrieval_service
 });
 
-// Helper function to transform database assignment data to frontend format
+// Helper function to transform database assignment data to frontend format with proper DateRange
 const transformAssignmentData = (dbAssignment: any): OwnerPropertyAssignment => ({
-  id: dbAssignment.id,
   propertyId: dbAssignment.property_id,
   ownerId: dbAssignment.owner_id,
   ownershipPercentage: dbAssignment.ownership_percentage,
   residentAtProperty: dbAssignment.resident_at_property,
-  residentFromDate: dbAssignment.resident_from_date ? new Date(dbAssignment.resident_from_date) : undefined,
-  residentToDate: dbAssignment.resident_to_date ? new Date(dbAssignment.resident_to_date) : undefined,
+  residentDateRange: {
+    from: dbAssignment.resident_from_date ? new Date(dbAssignment.resident_from_date) : null,
+    to: dbAssignment.resident_to_date ? new Date(dbAssignment.resident_to_date) : null
+  },
   taxCredits: dbAssignment.tax_credits
 });
 
@@ -110,11 +112,16 @@ const transformPropertyToDb = (property: Property) => ({
   use_document_retrieval_service: property.useDocumentRetrievalService || false
 });
 
+// Extended assignment type that includes ID for internal use
+interface AssignmentWithId extends OwnerPropertyAssignment {
+  id: string;
+}
+
 export const useDashboardData = () => {
   const { user } = useUser();
   const [owners, setOwners] = useState<Owner[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [assignments, setAssignments] = useState<OwnerPropertyAssignment[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -148,7 +155,10 @@ export const useDashboardData = () => {
         .order('created_at', { ascending: false });
 
       if (assignmentsError) throw assignmentsError;
-      setAssignments((assignmentsData || []).map(transformAssignmentData));
+      setAssignments((assignmentsData || []).map(dbAssignment => ({
+        id: dbAssignment.id,
+        ...transformAssignmentData(dbAssignment)
+      })));
     } catch (error: any) {
       setError(error.message);
       toast.error('Failed to load dashboard data');
@@ -264,34 +274,36 @@ export const useDashboardData = () => {
     }
   };
 
-  const createAssignment = async (assignmentData: Omit<OwnerPropertyAssignment, 'id'>) => {
+  const createAssignment = async (assignmentData: OwnerPropertyAssignment) => {
     if (!user) {
       toast.error('You must be logged in to create assignments');
       return null;
     }
 
     try {
-      const newAssignment: OwnerPropertyAssignment = {
-        ...assignmentData,
-        id: crypto.randomUUID()
-      };
+      const assignmentId = crypto.randomUUID();
 
       const { error } = await supabase
         .from('owner_property_assignments')
         .insert({
-          property_id: newAssignment.propertyId,
-          owner_id: newAssignment.ownerId,
-          ownership_percentage: newAssignment.ownershipPercentage,
-          resident_at_property: newAssignment.residentAtProperty,
-          resident_from_date: newAssignment.residentFromDate ? newAssignment.residentFromDate.toISOString().split('T')[0] : null,
-          resident_to_date: newAssignment.residentToDate ? newAssignment.residentToDate.toISOString().split('T')[0] : null,
-          tax_credits: newAssignment.taxCredits || null,
+          property_id: assignmentData.propertyId,
+          owner_id: assignmentData.ownerId,
+          ownership_percentage: assignmentData.ownershipPercentage,
+          resident_at_property: assignmentData.residentAtProperty,
+          resident_from_date: assignmentData.residentDateRange?.from ? assignmentData.residentDateRange.from.toISOString().split('T')[0] : null,
+          resident_to_date: assignmentData.residentDateRange?.to ? assignmentData.residentDateRange.to.toISOString().split('T')[0] : null,
+          tax_credits: assignmentData.taxCredits || null,
           user_id: user.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
 
       if (error) throw error;
+
+      const newAssignment: AssignmentWithId = {
+        id: assignmentId,
+        ...assignmentData
+      };
 
       setAssignments(prev => [...prev, newAssignment]);
       toast.success('Assignment created successfully');
@@ -310,8 +322,11 @@ export const useDashboardData = () => {
     }
 
     try {
-      const dbUpdates = updates.firstName || updates.lastName || updates.address ? 
-        transformOwnerToDb({ ...owners.find(o => o.id === id)!, ...updates }) : updates;
+      const currentOwner = owners.find(o => o.id === id);
+      if (!currentOwner) throw new Error('Owner not found');
+
+      const updatedOwner = { ...currentOwner, ...updates };
+      const dbUpdates = transformOwnerToDb(updatedOwner);
 
       const { error } = await supabase
         .from('owners')
@@ -342,8 +357,11 @@ export const useDashboardData = () => {
     }
 
     try {
-      const dbUpdates = updates.label || updates.address || updates.propertyType ? 
-        transformPropertyToDb({ ...properties.find(p => p.id === id)!, ...updates }) : updates;
+      const currentProperty = properties.find(p => p.id === id);
+      if (!currentProperty) throw new Error('Property not found');
+
+      const updatedProperty = { ...currentProperty, ...updates };
+      const dbUpdates = transformPropertyToDb(updatedProperty);
 
       const { error } = await supabase
         .from('properties')
@@ -379,8 +397,8 @@ export const useDashboardData = () => {
       if (updates.ownerId) dbUpdates.owner_id = updates.ownerId;
       if (updates.ownershipPercentage !== undefined) dbUpdates.ownership_percentage = updates.ownershipPercentage;
       if (updates.residentAtProperty !== undefined) dbUpdates.resident_at_property = updates.residentAtProperty;
-      if (updates.residentFromDate !== undefined) dbUpdates.resident_from_date = updates.residentFromDate?.toISOString().split('T')[0] || null;
-      if (updates.residentToDate !== undefined) dbUpdates.resident_to_date = updates.residentToDate?.toISOString().split('T')[0] || null;
+      if (updates.residentDateRange?.from !== undefined) dbUpdates.resident_from_date = updates.residentDateRange?.from?.toISOString().split('T')[0] || null;
+      if (updates.residentDateRange?.to !== undefined) dbUpdates.resident_to_date = updates.residentDateRange?.to?.toISOString().split('T')[0] || null;
       if (updates.taxCredits !== undefined) dbUpdates.tax_credits = updates.taxCredits;
 
       const { error } = await supabase
@@ -397,7 +415,7 @@ export const useDashboardData = () => {
         prev.map(assignment => (assignment.id === id ? { ...assignment, ...updates } : assignment))
       );
       toast.success('Assignment updated successfully');
-      return { id, ...updates } as OwnerPropertyAssignment;
+      return { id, ...updates } as AssignmentWithId;
     } catch (error: any) {
       console.error('Error updating assignment:', error);
       toast.error('Failed to update assignment');

@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -19,10 +18,14 @@ const DashboardPage = () => {
     setRefreshFlag(prev => prev + 1);
   }, []);
   
-  const { loading, owners, properties, assignments } = useDashboardData({ 
-    userId: user?.id,
-    refreshFlag 
-  });
+  const { loading, owners, properties, assignments, refetch } = useDashboardData();
+
+  // Trigger refetch when refreshFlag changes
+  useEffect(() => {
+    if (refreshFlag > 0) {
+      refetch();
+    }
+  }, [refreshFlag, refetch]);
 
   // Check for redirect from form submission - revised to use localStorage
   useEffect(() => {

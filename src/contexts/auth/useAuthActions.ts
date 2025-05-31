@@ -1,12 +1,12 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useUser } from './AuthContext';
 import { ActivityLogger } from '@/services/activityLogger';
 
 export const useAuthActions = () => {
   const [loading, setLoading] = useState(false);
-  const { user, setUser } = useUser();
+  // Remove the setUser dependency since the auth state is managed by the context
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
@@ -30,7 +30,6 @@ export const useAuthActions = () => {
         // Log registration activity
         await ActivityLogger.logUserRegistration(data.user.id, email);
         
-        setUser(data.user);
         toast.success('Account created! Please check your email to verify your account.');
       }
 
@@ -61,7 +60,6 @@ export const useAuthActions = () => {
         // Log login activity
         await ActivityLogger.logUserLogin(data.user.id);
         
-        setUser(data.user);
         toast.success('Welcome back!');
       }
 
@@ -80,7 +78,6 @@ export const useAuthActions = () => {
       setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setUser(null);
       toast.success('Signed out successfully');
     } catch (error: any) {
       console.error('Sign out error:', error);
@@ -135,6 +132,7 @@ export const useAuthActions = () => {
       try {
         setLoading(true);
         
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('No user logged in');
 
         // Update auth user email if provided
@@ -161,12 +159,6 @@ export const useAuthActions = () => {
         await ActivityLogger.logProfileUpdate(user.id, updatedFields);
 
         toast.success('Profile updated successfully');
-        
-        // Refresh user data
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData.user) {
-          setUser(userData.user);
-        }
         
       } catch (error: any) {
         console.error('Profile update error:', error);
