@@ -31,13 +31,20 @@ export const useTaxFilingSession = (sessionId: string | undefined) => {
       try {
         setLoading(true);
 
-        // Check if purchase record exists
+        // Check if purchase record exists and get associated form submission
         const {
           data: purchaseData,
           error: purchaseError
         } = await supabase
           .from('purchases')
-          .select('id, contact_id, has_document_retrieval')
+          .select(`
+            id, 
+            form_submission_id, 
+            has_document_retrieval,
+            form_submissions:form_submission_id (
+              user_id
+            )
+          `)
           .eq('id', sessionId)
           .maybeSingle();
           
@@ -57,26 +64,9 @@ export const useTaxFilingSession = (sessionId: string | undefined) => {
           return;
         }
 
-        // Verify the purchase belongs to this user by checking contact table
-        const {
-          data: contactData,
-          error: contactError
-        } = await supabase
-          .from('contacts')
-          .select('user_id')
-          .eq('id', purchaseData.contact_id)
-          .maybeSingle();
-          
-        if (contactError) {
-          console.error('Error fetching contact:', contactError);
-          toast.error('Error verifying user access');
-          setSessionValid(false);
-          navigate('/dashboard');
-          return;
-        }
-        
-        if (!contactData || contactData.user_id !== user.id) {
-          console.error('Contact not found or does not belong to user');
+        // Verify the purchase belongs to this user through the form submission
+        if (!purchaseData.form_submissions || purchaseData.form_submissions.user_id !== user.id) {
+          console.error('Purchase does not belong to user');
           toast.error('You don\'t have access to this tax filing session');
           setSessionValid(false);
           navigate('/dashboard');
