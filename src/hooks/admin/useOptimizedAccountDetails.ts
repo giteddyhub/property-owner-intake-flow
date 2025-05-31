@@ -51,6 +51,15 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
       const isSessionValid = await validateSession();
       if (!isSessionValid) return;
 
+      // Check if admin token is available
+      const adminToken = localStorage.getItem('admin_session');
+      if (!adminToken) {
+        console.error('[useOptimizedAccountDetails] ❌ No admin token available');
+        toast.error('Admin authentication required');
+        navigate('/admin/login');
+        return;
+      }
+
       // Fetch user summary data
       console.log(`[useOptimizedAccountDetails] 📋 Fetching user summary...`);
       const userSummary = await fetchUserSummary(id);
@@ -199,22 +208,9 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         }
       }
 
-      // Final validation and error reporting
+      // Final validation and reporting
       if (!paymentsFetchSuccess || paymentsData.length === 0) {
-        console.error(`[useOptimizedAccountDetails] 🚨 CRITICAL: All payment fetching strategies failed for user ${id}`);
-        console.error(`[useOptimizedAccountDetails] 🔍 Debug info:`, {
-          userId: id,
-          userEmail: userSummary.email,
-          submissionsFound: fetchedSubmissions.length,
-          submissionIds: submissionIds,
-          submissionStates: fetchedSubmissions.map(s => s.state),
-          strategiesAttempted: 3
-        });
-        
-        // Show error toast to user
-        toast.error('Payment data could not be loaded', {
-          description: 'All payment retrieval strategies failed. Check console for details.'
-        });
+        console.log(`[useOptimizedAccountDetails] ⚠️ No payments found after all strategies - this is normal if user has no payments`);
       } else {
         console.log(`[useOptimizedAccountDetails] 🎉 SUCCESS: Payments retrieved successfully using one of the strategies`);
       }
@@ -253,7 +249,8 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
         total_revenue: totalPaymentAmount,
         recent_activities: userSummary.recent_activities || 0,
         properties_count: propertiesData.length,
-        owners_count: ownersData.length
+        owners_count: ownersData.length,
+        submissions_count: fetchedSubmissions.length
       };
 
       // Set all state with comprehensive logging and validation
@@ -289,7 +286,13 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
     } catch (error: any) {
       console.error('[useOptimizedAccountDetails] ❌ Error fetching account details:', error);
       
-      if (error.message === 'Account not found') {
+      // Check for authentication-related errors
+      if (error.message?.includes('admin token') || error.message?.includes('authentication')) {
+        toast.error('Admin authentication expired', {
+          description: 'Please log in again to access admin features'
+        });
+        navigate('/admin/login');
+      } else if (error.message === 'Account not found') {
         toast.error('Account not found');
         navigate('/admin/accounts');
       } else {

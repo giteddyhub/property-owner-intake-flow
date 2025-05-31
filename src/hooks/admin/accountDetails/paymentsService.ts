@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { getAuthenticatedAdminClient } from '@/integrations/supabase/adminClient';
 import { PaymentData } from '@/types/admin';
 
 // Enhanced type guard for payment validation
@@ -25,8 +25,11 @@ export const fetchPayments = async (submissionIds: string[]): Promise<PaymentDat
   }
 
   try {
+    // Use authenticated admin client with proper headers
+    const adminClient = getAuthenticatedAdminClient();
+    
     // Enhanced query with better error handling
-    const { data: paymentsData, error: paymentsError } = await supabase
+    const { data: paymentsData, error: paymentsError } = await adminClient
       .from('purchases')
       .select(`
         id,
@@ -97,8 +100,10 @@ export const fetchPaymentsByUserId = async (userId: string): Promise<PaymentData
   console.log(`[paymentsService] 🔄 Fetching payments directly by user ID: ${userId}`);
   
   try {
+    const adminClient = getAuthenticatedAdminClient();
+    
     // Get all submissions for this user first
-    const { data: userSubmissions, error: submissionsError } = await supabase
+    const { data: userSubmissions, error: submissionsError } = await adminClient
       .from('form_submissions')
       .select('id')
       .eq('user_id', userId)
@@ -129,8 +134,10 @@ export const fetchPaymentsDirectQuery = async (userId: string): Promise<PaymentD
   console.log(`[paymentsService] 🎯 Direct query strategy for user: ${userId}`);
   
   try {
+    const adminClient = getAuthenticatedAdminClient();
+    
     // Direct JOIN query to get payments for user
-    const { data: paymentsData, error: paymentsError } = await supabase
+    const { data: paymentsData, error: paymentsError } = await adminClient
       .from('purchases')
       .select(`
         id,
