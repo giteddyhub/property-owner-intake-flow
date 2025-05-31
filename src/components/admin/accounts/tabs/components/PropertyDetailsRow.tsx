@@ -3,20 +3,34 @@ import React from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { PropertyData } from '@/types/admin';
 import { formatPropertyOccupancy } from '../utils/occupancyFormatter';
 
 interface PropertyDetailsRowProps {
   property: PropertyData;
-  onDownloadDocument: (documentUrl: string, documentName: string) => void;
+  onDownloadDocument: (documentData: string, documentName: string) => void;
 }
 
 export const PropertyDetailsRow: React.FC<PropertyDetailsRowProps> = ({
   property,
   onDownloadDocument
 }) => {
+  const getDocumentName = (doc: string, index: number) => {
+    // Try to extract filename from URL or path
+    if (doc.includes('/')) {
+      const parts = doc.split('/');
+      const lastPart = parts[parts.length - 1];
+      if (lastPart && lastPart.includes('.')) {
+        return lastPart;
+      }
+    }
+    
+    // Fallback to generic name
+    return `${property.label.replace(/\s+/g, '_')}_document_${index + 1}`;
+  };
+
   return (
     <TableRow>
       <TableCell colSpan={6} className="bg-muted/20">
@@ -69,29 +83,38 @@ export const PropertyDetailsRow: React.FC<PropertyDetailsRowProps> = ({
           {/* Documents Section */}
           {property.documents && property.documents.length > 0 && (
             <div className="border-t pt-4">
-              <h4 className="font-medium text-sm mb-2">Documents ({property.documents.length})</h4>
-              <div className="flex flex-wrap gap-2">
-                {property.documents.map((doc, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDownloadDocument(doc, `${property.label}_document_${index + 1}`);
-                    }}
-                  >
-                    <Download className="h-3 w-3 mr-1" />
-                    Document {index + 1}
-                  </Button>
-                ))}
+              <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Documents ({property.documents.length})
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {property.documents.map((doc, index) => {
+                  const documentName = getDocumentName(doc, index);
+                  return (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      size="sm"
+                      className="justify-start h-auto p-3"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDownloadDocument(doc, documentName);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Download className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate text-xs">{documentName}</span>
+                      </div>
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {property.use_document_retrieval_service && (
             <div className="border-t pt-4">
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
                 Document Retrieval Service Enabled
               </Badge>
             </div>
