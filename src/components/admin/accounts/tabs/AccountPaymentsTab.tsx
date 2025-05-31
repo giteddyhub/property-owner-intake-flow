@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronRight, DollarSign } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -19,15 +19,19 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { PaymentData } from '@/types/admin';
-import { AlertTriangle, DollarSign } from 'lucide-react';
 
 interface AccountPaymentsTabProps {
   payments: PaymentData[];
 }
 
 export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments }) => {
+  const [expandedPayment, setExpandedPayment] = useState<string | null>(null);
+
+  const togglePaymentExpansion = (paymentId: string) => {
+    setExpandedPayment(expandedPayment === paymentId ? null : paymentId);
+  };
+
   const formatCurrency = (amount: number | string, currency: string = 'eur') => {
-    // Handle different amount formats
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     
     if (isNaN(numericAmount) || numericAmount === null || numericAmount === undefined) {
@@ -55,8 +59,6 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
     }
   };
 
-  // Debug information for troubleshooting
-  const debugPayments = payments.length > 0;
   const totalRevenue = payments.reduce((sum, payment) => {
     const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
     return sum + (isNaN(amount) ? 0 : amount);
@@ -76,24 +78,6 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {debugPayments && (
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Payment Debug Information</span>
-            </div>
-            <div className="text-xs text-blue-700 space-y-1">
-              <div>Total payments found: {payments.length}</div>
-              <div>Payments with valid amounts: {payments.filter(p => {
-                const amount = typeof p.amount === 'string' ? parseFloat(p.amount) : p.amount;
-                return !isNaN(amount) && amount > 0;
-              }).length}</div>
-              <div>Payments with pending status: {payments.filter(p => p.payment_status === 'pending').length}</div>
-              <div>Payments with paid status: {payments.filter(p => p.payment_status === 'paid').length}</div>
-            </div>
-          </div>
-        )}
-
         {payments.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No payment records found for this user.
@@ -102,12 +86,12 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8"></TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Document Retrieval</TableHead>
-                <TableHead>Stripe Session ID</TableHead>
-                <TableHead>Stripe Payment ID</TableHead>
+                <TableHead>Payment Method</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -116,58 +100,114 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
                 const isValidAmount = !isNaN(amount) && amount > 0;
                 
                 return (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      {format(new Date(payment.created_at), 'MMM dd, yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {formatCurrency(payment.amount, payment.currency)}
-                        {!isValidAmount && (
-                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
-                            Invalid Amount
+                  <React.Fragment key={payment.id}>
+                    <TableRow 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => togglePaymentExpansion(payment.id)}
+                    >
+                      <TableCell>
+                        {expandedPayment === payment.id ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(payment.created_at), 'MMM dd, yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {formatCurrency(payment.amount, payment.currency)}
+                          {!isValidAmount && (
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Invalid Amount
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={getPaymentStatusBadgeClass(payment.payment_status)}
+                        >
+                          {payment.payment_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {payment.has_document_retrieval ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            Included
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                            Not Included
                           </Badge>
                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={getPaymentStatusBadgeClass(payment.payment_status)}
-                      >
-                        {payment.payment_status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {payment.has_document_retrieval ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          Included
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                          Not Included
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {payment.stripe_session_id ? (
-                        <span title={payment.stripe_session_id}>
-                          {payment.stripe_session_id.substring(0, 20)}...
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">None</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {payment.stripe_payment_id ? (
-                        <span title={payment.stripe_payment_id}>
-                          {payment.stripe_payment_id.substring(0, 20)}...
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">None</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">Stripe</Badge>
+                      </TableCell>
+                    </TableRow>
+                    {expandedPayment === payment.id && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="bg-muted/20">
+                          <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium text-muted-foreground">Payment ID:</span>
+                                <p className="font-mono text-xs">{payment.id}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium text-muted-foreground">Amount:</span>
+                                <p className="font-medium">{formatCurrency(payment.amount, payment.currency)}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium text-muted-foreground">Currency:</span>
+                                <p className="uppercase">{payment.currency}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium text-muted-foreground">Status:</span>
+                                <Badge
+                                  variant="outline"
+                                  className={getPaymentStatusBadgeClass(payment.payment_status)}
+                                >
+                                  {payment.payment_status}
+                                </Badge>
+                              </div>
+                              <div>
+                                <span className="font-medium text-muted-foreground">Document Retrieval:</span>
+                                <p>{payment.has_document_retrieval ? 'Yes' : 'No'}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium text-muted-foreground">Created:</span>
+                                <p>{format(new Date(payment.created_at), 'PPpp')}</p>
+                              </div>
+                            </div>
+                            
+                            {(payment.stripe_session_id || payment.stripe_payment_id) && (
+                              <div className="border-t pt-4">
+                                <h4 className="font-medium text-sm mb-2">Stripe Information</h4>
+                                <div className="grid grid-cols-1 gap-2 text-sm">
+                                  {payment.stripe_session_id && (
+                                    <div>
+                                      <span className="font-medium text-muted-foreground">Session ID:</span>
+                                      <p className="font-mono text-xs break-all">{payment.stripe_session_id}</p>
+                                    </div>
+                                  )}
+                                  {payment.stripe_payment_id && (
+                                    <div>
+                                      <span className="font-medium text-muted-foreground">Payment ID:</span>
+                                      <p className="font-mono text-xs break-all">{payment.stripe_payment_id}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </TableBody>
