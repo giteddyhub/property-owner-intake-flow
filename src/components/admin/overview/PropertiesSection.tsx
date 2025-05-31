@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download } from 'lucide-react';
 import { PropertyData } from '@/types/admin';
+import { formatOccupancyStatuses } from '@/components/form/property/utils/occupancyUtils';
 
 interface PropertiesSectionProps {
   properties: PropertyData[];
@@ -18,6 +19,32 @@ export const PropertiesSection: React.FC<PropertiesSectionProps> = ({ properties
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Helper function to parse and format occupancy statuses from database format
+  const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined) => {
+    if (!occupancyStatuses || occupancyStatuses.length === 0) {
+      return 'Not specified';
+    }
+
+    try {
+      // Parse the occupancy statuses from string format to proper objects
+      const parsedStatuses = occupancyStatuses.map(status => {
+        if (typeof status === 'string') {
+          try {
+            return JSON.parse(status);
+          } catch {
+            return null;
+          }
+        }
+        return status;
+      }).filter(Boolean);
+
+      return formatOccupancyStatuses(parsedStatuses);
+    } catch (error) {
+      console.error('Error parsing occupancy statuses:', error);
+      return 'Not specified';
+    }
   };
 
   return (
@@ -38,6 +65,14 @@ export const PropertiesSection: React.FC<PropertiesSectionProps> = ({ properties
                   {property.property_type}
                 </Badge>
               </div>
+              
+              {/* Occupancy Status */}
+              {property.occupancy_statuses && property.occupancy_statuses.length > 0 && (
+                <div className="mt-2 pt-2 border-t">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Occupancy:</p>
+                  <p className="text-xs">{formatPropertyOccupancy(property.occupancy_statuses)}</p>
+                </div>
+              )}
               
               {/* Property Documents */}
               {property.documents && property.documents.length > 0 && (

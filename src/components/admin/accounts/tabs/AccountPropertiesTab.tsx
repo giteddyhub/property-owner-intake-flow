@@ -20,6 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { PropertyData } from '@/types/admin';
+import { formatOccupancyStatuses } from '@/components/form/property/utils/occupancyUtils';
 
 interface AccountPropertiesTabProps {
   properties: PropertyData[];
@@ -40,6 +41,32 @@ export const AccountPropertiesTab: React.FC<AccountPropertiesTabProps> = ({ prop
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Helper function to parse and format occupancy statuses from database format
+  const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined) => {
+    if (!occupancyStatuses || occupancyStatuses.length === 0) {
+      return 'Not specified';
+    }
+
+    try {
+      // Parse the occupancy statuses from string format to proper objects
+      const parsedStatuses = occupancyStatuses.map(status => {
+        if (typeof status === 'string') {
+          try {
+            return JSON.parse(status);
+          } catch {
+            return null;
+          }
+        }
+        return status;
+      }).filter(Boolean);
+
+      return formatOccupancyStatuses(parsedStatuses);
+    } catch (error) {
+      console.error('Error parsing occupancy statuses:', error);
+      return 'Not specified';
+    }
   };
 
   return (
@@ -180,13 +207,7 @@ export const AccountPropertiesTab: React.FC<AccountPropertiesTabProps> = ({ prop
                           {property.occupancy_statuses && property.occupancy_statuses.length > 0 && (
                             <div className="border-t pt-4">
                               <h4 className="font-medium text-sm mb-2">Occupancy Status</h4>
-                              <div className="flex flex-wrap gap-1">
-                                {property.occupancy_statuses.map((status, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs">
-                                    {status}
-                                  </Badge>
-                                ))}
-                              </div>
+                              <p className="text-sm">{formatPropertyOccupancy(property.occupancy_statuses)}</p>
                             </div>
                           )}
                         </div>
