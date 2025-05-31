@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 import { OwnerData, PropertyData, AssignmentData, PaymentData, UserActivityData } from '@/types/admin';
 
 interface AccountDetails {
@@ -29,6 +30,7 @@ interface FormSubmission {
 
 export const useOptimizedAccountDetails = (id: string | undefined) => {
   const navigate = useNavigate();
+  const { adminSession, isAdminAuthenticated, checkAdminSession } = useAdminAuth();
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState<AccountDetails | null>(null);
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
@@ -45,12 +47,15 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
     try {
       console.log(`Fetching optimized account details for ID: ${id}`);
       
-      // Get admin token from session storage
-      const adminToken = sessionStorage.getItem('admin_token');
-      if (!adminToken) {
-        toast.error('Admin session expired. Please log in again.');
-        navigate('/admin/login');
-        return;
+      // Check if admin session is valid
+      if (!isAdminAuthenticated || !adminSession?.token) {
+        console.log('No valid admin session, checking session...');
+        const isValid = await checkAdminSession();
+        if (!isValid) {
+          toast.error('Admin session expired. Please log in again.');
+          navigate('/admin/login');
+          return;
+        }
       }
 
       // First, get user summary data from the optimized view
@@ -201,7 +206,7 @@ export const useOptimizedAccountDetails = (id: string | undefined) => {
   useEffect(() => {
     if (!id) return;
     fetchOptimizedAccountDetails();
-  }, [id]);
+  }, [id, adminSession]);
 
   return {
     loading,
