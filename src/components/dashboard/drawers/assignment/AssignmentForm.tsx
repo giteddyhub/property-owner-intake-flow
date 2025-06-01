@@ -30,7 +30,7 @@ interface AssignmentFormProps {
   owners: Owner[];
   onSuccess: () => void;
   onClose: () => void;
-  userId: string; // Added userId prop
+  userId: string;
 }
 
 const AssignmentForm: React.FC<AssignmentFormProps> = ({ 
@@ -39,7 +39,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   owners, 
   onSuccess, 
   onClose,
-  userId // Accept userId prop
+  userId
 }) => {
   const form = useForm<AssignmentFormValues>({
     defaultValues: {
@@ -58,6 +58,8 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   
   const handleSubmit = async (values: AssignmentFormValues) => {
     setIsSubmitting(true);
+    console.log('Submitting assignment with values:', values);
+    console.log('User ID:', userId);
     
     try {
       const assignmentData = {
@@ -73,8 +75,10 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           : null,
         tax_credits: values.taxCredits || null,
         updated_at: new Date().toISOString(),
-        user_id: userId // Add user_id to assignments
+        user_id: userId
       };
+      
+      console.log('Assignment data being saved:', assignmentData);
       
       if (assignment?.id) {
         // Update existing assignment
@@ -83,7 +87,10 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           .update(assignmentData)
           .eq('id', assignment.id);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
         toast.success('Assignment updated successfully');
       } else {
         // Check if this combination already exists
@@ -92,6 +99,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           .select('id')
           .eq('property_id', values.propertyId)
           .eq('owner_id', values.ownerId)
+          .eq('user_id', userId)
           .maybeSingle();
           
         if (existingAssignment) {
@@ -103,9 +111,15 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         // Create new assignment
         const { error } = await supabase
           .from('owner_property_assignments')
-          .insert(assignmentData);
+          .insert({
+            ...assignmentData,
+            created_at: new Date().toISOString()
+          });
           
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
         toast.success('Assignment added successfully');
       }
 
@@ -113,7 +127,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
       onSuccess();
     } catch (error) {
       console.error('Error saving assignment:', error);
-      toast.error('Failed to save assignment');
+      toast.error('Failed to save assignment: ' + (error as any).message);
     } finally {
       setIsSubmitting(false);
     }

@@ -129,39 +129,69 @@ export const useDashboardData = () => {
     if (!user) return;
 
     setLoading(true);
+    setError(null);
+    
     try {
+      console.log('Fetching dashboard data for user:', user.id);
+      
+      // Fetch owners
       const { data: ownersData, error: ownersError } = await supabase
         .from('owners')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (ownersError) throw ownersError;
+      if (ownersError) {
+        console.error('Error fetching owners:', ownersError);
+        throw ownersError;
+      }
+
+      console.log('Fetched owners:', ownersData?.length || 0);
       setOwners((ownersData || []).map(transformOwnerData));
 
+      // Fetch properties
       const { data: propertiesData, error: propertiesError } = await supabase
         .from('properties')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (propertiesError) throw propertiesError;
+      if (propertiesError) {
+        console.error('Error fetching properties:', propertiesError);
+        throw propertiesError;
+      }
+
+      console.log('Fetched properties:', propertiesData?.length || 0);
       setProperties((propertiesData || []).map(transformPropertyData));
 
+      // Fetch assignments
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('owner_property_assignments')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (assignmentsError) throw assignmentsError;
-      setAssignments((assignmentsData || []).map(dbAssignment => ({
+      if (assignmentsError) {
+        console.error('Error fetching assignments:', assignmentsError);
+        throw assignmentsError;
+      }
+
+      console.log('Fetched assignments:', assignmentsData?.length || 0);
+      const transformedAssignments = (assignmentsData || []).map(dbAssignment => ({
         id: dbAssignment.id,
         ...transformAssignmentData(dbAssignment)
-      })));
+      }));
+      
+      setAssignments(transformedAssignments);
+      console.log('Dashboard data fetch completed successfully');
+      
     } catch (error: any) {
+      console.error('Error in fetchDashboardData:', error);
       setError(error.message);
-      toast.error('Failed to load dashboard data');
+      // Only show toast error once, not on every retry
+      if (!error.message?.includes('JWT')) {
+        toast.error('Failed to load dashboard data: ' + error.message);
+      }
     } finally {
       setLoading(false);
     }

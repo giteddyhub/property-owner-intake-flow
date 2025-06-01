@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -18,7 +19,7 @@ const DashboardPage = () => {
     setRefreshFlag(prev => prev + 1);
   }, []);
   
-  const { loading, owners, properties, assignments, refetch } = useDashboardData();
+  const { loading, owners, properties, assignments, error, refetch } = useDashboardData();
 
   // Trigger refetch when refreshFlag changes
   useEffect(() => {
@@ -26,6 +27,19 @@ const DashboardPage = () => {
       refetch();
     }
   }, [refreshFlag, refetch]);
+
+  // Handle errors from useDashboardData
+  useEffect(() => {
+    if (error && !loading) {
+      console.error('Dashboard data error:', error);
+      // Only show error if it's not a JWT/auth error (those are handled elsewhere)
+      if (!error.includes('JWT') && !error.includes('auth')) {
+        toast.error('Failed to load dashboard data', {
+          description: error
+        });
+      }
+    }
+  }, [error, loading]);
 
   // Check for redirect from form submission - revised to use localStorage
   useEffect(() => {
@@ -128,6 +142,10 @@ const DashboardPage = () => {
       toast.error('Failed to sign out. Please try again.');
     }
   };
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <DashboardLayout
