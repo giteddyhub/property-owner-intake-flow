@@ -17,7 +17,7 @@ import TaxFilingServicePage from '@/pages/TaxFilingServicePage';
 import NotFound from '@/pages/NotFound';
 
 // Admin Pages
-import AdminLoginPage from '@/pages/admin/AdminLoginPage';
+import AdminLoginPage from '@/pages/AdminLoginPage';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import AdminAccountsPage from '@/pages/admin/AdminAccountsPage';
 import AdminAccountDetailPage from '@/pages/admin/AdminAccountDetailPage';

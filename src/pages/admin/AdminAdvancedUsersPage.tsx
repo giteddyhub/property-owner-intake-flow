@@ -4,31 +4,34 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { UserManagementHeader } from '@/components/admin/users/UserManagementHeader';
 import { EnhancedUsersTable } from '@/components/admin/users/EnhancedUsersTable';
 import { AuditLogViewer } from '@/components/admin/audit/AuditLogViewer';
-import { useAdminUsers } from '@/hooks/admin/useAdminUsers';
+import { useAccountsData } from '@/hooks/admin/useAccountsData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Zap, Shield, Users } from 'lucide-react';
 
 const AdminAdvancedUsersPage: React.FC = () => {
   const {
-    users,
     loading,
     error,
-    fetchUsers,
-    handleRowClick,
     currentItems,
     currentPage,
     setCurrentPage,
     itemsPerPage,
     totalPages,
-    filteredAccounts
-  } = useAdminUsers('all');
+    filteredAccounts,
+    fetchAccounts
+  } = useAccountsData();
+
+  const handleRowClick = (userId: string) => {
+    // Navigate to account detail page
+    window.location.href = `/admin/accounts/${userId}`;
+  };
 
   return (
     <AdminLayout pageTitle="Advanced User Management">
       <div className="space-y-6">
         <UserManagementHeader 
           pageTitle="Advanced User Management"
-          onRefresh={fetchUsers}
+          onRefresh={fetchAccounts}
         />
         
         <Card>
@@ -64,7 +67,7 @@ const AdminAdvancedUsersPage: React.FC = () => {
           totalPages={totalPages}
           setCurrentPage={setCurrentPage}
           error={error}
-          onRefresh={fetchUsers}
+          onRefresh={fetchAccounts}
         />
         
         <AuditLogViewer />

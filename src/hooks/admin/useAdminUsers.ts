@@ -14,10 +14,18 @@ export interface UseAdminUsersReturn {
   filter: UserRole;
   setFilter: (filter: UserRole) => void;
   handleRowClick: (userId: string) => void;
+  currentItems: UserProfile[];
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  itemsPerPage: number;
+  totalPages: number;
+  filteredAccounts: UserProfile[];
 }
 
 export const useAdminUsers = (defaultFilter: UserRole = 'all'): UseAdminUsersReturn => {
   const [filter, setFilter] = useState<UserRole>(defaultFilter);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { users, loading, error, refetch } = useCleanAdminData();
   const navigate = useNavigate();
   
@@ -30,7 +38,7 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all'): UseAdminUsersRet
   }, [navigate]);
   
   // Filter users based on the selected filter
-  const filteredUsers = users.filter(user => {
+  const filteredAccounts = users.filter(user => {
     switch (filter) {
       case 'admins':
         // No users are shown as admins since admin management is removed
@@ -42,15 +50,32 @@ export const useAdminUsers = (defaultFilter: UserRole = 'all'): UseAdminUsersRet
         return true;
     }
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredAccounts.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset to first page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
   
   return {
-    users: filteredUsers,
+    users: filteredAccounts,
     loading,
     error,
     fetchUsers: refetch,
     isAdmin,
     filter,
     setFilter,
-    handleRowClick
+    handleRowClick,
+    currentItems,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    totalPages,
+    filteredAccounts
   };
 };

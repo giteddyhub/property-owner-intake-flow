@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
-import { toast } from '@/components/ui/use-toast';
-import { useAuditLog } from './useAuditLog';
+import { toast } from 'sonner';
+import { useCleanAdminData } from './useCleanAdminData';
 
 export interface UserAction {
   id: string;
@@ -20,14 +20,15 @@ export interface BulkActionResult {
 
 export const useAdvancedUserManagement = () => {
   const [loading, setLoading] = useState(false);
-  const { logAction } = useAuditLog();
+  const { logAdminAction } = useCleanAdminData();
 
+  // Available user actions
   const availableActions: UserAction[] = [
     {
       id: 'suspend',
       type: 'suspend',
       label: 'Suspend Account',
-      description: 'Temporarily disable user access',
+      description: 'Temporarily suspend user access',
       severity: 'high',
       requiresConfirmation: true
     },
@@ -35,15 +36,15 @@ export const useAdvancedUserManagement = () => {
       id: 'activate',
       type: 'activate',
       label: 'Activate Account',
-      description: 'Enable user access',
+      description: 'Restore user access',
       severity: 'medium',
-      requiresConfirmation: false
+      requiresConfirmation: true
     },
     {
       id: 'reset_password',
       type: 'reset_password',
-      label: 'Force Password Reset',
-      description: 'Require user to change password on next login',
+      label: 'Reset Password',
+      description: 'Force password reset on next login',
       severity: 'medium',
       requiresConfirmation: true
     },
@@ -51,42 +52,60 @@ export const useAdvancedUserManagement = () => {
       id: 'send_email',
       type: 'send_email',
       label: 'Send Notification',
-      description: 'Send email to user',
+      description: 'Send notification email to user',
       severity: 'low',
       requiresConfirmation: false
     }
   ];
 
+  // Get user activity summary
+  const getUserActivitySummary = async (userId: string) => {
+    try {
+      // Mock data for now - in a real implementation this would fetch from the backend
+      return {
+        loginCount: Math.floor(Math.random() * 50),
+        submissionsCount: Math.floor(Math.random() * 10),
+        propertiesCount: Math.floor(Math.random() * 5),
+        accountAge: Math.floor(Math.random() * 365),
+        lastLogin: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        riskScore: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)]
+      };
+    } catch (error) {
+      console.error('Failed to fetch user activity summary:', error);
+      return null;
+    }
+  };
+
+  // Execute single user action
   const executeUserAction = async (
     userId: string,
     userEmail: string,
-    action: UserAction['type'],
+    actionType: UserAction['type'],
     reason?: string
   ): Promise<boolean> => {
     setLoading(true);
+    
     try {
-      // Mock implementation for actions - in production would make actual API calls
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      await logAction(
-        `user_${action}`,
-        'user',
-        userId,
-        { user_email: userEmail, reason, action }
-      );
+      // Log the admin action
+      await logAdminAction('user_action', 'user', userId, {
+        action_type: actionType,
+        target_email: userEmail,
+        reason: reason || 'No reason provided',
+        timestamp: new Date().toISOString()
+      });
 
-      toast({
-        title: "Action Completed",
-        description: `Successfully executed ${action} for ${userEmail}`,
+      // Simulate action execution
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.success(`User action "${actionType}" executed successfully`, {
+        description: `Applied to ${userEmail}`
       });
 
       return true;
     } catch (error: any) {
-      console.error(`Failed to execute ${action}:`, error);
-      toast({
-        title: "Action Failed",
-        description: `Failed to execute ${action}: ${error.message}`,
-        type: "error"
+      console.error('Failed to execute user action:', error);
+      toast.error('Failed to execute user action', {
+        description: error.message
       });
       return false;
     } finally {
@@ -94,93 +113,62 @@ export const useAdvancedUserManagement = () => {
     }
   };
 
+  // Execute bulk action
   const executeBulkAction = async (
     userIds: string[],
-    action: UserAction['type'],
+    actionType: UserAction['type'],
     reason?: string
   ): Promise<BulkActionResult> => {
     setLoading(true);
-    const results: BulkActionResult = {
-      success: 0,
-      failed: 0,
-      errors: []
-    };
-
+    
     try {
-      for (const userId of userIds) {
-        try {
-          // Mock implementation for actions
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
-          await logAction(
-            `bulk_${action}`,
-            'user',
-            userId,
-            { reason, action, batch_size: userIds.length }
-          );
-          
-          results.success++;
-        } catch (error: any) {
-          results.failed++;
-          results.errors.push(`Failed for user ${userId}: ${error.message}`);
-        }
-      }
-
-      await logAction(
-        'bulk_operation_completed',
-        'system',
-        undefined,
-        { 
-          action, 
-          total_users: userIds.length, 
-          success: results.success, 
-          failed: results.failed,
-          reason 
-        }
-      );
-
-      toast({
-        title: "Bulk Operation Completed",
-        description: `${results.success} successful, ${results.failed} failed`,
+      // Log the bulk admin action
+      await logAdminAction('bulk_user_action', 'users', undefined, {
+        action_type: actionType,
+        target_count: userIds.length,
+        target_user_ids: userIds,
+        reason: reason || 'No reason provided',
+        timestamp: new Date().toISOString()
       });
 
+      // Simulate bulk action execution
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const result: BulkActionResult = {
+        success: userIds.length,
+        failed: 0,
+        errors: []
+      };
+
+      toast.success(`Bulk action "${actionType}" completed`, {
+        description: `Successfully applied to ${result.success} users`
+      });
+
+      return result;
     } catch (error: any) {
-      console.error('Bulk operation failed:', error);
-      toast({
-        title: "Bulk Operation Failed",
-        description: error.message,
-        type: "error"
+      console.error('Failed to execute bulk action:', error);
+      
+      const result: BulkActionResult = {
+        success: 0,
+        failed: userIds.length,
+        errors: [error.message]
+      };
+
+      toast.error('Failed to execute bulk action', {
+        description: error.message
       });
+
+      return result;
     } finally {
       setLoading(false);
-    }
-
-    return results;
-  };
-
-  const getUserActivitySummary = async (userId: string) => {
-    try {
-      // Mock user activity data
-      return {
-        lastLogin: new Date(Date.now() - 86400000).toISOString(),
-        loginCount: 42,
-        submissionsCount: 3,
-        propertiesCount: 2,
-        isActive: true,
-        accountAge: 180, // days
-        riskScore: 'low' as const
-      };
-    } catch (error) {
-      console.error('Failed to fetch user activity:', error);
-      return null;
     }
   };
 
   return {
     loading,
     availableActions,
+    getUserActivitySummary,
     executeUserAction,
-    executeBulkAction,
-    getUserActivitySummary
+    executeBulkAction
   };
 };
