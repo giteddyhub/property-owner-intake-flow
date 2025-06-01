@@ -6,6 +6,10 @@ import { corsHeaders } from '../_shared/cors.ts';
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
 
+console.log('[admin-delete-user] Function starting with environment check');
+console.log('[admin-delete-user] SUPABASE_URL exists:', !!supabaseUrl);
+console.log('[admin-delete-user] SERVICE_ROLE_KEY exists:', !!serviceRoleKey);
+
 // Create Supabase client with service role key for admin privileges
 const adminClient = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
@@ -14,19 +18,26 @@ const adminClient = createClient(supabaseUrl, serviceRoleKey, {
   }
 });
 
+console.log('[admin-delete-user] Supabase client created successfully');
+
 Deno.serve(async (req) => {
+  console.log('[admin-delete-user] 🚀 Request received:', req.method, req.url);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('[admin-delete-user] Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
   
   try {
-    console.log('Admin delete user request received');
+    console.log('[admin-delete-user] Processing request...');
     
     // Get admin token from headers
     const adminToken = req.headers.get('x-admin-token');
+    console.log('[admin-delete-user] Admin token present:', !!adminToken);
+    
     if (!adminToken) {
-      console.error('No admin token provided');
+      console.error('[admin-delete-user] ❌ No admin token provided');
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -37,11 +48,26 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { targetUserId } = await req.json();
-    console.log('Target user ID:', targetUserId);
+    let requestBody;
+    try {
+      requestBody = await req.json();
+      console.log('[admin-delete-user] Request body parsed:', requestBody);
+    } catch (parseError) {
+      console.error('[admin-delete-user] ❌ Failed to parse request body:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Invalid request body format' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { targetUserId } = requestBody;
+    console.log('[admin-delete-user] Target user ID:', targetUserId);
 
     if (!targetUserId) {
-      console.error('No target user ID provided');
+      console.error('[admin-delete-user] ❌ No target user ID provided');
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -51,7 +77,53 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Calling admin_delete_user function with:', { adminToken: adminToken ? 'present' : 'missing', targetUserId });
+    // Validate that targetUserId is a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(targetUserId)) {
+      console.error('[admin-delete-user] ❌ Invalid UUID format:', targetUserId);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Invalid user ID format' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('[admin-delete-user] 🔧 Calling admin_delete_user function...');
+    console.log('[admin-delete-user] Parameters:', { 
+      adminToken: adminToken ? 'present' : 'missing', 
+      targetUserId 
+    });
+
+    // Test database connection first
+    try {
+      const { data: connectionTest, error: connectionError } = await adminClient
+        .from('profiles')
+        .select('count')
+        .limit(1);
+      
+      if (connectionError) {
+        console.error('[admin-delete-user] ❌ Database connection test failed:', connectionError);
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: `Database connection failed: ${connectionError.message}` 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log('[admin-delete-user] ✅ Database connection test passed');
+    } catch (dbError) {
+      console.error('[admin-delete-user] ❌ Database connection error:', dbError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: `Database connection error: ${dbError.message}` 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Call the secure deletion function
     const { data: deletionResult, error: deletionError } = await adminClient
@@ -60,21 +132,31 @@ Deno.serve(async (req) => {
         target_user_id: targetUserId
       });
 
-    console.log('Function response:', { deletionResult, deletionError });
+    console.log('[admin-delete-user] 📊 Function response received');
+    console.log('[admin-delete-user] Deletion result:', deletionResult);
+    console.log('[admin-delete-user] Deletion error:', deletionError);
 
     if (deletionError) {
-      console.error('Database function error:', deletionError);
+      console.error('[admin-delete-user] ❌ Database function error:', {
+        message: deletionError.message,
+        details: deletionError.details,
+        hint: deletionError.hint,
+        code: deletionError.code
+      });
+      
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: `Database error: ${deletionError.message}` 
+          error: `Database error: ${deletionError.message}`,
+          details: deletionError.details || 'No additional details',
+          hint: deletionError.hint || 'No hint available'
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (!deletionResult) {
-      console.error('No result returned from deletion function');
+      console.error('[admin-delete-user] ❌ No result returned from deletion function');
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -85,7 +167,7 @@ Deno.serve(async (req) => {
     }
 
     if (!deletionResult.success) {
-      console.error('Deletion function reported failure:', deletionResult.error);
+      console.error('[admin-delete-user] ❌ Deletion function reported failure:', deletionResult.error);
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -95,7 +177,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('User deletion successful:', deletionResult);
+    console.log('[admin-delete-user] ✅ User deletion successful:', deletionResult);
 
     return new Response(
       JSON.stringify(deletionResult),
@@ -103,13 +185,19 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Edge function error:', error);
+    console.error('[admin-delete-user] ❌ Unexpected error in edge function:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: `Server error: ${errorMessage}` 
+        error: `Server error: ${errorMessage}`,
+        type: 'unexpected_error'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

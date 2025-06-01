@@ -16,6 +16,7 @@ import { AccountData } from '@/types/admin';
 import { Mail, FileText, Home, Users as UsersIcon, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { UserDeletionDialog } from './UserDeletionDialog';
+import { DebugDeletionPanel } from './DebugDeletionPanel';
 import { useUserDeletion } from '@/hooks/admin/useUserDeletion';
 
 interface AccountsTableProps {
@@ -94,57 +95,62 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
 
   if (error) {
     return (
-      <Alert variant="destructive" className="mb-4">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Error loading accounts</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-        
-        {diagnosticInfo && Object.keys(diagnosticInfo).length > 0 && (
-          <div className="mt-4 p-4 bg-muted/50 rounded-md">
-            <h4 className="text-sm font-semibold mb-2">Diagnostic Information</h4>
-            <div className="text-xs space-y-1">
-              {diagnosticInfo.hasAuthSession !== undefined && (
-                <div>Auth Session: {diagnosticInfo.hasAuthSession ? 'Yes' : 'No'}</div>
-              )}
-              {diagnosticInfo.profilesQueryStatus && (
-                <div>Profiles Query Status: {diagnosticInfo.profilesQueryStatus}</div>
-              )}
-              {diagnosticInfo.profilesCount !== undefined && (
-                <div>Profiles Count: {diagnosticInfo.profilesCount}</div>
-              )}
-              {diagnosticInfo.adminQueryStatus && (
-                <div>Admin Query Status: {diagnosticInfo.adminQueryStatus}</div>
-              )}
-              {diagnosticInfo.adminCount !== undefined && (
-                <div>Admin Count: {diagnosticInfo.adminCount}</div>
-              )}
-              {diagnosticInfo.authError && (
-                <div className="text-red-500">Auth Error: {diagnosticInfo.authError}</div>
-              )}
-              {diagnosticInfo.profilesError && (
-                <div className="text-red-500">Profiles Error: {diagnosticInfo.profilesError}</div>
-              )}
-              {diagnosticInfo.adminError && (
-                <div className="text-red-500">Admin Error: {diagnosticInfo.adminError}</div>
-              )}
+      <>
+        <DebugDeletionPanel />
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error loading accounts</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+          
+          {diagnosticInfo && Object.keys(diagnosticInfo).length > 0 && (
+            <div className="mt-4 p-4 bg-muted/50 rounded-md">
+              <h4 className="text-sm font-semibold mb-2">Diagnostic Information</h4>
+              <div className="text-xs space-y-1">
+                {diagnosticInfo.hasAuthSession !== undefined && (
+                  <div>Auth Session: {diagnosticInfo.hasAuthSession ? 'Yes' : 'No'}</div>
+                )}
+                {diagnosticInfo.profilesQueryStatus && (
+                  <div>Profiles Query Status: {diagnosticInfo.profilesQueryStatus}</div>
+                )}
+                {diagnosticInfo.profilesCount !== undefined && (
+                  <div>Profiles Count: {diagnosticInfo.profilesCount}</div>
+                )}
+                {diagnosticInfo.adminQueryStatus && (
+                  <div>Admin Query Status: {diagnosticInfo.adminQueryStatus}</div>
+                )}
+                {diagnosticInfo.adminCount !== undefined && (
+                  <div>Admin Count: {diagnosticInfo.adminCount}</div>
+                )}
+                {diagnosticInfo.authError && (
+                  <div className="text-red-500">Auth Error: {diagnosticInfo.authError}</div>
+                )}
+                {diagnosticInfo.profilesError && (
+                  <div className="text-red-500">Profiles Error: {diagnosticInfo.profilesError}</div>
+                )}
+                {diagnosticInfo.adminError && (
+                  <div className="text-red-500">Admin Error: {diagnosticInfo.adminError}</div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-        
-        {onRefresh && (
-          <div className="mt-4">
-            <Button variant="outline" onClick={onRefresh} size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Data
-            </Button>
-          </div>
-        )}
-      </Alert>
+          )}
+          
+          {onRefresh && (
+            <div className="mt-4">
+              <Button variant="outline" onClick={onRefresh} size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Data
+              </Button>
+            </div>
+          )}
+        </Alert>
+      </>
     );
   }
 
   return (
     <>
+      <DebugDeletionPanel />
+      
       <div className="bg-white rounded-md shadow overflow-hidden">
         <Table>
           <TableHeader>
