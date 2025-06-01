@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -59,52 +58,61 @@ export const useOptimizedAdminData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper function to get month boundaries
+  // Helper function to get month boundaries with proper timezone handling
   const getMonthBoundaries = (monthsBack: number = 0) => {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth() - monthsBack, 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() - monthsBack + 1, 0, 23, 59, 59, 999);
+    // Use UTC to avoid timezone issues
+    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthsBack, 1, 0, 0, 0, 0));
+    const endOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthsBack + 1, 0, 23, 59, 59, 999));
     return { startOfMonth, endOfMonth };
   };
 
-  // Enhanced amount parsing with detailed logging
-  const parsePaymentAmount = (payment: any, index: number) => {
-    console.log(`🔍 [Payment ${index + 1}] Raw payment data:`, {
+  // Standardized payment amount parsing with comprehensive logging
+  const parsePaymentAmount = (payment: any, index: number, queryType: string = '') => {
+    console.log(`🔍 [${queryType} Payment ${index + 1}] Raw payment:`, {
       id: payment?.id,
       amount: payment?.amount,
       amountType: typeof payment?.amount,
       status: payment?.payment_status,
-      fullPayment: payment
+      created_at: payment?.created_at,
+      fullObject: payment
     });
 
-    if (!payment || payment.amount === null || payment.amount === undefined) {
-      console.error(`❌ [Payment ${index + 1}] Invalid payment or null amount:`, payment);
+    if (!payment) {
+      console.error(`❌ [${queryType} Payment ${index + 1}] Payment object is null/undefined`);
+      return 0;
+    }
+
+    if (payment.amount === null || payment.amount === undefined) {
+      console.error(`❌ [${queryType} Payment ${index + 1}] Amount is null/undefined:`, payment);
       return 0;
     }
 
     let numericAmount: number;
     
     if (typeof payment.amount === 'string') {
-      numericAmount = parseFloat(payment.amount);
-      console.log(`🔄 [Payment ${index + 1}] Parsed string "${payment.amount}" to number: ${numericAmount}`);
+      // Remove any currency symbols and parse
+      const cleanAmount = payment.amount.replace(/[€$,\s]/g, '');
+      numericAmount = parseFloat(cleanAmount);
+      console.log(`🔄 [${queryType} Payment ${index + 1}] Parsed string "${payment.amount}" to number: ${numericAmount}`);
     } else if (typeof payment.amount === 'number') {
       numericAmount = payment.amount;
-      console.log(`✅ [Payment ${index + 1}] Amount already number: ${numericAmount}`);
+      console.log(`✅ [${queryType} Payment ${index + 1}] Amount already number: ${numericAmount}`);
     } else {
-      console.error(`❌ [Payment ${index + 1}] Unexpected amount type:`, typeof payment.amount, payment.amount);
+      console.error(`❌ [${queryType} Payment ${index + 1}] Unexpected amount type:`, typeof payment.amount, payment.amount);
       return 0;
     }
 
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      console.error(`❌ [Payment ${index + 1}] Invalid numeric amount: ${numericAmount} (isNaN: ${isNaN(numericAmount)}, isZeroOrNegative: ${numericAmount <= 0})`);
+    if (isNaN(numericAmount) || numericAmount < 0) {
+      console.error(`❌ [${queryType} Payment ${index + 1}] Invalid numeric amount: ${numericAmount} (isNaN: ${isNaN(numericAmount)})`);
       return 0;
     }
 
-    console.log(`✅ [Payment ${index + 1}] Valid amount: ${numericAmount}`);
+    console.log(`✅ [${queryType} Payment ${index + 1}] Valid amount: €${numericAmount}`);
     return numericAmount;
   };
 
-  // Optimized query function with comprehensive error handling and logging
+  // Optimized query function with standardized payment queries
   const fetchOptimizedAnalytics = useCallback(async () => {
     const startTime = Date.now();
     
@@ -116,20 +124,32 @@ export const useOptimizedAdminData = () => {
       const currentMonth = getMonthBoundaries(0);
       const previousMonth = getMonthBoundaries(1);
 
-      console.log('📅 Month boundaries:', {
-        currentMonth: { start: currentMonth.startOfMonth, end: currentMonth.endOfMonth },
-        previousMonth: { start: previousMonth.startOfMonth, end: previousMonth.endOfMonth }
+      console.log('📅 REVENUE DEBUG - Month boundaries:', {
+        currentMonth: { 
+          start: currentMonth.startOfMonth.toISOString(), 
+          end: currentMonth.endOfMonth.toISOString() 
+        },
+        previousMonth: { 
+          start: previousMonth.startOfMonth.toISOString(), 
+          end: previousMonth.endOfMonth.toISOString() 
+        }
       });
 
-      console.log('🚀 STARTING REVENUE DEBUG - Fetching all payments...');
+      console.log('🚀 REVENUE DEBUG - Starting payment queries...');
 
-      // Execute queries with enhanced error handling - fix the profiles queries
+      // Standardized payment field selection for all queries
+      const paymentFields = 'id, amount, created_at, payment_status, form_submission_id, currency';
+
+      // Execute queries with standardized field selection
       const [
         userSummaryResult,
         submissionsResult,
         activitiesResult,
-        paymentsResult,
+        // ALL PAYMENTS - No date filtering to capture everything
+        allPaymentsResult,
+        // Current month payments
         currentMonthPaymentsResult,
+        // Previous month payments
         previousMonthPaymentsResult,
         recentActivitiesResult
       ] = await Promise.all([
@@ -161,39 +181,54 @@ export const useOptimizedAdminData = () => {
             return result;
           }),
         
-        // Enhanced payments query with detailed selection
+        // ALL PAYMENTS QUERY - This should capture the €295 payment
         supabase
           .from('purchases')
-          .select('id, amount, created_at, payment_status, form_submission_id, currency, has_document_retrieval, stripe_session_id')
+          .select(paymentFields)
           .eq('payment_status', 'paid')
           .order('created_at', { ascending: false })
           .then(result => {
-            if (result.error) console.error('❌ ALL PAYMENTS ERROR:', result.error);
-            console.log('📋 ALL PAYMENTS RESULT:', result);
+            console.log('📋 ALL PAYMENTS QUERY RESULT:');
+            console.log('  Error:', result.error);
+            console.log('  Data count:', result.data?.length || 0);
+            console.log('  Raw data:', result.data);
+            if (result.error) {
+              console.error('❌ ALL PAYMENTS ERROR:', result.error);
+            }
             return result;
           }),
 
+        // CURRENT MONTH PAYMENTS
         supabase
           .from('purchases')
-          .select('id, amount, created_at, payment_status')
+          .select(paymentFields)
           .eq('payment_status', 'paid')
           .gte('created_at', currentMonth.startOfMonth.toISOString())
           .lte('created_at', currentMonth.endOfMonth.toISOString())
           .then(result => {
+            console.log('📋 CURRENT MONTH PAYMENTS:', {
+              error: result.error,
+              count: result.data?.length || 0,
+              dateRange: `${currentMonth.startOfMonth.toISOString()} to ${currentMonth.endOfMonth.toISOString()}`
+            });
             if (result.error) console.error('❌ CURRENT MONTH PAYMENTS ERROR:', result.error);
-            console.log('📋 CURRENT MONTH PAYMENTS RESULT:', result);
             return result;
           }),
 
+        // PREVIOUS MONTH PAYMENTS
         supabase
           .from('purchases')
-          .select('id, amount, created_at, payment_status')
+          .select(paymentFields)
           .eq('payment_status', 'paid')
           .gte('created_at', previousMonth.startOfMonth.toISOString())
           .lte('created_at', previousMonth.endOfMonth.toISOString())
           .then(result => {
+            console.log('📋 PREVIOUS MONTH PAYMENTS:', {
+              error: result.error,
+              count: result.data?.length || 0,
+              dateRange: `${previousMonth.startOfMonth.toISOString()} to ${previousMonth.endOfMonth.toISOString()}`
+            });
             if (result.error) console.error('❌ PREVIOUS MONTH PAYMENTS ERROR:', result.error);
-            console.log('📋 PREVIOUS MONTH PAYMENTS RESULT:', result);
             return result;
           }),
 
@@ -211,107 +246,128 @@ export const useOptimizedAdminData = () => {
       const endTime = Date.now();
       const responseTime = endTime - startTime;
 
-      // Enhanced error checking with specific error details
-      console.log('📊 QUERY RESULTS ANALYSIS:');
-      
-      if (paymentsResult.error) {
-        console.error('❌ PAYMENTS QUERY ERROR:', paymentsResult.error);
-        throw new Error(`Payments query failed: ${paymentsResult.error.message}`);
-      }
-      
-      if (currentMonthPaymentsResult.error) {
-        console.error('❌ CURRENT MONTH PAYMENTS QUERY ERROR:', currentMonthPaymentsResult.error);
-        throw new Error(`Current month payments query failed: ${currentMonthPaymentsResult.error.message}`);
-      }
-      
-      if (previousMonthPaymentsResult.error) {
-        console.error('❌ PREVIOUS MONTH PAYMENTS QUERY ERROR:', previousMonthPaymentsResult.error);
-        throw new Error(`Previous month payments query failed: ${previousMonthPaymentsResult.error.message}`);
+      // Check for payment query errors
+      if (allPaymentsResult.error) {
+        console.error('❌ ALL PAYMENTS QUERY FAILED:', allPaymentsResult.error);
+        throw new Error(`All payments query failed: ${allPaymentsResult.error.message}`);
       }
 
-      // Detailed payments data analysis
-      const allPayments = paymentsResult.data || [];
+      // Extract payment data with comprehensive logging
+      const allPayments = allPaymentsResult.data || [];
       const currentMonthPayments = currentMonthPaymentsResult.data || [];
       const previousMonthPayments = previousMonthPaymentsResult.data || [];
 
-      console.log('💳 PAYMENTS DATA RETRIEVED:');
-      console.log(`  📈 Total payments found: ${allPayments.length}`);
+      console.log('💳 PAYMENT DATA ANALYSIS:');
+      console.log(`  📈 Total payments retrieved: ${allPayments.length}`);
       console.log(`  📅 Current month payments: ${currentMonthPayments.length}`);
       console.log(`  📅 Previous month payments: ${previousMonthPayments.length}`);
 
+      // Log each payment in detail to find the missing €295
       if (allPayments.length > 0) {
-        console.log('💰 DETAILED PAYMENT BREAKDOWN:');
+        console.log('💰 DETAILED ALL PAYMENTS BREAKDOWN:');
         allPayments.forEach((payment, index) => {
           console.log(`  Payment ${index + 1}:`, {
             id: payment.id,
             amount: payment.amount,
             amountType: typeof payment.amount,
             status: payment.payment_status,
-            date: payment.created_at,
-            submissionId: payment.form_submission_id
+            created_at: payment.created_at,
+            currency: payment.currency
           });
         });
       } else {
-        console.warn('⚠️ NO PAYMENTS FOUND IN DATABASE!');
+        console.warn('⚠️ NO PAYMENTS FOUND - This is the problem!');
+        console.log('🔍 Let me check the raw database query...');
+        
+        // Direct database check to verify payments exist
+        const debugQuery = await supabase
+          .from('purchases')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        console.log('🔍 DEBUG - Raw purchases table query:', {
+          error: debugQuery.error,
+          count: debugQuery.data?.length || 0,
+          allData: debugQuery.data
+        });
       }
 
-      // Enhanced revenue calculation with step-by-step logging
+      // Enhanced revenue calculation with step-by-step tracking
       console.log('🧮 STARTING REVENUE CALCULATIONS...');
       
       let totalRevenue = 0;
       let validPaymentCount = 0;
+      let invalidPaymentCount = 0;
+      
+      console.log(`📊 Processing ${allPayments.length} payments for total revenue...`);
       
       allPayments.forEach((payment, index) => {
-        const amount = parsePaymentAmount(payment, index);
+        const amount = parsePaymentAmount(payment, index, 'ALL');
         if (amount > 0) {
           totalRevenue += amount;
           validPaymentCount++;
-          console.log(`💰 Added €${amount} to total. Running total: €${totalRevenue}`);
+          console.log(`💰 Payment ${index + 1}: Added €${amount}. Running total: €${totalRevenue}`);
+        } else {
+          invalidPaymentCount++;
+          console.log(`❌ Payment ${index + 1}: Skipped (invalid amount)`);
         }
       });
 
-      console.log(`📊 TOTAL REVENUE CALCULATION COMPLETE:`, {
-        totalPayments: allPayments.length,
+      console.log(`📊 TOTAL REVENUE CALCULATION SUMMARY:`, {
+        totalPaymentsProcessed: allPayments.length,
         validPayments: validPaymentCount,
-        totalRevenue: totalRevenue,
+        invalidPayments: invalidPaymentCount,
+        finalTotalRevenue: totalRevenue,
         formattedTotal: `€${totalRevenue.toLocaleString()}`
       });
 
       // Current month revenue calculation
       let currentMonthRevenue = 0;
-      let currentMonthValidCount = 0;
-      
       currentMonthPayments.forEach((payment, index) => {
-        const amount = parsePaymentAmount(payment, index);
+        const amount = parsePaymentAmount(payment, index, 'CURRENT_MONTH');
         if (amount > 0) {
           currentMonthRevenue += amount;
-          currentMonthValidCount++;
-          console.log(`📅 Current month: Added €${amount}. Running total: €${currentMonthRevenue}`);
         }
       });
 
       // Previous month revenue calculation
       let previousMonthRevenue = 0;
-      let previousMonthValidCount = 0;
-      
       previousMonthPayments.forEach((payment, index) => {
-        const amount = parsePaymentAmount(payment, index);
+        const amount = parsePaymentAmount(payment, index, 'PREVIOUS_MONTH');
         if (amount > 0) {
           previousMonthRevenue += amount;
-          previousMonthValidCount++;
-          console.log(`📅 Previous month: Added €${amount}. Running total: €${previousMonthRevenue}`);
         }
       });
 
       console.log('💰 FINAL REVENUE SUMMARY:');
       console.log(`  🏆 Total Revenue: €${totalRevenue} (from ${validPaymentCount} payments)`);
-      console.log(`  📅 Current Month: €${currentMonthRevenue} (from ${currentMonthValidCount} payments)`);
-      console.log(`  📅 Previous Month: €${previousMonthRevenue} (from ${previousMonthValidCount} payments)`);
+      console.log(`  📅 Current Month: €${currentMonthRevenue}`);
+      console.log(`  📅 Previous Month: €${previousMonthRevenue}`);
 
-      // Use current month revenue if available, otherwise fall back to total revenue for display
-      const displayMonthlyRevenue = currentMonthRevenue > 0 ? currentMonthRevenue : totalRevenue;
+      // If totalRevenue is still 0, there's a fundamental issue
+      if (totalRevenue === 0 && allPayments.length === 0) {
+        console.error('🚨 CRITICAL ISSUE: No payments found in database despite expecting €295 payment!');
+        console.log('🔍 Checking for potential query issues...');
+        
+        // Alternative query approach to find any payments
+        const alternativeQuery = await supabase
+          .from('purchases')
+          .select('*');
+          
+        console.log('🔍 Alternative query result:', alternativeQuery);
+      }
+
+      // Use totalRevenue for display since that should include all historical payments
+      const displayMonthlyRevenue = currentMonthRevenue;
       
-      console.log(`📊 Display Monthly Revenue: €${displayMonthlyRevenue}`);
+      console.log(`📊 Final Display Values:`, {
+        totalRevenue,
+        displayMonthlyRevenue,
+        willShowInDashboard: {
+          totalRevenue: `€${totalRevenue.toLocaleString()}`,
+          monthlyRevenue: `€${displayMonthlyRevenue.toLocaleString()}`
+        }
+      });
 
       // Calculate metrics using the optimized view data - with null checks
       const userSummaries = userSummaryResult.data || [];
@@ -385,7 +441,6 @@ export const useOptimizedAdminData = () => {
         ? Math.round(((currentMonthSubmissions - previousMonthSubmissions) / previousMonthSubmissions) * 100)
         : currentMonthSubmissions > 0 ? 100 : 0;
 
-      // System health metrics
       const errorRate = responseTime > 1000 ? 2 : responseTime > 500 ? 1 : 0;
       const databaseStatus = responseTime > 2000 ? 'error' : responseTime > 1000 ? 'warning' : 'healthy';
 
@@ -485,8 +540,7 @@ export const useOptimizedAdminData = () => {
         totalRevenue: optimizedAnalytics.totalRevenue,
         monthlyRevenue: optimizedAnalytics.monthlyRevenue,
         revenueMetrics: optimizedAnalytics.revenueMetrics,
-        validPaymentsFound: validPaymentCount,
-        responseTime: `${responseTime}ms`
+        queryResponseTime: `${responseTime}ms`
       });
 
     } catch (error: any) {
