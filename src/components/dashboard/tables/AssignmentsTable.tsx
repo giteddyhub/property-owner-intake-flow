@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { OwnerPropertyAssignment, Owner, Property } from '@/components/dashboard/types';
 import { AssignmentsTableContent } from './assignment/AssignmentsTableContent';
 import AssignmentDrawer from '@/components/dashboard/drawers/AssignmentDrawer';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { DeleteAssignmentDialog } from './assignment/DeleteAssignmentDialog';
 
 interface AssignmentsTableProps {
   assignments: OwnerPropertyAssignment[];
@@ -21,8 +23,10 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   userId,
   onShowUserOverview 
 }) => {
+  const { deleteAssignment } = useDashboardData();
   const [selectedAssignment, setSelectedAssignment] = useState<OwnerPropertyAssignment | undefined>();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [assignmentToDelete, setAssignmentToDelete] = useState<OwnerPropertyAssignment | null>(null);
 
   const handleRowClick = (e: React.MouseEvent, assignment: OwnerPropertyAssignment) => {
     console.log('Assignment row clicked:', assignment);
@@ -38,7 +42,17 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
 
   const handleDelete = (assignment: OwnerPropertyAssignment) => {
     console.log('Delete assignment:', assignment);
-    // TODO: Implement delete confirmation dialog
+    setAssignmentToDelete(assignment);
+  };
+
+  const confirmDelete = async () => {
+    if (assignmentToDelete && 'id' in assignmentToDelete && assignmentToDelete.id) {
+      const success = await deleteAssignment(assignmentToDelete.id);
+      if (success) {
+        onRefresh();
+      }
+      setAssignmentToDelete(null);
+    }
   };
 
   const handleActionClick = () => {
@@ -75,6 +89,12 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         owners={owners}
         onSuccess={handleSuccess}
         userId={userId}
+      />
+
+      <DeleteAssignmentDialog
+        open={!!assignmentToDelete}
+        onOpenChange={() => setAssignmentToDelete(null)}
+        onConfirm={confirmDelete}
       />
     </>
   );

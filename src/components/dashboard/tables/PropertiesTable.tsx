@@ -3,6 +3,18 @@ import React, { useState } from 'react';
 import { Property } from '@/components/dashboard/types';
 import { PropertiesTableContent } from './property/PropertiesTableContent';
 import PropertyDrawer from '@/components/dashboard/drawers/PropertyDrawer';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
 
 interface PropertiesTableProps {
   properties: Property[];
@@ -15,8 +27,10 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
   onRefresh,
   onShowUserOverview 
 }) => {
+  const { deleteProperty } = useDashboardData();
   const [selectedProperty, setSelectedProperty] = useState<Property | undefined>();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
 
   const handleRowClick = (e: React.MouseEvent, property: Property) => {
     console.log('Property row clicked:', property);
@@ -32,7 +46,17 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
 
   const handleDelete = (property: Property) => {
     console.log('Delete property:', property);
-    // TODO: Implement delete confirmation dialog
+    setPropertyToDelete(property);
+  };
+
+  const confirmDelete = async () => {
+    if (propertyToDelete) {
+      const success = await deleteProperty(propertyToDelete.id);
+      if (success) {
+        onRefresh();
+      }
+      setPropertyToDelete(null);
+    }
   };
 
   const handleActionClick = () => {
@@ -65,6 +89,29 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
         property={selectedProperty}
         onSuccess={handleSuccess}
       />
+
+      <AlertDialog open={!!propertyToDelete} onOpenChange={() => setPropertyToDelete(null)}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete Property
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the property "{propertyToDelete?.label}" and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

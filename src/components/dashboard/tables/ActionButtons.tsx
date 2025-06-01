@@ -9,12 +9,24 @@ interface ActionButtonsProps {
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({ onEdit, onDelete }) => {
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onEdit(e);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onDelete(e);
+  };
+
   return (
     <div className="flex space-x-1">
       <Button
         variant="ghost"
         size="icon"
-        onClick={onEdit}
+        onClick={handleEdit}
         className="h-8 w-8"
       >
         <Edit className="h-4 w-4" />
@@ -22,7 +34,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onEdit, onDelete }
       <Button
         variant="ghost"
         size="icon"
-        onClick={onDelete}
+        onClick={handleDelete}
         className="h-8 w-8 text-red-500 hover:text-red-600"
       >
         <Trash2 className="h-4 w-4" />
