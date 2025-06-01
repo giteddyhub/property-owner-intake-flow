@@ -1,4 +1,4 @@
 
 // Re-export everything from the new modular activity logger
-export { ActivityLogger } from './activityLogger';
-export type { ActivityLogData } from './activityLogger';
+export { ActivityLogger } from './activityLogger/index';
+export type { ActivityLogData } from './activityLogger/types';
