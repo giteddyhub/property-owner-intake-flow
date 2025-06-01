@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { toast } from 'sonner';
@@ -58,17 +57,36 @@ const transformPropertyData = (dbProperty: any): Property => ({
 });
 
 // Helper function to transform database assignment data to frontend format with proper DateRange
-const transformAssignmentData = (dbAssignment: any): OwnerPropertyAssignment => ({
-  propertyId: dbAssignment.property_id,
-  ownerId: dbAssignment.owner_id,
-  ownershipPercentage: dbAssignment.ownership_percentage,
-  residentAtProperty: dbAssignment.resident_at_property,
-  residentDateRange: {
-    from: dbAssignment.resident_from_date ? new Date(dbAssignment.resident_from_date) : null,
-    to: dbAssignment.resident_to_date ? new Date(dbAssignment.resident_to_date) : null
-  },
-  taxCredits: dbAssignment.tax_credits
-});
+const transformAssignmentData = (dbAssignment: any): OwnerPropertyAssignment => {
+  try {
+    console.log('Transforming assignment data:', dbAssignment);
+    
+    // Ensure we have the required ID
+    if (!dbAssignment.id) {
+      console.error('Assignment missing ID:', dbAssignment);
+      throw new Error('Assignment must have an ID');
+    }
+
+    const transformed = {
+      id: dbAssignment.id,
+      propertyId: dbAssignment.property_id,
+      ownerId: dbAssignment.owner_id,
+      ownershipPercentage: dbAssignment.ownership_percentage,
+      residentAtProperty: dbAssignment.resident_at_property,
+      residentDateRange: {
+        from: dbAssignment.resident_from_date ? new Date(dbAssignment.resident_from_date) : null,
+        to: dbAssignment.resident_to_date ? new Date(dbAssignment.resident_to_date) : null
+      },
+      taxCredits: dbAssignment.tax_credits
+    };
+
+    console.log('Transformed assignment:', transformed);
+    return transformed;
+  } catch (error) {
+    console.error('Error transforming assignment data:', error, dbAssignment);
+    throw error;
+  }
+};
 
 // Helper function to transform frontend owner data to database format
 const transformOwnerToDb = (owner: Owner) => ({
@@ -124,8 +142,10 @@ export const useDashboardData = () => {
   const [assignments, setAssignments] = useState<AssignmentWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -177,31 +197,46 @@ export const useDashboardData = () => {
       }
 
       console.log('Fetched assignments:', assignmentsData?.length || 0);
-      const transformedAssignments = (assignmentsData || []).map(dbAssignment => ({
-        id: dbAssignment.id,
-        ...transformAssignmentData(dbAssignment)
-      }));
+      
+      // Transform assignments with error handling
+      const transformedAssignments: AssignmentWithId[] = [];
+      (assignmentsData || []).forEach(dbAssignment => {
+        try {
+          const transformed = transformAssignmentData(dbAssignment) as AssignmentWithId;
+          transformedAssignments.push(transformed);
+        } catch (error) {
+          console.error('Failed to transform assignment, skipping:', error, dbAssignment);
+        }
+      });
       
       setAssignments(transformedAssignments);
       console.log('Dashboard data fetch completed successfully');
+      setRetryCount(0); // Reset retry count on success
       
     } catch (error: any) {
       console.error('Error in fetchDashboardData:', error);
       setError(error.message);
-      // Only show toast error once, not on every retry
-      if (!error.message?.includes('JWT')) {
-        toast.error('Failed to load dashboard data: ' + error.message);
+      
+      // Prevent infinite retry loops
+      if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+        console.log(`Retrying fetch (attempt ${retryCount + 1}/${maxRetries})`);
+      } else {
+        console.error('Max retries reached, stopping fetch attempts');
+        if (!error.message?.includes('JWT')) {
+          toast.error('Failed to load dashboard data. Please refresh the page.');
+        }
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, retryCount]);
 
   useEffect(() => {
     if (user) {
       fetchDashboardData();
     }
-  }, [user]);
+  }, [user, fetchDashboardData]);
 
   const createOwner = async (ownerData: Omit<Owner, 'id'>) => {
     if (!user) {
@@ -294,9 +329,10 @@ export const useDashboardData = () => {
     try {
       const assignmentId = crypto.randomUUID();
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('owner_property_assignments')
         .insert({
+          id: assignmentId,
           property_id: assignmentData.propertyId,
           owner_id: assignmentData.ownerId,
           ownership_percentage: assignmentData.ownershipPercentage,
@@ -307,9 +343,13 @@ export const useDashboardData = () => {
           user_id: user.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      console.log('Assignment created with data:', data);
 
       // Get owner and property names for activity logging
       const owner = owners.find(o => o.id === assignmentData.ownerId);

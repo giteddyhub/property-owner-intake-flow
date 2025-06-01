@@ -54,11 +54,18 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
 
   const confirmDelete = async () => {
     if (assignmentToDelete && 'id' in assignmentToDelete && assignmentToDelete.id) {
-      const success = await deleteAssignment(assignmentToDelete.id);
-      if (success) {
-        onRefresh();
+      try {
+        console.log('Deleting assignment with ID:', assignmentToDelete.id);
+        const success = await deleteAssignment(assignmentToDelete.id);
+        if (success) {
+          console.log('Assignment deleted successfully, refreshing data');
+          onRefresh();
+        }
+      } catch (error) {
+        console.error('Error in confirmDelete:', error);
+      } finally {
+        setAssignmentToDelete(null);
       }
-      setAssignmentToDelete(null);
     }
   };
 
@@ -72,6 +79,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   };
 
   const handleSuccess = () => {
+    console.log('Assignment operation successful, refreshing data');
     onRefresh();
     handleDrawerClose();
   };

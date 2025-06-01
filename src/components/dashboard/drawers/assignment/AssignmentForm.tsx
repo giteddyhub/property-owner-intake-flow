@@ -58,10 +58,19 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   
   const handleSubmit = async (values: AssignmentFormValues) => {
     setIsSubmitting(true);
-    console.log('Submitting assignment with values:', values);
+    console.log('Assignment form submission started with values:', values);
     console.log('User ID:', userId);
     
     try {
+      // Validate required fields
+      if (!values.propertyId || !values.ownerId) {
+        throw new Error('Property and Owner are required');
+      }
+
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+      
       const assignmentData = {
         property_id: values.propertyId,
         owner_id: values.ownerId,
@@ -74,33 +83,44 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           ? values.residentToDate.toISOString().split('T')[0]
           : null,
         tax_credits: values.taxCredits || null,
-        updated_at: new Date().toISOString(),
-        user_id: userId
+        user_id: userId,
+        updated_at: new Date().toISOString()
       };
       
-      console.log('Assignment data being saved:', assignmentData);
+      console.log('Assignment data prepared for save:', assignmentData);
       
       if (assignment?.id) {
         // Update existing assignment
-        const { error } = await supabase
+        console.log('Updating existing assignment with ID:', assignment.id);
+        const { data, error } = await supabase
           .from('owner_property_assignments')
           .update(assignmentData)
-          .eq('id', assignment.id);
+          .eq('id', assignment.id)
+          .select()
+          .single();
           
         if (error) {
           console.error('Update error:', error);
           throw error;
         }
+        
+        console.log('Assignment updated successfully:', data);
         toast.success('Assignment updated successfully');
       } else {
         // Check if this combination already exists
-        const { data: existingAssignment } = await supabase
+        console.log('Checking for existing assignment combination');
+        const { data: existingAssignment, error: checkError } = await supabase
           .from('owner_property_assignments')
           .select('id')
           .eq('property_id', values.propertyId)
           .eq('owner_id', values.ownerId)
           .eq('user_id', userId)
           .maybeSingle();
+          
+        if (checkError) {
+          console.error('Error checking existing assignment:', checkError);
+          throw checkError;
+        }
           
         if (existingAssignment) {
           toast.error('This owner is already assigned to this property');
@@ -109,25 +129,32 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         }
         
         // Create new assignment
-        const { error } = await supabase
+        console.log('Creating new assignment');
+        const { data, error } = await supabase
           .from('owner_property_assignments')
           .insert({
             ...assignmentData,
             created_at: new Date().toISOString()
-          });
+          })
+          .select()
+          .single();
           
         if (error) {
           console.error('Insert error:', error);
           throw error;
         }
+        
+        console.log('Assignment created successfully:', data);
         toast.success('Assignment added successfully');
       }
 
+      // Close drawer and trigger refresh
       onClose();
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving assignment:', error);
-      toast.error('Failed to save assignment: ' + (error as any).message);
+      const errorMessage = error?.message || 'Unknown error occurred';
+      toast.error(`Failed to save assignment: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
