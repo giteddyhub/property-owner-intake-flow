@@ -109,12 +109,24 @@ const AdminDashboardPage: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Query Response Time</p>
               </div>
               <div className="text-center">
-                <div className={`text-2xl font-bold ${
-                  analytics.systemHealth.databaseStatus === 'healthy' ? 'text-green-600' :
-                  analytics.systemHealth.databaseStatus === 'warning' ? 'text-yellow-600' : 'text-red-600'
-                }`}>
-                  {analytics.systemHealth.databaseStatus === 'healthy' ? '✓' :
-                   analytics.systemHealth.databaseStatus === 'warning' ? '⚠' : '✗'}
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`text-2xl font-bold ${
+                    analytics.systemHealth.databaseStatus === 'healthy' ? 'text-green-600' :
+                    analytics.systemHealth.databaseStatus === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                  }`}>
+                    {analytics.systemHealth.databaseStatus === 'healthy' ? '✓' :
+                     analytics.systemHealth.databaseStatus === 'warning' ? '⚠' : '✗'}
+                  </div>
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs ${
+                      analytics.systemHealth.databaseStatus === 'healthy' ? 'text-green-600 border-green-600' :
+                      analytics.systemHealth.databaseStatus === 'warning' ? 'text-yellow-600 border-yellow-600' : 
+                      'text-red-600 border-red-600'
+                    }`}
+                  >
+                    {analytics.systemHealth.databaseStatus.charAt(0).toUpperCase() + analytics.systemHealth.databaseStatus.slice(1)}
+                  </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">Database Status</p>
               </div>
