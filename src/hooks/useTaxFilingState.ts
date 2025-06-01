@@ -79,8 +79,8 @@ export const useTaxFilingState = () => {
       // Define a default amount for the purchase entry
       const defaultAmount = 0;
       
-      // Create the purchase entry directly without needing a separate contact
-      // since the form_submission already contains the user_id reference
+      // Create the purchase entry linked to the form submission
+      // No need for a separate contact since we'll get user info through form_submission -> profiles
       try {
         const { data: purchase, error: purchaseError } = await supabase
           .from('purchases')

@@ -35,11 +35,22 @@ function initSupabase() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-// Fetch purchase and contact information from Supabase
+// Fetch purchase and related form submission data from Supabase
 async function fetchPurchaseData(supabase, purchaseId) {
   const { data: purchaseData, error: purchaseError } = await supabase
     .from("purchases")
-    .select("id, contact_id, has_document_retrieval")
+    .select(`
+      id, 
+      has_document_retrieval,
+      form_submission_id,
+      form_submissions!inner(
+        user_id,
+        profiles!inner(
+          full_name,
+          email
+        )
+      )
+    `)
     .eq("id", purchaseId)
     .single();
 
@@ -48,7 +59,20 @@ async function fetchPurchaseData(supabase, purchaseId) {
     throw new Error(`Error fetching purchase: ${purchaseError?.message || "Purchase not found"}`);
   }
 
-  return purchaseData;
+  // Extract user profile data from the nested structure
+  const userProfile = purchaseData.form_submissions?.profiles;
+  if (!userProfile || !userProfile.email) {
+    console.error("No user profile or email found for purchase:", purchaseId);
+    throw new Error("User profile or email not found for this purchase");
+  }
+
+  return {
+    ...purchaseData,
+    contactData: {
+      full_name: userProfile.full_name,
+      email: userProfile.email
+    }
+  };
 }
 
 // Update document retrieval preference in purchase record
@@ -62,28 +86,6 @@ async function updateDocumentRetrieval(supabase, purchaseId, hasDocumentRetrieva
     console.error("Error updating purchase document retrieval preference:", updateError);
     // Non-critical error, continue execution
   }
-}
-
-// Fetch contact information from Supabase
-async function fetchContactData(supabase, contactId) {
-  const { data: contactData, error: contactError } = await supabase
-    .from("contacts")
-    .select("full_name, email")
-    .eq("id", contactId)
-    .single();
-
-  if (contactError || !contactData) {
-    console.error("Error fetching contact:", contactError);
-    throw new Error(`Error fetching contact: ${contactError?.message || "Contact not found"}`);
-  }
-
-  if (!contactData.email) {
-    console.error("Contact email missing");
-    throw new Error("Contact email is required for checkout");
-  }
-
-  console.log("Found contact:", contactData.email);
-  return contactData;
 }
 
 // Create line items for the Stripe checkout session
@@ -233,14 +235,11 @@ serve(async (req) => {
     const stripe = initStripe();
     const supabase = initSupabase();
 
-    // Fetch purchase data
-    const purchaseData = await fetchPurchaseData(supabase, purchaseId);
+    // Fetch purchase data with contact information from profiles
+    const purchaseDataWithContact = await fetchPurchaseData(supabase, purchaseId);
     
     // Update document retrieval preference
     await updateDocumentRetrieval(supabase, purchaseId, hasDocumentRetrievalService);
-    
-    // Fetch contact data
-    const contactData = await fetchContactData(supabase, purchaseData.contact_id);
     
     // Calculate base price (total minus document retrieval fee if enabled)
     const basePrice = totalAmount - (hasDocumentRetrievalService ? 28 : 0);
@@ -258,7 +257,7 @@ serve(async (req) => {
       const session = await createStripeCheckoutSession(
         stripe, 
         lineItems, 
-        contactData.email, 
+        purchaseDataWithContact.contactData.email, 
         req.headers.get("origin"), 
         purchaseId, 
         hasDocumentRetrievalService, 
