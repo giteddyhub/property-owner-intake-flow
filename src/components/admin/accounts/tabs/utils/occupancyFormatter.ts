@@ -15,9 +15,10 @@ export const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined)
         if (typeof status === 'string') {
           try {
             // Try to parse as JSON first
-            return JSON.parse(status);
+            const parsed = JSON.parse(status);
+            return parsed;
           } catch {
-            // If JSON parsing fails, treat as a simple string value
+            // If JSON parsing fails, treat as a simple string value with 0 months
             return { status: status, months: 0 };
           }
         } else if (typeof status === 'object' && status !== null) {
@@ -47,23 +48,41 @@ export const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined)
           
           return formatOccupancyStatuses(converted);
         } else {
-          // Use the new format directly with the proven utility function
-          return formatOccupancyStatuses(validAllocations);
+          // Ensure all allocations have both status and months properties
+          const normalizedAllocations = validAllocations.map(allocation => {
+            if ('status' in allocation && 'months' in allocation) {
+              return allocation;
+            }
+            // If missing months, default to 0
+            return { status: allocation.status || 'UNKNOWN', months: allocation.months || 0 };
+          });
+          
+          return formatOccupancyStatuses(normalizedAllocations);
         }
       }
     }
 
-    // Fallback: try to display whatever we have in a cleaner way
-    return occupancyStatuses.map(status => {
+    // Enhanced fallback: try to create proper status objects with months
+    const fallbackStatuses = occupancyStatuses.map(status => {
       if (typeof status === 'string') {
-        // Try to clean up common patterns
-        if (status.includes('PERSONAL_USE')) return 'Personal Use';
-        if (status.includes('LONG_TERM_RENT')) return 'Long-term Rental';
-        if (status.includes('SHORT_TERM_RENT')) return 'Short-term Rental';
-        return status;
+        // Try to extract status information and create a proper object
+        if (status.includes('PERSONAL_USE')) {
+          return { status: 'PERSONAL_USE', months: 0 };
+        }
+        if (status.includes('LONG_TERM_RENT')) {
+          return { status: 'LONG_TERM_RENT', months: 0 };
+        }
+        if (status.includes('SHORT_TERM_RENT')) {
+          return { status: 'SHORT_TERM_RENT', months: 0 };
+        }
+        // Default case
+        return { status: status, months: 0 };
       }
-      return JSON.stringify(status);
-    }).join(', ');
+      return { status: 'UNKNOWN', months: 0 };
+    });
+
+    // Use the utility function even for fallback cases
+    return formatOccupancyStatuses(fallbackStatuses);
 
   } catch (error) {
     console.error('Error parsing occupancy statuses:', error);
