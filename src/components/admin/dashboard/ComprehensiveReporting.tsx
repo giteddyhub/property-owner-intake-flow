@@ -108,7 +108,7 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
             <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
               <FileText className="h-8 w-8 text-green-600" />
               <div>
-                <div className="text-2xl font-bold text-green-600">{analytics.totalSessions}</div>
+                <div className="text-2xl font-bold text-green-600">{analytics.totalSubmissions}</div>
                 <div className="text-sm text-green-600/70">Total Sessions</div>
                 <div className="flex items-center gap-1 mt-1">
                   <TrendingUp className="h-3 w-3" />
@@ -306,7 +306,7 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
             <Card>
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold">
-                  {Math.round((analytics.completedSessions / analytics.totalSessions) * 100)}%
+                  {Math.round((analytics.completedSubmissions / analytics.totalSubmissions) * 100)}%
                 </div>
                 <p className="text-sm text-muted-foreground">Completion Rate</p>
                 <Badge variant="outline" className="mt-2">
@@ -341,14 +341,14 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-green-600">{analytics.completedSessions}</div>
+                <div className="text-2xl font-bold text-green-600">{analytics.completedSubmissions}</div>
                 <p className="text-sm text-muted-foreground">Completed Sessions</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-yellow-600">{analytics.pendingSessions}</div>
+                <div className="text-2xl font-bold text-yellow-600">{analytics.pendingSubmissions}</div>
                 <p className="text-sm text-muted-foreground">Pending Sessions</p>
               </CardContent>
             </Card>
@@ -356,7 +356,7 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
             <Card>
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold">
-                  {Math.round((analytics.completedSessions / analytics.totalSessions) * 100)}%
+                  {Math.round((analytics.completedSubmissions / analytics.totalSubmissions) * 100)}%
                 </div>
                 <p className="text-sm text-muted-foreground">Success Rate</p>
               </CardContent>
