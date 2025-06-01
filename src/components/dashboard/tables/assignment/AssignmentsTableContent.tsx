@@ -20,6 +20,7 @@ interface AssignmentsTableContentProps {
   onEdit: (assignment: OwnerPropertyAssignment) => void;
   onDelete: (assignment: OwnerPropertyAssignment) => void;
   onActionClick: () => void;
+  onAddAssignment: () => void;
 }
 
 export const AssignmentsTableContent: React.FC<AssignmentsTableContentProps> = ({
@@ -29,7 +30,8 @@ export const AssignmentsTableContent: React.FC<AssignmentsTableContentProps> = (
   onRowClick,
   onEdit,
   onDelete,
-  onActionClick
+  onActionClick,
+  onAddAssignment
 }) => {
   const getOwnerById = (id: string): Owner | undefined => {
     return owners.find(owner => owner.id === id);
@@ -54,7 +56,7 @@ export const AssignmentsTableContent: React.FC<AssignmentsTableContentProps> = (
         </TableHeader>
         <TableBody>
           {assignments.length === 0 ? (
-            <EmptyAssignments />
+            <EmptyAssignments onAddAssignment={onAddAssignment} />
           ) : (
             assignments.map((assignment) => (
               <AssignmentTableRow

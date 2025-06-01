@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { OwnerPropertyAssignment, Owner, Property } from '@/components/dashboard/types';
 import { AssignmentsTableContent } from './assignment/AssignmentsTableContent';
+import { AssignmentsTableHeader } from './assignment/AssignmentsTableHeader';
 import AssignmentDrawer from '@/components/dashboard/drawers/AssignmentDrawer';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { DeleteAssignmentDialog } from './assignment/DeleteAssignmentDialog';
@@ -45,6 +46,12 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
     setAssignmentToDelete(assignment);
   };
 
+  const handleAddAssignment = () => {
+    console.log('Add new assignment');
+    setSelectedAssignment(undefined);
+    setIsDrawerOpen(true);
+  };
+
   const confirmDelete = async () => {
     if (assignmentToDelete && 'id' in assignmentToDelete && assignmentToDelete.id) {
       const success = await deleteAssignment(assignmentToDelete.id);
@@ -70,7 +77,12 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   };
 
   return (
-    <>
+    <div>
+      <AssignmentsTableHeader 
+        onAddAssignment={handleAddAssignment}
+        assignmentsCount={assignments.length}
+      />
+      
       <AssignmentsTableContent
         assignments={assignments}
         owners={owners}
@@ -79,6 +91,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         onEdit={handleEdit}
         onDelete={handleDelete}
         onActionClick={handleActionClick}
+        onAddAssignment={handleAddAssignment}
       />
       
       <AssignmentDrawer
@@ -96,6 +109,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         onOpenChange={() => setAssignmentToDelete(null)}
         onConfirm={confirmDelete}
       />
-    </>
+    </div>
   );
 };

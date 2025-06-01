@@ -11,9 +11,9 @@ import {
   OccupancyStatus 
 } from '@/types/form';
 
-// Extend the OwnerPropertyAssignment type to include id
+// Extend the OwnerPropertyAssignment type to include id (required for edit/delete operations)
 export interface OwnerPropertyAssignment extends BaseOwnerPropertyAssignment {
-  id?: string;
+  id: string; // Changed from optional to required since we need it for operations
 }
 
 export type {
