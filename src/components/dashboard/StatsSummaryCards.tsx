@@ -5,7 +5,7 @@ import { TaxFilingCTA } from '@/components/dashboard/TaxFilingCTA';
 
 interface StatsSummaryCardProps {
   title: string;
-  value: number;
+  value: number | string;
   chartColor: string;
 }
 
@@ -33,16 +33,20 @@ const StatsSummaryCard: React.FC<StatsSummaryCardProps> = ({
 interface StatsSummaryCardsProps {
   ownersCount: number;
   propertiesCount: number;
-  assignmentsCount: number;
+  totalRevenue: number;
   userId: string;
 }
 
 export const StatsSummaryCards: React.FC<StatsSummaryCardsProps> = ({
   ownersCount,
   propertiesCount,
-  assignmentsCount,
+  totalRevenue,
   userId
 }) => {
+  const formatRevenue = (amount: number) => {
+    return `€${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
       <div className="md:col-span-3">
@@ -52,7 +56,7 @@ export const StatsSummaryCards: React.FC<StatsSummaryCardsProps> = ({
         <StatsSummaryCard title="Owners" value={ownersCount} chartColor="#3B82F6" />
       </div>
       <div className="md:col-span-3">
-        <StatsSummaryCard title="Assignments" value={assignmentsCount} chartColor="#F59E0B" />
+        <StatsSummaryCard title="Total Revenue" value={formatRevenue(totalRevenue)} chartColor="#8B5CF6" />
       </div>
       <div className="md:col-span-3 lg:col-span-3">
         <TaxFilingCTA userId={userId} />

@@ -17,22 +17,24 @@ interface DashboardLayoutProps {
   owners: Owner[];
   properties: Property[];
   assignments: OwnerPropertyAssignment[];
+  totalRevenue: number;
   onSignOut: () => Promise<void>;
   activeFilter: string;
   setActiveFilter: (filter: string) => void;
   onRefresh: () => void;
-  userId: string; // Added userId prop
+  userId: string;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   owners,
   properties,
   assignments,
+  totalRevenue,
   onSignOut,
   activeFilter,
   setActiveFilter,
   onRefresh,
-  userId // Accept the userId prop
+  userId
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -58,8 +60,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <StatsSummaryCards 
           ownersCount={owners.length} 
           propertiesCount={properties.length} 
-          assignmentsCount={assignments.length}
-          userId={userId} // Pass userId
+          totalRevenue={totalRevenue}
+          userId={userId}
         />
 
         <div className="bg-white rounded-xl mb-8">
@@ -75,7 +77,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               assignments={assignments} 
               activeFilter={activeFilter}
               onRefresh={onRefresh}
-              userId={userId} // Pass userId
+              userId={userId}
             />
           </div>
         </div>

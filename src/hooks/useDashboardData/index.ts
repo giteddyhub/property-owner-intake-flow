@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useUser } from '@/contexts/auth/AuthContext';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { fetchDashboardData, AssignmentWithId } from './dataService';
+import { fetchUserTotalRevenue } from './revenueService';
 import {
   createOwner,
   createProperty,
@@ -21,6 +22,7 @@ export const useDashboardData = () => {
   const [owners, setOwners] = useState<Owner[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [assignments, setAssignments] = useState<AssignmentWithId[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -33,10 +35,16 @@ export const useDashboardData = () => {
     setError(null);
     
     try {
-      const data = await fetchDashboardData(user.id);
-      setOwners(data.owners);
-      setProperties(data.properties);
-      setAssignments(data.assignments);
+      // Fetch dashboard data and revenue in parallel
+      const [dashboardData, revenue] = await Promise.all([
+        fetchDashboardData(user.id),
+        fetchUserTotalRevenue(user.id)
+      ]);
+      
+      setOwners(dashboardData.owners);
+      setProperties(dashboardData.properties);
+      setAssignments(dashboardData.assignments);
+      setTotalRevenue(revenue);
       setRetryCount(0); // Reset retry count on success
       
     } catch (error: any) {
@@ -203,6 +211,7 @@ export const useDashboardData = () => {
     owners,
     properties,
     assignments,
+    totalRevenue,
     loading,
     error,
     createOwner: handleCreateOwner,

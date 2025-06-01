@@ -18,7 +18,7 @@ const DashboardPage = () => {
     setRefreshFlag(prev => prev + 1);
   }, []);
   
-  const { loading, owners, properties, assignments, error, refetch } = useDashboardData();
+  const { loading, owners, properties, assignments, totalRevenue, error, refetch } = useDashboardData();
 
   // Trigger refetch when refreshFlag changes
   useEffect(() => {
@@ -149,6 +149,7 @@ const DashboardPage = () => {
       owners={owners}
       properties={properties}
       assignments={assignments}
+      totalRevenue={totalRevenue}
       onSignOut={handleSignOut}
       activeFilter={activeFilter}
       setActiveFilter={setActiveFilter}
