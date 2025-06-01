@@ -1,5 +1,6 @@
 
 import { formatOccupancyStatuses } from '@/components/form/property/utils/occupancyUtils';
+import { OccupancyStatus } from '@/types/form';
 
 export const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined): string => {
   if (!occupancyStatuses || occupancyStatuses.length === 0) {
@@ -42,9 +43,9 @@ export const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined)
           // Convert old format to new format
           const converted = [];
           const allocation = validAllocations[0];
-          if (allocation.PERSONAL_USE > 0) converted.push({ status: 'PERSONAL_USE', months: allocation.PERSONAL_USE });
-          if (allocation.LONG_TERM_RENT > 0) converted.push({ status: 'LONG_TERM_RENT', months: allocation.LONG_TERM_RENT });
-          if (allocation.SHORT_TERM_RENT > 0) converted.push({ status: 'SHORT_TERM_RENT', months: allocation.SHORT_TERM_RENT });
+          if (allocation.PERSONAL_USE > 0) converted.push({ status: 'PERSONAL_USE' as OccupancyStatus, months: allocation.PERSONAL_USE });
+          if (allocation.LONG_TERM_RENT > 0) converted.push({ status: 'LONG_TERM_RENT' as OccupancyStatus, months: allocation.LONG_TERM_RENT });
+          if (allocation.SHORT_TERM_RENT > 0) converted.push({ status: 'SHORT_TERM_RENT' as OccupancyStatus, months: allocation.SHORT_TERM_RENT });
           
           return formatOccupancyStatuses(converted);
         } else {
@@ -54,7 +55,7 @@ export const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined)
               return allocation;
             }
             // If missing months, default to 0
-            return { status: allocation.status || 'UNKNOWN', months: allocation.months || 0 };
+            return { status: allocation.status || 'PERSONAL_USE', months: allocation.months || 0 };
           });
           
           return formatOccupancyStatuses(normalizedAllocations);
@@ -65,20 +66,20 @@ export const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined)
     // Enhanced fallback: try to create proper status objects with months
     const fallbackStatuses = occupancyStatuses.map(status => {
       if (typeof status === 'string') {
-        // Try to extract status information and create a proper object
+        // Try to extract status information and create a proper object with valid OccupancyStatus
         if (status.includes('PERSONAL_USE')) {
-          return { status: 'PERSONAL_USE', months: 0 };
+          return { status: 'PERSONAL_USE' as OccupancyStatus, months: 0 };
         }
         if (status.includes('LONG_TERM_RENT')) {
-          return { status: 'LONG_TERM_RENT', months: 0 };
+          return { status: 'LONG_TERM_RENT' as OccupancyStatus, months: 0 };
         }
         if (status.includes('SHORT_TERM_RENT')) {
-          return { status: 'SHORT_TERM_RENT', months: 0 };
+          return { status: 'SHORT_TERM_RENT' as OccupancyStatus, months: 0 };
         }
-        // Default case
-        return { status: status, months: 0 };
+        // Default case - use PERSONAL_USE as fallback for unknown statuses
+        return { status: 'PERSONAL_USE' as OccupancyStatus, months: 0 };
       }
-      return { status: 'UNKNOWN', months: 0 };
+      return { status: 'PERSONAL_USE' as OccupancyStatus, months: 0 };
     });
 
     // Use the utility function even for fallback cases
