@@ -2,39 +2,98 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.6';
 import { corsHeaders } from '../_shared/cors.ts';
 
-// Get environment variables
+console.log('[admin-delete-user] 🚀 Function module loading...');
+
+// Get environment variables with detailed logging
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
 
-console.log('[admin-delete-user] Function starting with environment check');
+console.log('[admin-delete-user] Environment check:');
 console.log('[admin-delete-user] SUPABASE_URL exists:', !!supabaseUrl);
+console.log('[admin-delete-user] SUPABASE_URL value:', supabaseUrl ? 'present' : 'missing');
 console.log('[admin-delete-user] SERVICE_ROLE_KEY exists:', !!serviceRoleKey);
+console.log('[admin-delete-user] SERVICE_ROLE_KEY length:', serviceRoleKey ? serviceRoleKey.length : 0);
 
-// Create Supabase client with service role key for admin privileges
-const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+if (!supabaseUrl) {
+  console.error('[admin-delete-user] ❌ CRITICAL: SUPABASE_URL environment variable is missing');
+}
 
-console.log('[admin-delete-user] Supabase client created successfully');
+if (!serviceRoleKey) {
+  console.error('[admin-delete-user] ❌ CRITICAL: SUPABASE_SERVICE_ROLE_KEY environment variable is missing');
+}
+
+// Create Supabase client with detailed error handling
+let adminClient;
+try {
+  adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+  console.log('[admin-delete-user] ✅ Supabase client created successfully');
+} catch (clientError) {
+  console.error('[admin-delete-user] ❌ CRITICAL: Failed to create Supabase client:', clientError);
+}
 
 Deno.serve(async (req) => {
-  console.log('[admin-delete-user] 🚀 Request received:', req.method, req.url);
-  
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    console.log('[admin-delete-user] Handling CORS preflight request');
-    return new Response(null, { headers: corsHeaders });
-  }
+  console.log('[admin-delete-user] 🚀 Request received:', {
+    method: req.method,
+    url: req.url,
+    timestamp: new Date().toISOString()
+  });
   
   try {
-    console.log('[admin-delete-user] Processing request...');
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      console.log('[admin-delete-user] Handling CORS preflight request');
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // Health check endpoint
+    if (req.method === 'GET') {
+      console.log('[admin-delete-user] Health check requested');
+      const healthStatus = {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        environment: {
+          supabaseUrl: !!supabaseUrl,
+          serviceRoleKey: !!serviceRoleKey,
+          clientCreated: !!adminClient
+        }
+      };
+      console.log('[admin-delete-user] Health check response:', healthStatus);
+      return new Response(
+        JSON.stringify(healthStatus),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate environment before processing
+    if (!supabaseUrl || !serviceRoleKey || !adminClient) {
+      console.error('[admin-delete-user] ❌ Environment validation failed');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Server configuration error - missing environment variables',
+          details: {
+            supabaseUrl: !!supabaseUrl,
+            serviceRoleKey: !!serviceRoleKey,
+            clientCreated: !!adminClient
+          }
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('[admin-delete-user] Processing DELETE request...');
     
     // Get admin token from headers
     const adminToken = req.headers.get('x-admin-token');
-    console.log('[admin-delete-user] Admin token present:', !!adminToken);
+    console.log('[admin-delete-user] Admin token check:', {
+      present: !!adminToken,
+      length: adminToken ? adminToken.length : 0
+    });
     
     if (!adminToken) {
       console.error('[admin-delete-user] ❌ No admin token provided');
@@ -47,13 +106,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body
+    // Parse request body with enhanced error handling
     let requestBody;
     try {
+      const contentType = req.headers.get('content-type') || '';
+      console.log('[admin-delete-user] Content-Type:', contentType);
+      
       requestBody = await req.json();
       console.log('[admin-delete-user] Request body parsed successfully:', requestBody);
     } catch (parseError) {
-      console.error('[admin-delete-user] ❌ Failed to parse request body:', parseError);
+      console.error('[admin-delete-user] ❌ Failed to parse request body:', {
+        error: parseError.message,
+        name: parseError.name,
+        stack: parseError.stack
+      });
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -91,12 +157,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[admin-delete-user] 🔧 Calling admin_delete_user function...');
-    console.log('[admin-delete-user] Parameters:', { 
-      adminToken: adminToken ? 'present' : 'missing', 
-      targetUserId 
-    });
-
+    console.log('[admin-delete-user] 🔧 Testing database connection...');
+    
     // Test database connection first
     try {
       const { data: connectionTest, error: connectionError } = await adminClient
@@ -109,7 +171,8 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false,
-            error: `Database connection failed: ${connectionError.message}` 
+            error: `Database connection failed: ${connectionError.message}`,
+            details: connectionError
           }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -120,11 +183,18 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: `Database connection error: ${dbError.message}` 
+          error: `Database connection error: ${dbError.message}`,
+          details: dbError
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('[admin-delete-user] 🔧 Calling admin_delete_user function...');
+    console.log('[admin-delete-user] Parameters:', { 
+      adminToken: adminToken ? 'present' : 'missing', 
+      targetUserId 
+    });
 
     // Call the secure deletion function
     const { data: deletionResult, error: deletionError } = await adminClient
@@ -189,7 +259,8 @@ Deno.serve(async (req) => {
     console.error('[admin-delete-user] ❌ Unexpected error in edge function:', {
       message: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
+      cause: error.cause
     });
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -198,7 +269,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: false,
         error: `Server error: ${errorMessage}`,
-        type: 'unexpected_error'
+        type: 'unexpected_error',
+        details: error.stack
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

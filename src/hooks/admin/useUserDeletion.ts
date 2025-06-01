@@ -28,6 +28,43 @@ export const useUserDeletion = () => {
   const [loading, setLoading] = useState(false);
   const { adminSession } = useAdminAuth();
 
+  const testEdgeFunction = async () => {
+    console.log('[useUserDeletion] 🔍 Testing edge function health...');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        method: 'GET' // Health check endpoint
+      });
+
+      console.log('[useUserDeletion] Health check response:', { data, error });
+      
+      if (error) {
+        console.error('[useUserDeletion] Health check error:', error);
+        toast.error('Edge function health check failed', {
+          description: error.message,
+        });
+        return false;
+      }
+      
+      if (data) {
+        console.log('[useUserDeletion] ✅ Edge function is healthy:', data);
+        toast.success('Edge function is healthy');
+        return true;
+      }
+      
+      return false;
+    } catch (error: any) {
+      console.error('[useUserDeletion] Health check exception:', error);
+      toast.error('Health check failed', {
+        description: error.message,
+      });
+      return false;
+    }
+  };
+
   const deleteUser = async (userId: string): Promise<DeletionResult> => {
     console.log('[useUserDeletion] 🚀 Starting user deletion for:', userId);
     
@@ -48,10 +85,12 @@ export const useUserDeletion = () => {
       };
       
       console.log('[useUserDeletion] Request payload:', requestPayload);
+      console.log('[useUserDeletion] Admin token length:', adminSession.token?.length || 0);
 
       const { data, error } = await supabase.functions.invoke('admin-delete-user', {
         headers: {
           'x-admin-token': adminSession.token,
+          'Content-Type': 'application/json'
         },
         body: requestPayload,
       });
@@ -152,5 +191,6 @@ export const useUserDeletion = () => {
   return {
     deleteUser,
     loading,
+    testEdgeFunction,
   };
 };
