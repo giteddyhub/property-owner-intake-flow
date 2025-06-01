@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Property } from '@/components/dashboard/types';
-import { AdminDataTable } from '@/components/admin/tables/AdminDataTable';
-import { Badge } from '@/components/ui/badge';
+import { PropertiesTableContent } from './property/PropertiesTableContent';
+import PropertyDrawer from '@/components/dashboard/drawers/PropertyDrawer';
 
 interface PropertiesTableProps {
   properties: Property[];
@@ -15,39 +15,56 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
   onRefresh,
   onShowUserOverview 
 }) => {
-  const columns = [
-    {
-      key: 'label',
-      header: 'Property Label',
-      className: 'font-medium'
-    },
-    {
-      key: 'address',
-      header: 'Address',
-      render: (address: any) => `${address?.comune || ''}, ${address?.province || ''}`
-    },
-    {
-      key: 'propertyType',
-      header: 'Type',
-      render: (type: string) => (
-        <Badge variant="outline">{type}</Badge>
-      )
-    },
-    {
-      key: 'activity2024',
-      header: 'Activity 2024',
-      render: (activity: string) => (
-        <Badge variant="secondary">{activity}</Badge>
-      )
-    }
-  ];
+  const [selectedProperty, setSelectedProperty] = useState<Property | undefined>();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const handleRowClick = (e: React.MouseEvent, property: Property) => {
+    console.log('Property row clicked:', property);
+    setSelectedProperty(property);
+    setIsDrawerOpen(true);
+  };
+
+  const handleEdit = (property: Property) => {
+    console.log('Edit property:', property);
+    setSelectedProperty(property);
+    setIsDrawerOpen(true);
+  };
+
+  const handleDelete = (property: Property) => {
+    console.log('Delete property:', property);
+    // TODO: Implement delete confirmation dialog
+  };
+
+  const handleActionClick = () => {
+    console.log('Action button clicked');
+  };
+
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false);
+    setSelectedProperty(undefined);
+  };
+
+  const handleSuccess = () => {
+    onRefresh();
+    handleDrawerClose();
+  };
 
   return (
-    <AdminDataTable
-      data={properties}
-      columns={columns}
-      onShowUserOverview={onShowUserOverview}
-      contextType="property"
-    />
+    <>
+      <PropertiesTableContent
+        properties={properties}
+        onRowClick={handleRowClick}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onActionClick={handleActionClick}
+      />
+      
+      <PropertyDrawer
+        isOpen={isDrawerOpen}
+        onClose={handleDrawerClose}
+        property={selectedProperty}
+        onSuccess={handleSuccess}
+      />
+    </>
   );
 };
