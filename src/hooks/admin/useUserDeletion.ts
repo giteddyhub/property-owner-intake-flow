@@ -27,13 +27,15 @@ export const useUserDeletion = () => {
 
   const deleteUser = async (userId: string): Promise<DeletionResult> => {
     if (!adminSession?.token) {
-      throw new Error('No admin session available');
+      const error = 'No admin session available';
+      console.error('[useUserDeletion]', error);
+      throw new Error(error);
     }
 
     setLoading(true);
 
     try {
-      console.log('Initiating user deletion for:', userId);
+      console.log('[useUserDeletion] Initiating user deletion for:', userId);
 
       const { data, error } = await supabase.functions.invoke('admin-delete-user', {
         headers: {
@@ -44,22 +46,28 @@ export const useUserDeletion = () => {
         },
       });
 
+      console.log('[useUserDeletion] Edge function response:', { data, error });
+
       if (error) {
-        console.error('Edge function error:', error);
+        console.error('[useUserDeletion] Edge function error:', error);
         throw new Error(error.message || 'Failed to delete user');
       }
 
       if (!data) {
-        throw new Error('No response from deletion service');
+        const errorMsg = 'No response from deletion service';
+        console.error('[useUserDeletion]', errorMsg);
+        throw new Error(errorMsg);
       }
 
       if (!data.success) {
-        throw new Error(data.error || 'Deletion failed');
+        const errorMsg = data.error || 'Deletion failed';
+        console.error('[useUserDeletion] Deletion failed:', errorMsg);
+        throw new Error(errorMsg);
       }
 
-      console.log('User deletion successful:', data);
+      console.log('[useUserDeletion] User deletion successful:', data);
 
-      // Show success toast with details - with proper type checking
+      // Show success toast with details
       const deletedRecords = data.deleted_records;
       const deletedRecordsTotal = deletedRecords ? 
         (typeof deletedRecords.properties === 'number' ? deletedRecords.properties : 0) + 
@@ -74,10 +82,22 @@ export const useUserDeletion = () => {
 
       return data;
     } catch (error: any) {
-      console.error('User deletion error:', error);
+      console.error('[useUserDeletion] User deletion error:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = error.message;
+      if (errorMessage.includes('Invalid admin session')) {
+        errorMessage = 'Your admin session has expired. Please refresh the page and try again.';
+      } else if (errorMessage.includes('User not found')) {
+        errorMessage = 'The user you are trying to delete no longer exists.';
+      } else if (errorMessage.includes('Cannot delete your own admin account')) {
+        errorMessage = 'You cannot delete your own admin account.';
+      } else if (errorMessage.includes('Database error')) {
+        errorMessage = 'A database error occurred. Please try again or contact support.';
+      }
       
       toast.error('Failed to delete user', {
-        description: error.message,
+        description: errorMessage,
       });
       
       throw error;

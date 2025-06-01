@@ -21,26 +21,37 @@ Deno.serve(async (req) => {
   }
   
   try {
+    console.log('Admin delete user request received');
+    
     // Get admin token from headers
     const adminToken = req.headers.get('x-admin-token');
     if (!adminToken) {
+      console.error('No admin token provided');
       return new Response(
-        JSON.stringify({ error: 'Admin token required' }),
+        JSON.stringify({ 
+          success: false,
+          error: 'Admin token required' 
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Parse request body
     const { targetUserId } = await req.json();
+    console.log('Target user ID:', targetUserId);
 
     if (!targetUserId) {
+      console.error('No target user ID provided');
       return new Response(
-        JSON.stringify({ error: 'Target user ID is required' }),
+        JSON.stringify({ 
+          success: false,
+          error: 'Target user ID is required' 
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Attempting to delete user:', targetUserId);
+    console.log('Calling admin_delete_user function with:', { adminToken: adminToken ? 'present' : 'missing', targetUserId });
 
     // Call the secure deletion function
     const { data: deletionResult, error: deletionError } = await adminClient
@@ -49,18 +60,37 @@ Deno.serve(async (req) => {
         target_user_id: targetUserId
       });
 
+    console.log('Function response:', { deletionResult, deletionError });
+
     if (deletionError) {
-      console.error('Deletion function error:', deletionError);
+      console.error('Database function error:', deletionError);
       return new Response(
-        JSON.stringify({ error: `Deletion failed: ${deletionError.message}` }),
+        JSON.stringify({ 
+          success: false,
+          error: `Database error: ${deletionError.message}` 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!deletionResult) {
+      console.error('No result returned from deletion function');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'No result returned from deletion function' 
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (!deletionResult.success) {
-      console.error('Deletion failed:', deletionResult.error);
+      console.error('Deletion function reported failure:', deletionResult.error);
       return new Response(
-        JSON.stringify({ error: deletionResult.error }),
+        JSON.stringify({ 
+          success: false,
+          error: deletionResult.error || 'User deletion failed' 
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -73,9 +103,14 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Admin user deletion error:', error);
+    console.error('Edge function error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ 
+        success: false,
+        error: `Server error: ${errorMessage}` 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
