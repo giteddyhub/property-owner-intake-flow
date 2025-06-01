@@ -59,19 +59,33 @@ const AdminAccountDetailPage = () => {
 
   // Calculate enhanced metrics with proper validation
   const hasCompletedSetup = submissions.some(s => s.is_primary_submission && s.state === 'completed');
+  
+  // Calculate total payment amount (all payments) for the tabs
   const totalPaymentAmount = payments.reduce((sum, p) => {
     const amount = Number(p.amount || 0);
     return sum + (isNaN(amount) ? 0 : amount);
   }, 0);
 
+  // Calculate paid payment amount (only paid payments) for the overview
+  const paidPaymentAmount = payments
+    .filter(p => p.payment_status === 'paid')
+    .reduce((sum, p) => {
+      const amount = Number(p.amount || 0);
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
+
   console.log(`[AdminAccountDetailPage] 📊 Final UI calculations:`, {
     hasCompletedSetup,
     totalPaymentAmount,
+    paidPaymentAmount,
     paymentsForUI: payments.length,
+    paidPaymentsCount: payments.filter(p => p.payment_status === 'paid').length,
     calculationDetails: payments.map(p => ({ 
       id: p.id, 
       originalAmount: p.amount, 
       numericAmount: Number(p.amount || 0),
+      status: p.payment_status,
+      isPaid: p.payment_status === 'paid',
       isValid: !isNaN(Number(p.amount || 0))
     }))
   });
@@ -94,7 +108,7 @@ const AdminAccountDetailPage = () => {
           paymentsCount={payments.length}
           activitiesCount={activities.length}
           hasCompletedSetup={hasCompletedSetup}
-          totalPaymentAmount={totalPaymentAmount}
+          paidPaymentAmount={paidPaymentAmount}
         />
         
         <AccountDetailTabs

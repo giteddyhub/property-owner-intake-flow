@@ -13,7 +13,7 @@ interface AccountInfoCardProps {
   paymentsCount: number;
   activitiesCount: number;
   hasCompletedSetup: boolean;
-  totalPaymentAmount: number;
+  paidPaymentAmount: number;
 }
 
 export const AccountInfoCard: React.FC<AccountInfoCardProps> = ({
@@ -24,7 +24,7 @@ export const AccountInfoCard: React.FC<AccountInfoCardProps> = ({
   paymentsCount,
   activitiesCount,
   hasCompletedSetup,
-  totalPaymentAmount
+  paidPaymentAmount
 }) => {
   return (
     <div className="grid gap-6 mb-6">
@@ -91,7 +91,7 @@ export const AccountInfoCard: React.FC<AccountInfoCardProps> = ({
                 <DollarSign className="h-4 w-4 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">€{totalPaymentAmount.toFixed(2)}</p>
+                <p className="text-2xl font-bold">€{paidPaymentAmount.toFixed(2)}</p>
                 <p className="text-xs text-muted-foreground">{paymentsCount} Payments</p>
               </div>
             </div>
