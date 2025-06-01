@@ -4,6 +4,7 @@ import { TableRow, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Property } from '@/components/dashboard/types';
 import { ActionButtons } from '@/components/dashboard/tables/ActionButtons';
+import { formatActivityType } from '@/components/form/property/utils/activityUtils';
 
 interface PropertyTableRowProps {
   property: Property;
@@ -35,7 +36,7 @@ export const PropertyTableRow: React.FC<PropertyTableRowProps> = ({
         <Badge variant="outline">{property.propertyType}</Badge>
       </TableCell>
       <TableCell>
-        <Badge variant="secondary">{property.activity2024}</Badge>
+        <Badge variant="secondary">{formatActivityType(property.activity2024)}</Badge>
       </TableCell>
       <TableCell>
         <div 
