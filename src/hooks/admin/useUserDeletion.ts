@@ -47,14 +47,18 @@ export const useUserDeletion = () => {
         hasAdminToken: !!adminSession.token
       });
 
+      const requestBody = JSON.stringify({
+        targetUserId: userId,
+      });
+
+      console.log('[useUserDeletion] Request body stringified:', requestBody);
+
       const { data, error } = await supabase.functions.invoke('admin-delete-user', {
         headers: {
           'x-admin-token': adminSession.token,
           'Content-Type': 'application/json'
         },
-        body: {
-          targetUserId: userId,
-        },
+        body: requestBody,
       });
 
       console.log('[useUserDeletion] 📊 Edge function response received');
@@ -81,6 +85,10 @@ export const useUserDeletion = () => {
           userFriendlyMessage = 'Database connection error. Please try again in a moment.';
         } else if (error.message?.includes('violates foreign key constraint')) {
           userFriendlyMessage = 'Cannot delete user due to database constraints. Please contact support.';
+        } else if (error.message?.includes('Invalid JSON')) {
+          userFriendlyMessage = 'Request formatting error. Please try again.';
+        } else if (error.message?.includes('Request body is required')) {
+          userFriendlyMessage = 'Invalid request. Please try again.';
         }
         
         throw new Error(userFriendlyMessage);
