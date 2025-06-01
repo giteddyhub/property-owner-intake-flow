@@ -185,22 +185,25 @@ export const useUserDeletion = () => {
     try {
       console.log('[useUserDeletion] 📡 Calling edge function admin-delete-user');
       
+      // Create the request payload as a properly formatted object
       const requestPayload = {
         targetUserId: userId,
       };
       
-      console.log('[useUserDeletion] Request payload:', requestPayload);
+      console.log('[useUserDeletion] Request payload:', JSON.stringify(requestPayload));
       console.log('[useUserDeletion] Request headers:', {
         'x-admin-token': adminSession.token ? 'present' : 'missing',
         'Content-Type': 'application/json'
       });
 
+      // Use the invoke method with proper body structure
       const { data, error } = await supabase.functions.invoke('admin-delete-user', {
         headers: {
           'x-admin-token': adminSession.token,
           'Content-Type': 'application/json'
         },
-        body: requestPayload,
+        body: JSON.stringify(requestPayload), // Explicitly stringify the body
+        method: 'POST' // Explicitly set method
       });
 
       console.log('[useUserDeletion] 📊 Edge function response received');
