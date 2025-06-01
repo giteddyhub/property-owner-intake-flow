@@ -47,24 +47,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body with improved error handling
+    // Parse request body
     let requestBody;
     try {
-      const bodyText = await req.text();
-      console.log('[admin-delete-user] Raw request body:', bodyText);
-      
-      if (!bodyText || bodyText.trim() === '') {
-        console.error('[admin-delete-user] ❌ Empty request body');
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: 'Request body is required' 
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      requestBody = JSON.parse(bodyText);
+      requestBody = await req.json();
       console.log('[admin-delete-user] Request body parsed successfully:', requestBody);
     } catch (parseError) {
       console.error('[admin-delete-user] ❌ Failed to parse request body:', parseError);

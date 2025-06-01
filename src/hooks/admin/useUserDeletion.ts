@@ -42,23 +42,18 @@ export const useUserDeletion = () => {
 
     try {
       console.log('[useUserDeletion] 📡 Calling edge function admin-delete-user');
-      console.log('[useUserDeletion] Request payload:', {
+      
+      const requestPayload = {
         targetUserId: userId,
-        hasAdminToken: !!adminSession.token
-      });
-
-      const requestBody = JSON.stringify({
-        targetUserId: userId,
-      });
-
-      console.log('[useUserDeletion] Request body stringified:', requestBody);
+      };
+      
+      console.log('[useUserDeletion] Request payload:', requestPayload);
 
       const { data, error } = await supabase.functions.invoke('admin-delete-user', {
         headers: {
           'x-admin-token': adminSession.token,
-          'Content-Type': 'application/json'
         },
-        body: requestBody,
+        body: requestPayload,
       });
 
       console.log('[useUserDeletion] 📊 Edge function response received');
