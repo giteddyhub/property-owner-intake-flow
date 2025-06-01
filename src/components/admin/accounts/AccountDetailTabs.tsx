@@ -10,7 +10,8 @@ import { AccountPropertiesTab } from './tabs/AccountPropertiesTab';
 import { AccountOwnersTab } from './tabs/AccountOwnersTab';
 import { AccountAssignmentsTab } from './tabs/AccountAssignmentsTab';
 import { AccountPaymentsTab } from './tabs/AccountPaymentsTab';
-import { OwnerData, PropertyData, AssignmentData, PaymentData } from '@/types/admin';
+import { AccountActivitiesTab } from './tabs/AccountActivitiesTab';
+import { OwnerData, PropertyData, AssignmentData, PaymentData, UserActivityData } from '@/types/admin';
 
 interface FormSubmission {
   id: string;
@@ -30,7 +31,7 @@ interface AccountDetailTabsProps {
   owners: OwnerData[];
   assignments: AssignmentData[];
   payments: PaymentData[];
-  activities: any[];
+  activities: UserActivityData[];
 }
 
 export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
@@ -47,7 +48,8 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
     paymentsCount: payments.length,
     propertiesCount: properties.length,
     ownersCount: owners.length,
-    assignmentsCount: assignments.length
+    assignmentsCount: assignments.length,
+    activitiesCount: activities.length
   });
   
   console.log(`[AccountDetailTabs] 📝 Submissions breakdown:`, 
@@ -65,7 +67,7 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
   
   return (
     <Tabs defaultValue="properties" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-5">
         <TabsTrigger value="properties">
           Properties ({properties.length})
         </TabsTrigger>
@@ -77,6 +79,9 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
         </TabsTrigger>
         <TabsTrigger value="payments">
           Payments ({payments.length})
+        </TabsTrigger>
+        <TabsTrigger value="activities">
+          Activities ({activities.length})
         </TabsTrigger>
       </TabsList>
       
@@ -94,6 +99,10 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
       
       <TabsContent value="payments">
         <AccountPaymentsTab payments={payments} />
+      </TabsContent>
+
+      <TabsContent value="activities">
+        <AccountActivitiesTab activities={activities} />
       </TabsContent>
     </Tabs>
   );
