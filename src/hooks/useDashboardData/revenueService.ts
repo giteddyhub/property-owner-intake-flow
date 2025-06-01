@@ -3,54 +3,35 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const fetchUserTotalRevenue = async (userId: string): Promise<number> => {
   try {
-    console.log('Fetching total revenue for user:', userId);
+    console.log('Fetching total rental income for user:', userId);
     
-    // First, get all form submissions for this user
-    const { data: submissions, error: submissionsError } = await supabase
-      .from('form_submissions')
-      .select('id')
+    // Get all properties for this user and sum their rental income
+    const { data: properties, error: propertiesError } = await supabase
+      .from('properties')
+      .select('rental_income')
       .eq('user_id', userId);
 
-    if (submissionsError) {
-      console.error('Error fetching user submissions:', submissionsError);
-      throw submissionsError;
+    if (propertiesError) {
+      console.error('Error fetching user properties:', propertiesError);
+      throw propertiesError;
     }
 
-    if (!submissions || submissions.length === 0) {
-      console.log('No submissions found for user, revenue is 0');
+    if (!properties || properties.length === 0) {
+      console.log('No properties found for user, rental income is 0');
       return 0;
     }
 
-    const submissionIds = submissions.map(sub => sub.id);
-
-    // Now get all paid purchases for these submissions
-    const { data: purchases, error: purchasesError } = await supabase
-      .from('purchases')
-      .select('amount')
-      .in('form_submission_id', submissionIds)
-      .eq('payment_status', 'paid');
-
-    if (purchasesError) {
-      console.error('Error fetching user purchases:', purchasesError);
-      throw purchasesError;
-    }
-
-    if (!purchases || purchases.length === 0) {
-      console.log('No paid purchases found for user, revenue is 0');
-      return 0;
-    }
-
-    // Calculate total revenue
-    const totalRevenue = purchases.reduce((sum, purchase) => {
-      const amount = Number(purchase.amount) || 0;
-      return sum + amount;
+    // Calculate total rental income
+    const totalRentalIncome = properties.reduce((sum, property) => {
+      const rentalIncome = Number(property.rental_income) || 0;
+      return sum + rentalIncome;
     }, 0);
 
-    console.log(`Total revenue calculated: €${totalRevenue} from ${purchases.length} purchases`);
-    return totalRevenue;
+    console.log(`Total rental income calculated: €${totalRentalIncome} from ${properties.length} properties`);
+    return totalRentalIncome;
     
   } catch (error) {
-    console.error('Error calculating total revenue:', error);
+    console.error('Error calculating total rental income:', error);
     return 0;
   }
 };

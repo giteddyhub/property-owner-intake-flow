@@ -56,7 +56,7 @@ export const StatsSummaryCards: React.FC<StatsSummaryCardsProps> = ({
         <StatsSummaryCard title="Owners" value={ownersCount} chartColor="#3B82F6" />
       </div>
       <div className="md:col-span-3">
-        <StatsSummaryCard title="Total Revenue" value={formatRevenue(totalRevenue)} chartColor="#8B5CF6" />
+        <StatsSummaryCard title="Total Rental Income" value={formatRevenue(totalRevenue)} chartColor="#8B5CF6" />
       </div>
       <div className="md:col-span-3 lg:col-span-3">
         <TaxFilingCTA userId={userId} />
