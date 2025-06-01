@@ -152,7 +152,7 @@ export const fetchOptimizedAnalyticsData = async (): Promise<OptimizedAnalytics>
       lastChecked: new Date().toISOString()
     },
     userGrowthData: trendData.userGrowthData,
-    submissionTrends: trendData.submissionTrends,
+    sessionTrends: trendData.sessionTrends,
     propertyDistribution: trendData.propertyDistribution,
     revenueMetrics: {
       totalRevenue,
@@ -165,7 +165,7 @@ export const fetchOptimizedAnalyticsData = async (): Promise<OptimizedAnalytics>
     growthMetrics: {
       userGrowthRate: isNaN(growthMetrics.userGrowthRate) ? 0 : growthMetrics.userGrowthRate,
       revenueGrowthRate: isNaN(growthMetrics.revenueGrowthRate) ? 0 : growthMetrics.revenueGrowthRate,
-      submissionGrowthRate: isNaN(growthMetrics.submissionGrowthRate) ? 0 : growthMetrics.submissionGrowthRate
+      sessionGrowthRate: isNaN(growthMetrics.sessionGrowthRate) ? 0 : growthMetrics.sessionGrowthRate
     }
   };
 

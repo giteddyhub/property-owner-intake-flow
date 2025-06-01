@@ -25,24 +25,24 @@ export const calculateGrowthMetrics = ({
     ? Math.round(((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100)
     : currentMonthRevenue > 0 ? 100 : 0;
 
-  // Current month submissions vs previous month for submission growth
-  const currentMonthSubmissions = submissionsResult.filter(s => 
+  // Current month sessions vs previous month for session growth
+  const currentMonthSessions = submissionsResult.filter(s => 
     new Date(s.created_at) >= currentMonth.startOfMonth && 
     new Date(s.created_at) <= currentMonth.endOfMonth
   ).length;
 
-  const previousMonthSubmissions = submissionsResult.filter(s => 
+  const previousMonthSessions = submissionsResult.filter(s => 
     new Date(s.created_at) >= previousMonth.startOfMonth && 
     new Date(s.created_at) <= previousMonth.endOfMonth
   ).length;
 
-  const submissionGrowthRate = previousMonthSubmissions > 0 
-    ? Math.round(((currentMonthSubmissions - previousMonthSubmissions) / previousMonthSubmissions) * 100)
-    : currentMonthSubmissions > 0 ? 100 : 0;
+  const sessionGrowthRate = previousMonthSessions > 0 
+    ? Math.round(((currentMonthSessions - previousMonthSessions) / previousMonthSessions) * 100)
+    : currentMonthSessions > 0 ? 100 : 0;
 
   return {
     userGrowthRate,
     revenueGrowthRate,
-    submissionGrowthRate
+    sessionGrowthRate
   };
 };

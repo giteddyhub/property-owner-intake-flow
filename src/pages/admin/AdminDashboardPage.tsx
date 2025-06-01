@@ -14,7 +14,6 @@ import {
   Activity, 
   BarChart3, 
   Users, 
-  FileText, 
   Home,
   DollarSign,
   TrendingUp,
@@ -69,7 +68,7 @@ const AdminDashboardPage: React.FC = () => {
   const growthMetrics = analytics.growthMetrics || {
     userGrowthRate: 0,
     revenueGrowthRate: 0,
-    submissionGrowthRate: 0
+    sessionGrowthRate: 0
   };
 
   return (
@@ -150,16 +149,16 @@ const AdminDashboardPage: React.FC = () => {
           />
 
           <DashboardWidget
-            title="Form Submissions"
+            title="User Sessions"
             value={analytics.totalSubmissions}
             change={{
-              value: growthMetrics.submissionGrowthRate,
-              type: growthMetrics.submissionGrowthRate >= 0 ? 'increase' : 'decrease',
+              value: growthMetrics.sessionGrowthRate,
+              type: growthMetrics.sessionGrowthRate >= 0 ? 'increase' : 'decrease',
               period: 'this month'
             }}
             status={analytics.pendingSubmissions > analytics.completedSubmissions ? 'warning' : 'success'}
-            icon={<FileText className="h-4 w-4" />}
-            description={`${analytics.completedSubmissions} completed`}
+            icon={<Activity className="h-4 w-4" />}
+            description={`${analytics.completedSubmissions} completed sessions`}
           />
 
           <DashboardWidget

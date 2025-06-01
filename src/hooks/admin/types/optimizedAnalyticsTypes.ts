@@ -21,10 +21,10 @@ export interface OptimizedAnalytics {
   userGrowthData: Array<{
     date: string;
     users: number;
-    submissions: number;
+    sessions: number;
     properties: number;
   }>;
-  submissionTrends: Array<{
+  sessionTrends: Array<{
     month: string;
     completed: number;
     pending: number;
@@ -46,6 +46,6 @@ export interface OptimizedAnalytics {
   growthMetrics: {
     userGrowthRate: number;
     revenueGrowthRate: number;
-    submissionGrowthRate: number;
+    sessionGrowthRate: number;
   };
 }

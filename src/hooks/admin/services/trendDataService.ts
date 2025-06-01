@@ -11,13 +11,13 @@ export const generateTrendData = async (
     return {
       date: date.toISOString().split('T')[0],
       users: Math.floor(userMetrics.totalUsers * (0.8 + i * 0.04)),
-      submissions: Math.floor(totalSubmissions * (0.7 + i * 0.05)),
+      sessions: Math.floor(totalSubmissions * (0.7 + i * 0.05)),
       properties: Math.floor(userMetrics.totalProperties * (0.75 + i * 0.04))
     };
   });
 
-  // Generate submission trends for the last 6 months
-  const submissionTrends = Array.from({ length: 6 }, (_, i) => {
+  // Generate session trends for the last 6 months
+  const sessionTrends = Array.from({ length: 6 }, (_, i) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (5 - i));
     const monthName = date.toLocaleDateString('en-US', { month: 'short' });
@@ -54,7 +54,7 @@ export const generateTrendData = async (
 
   return {
     userGrowthData,
-    submissionTrends,
+    sessionTrends,
     propertyDistribution
   };
 };
