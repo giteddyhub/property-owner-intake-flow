@@ -12,11 +12,18 @@ export const useAccountsData = () => {
   const [itemsPerPage] = useState(10);
   const { users, loading, error, refetch } = useCleanAdminData();
 
-  // Convert UserProfile to AccountData format for compatibility
-  const accounts: AccountData[] = users.map(user => ({
-    ...user,
-    is_admin: false // No longer tracking admin status in UI
-  }));
+  // Convert UserProfile to AccountData format for compatibility and sort by creation date
+  const accounts: AccountData[] = users
+    .map(user => ({
+      ...user,
+      is_admin: false // No longer tracking admin status in UI
+    }))
+    .sort((a, b) => {
+      // Sort by created_at in descending order (most recent first)
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return dateB.getTime() - dateA.getTime();
+    });
 
   // Filter accounts based on search query
   const filteredAccounts = accounts.filter(account => {
