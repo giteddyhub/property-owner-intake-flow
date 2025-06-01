@@ -127,14 +127,14 @@ const AdminDashboardPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Key Metrics Widgets */}
+        {/* Key Metrics Widgets with Accurate Growth Calculations */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <DashboardWidget
             title="Total Users"
             value={analytics.totalUsers}
             change={{
-              value: Math.round((analytics.newUsersThisMonth / Math.max(analytics.totalUsers, 1)) * 100),
-              type: 'increase',
+              value: analytics.growthMetrics.userGrowthRate,
+              type: analytics.growthMetrics.userGrowthRate >= 0 ? 'increase' : 'decrease',
               period: 'this month'
             }}
             status="success"
@@ -146,9 +146,9 @@ const AdminDashboardPage: React.FC = () => {
             title="Form Submissions"
             value={analytics.totalSubmissions}
             change={{
-              value: Math.round((analytics.completedSubmissions / Math.max(analytics.totalSubmissions, 1)) * 100),
-              type: 'increase',
-              period: 'completion rate'
+              value: analytics.growthMetrics.submissionGrowthRate,
+              type: analytics.growthMetrics.submissionGrowthRate >= 0 ? 'increase' : 'decrease',
+              period: 'this month'
             }}
             status={analytics.pendingSubmissions > analytics.completedSubmissions ? 'warning' : 'success'}
             icon={<FileText className="h-4 w-4" />}
@@ -167,8 +167,8 @@ const AdminDashboardPage: React.FC = () => {
             title="Revenue"
             value={`€${analytics.totalRevenue.toLocaleString()}`}
             change={{
-              value: analytics.monthlyRevenue > 0 ? 15 : 0,
-              type: 'increase',
+              value: Math.abs(analytics.growthMetrics.revenueGrowthRate),
+              type: analytics.growthMetrics.revenueGrowthRate >= 0 ? 'increase' : 'decrease',
               period: 'this month'
             }}
             status="success"
@@ -202,16 +202,25 @@ const AdminDashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Quick Statistics</CardTitle>
+                  <CardTitle>Growth Metrics</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm">User Growth Rate</span>
                       <div className="flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-green-600" />
-                        <span className="text-sm text-green-600">
-                          +{Math.round((analytics.newUsersThisMonth / Math.max(analytics.totalUsers, 1)) * 100)}%
+                        <TrendingUp className={`h-3 w-3 ${analytics.growthMetrics.userGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                        <span className={`text-sm ${analytics.growthMetrics.userGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {analytics.growthMetrics.userGrowthRate >= 0 ? '+' : ''}{analytics.growthMetrics.userGrowthRate}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Revenue Growth Rate</span>
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className={`h-3 w-3 ${analytics.growthMetrics.revenueGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                        <span className={`text-sm ${analytics.growthMetrics.revenueGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {analytics.growthMetrics.revenueGrowthRate >= 0 ? '+' : ''}{analytics.growthMetrics.revenueGrowthRate}%
                         </span>
                       </div>
                     </div>
@@ -227,40 +236,39 @@ const AdminDashboardPage: React.FC = () => {
                         {Math.round((analytics.activeUsers / Math.max(analytics.totalUsers, 1)) * 100)}%
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Monthly Revenue</span>
-                      <span className="text-sm text-muted-foreground">
-                        €{analytics.monthlyRevenue.toLocaleString()}
-                      </span>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Performance Insights</CardTitle>
+                  <CardTitle>Revenue Metrics</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="text-sm">
-                      <div className="flex items-center justify-between mb-2">
-                        <span>Database Query Performance</span>
-                        <Badge variant={analytics.systemHealth.apiResponseTime < 500 ? 'default' : 'secondary'}>
-                          {analytics.systemHealth.apiResponseTime < 500 ? 'Excellent' : 'Good'}
-                        </Badge>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-green-600 h-2 rounded-full" 
-                          style={{ width: `${Math.min((1000 - analytics.systemHealth.apiResponseTime) / 10, 100)}%` }}
-                        />
-                      </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Current Month Revenue</span>
+                      <span className="text-sm font-medium">
+                        €{analytics.revenueMetrics.monthlyRevenue.toLocaleString()}
+                      </span>
                     </div>
-                    <div className="text-sm">
-                      <p className="text-muted-foreground">
-                        Optimized with {analytics.recentActivities.length} recent activities tracked
-                      </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Previous Month Revenue</span>
+                      <span className="text-sm text-muted-foreground">
+                        €{analytics.revenueMetrics.previousMonthRevenue.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Average Order Value</span>
+                      <span className="text-sm text-muted-foreground">
+                        €{analytics.revenueMetrics.averageOrderValue.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Conversion Rate</span>
+                      <span className="text-sm text-muted-foreground">
+                        {analytics.revenueMetrics.conversionRate.toFixed(1)}%
+                      </span>
                     </div>
                   </div>
                 </CardContent>
