@@ -6,7 +6,6 @@ import { ActivityLogger } from '@/services/activityLogger';
 
 export const useAuthActions = () => {
   const [loading, setLoading] = useState(false);
-  // Remove the setUser dependency since the auth state is managed by the context
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
@@ -27,7 +26,7 @@ export const useAuthActions = () => {
       if (data.user) {
         console.log('User signed up successfully:', data.user.id);
         
-        // Log registration activity
+        // Enhanced registration activity logging
         await ActivityLogger.logUserRegistration(data.user.id, email);
         
         toast.success('Account created! Please check your email to verify your account.');
@@ -57,8 +56,8 @@ export const useAuthActions = () => {
       if (data.user) {
         console.log('User signed in successfully:', data.user.id);
         
-        // Log login activity
-        await ActivityLogger.logUserLogin(data.user.id);
+        // Enhanced login activity logging
+        await ActivityLogger.logUserLogin(data.user.id, email);
         
         toast.success('Welcome back!');
       }
@@ -154,9 +153,9 @@ export const useAuthActions = () => {
 
         if (profileError) throw profileError;
 
-        // Log profile update activity
+        // Enhanced profile update activity logging
         const updatedFields = Object.keys(updates).filter(key => updates[key as keyof typeof updates]);
-        await ActivityLogger.logProfileUpdate(user.id, updatedFields);
+        await ActivityLogger.logProfileUpdate(user.id, updatedFields, user.email);
 
         toast.success('Profile updated successfully');
         

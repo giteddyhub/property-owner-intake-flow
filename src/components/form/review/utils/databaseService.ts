@@ -6,6 +6,7 @@ import { saveAssignments } from './assignmentService';
 import { Owner, Property, OwnerPropertyAssignment } from '@/types/form';
 import { submissionTracker } from './submissionTracker';
 import { toast } from 'sonner';
+import { ActivityLogger } from '@/services/activityLogger';
 
 /**
  * Enhanced activity logging function with better error handling
@@ -191,6 +192,12 @@ export const saveFormData = async (
           timestamp: new Date().toISOString()
         }
       );
+
+      // Log individual owner creations with enhanced ActivityLogger
+      for (const owner of owners) {
+        const ownerName = `${owner.firstName} ${owner.lastName}`;
+        await ActivityLogger.logOwnerCreated(userId, owner.id, ownerName);
+      }
     }
     
     // Save properties and get ID mappings
@@ -214,6 +221,11 @@ export const saveFormData = async (
           timestamp: new Date().toISOString()
         }
       );
+
+      // Log individual property creations with enhanced ActivityLogger
+      for (const property of properties) {
+        await ActivityLogger.logPropertyCreated(userId, property.id, property.label, property.propertyType);
+      }
     }
     
     // Save owner-property assignments
@@ -236,7 +248,21 @@ export const saveFormData = async (
           timestamp: new Date().toISOString()
         }
       );
+
+      // Log individual assignment creations with enhanced ActivityLogger
+      for (const assignment of assignments) {
+        const owner = owners.find(o => o.id === assignment.ownerId);
+        const property = properties.find(p => p.id === assignment.propertyId);
+        
+        const ownerName = owner ? `${owner.firstName} ${owner.lastName}` : 'Unknown Owner';
+        const propertyLabel = property?.label || 'Unknown Property';
+        
+        await ActivityLogger.logAssignmentCreated(userId, assignment.propertyId + assignment.ownerId, ownerName, propertyLabel);
+      }
     }
+
+    // Log the complete form submission
+    await ActivityLogger.logFormSubmission(userId, submissionId, properties.length, owners.length);
     
     return { success: true };
   } catch (error) {

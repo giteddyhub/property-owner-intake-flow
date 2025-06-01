@@ -198,20 +198,9 @@ export const useDashboardData = () => {
 
       if (error) throw error;
 
-      // Log owner creation activity
-      await ActivityLogger.log({
-        userId: user.id,
-        activityType: 'owner_added',
-        activityDescription: `Added property owner: ${ownerData.firstName} ${ownerData.lastName}`,
-        entityType: 'owner',
-        entityId: newOwner.id,
-        metadata: {
-          owner_name: `${ownerData.firstName} ${ownerData.lastName}`,
-          italian_tax_code: ownerData.italianTaxCode,
-          is_resident_in_italy: ownerData.isResidentInItaly,
-          creation_timestamp: new Date().toISOString()
-        }
-      });
+      // Enhanced owner creation activity logging
+      const ownerName = `${ownerData.firstName} ${ownerData.lastName}`;
+      await ActivityLogger.logOwnerCreated(user.id, newOwner.id, ownerName);
 
       setOwners(prev => [...prev, newOwner]);
       toast.success('Owner added successfully');
@@ -248,21 +237,13 @@ export const useDashboardData = () => {
 
       if (error) throw error;
 
-      // Log property creation activity
-      await ActivityLogger.log({
-        userId: user.id,
-        activityType: 'property_added',
-        activityDescription: `Added property: ${propertyData.label}`,
-        entityType: 'property',
-        entityId: newProperty.id,
-        metadata: {
-          property_label: propertyData.label,
-          property_type: propertyData.propertyType,
-          address_comune: propertyData.address.comune,
-          activity_2024: propertyData.activity2024,
-          creation_timestamp: new Date().toISOString()
-        }
-      });
+      // Enhanced property creation activity logging
+      await ActivityLogger.logPropertyCreated(
+        user.id, 
+        newProperty.id, 
+        propertyData.label, 
+        propertyData.propertyType
+      );
 
       setProperties(prev => [...prev, newProperty]);
       toast.success('Property added successfully');
@@ -299,6 +280,15 @@ export const useDashboardData = () => {
         });
 
       if (error) throw error;
+
+      // Get owner and property names for activity logging
+      const owner = owners.find(o => o.id === assignmentData.ownerId);
+      const property = properties.find(p => p.id === assignmentData.propertyId);
+      
+      const ownerName = owner ? `${owner.firstName} ${owner.lastName}` : 'Unknown Owner';
+      const propertyLabel = property?.label || 'Unknown Property';
+
+      await ActivityLogger.logAssignmentCreated(user.id, assignmentId, ownerName, propertyLabel);
 
       const newAssignment: AssignmentWithId = {
         id: assignmentId,
@@ -338,6 +328,11 @@ export const useDashboardData = () => {
 
       if (error) throw error;
 
+      // Enhanced owner update activity logging
+      const ownerName = `${updatedOwner.firstName} ${updatedOwner.lastName}`;
+      const updatedFields = Object.keys(updates);
+      await ActivityLogger.logOwnerUpdated(user.id, id, ownerName, updatedFields);
+
       setOwners(prev =>
         prev.map(owner => (owner.id === id ? { ...owner, ...updates } : owner))
       );
@@ -372,6 +367,10 @@ export const useDashboardData = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Enhanced property update activity logging
+      const updatedFields = Object.keys(updates);
+      await ActivityLogger.logPropertyUpdated(user.id, id, updatedProperty.label, updatedFields);
 
       setProperties(prev =>
         prev.map(property => (property.id === id ? { ...property, ...updates } : property))
@@ -411,6 +410,18 @@ export const useDashboardData = () => {
 
       if (error) throw error;
 
+      // Get current assignment for activity logging
+      const currentAssignment = assignments.find(a => a.id === id);
+      if (currentAssignment) {
+        const owner = owners.find(o => o.id === currentAssignment.ownerId);
+        const property = properties.find(p => p.id === currentAssignment.propertyId);
+        
+        const ownerName = owner ? `${owner.firstName} ${owner.lastName}` : 'Unknown Owner';
+        const propertyLabel = property?.label || 'Unknown Property';
+
+        await ActivityLogger.logAssignmentUpdated(user.id, id, ownerName, propertyLabel);
+      }
+
       setAssignments(prev =>
         prev.map(assignment => (assignment.id === id ? { ...assignment, ...updates } : assignment))
       );
@@ -430,12 +441,19 @@ export const useDashboardData = () => {
     }
 
     try {
+      // Get owner data for activity logging before deletion
+      const ownerToDelete = owners.find(o => o.id === id);
+      const ownerName = ownerToDelete ? `${ownerToDelete.firstName} ${ownerToDelete.lastName}` : 'Unknown Owner';
+
       const { error } = await supabase
         .from('owners')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      // Enhanced owner deletion activity logging
+      await ActivityLogger.logOwnerDeleted(user.id, id, ownerName);
 
       setOwners(prev => prev.filter(owner => owner.id !== id));
       toast.success('Owner deleted successfully');
@@ -454,12 +472,19 @@ export const useDashboardData = () => {
     }
 
     try {
+      // Get property data for activity logging before deletion
+      const propertyToDelete = properties.find(p => p.id === id);
+      const propertyLabel = propertyToDelete?.label || 'Unknown Property';
+
       const { error } = await supabase
         .from('properties')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      // Enhanced property deletion activity logging
+      await ActivityLogger.logPropertyDeleted(user.id, id, propertyLabel);
 
       setProperties(prev => prev.filter(property => property.id !== id));
       toast.success('Property deleted successfully');
@@ -478,12 +503,28 @@ export const useDashboardData = () => {
     }
 
     try {
+      // Get assignment data for activity logging before deletion
+      const assignmentToDelete = assignments.find(a => a.id === id);
+      let ownerName = 'Unknown Owner';
+      let propertyLabel = 'Unknown Property';
+
+      if (assignmentToDelete) {
+        const owner = owners.find(o => o.id === assignmentToDelete.ownerId);
+        const property = properties.find(p => p.id === assignmentToDelete.propertyId);
+        
+        ownerName = owner ? `${owner.firstName} ${owner.lastName}` : 'Unknown Owner';
+        propertyLabel = property?.label || 'Unknown Property';
+      }
+
       const { error } = await supabase
         .from('owner_property_assignments')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      // Enhanced assignment deletion activity logging
+      await ActivityLogger.logAssignmentDeleted(user.id, id, ownerName, propertyLabel);
 
       setAssignments(prev => prev.filter(assignment => assignment.id !== id));
       toast.success('Assignment deleted successfully');
