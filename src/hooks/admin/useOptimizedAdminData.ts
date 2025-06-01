@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -114,7 +115,6 @@ export const useOptimizedAdminData = () => {
       // Get current and previous month boundaries
       const currentMonth = getMonthBoundaries(0);
       const previousMonth = getMonthBoundaries(1);
-      const lastMonth = getMonthBoundaries(1);
 
       console.log('📅 Month boundaries:', {
         currentMonth: { start: currentMonth.startOfMonth, end: currentMonth.endOfMonth },
@@ -123,7 +123,7 @@ export const useOptimizedAdminData = () => {
 
       console.log('🚀 STARTING REVENUE DEBUG - Fetching all payments...');
 
-      // Execute all queries with enhanced error handling
+      // Execute queries with enhanced error handling - fix the profiles queries
       const [
         userSummaryResult,
         submissionsResult,
@@ -131,64 +131,81 @@ export const useOptimizedAdminData = () => {
         paymentsResult,
         currentMonthPaymentsResult,
         previousMonthPaymentsResult,
-        currentMonthUsersResult,
-        previousMonthUsersResult,
         recentActivitiesResult
       ] = await Promise.all([
         supabase
           .from('admin_user_summary')
           .select('*')
-          .order('created_at', { ascending: false }),
+          .order('created_at', { ascending: false })
+          .then(result => {
+            if (result.error) console.error('❌ USER SUMMARY ERROR:', result.error);
+            return result;
+          }),
         
         supabase
           .from('form_submissions')
           .select('id, state, submitted_at, created_at')
-          .order('submitted_at', { ascending: false }),
+          .order('submitted_at', { ascending: false })
+          .then(result => {
+            if (result.error) console.error('❌ SUBMISSIONS ERROR:', result.error);
+            return result;
+          }),
         
         supabase
           .from('user_activities')
           .select('user_id, created_at')
           .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-          .order('created_at', { ascending: false }),
+          .order('created_at', { ascending: false })
+          .then(result => {
+            if (result.error) console.error('❌ ACTIVITIES ERROR:', result.error);
+            return result;
+          }),
         
         // Enhanced payments query with detailed selection
         supabase
           .from('purchases')
           .select('id, amount, created_at, payment_status, form_submission_id, currency, has_document_retrieval, stripe_session_id')
           .eq('payment_status', 'paid')
-          .order('created_at', { ascending: false }),
+          .order('created_at', { ascending: false })
+          .then(result => {
+            if (result.error) console.error('❌ ALL PAYMENTS ERROR:', result.error);
+            console.log('📋 ALL PAYMENTS RESULT:', result);
+            return result;
+          }),
 
         supabase
           .from('purchases')
           .select('id, amount, created_at, payment_status')
           .eq('payment_status', 'paid')
           .gte('created_at', currentMonth.startOfMonth.toISOString())
-          .lte('created_at', currentMonth.endOfMonth.toISOString()),
+          .lte('created_at', currentMonth.endOfMonth.toISOString())
+          .then(result => {
+            if (result.error) console.error('❌ CURRENT MONTH PAYMENTS ERROR:', result.error);
+            console.log('📋 CURRENT MONTH PAYMENTS RESULT:', result);
+            return result;
+          }),
 
         supabase
           .from('purchases')
           .select('id, amount, created_at, payment_status')
           .eq('payment_status', 'paid')
           .gte('created_at', previousMonth.startOfMonth.toISOString())
-          .lte('created_at', previousMonth.endOfMonth.toISOString()),
-
-        supabase
-          .from('profiles')
-          .select('id, created_at', { count: 'exact', head: true })
-          .gte('created_at', currentMonth.startOfMonth.toISOString())
-          .lte('created_at', currentMonth.endOfMonth.toISOString()),
-
-        supabase
-          .from('profiles')
-          .select('id, created_at', { count: 'exact', head: true })
-          .gte('created_at', previousMonth.startOfMonth.toISOString())
-          .lte('created_at', previousMonth.endOfMonth.toISOString()),
+          .lte('created_at', previousMonth.endOfMonth.toISOString())
+          .then(result => {
+            if (result.error) console.error('❌ PREVIOUS MONTH PAYMENTS ERROR:', result.error);
+            console.log('📋 PREVIOUS MONTH PAYMENTS RESULT:', result);
+            return result;
+          }),
 
         supabase
           .from('user_activities')
           .select('id, user_id, activity_type, created_at')
           .order('created_at', { ascending: false })
           .limit(10)
+          .then(result => {
+            if (result.error) console.error('❌ RECENT ACTIVITIES ERROR:', result.error);
+            return result;
+          })
       ]);
 
       const endTime = Date.now();
@@ -296,7 +313,7 @@ export const useOptimizedAdminData = () => {
       
       console.log(`📊 Display Monthly Revenue: €${displayMonthlyRevenue}`);
 
-      // Calculate metrics using the optimized view data
+      // Calculate metrics using the optimized view data - with null checks
       const userSummaries = userSummaryResult.data || [];
       const totalUsers = userSummaries.length;
       
@@ -304,9 +321,37 @@ export const useOptimizedAdminData = () => {
       const totalOwners = userSummaries.reduce((sum, user) => sum + (user.total_owners || 0), 0);
       const totalProperties = userSummaries.reduce((sum, user) => sum + (user.total_properties || 0), 0);
       
-      // User growth calculations
-      const newUsersThisMonth = currentMonthUsersResult.count || 0;
-      const newUsersPreviousMonth = previousMonthUsersResult.count || 0;
+      // Get user counts with proper error handling
+      let newUsersThisMonth = 0;
+      let newUsersPreviousMonth = 0;
+      
+      try {
+        // Use the profiles table directly instead of count queries that might be causing 404
+        const { data: allProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, created_at')
+          .order('created_at', { ascending: false });
+          
+        if (profilesError) {
+          console.error('❌ PROFILES QUERY ERROR:', profilesError);
+        } else if (allProfiles) {
+          // Calculate user counts from the data
+          newUsersThisMonth = allProfiles.filter(profile => {
+            const createdAt = new Date(profile.created_at);
+            return createdAt >= currentMonth.startOfMonth && createdAt <= currentMonth.endOfMonth;
+          }).length;
+          
+          newUsersPreviousMonth = allProfiles.filter(profile => {
+            const createdAt = new Date(profile.created_at);
+            return createdAt >= previousMonth.startOfMonth && createdAt <= previousMonth.endOfMonth;
+          }).length;
+        }
+      } catch (profileError) {
+        console.error('❌ Error fetching profiles for user counts:', profileError);
+        // Use fallback values
+        newUsersThisMonth = 0;
+        newUsersPreviousMonth = 0;
+      }
       
       const totalSubmissions = submissionsResult.data?.length || 0;
       const completedSubmissions = submissionsResult.data?.filter(s => s.state === 'completed').length || 0;
@@ -370,14 +415,14 @@ export const useOptimizedAdminData = () => {
         };
       });
 
-      // Property distribution
+      // Property distribution with null safety
       const { data: propertyTypes } = await supabase
         .from('properties')
         .select('property_type')
         .order('property_type');
 
-      const propertyDistribution = propertyTypes?.reduce((acc, property) => {
-        const type = property.property_type || 'Unknown';
+      const propertyDistribution = (propertyTypes || []).reduce((acc, property) => {
+        const type = property?.property_type || 'Unknown';
         const existing = acc.find(p => p.type === type);
         if (existing) {
           existing.count++;
@@ -385,7 +430,7 @@ export const useOptimizedAdminData = () => {
           acc.push({ type, count: 1, percentage: 0 });
         }
         return acc;
-      }, [] as Array<{ type: string; count: number; percentage: number }>) || [];
+      }, [] as Array<{ type: string; count: number; percentage: number }>);
 
       // Calculate percentages
       propertyDistribution.forEach(item => {
@@ -406,8 +451,8 @@ export const useOptimizedAdminData = () => {
         pendingSubmissions,
         totalProperties,
         totalOwners,
-        totalRevenue, // Use the correctly calculated total revenue
-        monthlyRevenue: displayMonthlyRevenue, // Use the corrected monthly revenue
+        totalRevenue,
+        monthlyRevenue: displayMonthlyRevenue,
         recentActivities: recentActivitiesResult.data || [],
         systemHealth: {
           databaseStatus,
