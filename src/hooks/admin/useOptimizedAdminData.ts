@@ -66,7 +66,44 @@ export const useOptimizedAdminData = () => {
     return { startOfMonth, endOfMonth };
   };
 
-  // Optimized query function with proper growth calculations
+  // Enhanced amount parsing with detailed logging
+  const parsePaymentAmount = (payment: any, index: number) => {
+    console.log(`🔍 [Payment ${index + 1}] Raw payment data:`, {
+      id: payment?.id,
+      amount: payment?.amount,
+      amountType: typeof payment?.amount,
+      status: payment?.payment_status,
+      fullPayment: payment
+    });
+
+    if (!payment || payment.amount === null || payment.amount === undefined) {
+      console.error(`❌ [Payment ${index + 1}] Invalid payment or null amount:`, payment);
+      return 0;
+    }
+
+    let numericAmount: number;
+    
+    if (typeof payment.amount === 'string') {
+      numericAmount = parseFloat(payment.amount);
+      console.log(`🔄 [Payment ${index + 1}] Parsed string "${payment.amount}" to number: ${numericAmount}`);
+    } else if (typeof payment.amount === 'number') {
+      numericAmount = payment.amount;
+      console.log(`✅ [Payment ${index + 1}] Amount already number: ${numericAmount}`);
+    } else {
+      console.error(`❌ [Payment ${index + 1}] Unexpected amount type:`, typeof payment.amount, payment.amount);
+      return 0;
+    }
+
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      console.error(`❌ [Payment ${index + 1}] Invalid numeric amount: ${numericAmount} (isNaN: ${isNaN(numericAmount)}, isZeroOrNegative: ${numericAmount <= 0})`);
+      return 0;
+    }
+
+    console.log(`✅ [Payment ${index + 1}] Valid amount: ${numericAmount}`);
+    return numericAmount;
+  };
+
+  // Optimized query function with comprehensive error handling and logging
   const fetchOptimizedAnalytics = useCallback(async () => {
     const startTime = Date.now();
     
@@ -84,7 +121,9 @@ export const useOptimizedAdminData = () => {
         previousMonth: { start: previousMonth.startOfMonth, end: previousMonth.endOfMonth }
       });
 
-      // Use the admin_user_summary view for aggregated user data
+      console.log('🚀 STARTING REVENUE DEBUG - Fetching all payments...');
+
+      // Execute all queries with enhanced error handling
       const [
         userSummaryResult,
         submissionsResult,
@@ -96,63 +135,55 @@ export const useOptimizedAdminData = () => {
         previousMonthUsersResult,
         recentActivitiesResult
       ] = await Promise.all([
-        // Leverages new view for user summary data
         supabase
           .from('admin_user_summary')
           .select('*')
           .order('created_at', { ascending: false }),
         
-        // Optimized submissions query
         supabase
           .from('form_submissions')
           .select('id, state, submitted_at, created_at')
           .order('submitted_at', { ascending: false }),
         
-        // Recent user activities for active user calculation
         supabase
           .from('user_activities')
           .select('user_id, created_at')
           .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
           .order('created_at', { ascending: false }),
         
-        // All completed payments - using 'paid' status
+        // Enhanced payments query with detailed selection
         supabase
           .from('purchases')
-          .select('amount, created_at, payment_status, form_submission_id')
+          .select('id, amount, created_at, payment_status, form_submission_id, currency, has_document_retrieval, stripe_session_id')
           .eq('payment_status', 'paid')
           .order('created_at', { ascending: false }),
 
-        // Current month payments
         supabase
           .from('purchases')
-          .select('amount, created_at')
+          .select('id, amount, created_at, payment_status')
           .eq('payment_status', 'paid')
           .gte('created_at', currentMonth.startOfMonth.toISOString())
           .lte('created_at', currentMonth.endOfMonth.toISOString()),
 
-        // Previous month payments for growth calculation
         supabase
           .from('purchases')
-          .select('amount, created_at')
+          .select('id, amount, created_at, payment_status')
           .eq('payment_status', 'paid')
           .gte('created_at', previousMonth.startOfMonth.toISOString())
           .lte('created_at', previousMonth.endOfMonth.toISOString()),
 
-        // Current month new users
         supabase
           .from('profiles')
           .select('id, created_at', { count: 'exact', head: true })
           .gte('created_at', currentMonth.startOfMonth.toISOString())
           .lte('created_at', currentMonth.endOfMonth.toISOString()),
 
-        // Previous month new users
         supabase
           .from('profiles')
           .select('id, created_at', { count: 'exact', head: true })
           .gte('created_at', previousMonth.startOfMonth.toISOString())
           .lte('created_at', previousMonth.endOfMonth.toISOString()),
 
-        // Recent activities for system health
         supabase
           .from('user_activities')
           .select('id, user_id, activity_type, created_at')
@@ -163,20 +194,107 @@ export const useOptimizedAdminData = () => {
       const endTime = Date.now();
       const responseTime = endTime - startTime;
 
-      // Validate results
-      if (userSummaryResult.error) throw userSummaryResult.error;
-      if (submissionsResult.error) throw submissionsResult.error;
-      if (activitiesResult.error) throw activitiesResult.error;
-      if (paymentsResult.error) throw paymentsResult.error;
-      if (currentMonthPaymentsResult.error) throw currentMonthPaymentsResult.error;
-      if (previousMonthPaymentsResult.error) throw previousMonthPaymentsResult.error;
+      // Enhanced error checking with specific error details
+      console.log('📊 QUERY RESULTS ANALYSIS:');
+      
+      if (paymentsResult.error) {
+        console.error('❌ PAYMENTS QUERY ERROR:', paymentsResult.error);
+        throw new Error(`Payments query failed: ${paymentsResult.error.message}`);
+      }
+      
+      if (currentMonthPaymentsResult.error) {
+        console.error('❌ CURRENT MONTH PAYMENTS QUERY ERROR:', currentMonthPaymentsResult.error);
+        throw new Error(`Current month payments query failed: ${currentMonthPaymentsResult.error.message}`);
+      }
+      
+      if (previousMonthPaymentsResult.error) {
+        console.error('❌ PREVIOUS MONTH PAYMENTS QUERY ERROR:', previousMonthPaymentsResult.error);
+        throw new Error(`Previous month payments query failed: ${previousMonthPaymentsResult.error.message}`);
+      }
 
-      console.log('💳 Payment queries results:', {
-        totalPayments: paymentsResult.data?.length || 0,
-        currentMonthPayments: currentMonthPaymentsResult.data?.length || 0,
-        previousMonthPayments: previousMonthPaymentsResult.data?.length || 0,
-        allPaymentsData: paymentsResult.data
+      // Detailed payments data analysis
+      const allPayments = paymentsResult.data || [];
+      const currentMonthPayments = currentMonthPaymentsResult.data || [];
+      const previousMonthPayments = previousMonthPaymentsResult.data || [];
+
+      console.log('💳 PAYMENTS DATA RETRIEVED:');
+      console.log(`  📈 Total payments found: ${allPayments.length}`);
+      console.log(`  📅 Current month payments: ${currentMonthPayments.length}`);
+      console.log(`  📅 Previous month payments: ${previousMonthPayments.length}`);
+
+      if (allPayments.length > 0) {
+        console.log('💰 DETAILED PAYMENT BREAKDOWN:');
+        allPayments.forEach((payment, index) => {
+          console.log(`  Payment ${index + 1}:`, {
+            id: payment.id,
+            amount: payment.amount,
+            amountType: typeof payment.amount,
+            status: payment.payment_status,
+            date: payment.created_at,
+            submissionId: payment.form_submission_id
+          });
+        });
+      } else {
+        console.warn('⚠️ NO PAYMENTS FOUND IN DATABASE!');
+      }
+
+      // Enhanced revenue calculation with step-by-step logging
+      console.log('🧮 STARTING REVENUE CALCULATIONS...');
+      
+      let totalRevenue = 0;
+      let validPaymentCount = 0;
+      
+      allPayments.forEach((payment, index) => {
+        const amount = parsePaymentAmount(payment, index);
+        if (amount > 0) {
+          totalRevenue += amount;
+          validPaymentCount++;
+          console.log(`💰 Added €${amount} to total. Running total: €${totalRevenue}`);
+        }
       });
+
+      console.log(`📊 TOTAL REVENUE CALCULATION COMPLETE:`, {
+        totalPayments: allPayments.length,
+        validPayments: validPaymentCount,
+        totalRevenue: totalRevenue,
+        formattedTotal: `€${totalRevenue.toLocaleString()}`
+      });
+
+      // Current month revenue calculation
+      let currentMonthRevenue = 0;
+      let currentMonthValidCount = 0;
+      
+      currentMonthPayments.forEach((payment, index) => {
+        const amount = parsePaymentAmount(payment, index);
+        if (amount > 0) {
+          currentMonthRevenue += amount;
+          currentMonthValidCount++;
+          console.log(`📅 Current month: Added €${amount}. Running total: €${currentMonthRevenue}`);
+        }
+      });
+
+      // Previous month revenue calculation
+      let previousMonthRevenue = 0;
+      let previousMonthValidCount = 0;
+      
+      previousMonthPayments.forEach((payment, index) => {
+        const amount = parsePaymentAmount(payment, index);
+        if (amount > 0) {
+          previousMonthRevenue += amount;
+          previousMonthValidCount++;
+          console.log(`📅 Previous month: Added €${amount}. Running total: €${previousMonthRevenue}`);
+        }
+      });
+
+      console.log('💰 FINAL REVENUE SUMMARY:');
+      console.log(`  🏆 Total Revenue: €${totalRevenue} (from ${validPaymentCount} payments)`);
+      console.log(`  📅 Current Month: €${currentMonthRevenue} (from ${currentMonthValidCount} payments)`);
+      console.log(`  📅 Previous Month: €${previousMonthRevenue} (from ${previousMonthValidCount} payments)`);
+
+      // Use current month revenue if available, otherwise fall back to total revenue for display
+      const displayMonthlyRevenue = currentMonthRevenue > 0 ? currentMonthRevenue : totalRevenue;
+      
+      console.log(`📊 Display Monthly Revenue: €${displayMonthlyRevenue}`);
 
       // Calculate metrics using the optimized view data
       const userSummaries = userSummaryResult.data || [];
@@ -186,41 +304,6 @@ export const useOptimizedAdminData = () => {
       const totalOwners = userSummaries.reduce((sum, user) => sum + (user.total_owners || 0), 0);
       const totalProperties = userSummaries.reduce((sum, user) => sum + (user.total_properties || 0), 0);
       
-      // Calculate revenue with proper filtering of valid amounts - FIXED LOGIC
-      const allPayments = paymentsResult.data || [];
-      console.log('🔍 All payments for revenue calculation:', allPayments);
-      
-      const totalRevenue = allPayments.reduce((sum, payment) => {
-        const amount = Number(payment.amount || 0);
-        console.log(`💰 Processing payment: amount: ${payment.amount}, parsed: ${amount}`);
-        return sum + (isNaN(amount) ? 0 : amount);
-      }, 0);
-
-      // For monthly revenue, let's use a more flexible approach
-      // Since we might not have current month data, let's show the most recent month's revenue
-      const currentMonthRevenue = (currentMonthPaymentsResult.data || []).reduce((sum, payment) => {
-        const amount = Number(payment.amount || 0);
-        return sum + (isNaN(amount) ? 0 : amount);
-      }, 0);
-
-      const previousMonthRevenue = (previousMonthPaymentsResult.data || []).reduce((sum, payment) => {
-        const amount = Number(payment.amount || 0);
-        return sum + (isNaN(amount) ? 0 : amount);
-      }, 0);
-
-      // If current month revenue is 0, let's use the total revenue as the display value
-      // This handles the case where payments are from previous months
-      const displayMonthlyRevenue = currentMonthRevenue > 0 ? currentMonthRevenue : totalRevenue;
-
-      console.log('💰 Revenue calculations FIXED:', {
-        totalRevenue,
-        currentMonthRevenue,
-        previousMonthRevenue,
-        displayMonthlyRevenue,
-        currentMonthPaymentsCount: currentMonthPaymentsResult.data?.length || 0,
-        previousMonthPaymentsCount: previousMonthPaymentsResult.data?.length || 0
-      });
-
       // User growth calculations
       const newUsersThisMonth = currentMonthUsersResult.count || 0;
       const newUsersPreviousMonth = previousMonthUsersResult.count || 0;
@@ -256,16 +339,6 @@ export const useOptimizedAdminData = () => {
       const submissionGrowthRate = previousMonthSubmissions > 0 
         ? Math.round(((currentMonthSubmissions - previousMonthSubmissions) / previousMonthSubmissions) * 100)
         : currentMonthSubmissions > 0 ? 100 : 0;
-
-      console.log('📈 Growth calculations:', {
-        userGrowthRate,
-        revenueGrowthRate,
-        submissionGrowthRate,
-        newUsersThisMonth,
-        newUsersPreviousMonth,
-        currentMonthSubmissions,
-        previousMonthSubmissions
-      });
 
       // System health metrics
       const errorRate = responseTime > 1000 ? 2 : responseTime > 500 ? 1 : 0;
@@ -319,17 +392,10 @@ export const useOptimizedAdminData = () => {
         item.percentage = totalProperties > 0 ? Math.round((item.count / totalProperties) * 100) : 0;
       });
 
-      // Revenue metrics with proper calculations
-      const averageOrderValue = allPayments.length > 0 ? totalRevenue / allPayments.length : 0;
+      // Revenue metrics with correct calculations
+      const averageOrderValue = validPaymentCount > 0 ? totalRevenue / validPaymentCount : 0;
       const conversionRate = totalUsers > 0 ? (completedSubmissions / totalUsers) * 100 : 0;
       const monthlyGrowthRate = revenueGrowthRate;
-
-      // Ensure growthMetrics is always properly initialized
-      const growthMetrics = {
-        userGrowthRate: isNaN(userGrowthRate) ? 0 : userGrowthRate,
-        revenueGrowthRate: isNaN(revenueGrowthRate) ? 0 : revenueGrowthRate,
-        submissionGrowthRate: isNaN(submissionGrowthRate) ? 0 : submissionGrowthRate
-      };
 
       const optimizedAnalytics: OptimizedAnalytics = {
         totalUsers,
@@ -340,7 +406,7 @@ export const useOptimizedAdminData = () => {
         pendingSubmissions,
         totalProperties,
         totalOwners,
-        totalRevenue,
+        totalRevenue, // Use the correctly calculated total revenue
         monthlyRevenue: displayMonthlyRevenue, // Use the corrected monthly revenue
         recentActivities: recentActivitiesResult.data || [],
         systemHealth: {
@@ -361,24 +427,25 @@ export const useOptimizedAdminData = () => {
           conversionRate,
           monthlyGrowthRate
         },
-        growthMetrics
+        growthMetrics: {
+          userGrowthRate: isNaN(userGrowthRate) ? 0 : userGrowthRate,
+          revenueGrowthRate: isNaN(revenueGrowthRate) ? 0 : revenueGrowthRate,
+          submissionGrowthRate: isNaN(submissionGrowthRate) ? 0 : submissionGrowthRate
+        }
       };
 
       setAnalytics(optimizedAnalytics);
       
-      console.log('✅ Optimized analytics loaded with FIXED revenue calculations:', {
-        responseTime: `${responseTime}ms`,
-        totalUsers,
-        totalOwners,
-        databaseStatus,
-        growthMetrics,
-        totalRevenue,
-        displayMonthlyRevenue,
-        previousMonthRevenue
+      console.log('✅ REVENUE DEBUG COMPLETE - Final Analytics:', {
+        totalRevenue: optimizedAnalytics.totalRevenue,
+        monthlyRevenue: optimizedAnalytics.monthlyRevenue,
+        revenueMetrics: optimizedAnalytics.revenueMetrics,
+        validPaymentsFound: validPaymentCount,
+        responseTime: `${responseTime}ms`
       });
 
     } catch (error: any) {
-      console.error('❌ Error fetching optimized analytics:', error);
+      console.error('❌ CRITICAL ERROR in fetchOptimizedAnalytics:', error);
       setError(error.message || 'Failed to fetch analytics data');
       toast.error('Failed to load dashboard analytics', {
         description: error.message
