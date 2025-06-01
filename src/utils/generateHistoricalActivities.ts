@@ -82,24 +82,37 @@ export const generateHistoricalActivities = async (userId: string): Promise<void
       }
     }
 
-    // Get all assignments created by this user
+    // Get all assignments with proper column hints to avoid ambiguity
     const { data: assignments } = await supabase
       .from('owner_property_assignments')
       .select(`
         id, 
         created_at,
-        owners(first_name, last_name),
-        properties(label)
+        owner_id,
+        property_id
       `)
       .eq('user_id', userId)
       .order('created_at', { ascending: true });
 
     if (assignments) {
       for (const assignment of assignments) {
-        const ownerName = assignment.owners 
-          ? `${assignment.owners.first_name} ${assignment.owners.last_name}`
+        // Get owner and property details separately to avoid ambiguity
+        const { data: owner } = await supabase
+          .from('owners')
+          .select('first_name, last_name')
+          .eq('id', assignment.owner_id)
+          .single();
+
+        const { data: property } = await supabase
+          .from('properties')
+          .select('label')
+          .eq('id', assignment.property_id)
+          .single();
+
+        const ownerName = owner 
+          ? `${owner.first_name} ${owner.last_name}`
           : 'Unknown Owner';
-        const propertyLabel = assignment.properties?.label || 'Unknown Property';
+        const propertyLabel = property?.label || 'Unknown Property';
 
         await ActivityLogger.log({
           userId,
