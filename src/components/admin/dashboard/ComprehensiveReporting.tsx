@@ -31,10 +31,10 @@ import {
   Calendar,
   Filter
 } from 'lucide-react';
-import { RealTimeAnalytics } from '@/hooks/admin/useRealTimeAnalytics';
+import { OptimizedAnalytics } from '@/hooks/admin/types/optimizedAnalyticsTypes';
 
 interface ComprehensiveReportingProps {
-  analytics: RealTimeAnalytics;
+  analytics: OptimizedAnalytics;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
@@ -62,10 +62,10 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
       ) 
     : 0;
 
-  const submissionTrend = analytics.submissionTrends.length > 1
+  const sessionTrend = analytics.sessionTrends.length > 1
     ? getGrowthPercentage(
-        analytics.submissionTrends[analytics.submissionTrends.length - 1].total,
-        analytics.submissionTrends[analytics.submissionTrends.length - 2].total
+        analytics.sessionTrends[analytics.sessionTrends.length - 1].total,
+        analytics.sessionTrends[analytics.sessionTrends.length - 2].total
       )
     : 0;
 
@@ -108,11 +108,11 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
             <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
               <FileText className="h-8 w-8 text-green-600" />
               <div>
-                <div className="text-2xl font-bold text-green-600">{analytics.totalSubmissions}</div>
-                <div className="text-sm text-green-600/70">Total Submissions</div>
+                <div className="text-2xl font-bold text-green-600">{analytics.totalSessions}</div>
+                <div className="text-sm text-green-600/70">Total Sessions</div>
                 <div className="flex items-center gap-1 mt-1">
                   <TrendingUp className="h-3 w-3" />
-                  <span className="text-xs">+{submissionTrend}% this month</span>
+                  <span className="text-xs">+{sessionTrend}% this month</span>
                 </div>
               </div>
             </div>
@@ -147,7 +147,7 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">User Analytics</TabsTrigger>
-          <TabsTrigger value="submissions">Submissions</TabsTrigger>
+          <TabsTrigger value="sessions">Sessions</TabsTrigger>
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
         </TabsList>
 
@@ -166,7 +166,7 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
                     <YAxis />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="users" fill="#8884d8" name="New Users" />
-                    <Line type="monotone" dataKey="submissions" stroke="#82ca9d" name="Submissions" strokeWidth={2} />
+                    <Line type="monotone" dataKey="sessions" stroke="#82ca9d" name="Sessions" strokeWidth={2} />
                     <Line type="monotone" dataKey="properties" stroke="#ffc658" name="Properties" strokeWidth={2} />
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -222,12 +222,12 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
 
             <Card>
               <CardHeader>
-                <CardTitle>Submission Status Trends</CardTitle>
+                <CardTitle>Session Status Trends</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={{}} className="h-64">
                   <ResponsiveContainer>
-                    <AreaChart data={analytics.submissionTrends}>
+                    <AreaChart data={analytics.sessionTrends}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
@@ -306,7 +306,7 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
             <Card>
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold">
-                  {Math.round((analytics.completedSubmissions / analytics.totalSubmissions) * 100)}%
+                  {Math.round((analytics.completedSessions / analytics.totalSessions) * 100)}%
                 </div>
                 <p className="text-sm text-muted-foreground">Completion Rate</p>
                 <Badge variant="outline" className="mt-2">
@@ -317,15 +317,15 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
           </div>
         </TabsContent>
 
-        <TabsContent value="submissions" className="space-y-6">
+        <TabsContent value="sessions" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Submission Volume by Month</CardTitle>
+              <CardTitle>Session Volume by Month</CardTitle>
             </CardHeader>
             <CardContent>
               <ChartContainer config={{}} className="h-80">
                 <ResponsiveContainer>
-                  <BarChart data={analytics.submissionTrends}>
+                  <BarChart data={analytics.sessionTrends}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
@@ -341,22 +341,22 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-green-600">{analytics.completedSubmissions}</div>
-                <p className="text-sm text-muted-foreground">Completed Submissions</p>
+                <div className="text-2xl font-bold text-green-600">{analytics.completedSessions}</div>
+                <p className="text-sm text-muted-foreground">Completed Sessions</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-yellow-600">{analytics.pendingSubmissions}</div>
-                <p className="text-sm text-muted-foreground">Pending Submissions</p>
+                <div className="text-2xl font-bold text-yellow-600">{analytics.pendingSessions}</div>
+                <p className="text-sm text-muted-foreground">Pending Sessions</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold">
-                  {Math.round((analytics.completedSubmissions / analytics.totalSubmissions) * 100)}%
+                  {Math.round((analytics.completedSessions / analytics.totalSessions) * 100)}%
                 </div>
                 <p className="text-sm text-muted-foreground">Success Rate</p>
               </CardContent>
@@ -389,7 +389,7 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
 
             <Card>
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{(analytics.revenueMetrics.conversionRate * 100).toFixed(1)}%</div>
+                <div className="text-2xl font-bold">{(analytics.revenueMetrics.conversionRate).toFixed(1)}%</div>
                 <p className="text-sm text-muted-foreground">Conversion Rate</p>
               </CardContent>
             </Card>
