@@ -95,13 +95,11 @@ Deno.serve(async (req) => {
     const adminToken = req.headers.get('x-admin-token');
     const authHeader = req.headers.get('authorization');
     const contentType = req.headers.get('content-type');
-    const contentLength = req.headers.get('content-length');
     
     console.log('[admin-delete-user] Header analysis:', {
       'x-admin-token': adminToken ? `present (${adminToken.length} chars)` : 'missing',
       'authorization': authHeader ? `present (${authHeader.length} chars)` : 'missing',
       'content-type': contentType || 'missing',
-      'content-length': contentLength || 'missing',
       allHeaders: Object.fromEntries(req.headers.entries())
     });
     
@@ -170,59 +168,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body with enhanced error handling
+    // Parse request body - Supabase edge functions receive the body as an object when using invoke
     let requestBody;
     try {
       console.log('[admin-delete-user] 📖 Parsing request body...');
-      console.log('[admin-delete-user] Content-Length:', contentLength);
       
-      // Check if we have a request body
-      if (!req.body) {
-        console.error('[admin-delete-user] ❌ No request body provided');
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: 'Request body is required'
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Check content length
-      if (contentLength === '0') {
-        console.error('[admin-delete-user] ❌ Empty request body (content-length: 0)');
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: 'Request body cannot be empty'
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      const bodyText = await req.text();
-      console.log('[admin-delete-user] Raw body text:', bodyText);
-      console.log('[admin-delete-user] Body text length:', bodyText.length);
-      
-      if (!bodyText || bodyText.trim() === '') {
-        console.error('[admin-delete-user] ❌ Empty request body text');
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: 'Request body cannot be empty'
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      requestBody = JSON.parse(bodyText);
+      // When using supabase.functions.invoke() with an object body,
+      // Deno receives it already parsed as JSON
+      requestBody = await req.json();
       console.log('[admin-delete-user] ✅ Request body parsed successfully:', requestBody);
     } catch (parseError) {
       console.error('[admin-delete-user] ❌ Failed to parse request body:', {
         error: parseError.message,
         name: parseError.name,
-        stack: parseError.stack,
-        contentLength: contentLength
+        stack: parseError.stack
       });
       return new Response(
         JSON.stringify({ 
