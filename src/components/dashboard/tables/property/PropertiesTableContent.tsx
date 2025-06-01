@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Property } from '@/components/dashboard/types';
 import { PropertyTableRow } from './PropertyTableRow';
+import { EmptyProperties } from './EmptyProperties';
 
 interface PropertiesTableContentProps {
   properties: Property[];
@@ -17,6 +18,7 @@ interface PropertiesTableContentProps {
   onEdit: (property: Property) => void;
   onDelete: (property: Property) => void;
   onActionClick: () => void;
+  onAddProperty: () => void;
 }
 
 export const PropertiesTableContent: React.FC<PropertiesTableContentProps> = ({
@@ -24,8 +26,13 @@ export const PropertiesTableContent: React.FC<PropertiesTableContentProps> = ({
   onRowClick,
   onEdit,
   onDelete,
-  onActionClick
+  onActionClick,
+  onAddProperty
 }) => {
+  if (properties.length === 0) {
+    return <EmptyProperties onAddProperty={onAddProperty} />;
+  }
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -39,24 +46,16 @@ export const PropertiesTableContent: React.FC<PropertiesTableContentProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {properties.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                No properties found
-              </TableCell>
-            </TableRow>
-          ) : (
-            properties.map((property) => (
-              <PropertyTableRow
-                key={property.id}
-                property={property}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onClick={onRowClick}
-                onActionClick={onActionClick}
-              />
-            ))
-          )}
+          {properties.map((property) => (
+            <PropertyTableRow
+              key={property.id}
+              property={property}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onClick={onRowClick}
+              onActionClick={onActionClick}
+            />
+          ))}
         </TableBody>
       </Table>
     </div>

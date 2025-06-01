@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Property } from '@/components/dashboard/types';
 import { PropertiesTableContent } from './property/PropertiesTableContent';
+import { PropertiesTableHeader } from './property/PropertiesTableHeader';
 import PropertyDrawer from '@/components/dashboard/drawers/PropertyDrawer';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import {
@@ -49,6 +50,12 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
     setPropertyToDelete(property);
   };
 
+  const handleAddProperty = () => {
+    console.log('Add new property');
+    setSelectedProperty(undefined);
+    setIsDrawerOpen(true);
+  };
+
   const confirmDelete = async () => {
     if (propertyToDelete) {
       const success = await deleteProperty(propertyToDelete.id);
@@ -74,13 +81,19 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
   };
 
   return (
-    <>
+    <div>
+      <PropertiesTableHeader 
+        onAddProperty={handleAddProperty}
+        propertiesCount={properties.length}
+      />
+      
       <PropertiesTableContent
         properties={properties}
         onRowClick={handleRowClick}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onActionClick={handleActionClick}
+        onAddProperty={handleAddProperty}
       />
       
       <PropertyDrawer
@@ -112,6 +125,6 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 };

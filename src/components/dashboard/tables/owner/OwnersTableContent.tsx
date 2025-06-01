@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Owner } from '@/components/dashboard/types';
 import { OwnerTableRow } from './OwnerTableRow';
+import { EmptyOwners } from './EmptyOwners';
 
 interface OwnersTableContentProps {
   owners: Owner[];
@@ -17,6 +18,7 @@ interface OwnersTableContentProps {
   onEdit: (owner: Owner) => void;
   onDelete: (owner: Owner) => void;
   onActionClick: () => void;
+  onAddOwner: () => void;
 }
 
 export const OwnersTableContent: React.FC<OwnersTableContentProps> = ({
@@ -24,8 +26,13 @@ export const OwnersTableContent: React.FC<OwnersTableContentProps> = ({
   onRowClick,
   onEdit,
   onDelete,
-  onActionClick
+  onActionClick,
+  onAddOwner
 }) => {
+  if (owners.length === 0) {
+    return <EmptyOwners onAddOwner={onAddOwner} />;
+  }
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -40,24 +47,16 @@ export const OwnersTableContent: React.FC<OwnersTableContentProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {owners.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                No owners found
-              </TableCell>
-            </TableRow>
-          ) : (
-            owners.map((owner) => (
-              <OwnerTableRow
-                key={owner.id}
-                owner={owner}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onClick={onRowClick}
-                onActionClick={onActionClick}
-              />
-            ))
-          )}
+          {owners.map((owner) => (
+            <OwnerTableRow
+              key={owner.id}
+              owner={owner}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onClick={onRowClick}
+              onActionClick={onActionClick}
+            />
+          ))}
         </TableBody>
       </Table>
     </div>

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Owner } from '@/components/dashboard/types';
 import { OwnersTableContent } from './owner/OwnersTableContent';
+import { OwnersTableHeader } from './owner/OwnersTableHeader';
 import OwnerDrawer from '@/components/dashboard/drawers/OwnerDrawer';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import {
@@ -49,6 +50,12 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
     setOwnerToDelete(owner);
   };
 
+  const handleAddOwner = () => {
+    console.log('Add new owner');
+    setSelectedOwner(undefined);
+    setIsDrawerOpen(true);
+  };
+
   const confirmDelete = async () => {
     if (ownerToDelete) {
       const success = await deleteOwner(ownerToDelete.id);
@@ -74,13 +81,19 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
   };
 
   return (
-    <>
+    <div>
+      <OwnersTableHeader 
+        onAddOwner={handleAddOwner}
+        ownersCount={owners.length}
+      />
+      
       <OwnersTableContent
         owners={owners}
         onRowClick={handleRowClick}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onActionClick={handleActionClick}
+        onAddOwner={handleAddOwner}
       />
       
       <OwnerDrawer
@@ -112,6 +125,6 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 };
