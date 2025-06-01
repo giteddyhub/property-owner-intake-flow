@@ -24,6 +24,12 @@ interface DeletionResult {
   type?: string;
 }
 
+interface EdgeFunctionResponse {
+  success?: boolean;
+  error?: string;
+  [key: string]: any;
+}
+
 export const useUserDeletion = () => {
   const [loading, setLoading] = useState(false);
   const { adminSession } = useAdminAuth();
@@ -138,12 +144,16 @@ export const useUserDeletion = () => {
         return true;
       }
       
-      if (data && !data.success) {
-        console.log('[useUserDeletion] ✅ Database function is responding (expected failure):', data);
-        toast.success('Database function is responsive', {
-          description: 'Function correctly handled invalid request',
-        });
-        return true;
+      // Check if data is an object with success property
+      if (data && typeof data === 'object' && data !== null && 'success' in data) {
+        const response = data as EdgeFunctionResponse;
+        if (!response.success) {
+          console.log('[useUserDeletion] ✅ Database function is responding (expected failure):', data);
+          toast.success('Database function is responsive', {
+            description: 'Function correctly handled invalid request',
+          });
+          return true;
+        }
       }
       
       console.log('[useUserDeletion] ⚠️ Unexpected response from database function');
@@ -232,22 +242,31 @@ export const useUserDeletion = () => {
         throw new Error(errorMsg);
       }
 
-      if (!data.success) {
-        const errorMsg = data.error || 'Deletion failed';
+      // Type check the response data
+      if (typeof data !== 'object' || data === null) {
+        const errorMsg = 'Invalid response format from deletion service';
+        console.error('[useUserDeletion] ❌', errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      const response = data as EdgeFunctionResponse;
+
+      if (!response.success) {
+        const errorMsg = response.error || 'Deletion failed';
         console.error('[useUserDeletion] ❌ Deletion failed:', {
           error: errorMsg,
-          details: data.details,
-          hint: data.hint,
-          type: data.type
+          details: response.details,
+          hint: response.hint,
+          type: response.type
         });
         
         // Show additional details in development
         let fullErrorMessage = errorMsg;
-        if (data.details && import.meta.env.DEV) {
-          fullErrorMessage += ` (Details: ${data.details})`;
+        if (response.details && import.meta.env.DEV) {
+          fullErrorMessage += ` (Details: ${response.details})`;
         }
-        if (data.hint && import.meta.env.DEV) {
-          fullErrorMessage += ` (Hint: ${data.hint})`;
+        if (response.hint && import.meta.env.DEV) {
+          fullErrorMessage += ` (Hint: ${response.hint})`;
         }
         
         throw new Error(fullErrorMessage);
@@ -256,7 +275,7 @@ export const useUserDeletion = () => {
       console.log('[useUserDeletion] ✅ User deletion successful:', data);
 
       // Show success toast with details
-      const deletedRecords = data.deleted_records;
+      const deletedRecords = response.deleted_records;
       const deletedRecordsTotal = deletedRecords ? 
         (typeof deletedRecords.properties === 'number' ? deletedRecords.properties : 0) + 
         (typeof deletedRecords.owners === 'number' ? deletedRecords.owners : 0) + 
@@ -265,10 +284,10 @@ export const useUserDeletion = () => {
         (typeof deletedRecords.user_activities === 'number' ? deletedRecords.user_activities : 0) : 0;
 
       toast.success('User deleted successfully', {
-        description: `Deleted ${data.deleted_user?.email} and ${deletedRecordsTotal} related records`,
+        description: `Deleted ${response.deleted_user?.email} and ${deletedRecordsTotal} related records`,
       });
 
-      return data;
+      return response as DeletionResult;
     } catch (error: any) {
       console.error('[useUserDeletion] ❌ User deletion error:', {
         message: error.message,
