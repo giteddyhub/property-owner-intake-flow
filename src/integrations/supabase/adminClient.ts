@@ -28,9 +28,9 @@ export const createAdminClient = (adminToken?: string) => {
   
   // Log token usage for debugging
   if (adminToken) {
-    console.log('[adminClient] ✅ Creating admin client with token:', adminToken.substring(0, 20) + '...');
+    console.log('[adminClient] ✅ Admin client created with token');
   } else {
-    console.log('[adminClient] ⚠️ Creating admin client without token');
+    console.log('[adminClient] ⚠️ Admin client created without token');
   }
 
   return client;
@@ -44,7 +44,7 @@ export const getAdminToken = (): string | null => {
       const adminSession = JSON.parse(adminSessionStr);
       const token = adminSession.session?.token || null;
       if (token) {
-        console.log('[adminClient] ✅ Retrieved admin token from localStorage:', token.substring(0, 20) + '...');
+        console.log('[adminClient] ✅ Retrieved admin token from localStorage');
       } else {
         console.log('[adminClient] ❌ No token found in admin session');
       }

@@ -2,7 +2,7 @@
 import { getAuthenticatedAdminClient } from '@/integrations/supabase/adminClient';
 import { PaymentData } from '@/types/admin';
 
-// Very simple validation - only check essential fields
+// Simplified validation - only check essential fields
 const isValidPayment = (payment: any): payment is PaymentData => {
   console.log(`[paymentsService] 🔍 Validating payment:`, payment);
   
@@ -36,11 +36,10 @@ export const fetchPayments = async (submissionIds: string[]): Promise<PaymentDat
       .in('form_submission_id', submissionIds)
       .order('created_at', { ascending: false });
 
-    console.log(`[paymentsService] 📊 Raw database response:`, { 
-      paymentsData, 
-      paymentsError,
-      submissionIds,
-      resultCount: paymentsData?.length || 0 
+    console.log(`[paymentsService] 📊 Database query completed:`, { 
+      success: !paymentsError,
+      resultCount: paymentsData?.length || 0,
+      error: paymentsError?.message 
     });
 
     if (paymentsError) {
@@ -54,15 +53,6 @@ export const fetchPayments = async (submissionIds: string[]): Promise<PaymentDat
     }
 
     console.log(`[paymentsService] 📦 Received ${paymentsData.length} payments from database`);
-    paymentsData.forEach((payment, index) => {
-      console.log(`[paymentsService]   Payment ${index + 1}:`, {
-        id: payment.id,
-        amount: payment.amount,
-        status: payment.payment_status,
-        submissionId: payment.form_submission_id,
-        createdAt: payment.created_at
-      });
-    });
 
     const validPayments = paymentsData.filter(payment => isValidPayment(payment));
     console.log(`[paymentsService] ✅ STRATEGY 1 SUCCESS: Returning ${validPayments.length} validated payments`);
@@ -89,10 +79,9 @@ export const fetchPaymentsByUserId = async (userId: string): Promise<PaymentData
       .eq('user_id', userId);
 
     console.log(`[paymentsService] 📋 User submissions result:`, { 
-      userSubmissions, 
-      submissionsError,
-      userId,
-      submissionCount: userSubmissions?.length || 0 
+      success: !submissionsError,
+      submissionCount: userSubmissions?.length || 0,
+      error: submissionsError?.message 
     });
 
     if (submissionsError) {
@@ -106,7 +95,7 @@ export const fetchPaymentsByUserId = async (userId: string): Promise<PaymentData
     }
 
     const submissionIds = userSubmissions.map(s => s.id);
-    console.log(`[paymentsService] 📋 Found ${submissionIds.length} submissions:`, submissionIds);
+    console.log(`[paymentsService] 📋 Found ${submissionIds.length} submissions for user`);
 
     // Now get payments for these submissions
     console.log('[paymentsService] 📡 Step 2: Getting payments for submissions...');
@@ -116,10 +105,10 @@ export const fetchPaymentsByUserId = async (userId: string): Promise<PaymentData
       .in('form_submission_id', submissionIds)
       .order('created_at', { ascending: false });
 
-    console.log(`[paymentsService] 💳 Payments result:`, { 
-      paymentsData, 
-      paymentsError,
-      resultCount: paymentsData?.length || 0 
+    console.log(`[paymentsService] 💳 Payments query result:`, { 
+      success: !paymentsError,
+      resultCount: paymentsData?.length || 0,
+      error: paymentsError?.message 
     });
 
     if (paymentsError) {
@@ -149,8 +138,8 @@ export const fetchPaymentsDirectQuery = async (userId: string): Promise<PaymentD
     const adminClient = getAuthenticatedAdminClient();
     console.log('[paymentsService] 🔑 Using authenticated admin client for emergency query');
     
-    // Get ALL purchases and filter by checking submission user_id
-    console.log('[paymentsService] 📡 Getting all purchases (emergency approach)...');
+    // Get purchases with form submission data in a single query
+    console.log('[paymentsService] 📡 Getting purchases with form submissions...');
     const { data: allPurchases, error: purchasesError } = await adminClient
       .from('purchases')
       .select(`
@@ -163,10 +152,9 @@ export const fetchPaymentsDirectQuery = async (userId: string): Promise<PaymentD
       .order('created_at', { ascending: false });
 
     console.log(`[paymentsService] 🚨 Emergency query result:`, { 
-      allPurchases, 
-      purchasesError,
-      userId,
-      resultCount: allPurchases?.length || 0
+      success: !purchasesError,
+      resultCount: allPurchases?.length || 0,
+      error: purchasesError?.message
     });
 
     if (purchasesError) {

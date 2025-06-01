@@ -1147,7 +1147,7 @@ export type Database = {
         Returns: boolean
       }
       validate_admin_token_for_purchases: {
-        Args: { token: string }
+        Args: { token_param: string }
         Returns: boolean
       }
       verify_admin_password: {
