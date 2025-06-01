@@ -47,15 +47,19 @@ export const formatPropertyOccupancy = (occupancyStatuses: string[] | undefined)
           
           return formatOccupancyStatuses(converted);
         } else {
-          // Use the new format directly
+          // Use the new format directly with the proven utility function
           return formatOccupancyStatuses(validAllocations);
         }
       }
     }
 
-    // Fallback: try to display whatever we have
+    // Fallback: try to display whatever we have in a cleaner way
     return occupancyStatuses.map(status => {
       if (typeof status === 'string') {
+        // Try to clean up common patterns
+        if (status.includes('PERSONAL_USE')) return 'Personal Use';
+        if (status.includes('LONG_TERM_RENT')) return 'Long-term Rental';
+        if (status.includes('SHORT_TERM_RENT')) return 'Short-term Rental';
         return status;
       }
       return JSON.stringify(status);
