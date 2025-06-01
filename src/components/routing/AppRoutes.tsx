@@ -2,11 +2,11 @@
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import Index from '@/pages/Index';
-import SignupPage from '@/pages/SignupPage';
-import ImprovedSignupPage from '@/pages/ImprovedSignupPage';
+import { SignupPage } from '@/pages/SignupPage';
+import { ImprovedSignupPage } from '@/pages/ImprovedSignupPage';
 import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
-import Dashboard from '@/pages/Dashboard';
+import { Dashboard } from '@/pages/Dashboard';
 import AccountSettingsPage from '@/pages/AccountSettingsPage';
 import VerifyEmailPage from '@/pages/VerifyEmailPage';
 import SuccessPage from '@/pages/SuccessPage';
