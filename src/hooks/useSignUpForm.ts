@@ -76,7 +76,6 @@ export const useSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseSignU
       const { error, data } = await signUp(email, password, fullName);
       
       if (error) {
-        toast.error(error.message);
         setFormState(prev => ({ ...prev, isSubmitting: false }));
         return;
       }
@@ -112,8 +111,7 @@ export const useSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseSignU
         }
       }
 
-      // Always show success message after signup
-      toast.success('Account created successfully! Please check your email to verify your account.');
+      // Set success state
       setFormState(prev => ({ ...prev, isSignedUp: true }));
       
       // Save email in session storage for the verification page
