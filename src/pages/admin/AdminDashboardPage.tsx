@@ -65,6 +65,13 @@ const AdminDashboardPage: React.FC = () => {
     );
   }
 
+  // Safely access growthMetrics with fallback values
+  const growthMetrics = analytics.growthMetrics || {
+    userGrowthRate: 0,
+    revenueGrowthRate: 0,
+    submissionGrowthRate: 0
+  };
+
   return (
     <AdminLayout pageTitle="Dashboard">
       <div className="space-y-6">
@@ -133,8 +140,8 @@ const AdminDashboardPage: React.FC = () => {
             title="Total Users"
             value={analytics.totalUsers}
             change={{
-              value: analytics.growthMetrics.userGrowthRate,
-              type: analytics.growthMetrics.userGrowthRate >= 0 ? 'increase' : 'decrease',
+              value: growthMetrics.userGrowthRate,
+              type: growthMetrics.userGrowthRate >= 0 ? 'increase' : 'decrease',
               period: 'this month'
             }}
             status="success"
@@ -146,8 +153,8 @@ const AdminDashboardPage: React.FC = () => {
             title="Form Submissions"
             value={analytics.totalSubmissions}
             change={{
-              value: analytics.growthMetrics.submissionGrowthRate,
-              type: analytics.growthMetrics.submissionGrowthRate >= 0 ? 'increase' : 'decrease',
+              value: growthMetrics.submissionGrowthRate,
+              type: growthMetrics.submissionGrowthRate >= 0 ? 'increase' : 'decrease',
               period: 'this month'
             }}
             status={analytics.pendingSubmissions > analytics.completedSubmissions ? 'warning' : 'success'}
@@ -167,8 +174,8 @@ const AdminDashboardPage: React.FC = () => {
             title="Revenue"
             value={`€${analytics.totalRevenue.toLocaleString()}`}
             change={{
-              value: Math.abs(analytics.growthMetrics.revenueGrowthRate),
-              type: analytics.growthMetrics.revenueGrowthRate >= 0 ? 'increase' : 'decrease',
+              value: Math.abs(growthMetrics.revenueGrowthRate),
+              type: growthMetrics.revenueGrowthRate >= 0 ? 'increase' : 'decrease',
               period: 'this month'
             }}
             status="success"
@@ -209,18 +216,18 @@ const AdminDashboardPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm">User Growth Rate</span>
                       <div className="flex items-center gap-1">
-                        <TrendingUp className={`h-3 w-3 ${analytics.growthMetrics.userGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`} />
-                        <span className={`text-sm ${analytics.growthMetrics.userGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {analytics.growthMetrics.userGrowthRate >= 0 ? '+' : ''}{analytics.growthMetrics.userGrowthRate}%
+                        <TrendingUp className={`h-3 w-3 ${growthMetrics.userGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                        <span className={`text-sm ${growthMetrics.userGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {growthMetrics.userGrowthRate >= 0 ? '+' : ''}{growthMetrics.userGrowthRate}%
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Revenue Growth Rate</span>
                       <div className="flex items-center gap-1">
-                        <TrendingUp className={`h-3 w-3 ${analytics.growthMetrics.revenueGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`} />
-                        <span className={`text-sm ${analytics.growthMetrics.revenueGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {analytics.growthMetrics.revenueGrowthRate >= 0 ? '+' : ''}{analytics.growthMetrics.revenueGrowthRate}%
+                        <TrendingUp className={`h-3 w-3 ${growthMetrics.revenueGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                        <span className={`text-sm ${growthMetrics.revenueGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {growthMetrics.revenueGrowthRate >= 0 ? '+' : ''}{growthMetrics.revenueGrowthRate}%
                         </span>
                       </div>
                     </div>

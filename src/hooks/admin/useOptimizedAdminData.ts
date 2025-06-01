@@ -116,7 +116,7 @@ export const useOptimizedAdminData = () => {
           .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
           .order('created_at', { ascending: false }),
         
-        // All completed payments - fix status to use 'paid' instead of 'completed'
+        // All completed payments - using 'paid' status
         supabase
           .from('purchases')
           .select('amount, created_at, payment_status, form_submission_id')
@@ -314,6 +314,13 @@ export const useOptimizedAdminData = () => {
       const conversionRate = totalUsers > 0 ? (completedSubmissions / totalUsers) * 100 : 0;
       const monthlyGrowthRate = revenueGrowthRate;
 
+      // Ensure growthMetrics is always properly initialized
+      const growthMetrics = {
+        userGrowthRate: isNaN(userGrowthRate) ? 0 : userGrowthRate,
+        revenueGrowthRate: isNaN(revenueGrowthRate) ? 0 : revenueGrowthRate,
+        submissionGrowthRate: isNaN(submissionGrowthRate) ? 0 : submissionGrowthRate
+      };
+
       const optimizedAnalytics: OptimizedAnalytics = {
         totalUsers,
         activeUsers,
@@ -344,11 +351,7 @@ export const useOptimizedAdminData = () => {
           conversionRate,
           monthlyGrowthRate
         },
-        growthMetrics: {
-          userGrowthRate,
-          revenueGrowthRate,
-          submissionGrowthRate
-        }
+        growthMetrics
       };
 
       setAnalytics(optimizedAnalytics);
@@ -358,9 +361,7 @@ export const useOptimizedAdminData = () => {
         totalUsers,
         totalOwners,
         databaseStatus,
-        userGrowthRate,
-        revenueGrowthRate,
-        submissionGrowthRate,
+        growthMetrics,
         totalRevenue,
         currentMonthRevenue,
         previousMonthRevenue
