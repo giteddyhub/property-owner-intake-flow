@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { 
@@ -14,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { AccountData } from '@/types/admin';
-import { Mail, FileText, Home, Users as UsersIcon, AlertTriangle, RefreshCw, Eye, Trash2 } from 'lucide-react';
+import { Mail, FileText, Home, Users as UsersIcon, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { UserDeletionDialog } from './UserDeletionDialog';
 import { useUserDeletion } from '@/hooks/admin/useUserDeletion';
@@ -160,7 +159,6 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
           </TableHeader>
           <TableBody>
             {loading ? (
-              // Loading skeleton
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={`skeleton-${i}`}>
                   <TableCell><Skeleton className="h-5 w-32" /></TableCell>
@@ -251,16 +249,6 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      {onShowUserOverview && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => onShowUserOverview(account.id)}
-                          title="Quick Overview"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      )}
                       <Button 
                         variant="outline" 
                         size="sm"

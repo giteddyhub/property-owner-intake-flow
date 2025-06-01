@@ -60,8 +60,15 @@ export const useUserDeletion = () => {
       console.log('User deletion successful:', data);
 
       // Show success toast with details
+      const deletedRecordsTotal = data.deleted_records ? 
+        (data.deleted_records.properties || 0) + 
+        (data.deleted_records.owners || 0) + 
+        (data.deleted_records.form_submissions || 0) + 
+        (data.deleted_records.assignments || 0) + 
+        (data.deleted_records.user_activities || 0) : 0;
+
       toast.success('User deleted successfully', {
-        description: `Deleted ${data.deleted_user?.email} and ${Object.values(data.deleted_records || {}).reduce((a, b) => a + b, 0)} related records`,
+        description: `Deleted ${data.deleted_user?.email} and ${deletedRecordsTotal} related records`,
       });
 
       return data;
