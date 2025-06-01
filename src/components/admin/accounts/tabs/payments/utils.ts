@@ -37,7 +37,7 @@ export const getPaymentStatusBadgeClass = (status: string) => {
   }
 };
 
-// Simplified validation function
+// Enhanced validation function that excludes zero amounts
 export const validatePayment = (payment: any, index: number): boolean => {
   console.log(`[PaymentValidation] 🔍 Validating payment ${index + 1}:`, payment);
   
@@ -56,9 +56,20 @@ export const validatePayment = (payment: any, index: number): boolean => {
     return false;
   }
 
-  // Simplified amount validation - just check if it exists
+  // Enhanced amount validation - check for zero and negative amounts
   if (payment.amount === null || payment.amount === undefined) {
     console.error(`[PaymentValidation] Payment ${index + 1} has null/undefined amount:`, payment.amount);
+    return false;
+  }
+
+  const numericAmount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
+  if (isNaN(numericAmount) || numericAmount <= 0) {
+    console.error(`[PaymentValidation] Payment ${index + 1} has zero or invalid amount:`, {
+      originalAmount: payment.amount,
+      numericAmount,
+      isNaN: isNaN(numericAmount),
+      isZeroOrNegative: numericAmount <= 0
+    });
     return false;
   }
 

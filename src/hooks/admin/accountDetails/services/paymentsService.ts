@@ -2,18 +2,35 @@
 import { getAuthenticatedAdminClient } from '@/integrations/supabase/adminClient';
 import { PaymentData } from '@/types/admin';
 
-// Simplified validation - only check essential fields
+// Enhanced validation - exclude zero amounts and check essential fields
 const isValidPayment = (payment: any): payment is PaymentData => {
   console.log(`[paymentsService] 🔍 Validating payment:`, payment);
   
-  const isValid = payment && 
-         payment.id && 
-         typeof payment.id === 'string' &&
-         payment.amount !== null && 
-         payment.amount !== undefined;
+  if (!payment || 
+      !payment.id || 
+      typeof payment.id !== 'string' ||
+      payment.amount === null || 
+      payment.amount === undefined) {
+    console.log(`[paymentsService] ❌ Payment validation failed - missing required fields`);
+    return false;
+  }
+
+  // Check for zero or negative amounts
+  const numericAmount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
+  if (isNaN(numericAmount) || numericAmount <= 0) {
+    console.log(`[paymentsService] ❌ Payment validation failed - zero or invalid amount:`, {
+      originalAmount: payment.amount,
+      numericAmount,
+      isZeroOrNegative: numericAmount <= 0
+    });
+    return false;
+  }
          
-  console.log(`[paymentsService] ${isValid ? '✅' : '❌'} Payment validation result for ${payment?.id}:`, isValid);
-  return isValid;
+  console.log(`[paymentsService] ✅ Payment validation passed for ${payment.id}:`, {
+    amount: numericAmount,
+    status: payment.payment_status
+  });
+  return true;
 };
 
 export const fetchPayments = async (submissionIds: string[]): Promise<PaymentData[]> => {
@@ -55,7 +72,7 @@ export const fetchPayments = async (submissionIds: string[]): Promise<PaymentDat
     console.log(`[paymentsService] 📦 Received ${paymentsData.length} payments from database`);
 
     const validPayments = paymentsData.filter(payment => isValidPayment(payment));
-    console.log(`[paymentsService] ✅ STRATEGY 1 SUCCESS: Returning ${validPayments.length} validated payments`);
+    console.log(`[paymentsService] ✅ STRATEGY 1 SUCCESS: Returning ${validPayments.length} validated payments (filtered out ${paymentsData.length - validPayments.length} invalid/zero payments)`);
     return validPayments;
 
   } catch (error) {
@@ -122,7 +139,7 @@ export const fetchPaymentsByUserId = async (userId: string): Promise<PaymentData
     }
 
     const validPayments = paymentsData.filter(payment => isValidPayment(payment));
-    console.log(`[paymentsService] ✅ STRATEGY 2 SUCCESS: Returning ${validPayments.length} validated payments`);
+    console.log(`[paymentsService] ✅ STRATEGY 2 SUCCESS: Returning ${validPayments.length} validated payments (filtered out ${paymentsData.length - validPayments.length} invalid/zero payments)`);
     return validPayments;
 
   } catch (error) {
@@ -168,7 +185,7 @@ export const fetchPaymentsDirectQuery = async (userId: string): Promise<PaymentD
     }
 
     const validPayments = allPurchases.filter(payment => isValidPayment(payment));
-    console.log(`[paymentsService] ✅ STRATEGY 3 SUCCESS: Emergency fallback returning ${validPayments.length} payments`);
+    console.log(`[paymentsService] ✅ STRATEGY 3 SUCCESS: Emergency fallback returning ${validPayments.length} payments (filtered out ${allPurchases.length - validPayments.length} invalid/zero payments)`);
     return validPayments;
 
   } catch (error) {

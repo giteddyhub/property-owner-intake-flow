@@ -58,7 +58,7 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
     }
   }, [payments]);
 
-  // Extremely simple validation - just check if it's an object with an id
+  // Enhanced validation - exclude zero and negative amounts
   const validPayments = useMemo(() => {
     console.log(`[AccountPaymentsTab] 🔄 VALIDATION PHASE STARTING...`);
     
@@ -84,10 +84,23 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
         console.error(`[AccountPaymentsTab] ❌ Payment ${index + 1} has no amount:`, payment.amount);
         return false;
       }
+
+      // Convert amount to number and check if it's positive
+      const numericAmount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        console.error(`[AccountPaymentsTab] ❌ Payment ${index + 1} has zero or invalid amount:`, {
+          originalAmount: payment.amount,
+          numericAmount,
+          isNaN: isNaN(numericAmount),
+          isZeroOrNegative: numericAmount <= 0
+        });
+        return false;
+      }
       
       console.log(`[AccountPaymentsTab] ✅ Payment ${index + 1} is VALID:`, {
         id: payment.id,
         amount: payment.amount,
+        numericAmount,
         status: payment.payment_status
       });
       return true;
@@ -150,7 +163,7 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
         </CardTitle>
         <CardDescription>
           {validPayments.length === 0 
-            ? 'This user has no payment records.' 
+            ? 'This user has no valid payment records.' 
             : `${validPayments.length} payment(s) found for this user. Total revenue: ${formatCurrency(totalRevenue)}`}
         </CardDescription>
       </CardHeader>
@@ -158,12 +171,12 @@ export const AccountPaymentsTab: React.FC<AccountPaymentsTabProps> = ({ payments
         {validPayments.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <div className="space-y-2">
-              <p>No payment records found for this user.</p>
+              <p>No valid payment records found for this user.</p>
               <p className="text-sm text-gray-500">
-                Raw payments received: {payments?.length || 0} items
+                Payments with zero amounts have been filtered out
               </p>
               <p className="text-xs text-gray-400">
-                Check browser console for detailed debugging information
+                Raw payments received: {payments?.length || 0} items
               </p>
               <p className="text-xs text-gray-300 mt-2 font-mono">
                 Debug: payments={JSON.stringify(payments?.slice(0, 2))}
