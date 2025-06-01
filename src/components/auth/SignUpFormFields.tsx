@@ -4,23 +4,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 interface SignUpFormFieldsProps {
-  fullName: string;
-  email: string;
-  password: string;
-  onFullNameChange: (value: string) => void;
-  onEmailChange: (value: string) => void;
-  onPasswordChange: (value: string) => void;
-  disabled: boolean;
+  formState: {
+    fullName: string;
+    email: string;
+    password: string;
+    isSubmitting: boolean;
+  };
+  updateField: (field: 'fullName' | 'email' | 'password', value: string) => void;
 }
 
 export const SignUpFormFields: React.FC<SignUpFormFieldsProps> = ({
-  fullName,
-  email,
-  password,
-  onFullNameChange,
-  onEmailChange,
-  onPasswordChange,
-  disabled
+  formState,
+  updateField
 }) => {
   return (
     <>
@@ -28,10 +23,10 @@ export const SignUpFormFields: React.FC<SignUpFormFieldsProps> = ({
         <Label htmlFor="fullName">Full Name</Label>
         <Input 
           id="fullName" 
-          value={fullName}
-          onChange={(e) => onFullNameChange(e.target.value)}
+          value={formState.fullName}
+          onChange={(e) => updateField('fullName', e.target.value)}
           placeholder="John Doe"
-          disabled={disabled}
+          disabled={formState.isSubmitting}
           required
         />
       </div>
@@ -41,10 +36,10 @@ export const SignUpFormFields: React.FC<SignUpFormFieldsProps> = ({
         <Input 
           id="email" 
           type="email" 
-          value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
+          value={formState.email}
+          onChange={(e) => updateField('email', e.target.value)}
           placeholder="your@email.com"
-          disabled={disabled}
+          disabled={formState.isSubmitting}
           required
         />
       </div>
@@ -54,9 +49,9 @@ export const SignUpFormFields: React.FC<SignUpFormFieldsProps> = ({
         <Input 
           id="password" 
           type="password"
-          value={password}
-          onChange={(e) => onPasswordChange(e.target.value)}
-          disabled={disabled}
+          value={formState.password}
+          onChange={(e) => updateField('password', e.target.value)}
+          disabled={formState.isSubmitting}
           required
           minLength={8}
         />

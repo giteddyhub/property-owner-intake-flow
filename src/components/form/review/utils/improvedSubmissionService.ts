@@ -54,9 +54,9 @@ export const submitFormDataImproved = async (
     try {
       const { data: isValid, error: validationError } = await supabase
         .rpc('validate_form_submission_data', {
-          owners_data: owners,
-          properties_data: properties,
-          assignments_data: assignments
+          owners_data: owners as any,
+          properties_data: properties as any,
+          assignments_data: assignments as any
         });
 
       if (validationError || !isValid) {

@@ -56,16 +56,13 @@ export const usePendingFormData = () => {
         // If user is authenticated, save to database
         const { data, error } = await supabase
           .from('pending_form_data')
-          .upsert({
-            user_id: userId,
+          .insert({
             session_id: sessionId,
-            owners: owners,
-            properties: properties,
-            assignments: assignments,
-            contact_info: contactInfo,
+            owners: owners as any,
+            properties: properties as any,
+            assignments: assignments as any,
+            contact_info: contactInfo as any,
             completed: false
-          }, {
-            onConflict: 'user_id,session_id'
           })
           .select()
           .single();
@@ -100,7 +97,6 @@ export const usePendingFormData = () => {
       const { data, error } = await supabase
         .from('pending_form_data')
         .select('*')
-        .eq('user_id', userId)
         .eq('completed', false)
         .order('created_at', { ascending: false })
         .maybeSingle();
@@ -114,10 +110,10 @@ export const usePendingFormData = () => {
         console.log('[PendingFormData] Loaded from database:', data.id);
         return {
           id: data.id,
-          owners: data.owners as Owner[],
-          properties: data.properties as Property[],
-          assignments: data.assignments as OwnerPropertyAssignment[],
-          contact_info: data.contact_info as ContactInfo,
+          owners: data.owners as unknown as Owner[],
+          properties: data.properties as unknown as Property[],
+          assignments: data.assignments as unknown as OwnerPropertyAssignment[],
+          contact_info: data.contact_info as unknown as ContactInfo,
           session_id: data.session_id,
           completed: data.completed
         };
@@ -146,8 +142,7 @@ export const usePendingFormData = () => {
         const { error } = await supabase
           .from('pending_form_data')
           .update({ completed: true })
-          .eq('id', pendingId)
-          .eq('user_id', userId);
+          .eq('id', pendingId);
 
         if (error) {
           console.error('[PendingFormData] Error completing pending data:', error);
@@ -174,7 +169,6 @@ export const usePendingFormData = () => {
       await supabase
         .from('pending_form_data')
         .delete()
-        .eq('user_id', userId)
         .eq('completed', false);
 
       // Clear from sessionStorage
