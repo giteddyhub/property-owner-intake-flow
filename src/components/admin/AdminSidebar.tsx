@@ -47,7 +47,7 @@ export const AdminSidebar: React.FC = () => {
       <SidebarHeader className="p-4">
         <Link to="/admin" className="flex items-center space-x-2">
           <img 
-            src="/lovable-uploads/e62d8a69-aa30-46c9-acbc-51e4f709fc4f.png" 
+            src="/lovable-uploads/786b8a8a-3ec3-4b1c-a119-a216abb8bd42.png" 
             alt="ItalianTaxes.com" 
             className="h-6 w-6"
           />
