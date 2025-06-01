@@ -40,7 +40,8 @@ Deno.serve(async (req) => {
   console.log('[admin-delete-user] 🚀 Request received:', {
     method: req.method,
     url: req.url,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    headers: Object.fromEntries(req.headers.entries())
   });
   
   try {
@@ -60,7 +61,9 @@ Deno.serve(async (req) => {
           supabaseUrl: !!supabaseUrl,
           serviceRoleKey: !!serviceRoleKey,
           clientCreated: !!adminClient
-        }
+        },
+        method: req.method,
+        url: req.url
       };
       console.log('[admin-delete-user] Health check response:', healthStatus);
       return new Response(
@@ -88,11 +91,16 @@ Deno.serve(async (req) => {
     
     console.log('[admin-delete-user] Processing DELETE request...');
     
-    // Get admin token from headers
+    // Get admin token from headers with extensive logging
     const adminToken = req.headers.get('x-admin-token');
-    console.log('[admin-delete-user] Admin token check:', {
-      present: !!adminToken,
-      length: adminToken ? adminToken.length : 0
+    const authHeader = req.headers.get('authorization');
+    const contentType = req.headers.get('content-type');
+    
+    console.log('[admin-delete-user] Header analysis:', {
+      'x-admin-token': adminToken ? `present (${adminToken.length} chars)` : 'missing',
+      'authorization': authHeader ? `present (${authHeader.length} chars)` : 'missing',
+      'content-type': contentType || 'missing',
+      allHeaders: Object.fromEntries(req.headers.entries())
     });
     
     if (!adminToken) {
@@ -100,20 +108,84 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Admin token required' 
+          error: 'Admin token required',
+          debug: {
+            headers: Object.fromEntries(req.headers.entries()),
+            method: req.method
+          }
         }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('[admin-delete-user] 🔍 Admin token received, validating...');
+
+    // Test admin session validation first
+    try {
+      console.log('[admin-delete-user] 🔍 Testing admin session validation...');
+      const { data: sessionData, error: sessionError } = await adminClient
+        .rpc('validate_admin_session', { session_token: adminToken });
+
+      console.log('[admin-delete-user] Session validation result:', {
+        data: sessionData,
+        error: sessionError,
+        dataLength: sessionData ? sessionData.length : 0
+      });
+
+      if (sessionError) {
+        console.error('[admin-delete-user] ❌ Session validation error:', sessionError);
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: `Session validation failed: ${sessionError.message}`,
+            details: sessionError
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!sessionData || sessionData.length === 0) {
+        console.error('[admin-delete-user] ❌ Invalid session - no admin data returned');
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Invalid or expired admin session'
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[admin-delete-user] ✅ Admin session validated successfully');
+    } catch (validationError) {
+      console.error('[admin-delete-user] ❌ Exception during session validation:', validationError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: `Session validation exception: ${validationError.message}`,
+          details: validationError
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Parse request body with enhanced error handling
     let requestBody;
     try {
-      const contentType = req.headers.get('content-type') || '';
-      console.log('[admin-delete-user] Content-Type:', contentType);
+      console.log('[admin-delete-user] 📖 Parsing request body...');
+      
+      if (!req.body) {
+        console.error('[admin-delete-user] ❌ No request body provided');
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Request body is required'
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       
       requestBody = await req.json();
-      console.log('[admin-delete-user] Request body parsed successfully:', requestBody);
+      console.log('[admin-delete-user] ✅ Request body parsed successfully:', requestBody);
     } catch (parseError) {
       console.error('[admin-delete-user] ❌ Failed to parse request body:', {
         error: parseError.message,
@@ -131,14 +203,15 @@ Deno.serve(async (req) => {
     }
 
     const { targetUserId } = requestBody;
-    console.log('[admin-delete-user] Target user ID:', targetUserId);
+    console.log('[admin-delete-user] 🎯 Target user ID extracted:', targetUserId);
 
     if (!targetUserId) {
       console.error('[admin-delete-user] ❌ No target user ID provided');
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Target user ID is required' 
+          error: 'Target user ID is required',
+          received: requestBody
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -151,15 +224,17 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Invalid user ID format' 
+          error: 'Invalid user ID format',
+          received: targetUserId
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log('[admin-delete-user] ✅ All validation passed, proceeding with deletion...');
+
+    // Test database connection
     console.log('[admin-delete-user] 🔧 Testing database connection...');
-    
-    // Test database connection first
     try {
       const { data: connectionTest, error: connectionError } = await adminClient
         .from('profiles')
@@ -192,7 +267,7 @@ Deno.serve(async (req) => {
 
     console.log('[admin-delete-user] 🔧 Calling admin_delete_user function...');
     console.log('[admin-delete-user] Parameters:', { 
-      adminToken: adminToken ? 'present' : 'missing', 
+      adminToken: adminToken ? `${adminToken.substring(0, 10)}...` : 'missing',
       targetUserId 
     });
 

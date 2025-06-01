@@ -28,6 +28,52 @@ export const useUserDeletion = () => {
   const [loading, setLoading] = useState(false);
   const { adminSession } = useAdminAuth();
 
+  const testAdminSessionValidation = async () => {
+    console.log('[useUserDeletion] 🔍 Testing admin session validation...');
+    
+    if (!adminSession?.token) {
+      console.error('[useUserDeletion] ❌ No admin session token available');
+      toast.error('No admin session available');
+      return false;
+    }
+
+    try {
+      console.log('[useUserDeletion] 🔧 Calling validate_admin_session function directly...');
+      
+      const { data, error } = await supabase.rpc('validate_admin_session', {
+        session_token: adminSession.token
+      });
+
+      console.log('[useUserDeletion] Session validation response:', { data, error });
+      
+      if (error) {
+        console.error('[useUserDeletion] ❌ Session validation error:', error);
+        toast.error('Session validation failed', {
+          description: error.message,
+        });
+        return false;
+      }
+      
+      if (!data || data.length === 0) {
+        console.error('[useUserDeletion] ❌ Invalid session - no admin data returned');
+        toast.error('Invalid admin session');
+        return false;
+      }
+      
+      console.log('[useUserDeletion] ✅ Admin session is valid:', data[0]);
+      toast.success('Admin session is valid', {
+        description: `Logged in as ${data[0].email}`,
+      });
+      return true;
+    } catch (error: any) {
+      console.error('[useUserDeletion] ❌ Session validation exception:', error);
+      toast.error('Session validation failed', {
+        description: error.message,
+      });
+      return false;
+    }
+  };
+
   const testEdgeFunction = async () => {
     console.log('[useUserDeletion] 🔍 Testing edge function health...');
     
@@ -65,6 +111,53 @@ export const useUserDeletion = () => {
     }
   };
 
+  const testDatabaseFunction = async () => {
+    console.log('[useUserDeletion] 🔍 Testing database function with invalid parameters...');
+    
+    if (!adminSession?.token) {
+      console.error('[useUserDeletion] ❌ No admin session available');
+      toast.error('No admin session available');
+      return false;
+    }
+
+    try {
+      // Test with invalid user ID to see if the function responds
+      const { data, error } = await supabase.rpc('admin_delete_user', {
+        admin_token: adminSession.token,
+        target_user_id: '00000000-0000-0000-0000-000000000000' // Invalid UUID
+      });
+
+      console.log('[useUserDeletion] Database function test response:', { data, error });
+      
+      // We expect this to fail with a specific error message
+      if (error) {
+        console.log('[useUserDeletion] ✅ Database function is responding (expected error):', error);
+        toast.success('Database function is responsive', {
+          description: 'Function correctly rejected invalid user ID',
+        });
+        return true;
+      }
+      
+      if (data && !data.success) {
+        console.log('[useUserDeletion] ✅ Database function is responding (expected failure):', data);
+        toast.success('Database function is responsive', {
+          description: 'Function correctly handled invalid request',
+        });
+        return true;
+      }
+      
+      console.log('[useUserDeletion] ⚠️ Unexpected response from database function');
+      toast.warning('Unexpected database function response');
+      return false;
+    } catch (error: any) {
+      console.error('[useUserDeletion] ❌ Database function test error:', error);
+      toast.error('Database function test failed', {
+        description: error.message,
+      });
+      return false;
+    }
+  };
+
   const deleteUser = async (userId: string): Promise<DeletionResult> => {
     console.log('[useUserDeletion] 🚀 Starting user deletion for:', userId);
     
@@ -75,6 +168,8 @@ export const useUserDeletion = () => {
     }
 
     console.log('[useUserDeletion] ✅ Admin session validated');
+    console.log('[useUserDeletion] Token length:', adminSession.token.length);
+    console.log('[useUserDeletion] Token preview:', adminSession.token.substring(0, 20) + '...');
     setLoading(true);
 
     try {
@@ -85,7 +180,10 @@ export const useUserDeletion = () => {
       };
       
       console.log('[useUserDeletion] Request payload:', requestPayload);
-      console.log('[useUserDeletion] Admin token length:', adminSession.token?.length || 0);
+      console.log('[useUserDeletion] Request headers:', {
+        'x-admin-token': adminSession.token ? 'present' : 'missing',
+        'Content-Type': 'application/json'
+      });
 
       const { data, error } = await supabase.functions.invoke('admin-delete-user', {
         headers: {
@@ -192,5 +290,7 @@ export const useUserDeletion = () => {
     deleteUser,
     loading,
     testEdgeFunction,
+    testAdminSessionValidation,
+    testDatabaseFunction,
   };
 };
