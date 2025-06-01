@@ -1,13 +1,11 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useAuditLog } from './useAuditLog';
-import { useUserDeletion } from './useUserDeletion';
 
 export interface UserAction {
   id: string;
-  type: 'suspend' | 'activate' | 'reset_password' | 'send_email' | 'delete_account';
+  type: 'suspend' | 'activate' | 'reset_password' | 'send_email';
   label: string;
   description: string;
   severity: 'low' | 'medium' | 'high';
@@ -23,7 +21,6 @@ export interface BulkActionResult {
 export const useAdvancedUserManagement = () => {
   const [loading, setLoading] = useState(false);
   const { logAction } = useAuditLog();
-  const { deleteUser } = useUserDeletion();
 
   const availableActions: UserAction[] = [
     {
@@ -57,14 +54,6 @@ export const useAdvancedUserManagement = () => {
       description: 'Send email to user',
       severity: 'low',
       requiresConfirmation: false
-    },
-    {
-      id: 'delete_account',
-      type: 'delete_account',
-      label: 'Delete Account',
-      description: 'Permanently remove user and all data',
-      severity: 'high',
-      requiresConfirmation: true
     }
   ];
 
@@ -76,36 +65,22 @@ export const useAdvancedUserManagement = () => {
   ): Promise<boolean> => {
     setLoading(true);
     try {
-      if (action === 'delete_account') {
-        // Use the real deletion function
-        await deleteUser(userId);
-        
-        await logAction(
-          `user_${action}`,
-          'user',
-          userId,
-          { user_email: userEmail, reason, action }
-        );
+      // Mock implementation for actions - in production would make actual API calls
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await logAction(
+        `user_${action}`,
+        'user',
+        userId,
+        { user_email: userEmail, reason, action }
+      );
 
-        return true;
-      } else {
-        // Mock implementation for other actions - in production would make actual API calls
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        await logAction(
-          `user_${action}`,
-          'user',
-          userId,
-          { user_email: userEmail, reason, action }
-        );
+      toast({
+        title: "Action Completed",
+        description: `Successfully executed ${action} for ${userEmail}`,
+      });
 
-        toast({
-          title: "Action Completed",
-          description: `Successfully executed ${action} for ${userEmail}`,
-        });
-
-        return true;
-      }
+      return true;
     } catch (error: any) {
       console.error(`Failed to execute ${action}:`, error);
       toast({
@@ -134,13 +109,8 @@ export const useAdvancedUserManagement = () => {
     try {
       for (const userId of userIds) {
         try {
-          if (action === 'delete_account') {
-            // Use the real deletion function for bulk deletion
-            await deleteUser(userId);
-          } else {
-            // Mock implementation for other actions
-            await new Promise(resolve => setTimeout(resolve, 200));
-          }
+          // Mock implementation for actions
+          await new Promise(resolve => setTimeout(resolve, 200));
           
           await logAction(
             `bulk_${action}`,
