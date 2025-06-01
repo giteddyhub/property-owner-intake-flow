@@ -1058,6 +1058,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_user: {
+        Args: { admin_token: string; target_user_id: string }
+        Returns: Json
+      }
       create_admin_session: {
         Args: {
           admin_id: string
