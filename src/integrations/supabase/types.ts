@@ -1080,6 +1080,23 @@ export type Database = {
         }
         Returns: string
       }
+      get_admin_user_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          last_submission_date: string | null
+          primary_submission_id: string | null
+          recent_activities: number | null
+          total_assignments: number | null
+          total_owners: number | null
+          total_properties: number | null
+          total_revenue: number | null
+          total_submissions: number | null
+        }[]
+      }
       hash_password: {
         Args: { password: string }
         Returns: string

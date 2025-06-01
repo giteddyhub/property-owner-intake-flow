@@ -58,27 +58,25 @@ export const useCleanAdminData = () => {
         timestamp: new Date().toISOString()
       });
 
-      // Use the new admin_user_summary view for optimized data access
-      const { data: userSummaries, error: viewError } = await supabase
-        .from('admin_user_summary')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Use the new secure function to get admin user summary data
+      const { data: userSummaries, error: functionError } = await supabase
+        .rpc('get_admin_user_summary');
 
-      if (viewError) {
-        throw new Error(`Failed to fetch user summary data: ${viewError.message}`);
+      if (functionError) {
+        throw new Error(`Failed to fetch user summary data: ${functionError.message}`);
       }
 
       if (!userSummaries) {
-        throw new Error('No user data returned from admin view');
+        throw new Error('No user data returned from admin function');
       }
 
-      // Transform the view data to match our UserProfile interface
+      // Transform the function result to match our UserProfile interface
       const transformedUsers: UserProfile[] = userSummaries.map(summary => ({
         id: summary.id,
         email: summary.email,
         full_name: summary.full_name,
         created_at: summary.created_at,
-        updated_at: summary.created_at, // View doesn't have updated_at, use created_at
+        updated_at: summary.created_at, // Function doesn't have updated_at, use created_at
         submissions_count: summary.total_submissions || 0,
         properties_count: summary.total_properties || 0,
         owners_count: summary.total_owners || 0,
@@ -94,7 +92,7 @@ export const useCleanAdminData = () => {
       await logAdminAction('user_data_retrieved', 'system', undefined, {
         user_count: transformedUsers.length,
         timestamp: new Date().toISOString(),
-        data_source: 'admin_user_summary_view'
+        data_source: 'get_admin_user_summary_function'
       });
 
     } catch (error: any) {

@@ -46,11 +46,9 @@ Deno.serve(async (req) => {
     const { action } = await req.json();
 
     if (action === 'fetch_user_profiles_with_stats') {
-      // Use the new admin_user_summary view for optimized data access
+      // Use the new secure function to get admin user summary data
       const { data: userSummaries, error: summaryError } = await adminClient
-        .from('admin_user_summary')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_admin_user_summary');
 
       if (summaryError) {
         throw new Error(`Failed to fetch user summary data: ${summaryError.message}`);
