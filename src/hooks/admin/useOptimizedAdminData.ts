@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -193,7 +192,7 @@ export const useOptimizedAdminData = () => {
       
       const totalRevenue = allPayments.reduce((sum, payment) => {
         const amount = Number(payment.amount || 0);
-        console.log(`💰 Processing payment: ${payment.id || 'unknown'}, amount: ${payment.amount}, parsed: ${amount}`);
+        console.log(`💰 Processing payment: amount: ${payment.amount}, parsed: ${amount}`);
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
 
