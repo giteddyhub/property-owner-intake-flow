@@ -1,53 +1,34 @@
 
 import React from 'react';
-import { useSignUpForm } from '@/hooks/useSignUpForm';
 import { SignUpFormFields } from './SignUpFormFields';
-import { SignUpSuccess } from './SignUpSuccess';
 import { SignUpSubmitButton } from './SignUpSubmitButton';
+import { SignUpSuccess } from './SignUpSuccess';
+import { useImprovedSignUpForm } from '@/hooks/useImprovedSignUpForm';
 
 interface SignUpFormProps {
   onSuccess?: () => void;
-  redirectAfterAuth?: boolean;
 }
 
-export const SignUpForm: React.FC<SignUpFormProps> = ({
-  onSuccess,
-  redirectAfterAuth = false
-}) => {
-  const { formState, updateField, handleSubmit } = useSignUpForm({ 
-    onSuccess, 
-    redirectAfterAuth 
+export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
+  const { formState, updateField, handleSubmit } = useImprovedSignUpForm({
+    onSuccess,
+    redirectAfterAuth: false
   });
-  
-  const { 
-    fullName, 
-    email, 
-    password, 
-    isSubmitting, 
-    isSignedUp, 
-    hasPendingFormData 
-  } = formState;
+
+  if (formState.isSignedUp) {
+    return <SignUpSuccess hasPendingFormData={formState.hasPendingFormData} />;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <SignUpFormFields 
-        fullName={fullName}
-        email={email}
-        password={password}
-        onFullNameChange={(value) => updateField('fullName', value)}
-        onEmailChange={(value) => updateField('email', value)}
-        onPasswordChange={(value) => updateField('password', value)}
-        disabled={isSubmitting || isSignedUp}
+      <SignUpFormFields
+        formState={formState}
+        updateField={updateField}
       />
-      
-      {isSignedUp ? (
-        <SignUpSuccess />
-      ) : (
-        <SignUpSubmitButton 
-          isSubmitting={isSubmitting} 
-          hasPendingFormData={hasPendingFormData} 
-        />
-      )}
+      <SignUpSubmitButton
+        isSubmitting={formState.isSubmitting}
+        hasPendingFormData={formState.hasPendingFormData}
+      />
     </form>
   );
 };

@@ -619,6 +619,45 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_form_data: {
+        Row: {
+          assignments: Json
+          completed: boolean
+          contact_info: Json
+          created_at: string
+          id: string
+          owners: Json
+          properties: Json
+          session_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          assignments?: Json
+          completed?: boolean
+          contact_info?: Json
+          created_at?: string
+          id?: string
+          owners?: Json
+          properties?: Json
+          session_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          assignments?: Json
+          completed?: boolean
+          contact_info?: Json
+          created_at?: string
+          id?: string
+          owners?: Json
+          properties?: Json
+          session_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       permissions: {
         Row: {
           created_at: string | null
@@ -1062,6 +1101,10 @@ export type Database = {
         Args: { admin_token: string; target_user_id: string }
         Returns: Json
       }
+      cleanup_completed_pending_form_data: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_admin_session: {
         Args: {
           admin_id: string
@@ -1169,6 +1212,14 @@ export type Database = {
       }
       validate_admin_token_for_purchases: {
         Args: { token_param: string }
+        Returns: boolean
+      }
+      validate_form_submission_data: {
+        Args: {
+          owners_data: Json
+          properties_data: Json
+          assignments_data: Json
+        }
         Returns: boolean
       }
       verify_admin_password: {

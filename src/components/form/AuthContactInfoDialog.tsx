@@ -5,7 +5,7 @@ import { AuthModal } from '../auth/AuthModal';
 import { ContactInfo, ContactDialogProps } from './contact-dialog/types';
 import ContactFormFields from './contact-dialog/ContactFormFields';
 import ContactSubmitButton from './contact-dialog/ContactSubmitButton';
-import { useContactForm } from './contact-dialog/useContactForm';
+import { useImprovedContactForm } from './contact-dialog/useImprovedContactForm';
 
 const AuthContactInfoDialog: React.FC<ContactDialogProps> = ({
   open,
@@ -22,7 +22,7 @@ const AuthContactInfoDialog: React.FC<ContactDialogProps> = ({
     handleSubmit,
     handleAuthSuccess,
     user
-  } = useContactForm(onSubmit, onClose);
+  } = useImprovedContactForm(onSubmit, onClose);
 
   return (
     <>
