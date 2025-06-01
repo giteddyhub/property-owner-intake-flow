@@ -159,8 +159,8 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Database Status */}
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-2">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
                 <Database className="h-4 w-4" />
                 <span className="font-medium">Database</span>
               </div>
