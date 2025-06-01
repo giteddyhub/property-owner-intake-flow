@@ -39,12 +39,6 @@ export const AdminSidebar: React.FC = () => {
       label: 'Settings',
       href: '/admin/settings',
       permission: 'system.settings' as Permission
-    },
-    {
-      icon: Shield,
-      label: 'Security',
-      href: '/admin/security',
-      permission: 'system.logs' as Permission
     }
   ];
 
