@@ -2,7 +2,7 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, Settings, Shield, LayoutDashboard } from 'lucide-react';
+import { Home, Settings, LayoutDashboard } from 'lucide-react';
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
 import { usePermissionSystem, Permission } from '@/hooks/admin/usePermissionSystem';
 import {
@@ -46,7 +46,11 @@ export const AdminSidebar: React.FC = () => {
     <Sidebar collapsible="icon" className="w-64">
       <SidebarHeader className="p-4">
         <Link to="/admin" className="flex items-center space-x-2">
-          <Shield className="h-6 w-6" />
+          <img 
+            src="/lovable-uploads/e62d8a69-aa30-46c9-acbc-51e4f709fc4f.png" 
+            alt="ItalianTaxes.com" 
+            className="h-6 w-6"
+          />
           <span className="font-semibold text-lg">Admin Panel</span>
         </Link>
       </SidebarHeader>
