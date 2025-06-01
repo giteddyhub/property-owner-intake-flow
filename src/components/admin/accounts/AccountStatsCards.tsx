@@ -26,7 +26,7 @@ export const AccountStatsCards: React.FC<AccountStatsCardsProps> = ({ accounts }
         <CardContent className="pt-6">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Submissions</p>
+              <p className="text-sm font-medium text-muted-foreground">User Sessions</p>
               <p className="text-2xl font-bold">{accounts.reduce((sum, account) => sum + account.submissions_count, 0)}</p>
             </div>
             <FileText className="h-8 w-8 text-muted-foreground opacity-70" />
