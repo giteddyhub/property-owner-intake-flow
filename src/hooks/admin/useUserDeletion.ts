@@ -59,13 +59,14 @@ export const useUserDeletion = () => {
 
       console.log('User deletion successful:', data);
 
-      // Show success toast with details
-      const deletedRecordsTotal = data.deleted_records ? 
-        (data.deleted_records.properties || 0) + 
-        (data.deleted_records.owners || 0) + 
-        (data.deleted_records.form_submissions || 0) + 
-        (data.deleted_records.assignments || 0) + 
-        (data.deleted_records.user_activities || 0) : 0;
+      // Show success toast with details - with proper type checking
+      const deletedRecords = data.deleted_records;
+      const deletedRecordsTotal = deletedRecords ? 
+        (typeof deletedRecords.properties === 'number' ? deletedRecords.properties : 0) + 
+        (typeof deletedRecords.owners === 'number' ? deletedRecords.owners : 0) + 
+        (typeof deletedRecords.form_submissions === 'number' ? deletedRecords.form_submissions : 0) + 
+        (typeof deletedRecords.assignments === 'number' ? deletedRecords.assignments : 0) + 
+        (typeof deletedRecords.user_activities === 'number' ? deletedRecords.user_activities : 0) : 0;
 
       toast.success('User deleted successfully', {
         description: `Deleted ${data.deleted_user?.email} and ${deletedRecordsTotal} related records`,
