@@ -2,7 +2,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, DollarSign, FileText } from 'lucide-react';
+import { User, DollarSign, Home } from 'lucide-react';
 import { AccountData } from '@/types/admin';
 
 interface AccountInfoCardProps {
@@ -60,7 +60,7 @@ export const AccountInfoCard: React.FC<AccountInfoCardProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="h-4 w-4 text-blue-600" />
+                <Home className="h-4 w-4 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{propertiesCount}</p>
