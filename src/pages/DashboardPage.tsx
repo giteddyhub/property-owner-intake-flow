@@ -1,11 +1,10 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { LoadingScreen } from '@/components/dashboard/LoadingScreen';
 import { useDashboardData } from '@/hooks/useDashboardData';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const DashboardPage = () => {
   const { user, signOut, checkAdminStatus } = useAuth();
@@ -34,9 +33,7 @@ const DashboardPage = () => {
       console.error('Dashboard data error:', error);
       // Only show error if it's not a JWT/auth error (those are handled elsewhere)
       if (!error.includes('JWT') && !error.includes('auth')) {
-        toast.error('Failed to load dashboard data', {
-          description: error
-        });
+        toast.error(`Failed to load dashboard data: ${error}`);
       }
     }
   }, [error, loading]);
