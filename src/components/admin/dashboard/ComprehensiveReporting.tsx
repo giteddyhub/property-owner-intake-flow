@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -182,7 +181,7 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
               </CardHeader>
               <CardContent>
                 <ChartContainer config={{}} className="h-64">
-                  <ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={analytics.propertyDistribution}
@@ -225,32 +224,38 @@ export const ComprehensiveReporting: React.FC<ComprehensiveReportingProps> = ({ 
                 <CardTitle>Session Status Trends</CardTitle>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={{}} className="h-64">
-                  <ResponsiveContainer>
-                    <AreaChart data={analytics.sessionTrends}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Area
-                        type="monotone"
-                        dataKey="completed"
-                        stackId="1"
-                        stroke="#82ca9d"
-                        fill="#82ca9d"
-                        name="Completed"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="pending"
-                        stackId="1"
-                        stroke="#8884d8"
-                        fill="#8884d8"
-                        name="Pending"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                <div className="w-full overflow-hidden">
+                  <ChartContainer config={{}} className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={analytics.sessionTrends} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="month" 
+                          tick={{ fontSize: 12 }}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis tick={{ fontSize: 12 }} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Area
+                          type="monotone"
+                          dataKey="completed"
+                          stackId="1"
+                          stroke="#82ca9d"
+                          fill="#82ca9d"
+                          name="Completed"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="pending"
+                          stackId="1"
+                          stroke="#8884d8"
+                          fill="#8884d8"
+                          name="Pending"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
               </CardContent>
             </Card>
           </div>
