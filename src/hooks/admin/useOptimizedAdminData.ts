@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getAuthenticatedAdminClient } from '@/integrations/supabase/adminClient';
 import { toast } from 'sonner';
 
 interface OptimizedAnalytics {
@@ -112,13 +112,23 @@ export const useOptimizedAdminData = () => {
     return numericAmount;
   };
 
-  // Optimized query function with standardized payment queries
+  // Optimized query function with admin client
   const fetchOptimizedAnalytics = useCallback(async () => {
     const startTime = Date.now();
     
     try {
       setLoading(true);
       setError(null);
+
+      // Get authenticated admin client
+      let adminSupabase;
+      try {
+        adminSupabase = getAuthenticatedAdminClient();
+        console.log('✅ Successfully obtained authenticated admin client');
+      } catch (adminError: any) {
+        console.error('❌ Failed to get authenticated admin client:', adminError);
+        throw new Error(`Admin authentication failed: ${adminError.message}`);
+      }
 
       // Get current and previous month boundaries
       const currentMonth = getMonthBoundaries(0);
@@ -135,25 +145,25 @@ export const useOptimizedAdminData = () => {
         }
       });
 
-      console.log('🚀 REVENUE DEBUG - Starting payment queries...');
+      console.log('🚀 REVENUE DEBUG - Starting payment queries with ADMIN CLIENT...');
 
       // Standardized payment field selection for all queries
       const paymentFields = 'id, amount, created_at, payment_status, form_submission_id, currency';
 
-      // Execute queries with standardized field selection
+      // Execute queries with ADMIN CLIENT and standardized field selection
       const [
         userSummaryResult,
         submissionsResult,
         activitiesResult,
-        // ALL PAYMENTS - No date filtering to capture everything
+        // ALL PAYMENTS - Using admin client
         allPaymentsResult,
-        // Current month payments
+        // Current month payments - Using admin client
         currentMonthPaymentsResult,
-        // Previous month payments
+        // Previous month payments - Using admin client
         previousMonthPaymentsResult,
         recentActivitiesResult
       ] = await Promise.all([
-        supabase
+        adminSupabase
           .from('admin_user_summary')
           .select('*')
           .order('created_at', { ascending: false })
@@ -162,7 +172,7 @@ export const useOptimizedAdminData = () => {
             return result;
           }),
         
-        supabase
+        adminSupabase
           .from('form_submissions')
           .select('id, state, submitted_at, created_at')
           .order('submitted_at', { ascending: false })
@@ -171,7 +181,7 @@ export const useOptimizedAdminData = () => {
             return result;
           }),
         
-        supabase
+        adminSupabase
           .from('user_activities')
           .select('user_id, created_at')
           .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
@@ -181,58 +191,65 @@ export const useOptimizedAdminData = () => {
             return result;
           }),
         
-        // ALL PAYMENTS QUERY - This should capture the €295 payment
-        supabase
+        // ALL PAYMENTS QUERY with ADMIN CLIENT - This should capture the €295 payment
+        adminSupabase
           .from('purchases')
           .select(paymentFields)
           .eq('payment_status', 'paid')
           .order('created_at', { ascending: false })
           .then(result => {
-            console.log('📋 ALL PAYMENTS QUERY RESULT:');
+            console.log('📋 ALL PAYMENTS QUERY RESULT (ADMIN CLIENT):');
             console.log('  Error:', result.error);
             console.log('  Data count:', result.data?.length || 0);
             console.log('  Raw data:', result.data);
             if (result.error) {
-              console.error('❌ ALL PAYMENTS ERROR:', result.error);
+              console.error('❌ ALL PAYMENTS ERROR (ADMIN CLIENT):', result.error);
+            } else if (result.data && result.data.length > 0) {
+              console.log('🎉 ADMIN CLIENT SUCCESSFULLY RETRIEVED PAYMENTS!');
+              result.data.forEach((payment, index) => {
+                console.log(`  Payment ${index + 1}: €${payment.amount} (${payment.payment_status}) - ${payment.created_at}`);
+              });
+            } else {
+              console.warn('⚠️ ADMIN CLIENT: No payments found in database');
             }
             return result;
           }),
 
-        // CURRENT MONTH PAYMENTS
-        supabase
+        // CURRENT MONTH PAYMENTS with ADMIN CLIENT
+        adminSupabase
           .from('purchases')
           .select(paymentFields)
           .eq('payment_status', 'paid')
           .gte('created_at', currentMonth.startOfMonth.toISOString())
           .lte('created_at', currentMonth.endOfMonth.toISOString())
           .then(result => {
-            console.log('📋 CURRENT MONTH PAYMENTS:', {
+            console.log('📋 CURRENT MONTH PAYMENTS (ADMIN CLIENT):', {
               error: result.error,
               count: result.data?.length || 0,
               dateRange: `${currentMonth.startOfMonth.toISOString()} to ${currentMonth.endOfMonth.toISOString()}`
             });
-            if (result.error) console.error('❌ CURRENT MONTH PAYMENTS ERROR:', result.error);
+            if (result.error) console.error('❌ CURRENT MONTH PAYMENTS ERROR (ADMIN CLIENT):', result.error);
             return result;
           }),
 
-        // PREVIOUS MONTH PAYMENTS
-        supabase
+        // PREVIOUS MONTH PAYMENTS with ADMIN CLIENT
+        adminSupabase
           .from('purchases')
           .select(paymentFields)
           .eq('payment_status', 'paid')
           .gte('created_at', previousMonth.startOfMonth.toISOString())
           .lte('created_at', previousMonth.endOfMonth.toISOString())
           .then(result => {
-            console.log('📋 PREVIOUS MONTH PAYMENTS:', {
+            console.log('📋 PREVIOUS MONTH PAYMENTS (ADMIN CLIENT):', {
               error: result.error,
               count: result.data?.length || 0,
               dateRange: `${previousMonth.startOfMonth.toISOString()} to ${previousMonth.endOfMonth.toISOString()}`
             });
-            if (result.error) console.error('❌ PREVIOUS MONTH PAYMENTS ERROR:', result.error);
+            if (result.error) console.error('❌ PREVIOUS MONTH PAYMENTS ERROR (ADMIN CLIENT):', result.error);
             return result;
           }),
 
-        supabase
+        adminSupabase
           .from('user_activities')
           .select('id, user_id, activity_type, created_at')
           .order('created_at', { ascending: false })
@@ -248,7 +265,7 @@ export const useOptimizedAdminData = () => {
 
       // Check for payment query errors
       if (allPaymentsResult.error) {
-        console.error('❌ ALL PAYMENTS QUERY FAILED:', allPaymentsResult.error);
+        console.error('❌ ALL PAYMENTS QUERY FAILED (ADMIN CLIENT):', allPaymentsResult.error);
         throw new Error(`All payments query failed: ${allPaymentsResult.error.message}`);
       }
 
@@ -257,14 +274,14 @@ export const useOptimizedAdminData = () => {
       const currentMonthPayments = currentMonthPaymentsResult.data || [];
       const previousMonthPayments = previousMonthPaymentsResult.data || [];
 
-      console.log('💳 PAYMENT DATA ANALYSIS:');
+      console.log('💳 PAYMENT DATA ANALYSIS (ADMIN CLIENT):');
       console.log(`  📈 Total payments retrieved: ${allPayments.length}`);
       console.log(`  📅 Current month payments: ${currentMonthPayments.length}`);
       console.log(`  📅 Previous month payments: ${previousMonthPayments.length}`);
 
       // Log each payment in detail to find the missing €295
       if (allPayments.length > 0) {
-        console.log('💰 DETAILED ALL PAYMENTS BREAKDOWN:');
+        console.log('💰 DETAILED ALL PAYMENTS BREAKDOWN (ADMIN CLIENT):');
         allPayments.forEach((payment, index) => {
           console.log(`  Payment ${index + 1}:`, {
             id: payment.id,
@@ -276,24 +293,11 @@ export const useOptimizedAdminData = () => {
           });
         });
       } else {
-        console.warn('⚠️ NO PAYMENTS FOUND - This is the problem!');
-        console.log('🔍 Let me check the raw database query...');
-        
-        // Direct database check to verify payments exist
-        const debugQuery = await supabase
-          .from('purchases')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        console.log('🔍 DEBUG - Raw purchases table query:', {
-          error: debugQuery.error,
-          count: debugQuery.data?.length || 0,
-          allData: debugQuery.data
-        });
+        console.error('🚨 CRITICAL ISSUE: No payments found even with ADMIN CLIENT!');
       }
 
       // Enhanced revenue calculation with step-by-step tracking
-      console.log('🧮 STARTING REVENUE CALCULATIONS...');
+      console.log('🧮 STARTING REVENUE CALCULATIONS (ADMIN CLIENT)...');
       
       let totalRevenue = 0;
       let validPaymentCount = 0;
@@ -302,7 +306,7 @@ export const useOptimizedAdminData = () => {
       console.log(`📊 Processing ${allPayments.length} payments for total revenue...`);
       
       allPayments.forEach((payment, index) => {
-        const amount = parsePaymentAmount(payment, index, 'ALL');
+        const amount = parsePaymentAmount(payment, index, 'ALL_ADMIN');
         if (amount > 0) {
           totalRevenue += amount;
           validPaymentCount++;
@@ -313,7 +317,7 @@ export const useOptimizedAdminData = () => {
         }
       });
 
-      console.log(`📊 TOTAL REVENUE CALCULATION SUMMARY:`, {
+      console.log(`📊 TOTAL REVENUE CALCULATION SUMMARY (ADMIN CLIENT):`, {
         totalPaymentsProcessed: allPayments.length,
         validPayments: validPaymentCount,
         invalidPayments: invalidPaymentCount,
@@ -324,7 +328,7 @@ export const useOptimizedAdminData = () => {
       // Current month revenue calculation
       let currentMonthRevenue = 0;
       currentMonthPayments.forEach((payment, index) => {
-        const amount = parsePaymentAmount(payment, index, 'CURRENT_MONTH');
+        const amount = parsePaymentAmount(payment, index, 'CURRENT_MONTH_ADMIN');
         if (amount > 0) {
           currentMonthRevenue += amount;
         }
@@ -333,29 +337,16 @@ export const useOptimizedAdminData = () => {
       // Previous month revenue calculation
       let previousMonthRevenue = 0;
       previousMonthPayments.forEach((payment, index) => {
-        const amount = parsePaymentAmount(payment, index, 'PREVIOUS_MONTH');
+        const amount = parsePaymentAmount(payment, index, 'PREVIOUS_MONTH_ADMIN');
         if (amount > 0) {
           previousMonthRevenue += amount;
         }
       });
 
-      console.log('💰 FINAL REVENUE SUMMARY:');
+      console.log('💰 FINAL REVENUE SUMMARY (ADMIN CLIENT):');
       console.log(`  🏆 Total Revenue: €${totalRevenue} (from ${validPaymentCount} payments)`);
       console.log(`  📅 Current Month: €${currentMonthRevenue}`);
       console.log(`  📅 Previous Month: €${previousMonthRevenue}`);
-
-      // If totalRevenue is still 0, there's a fundamental issue
-      if (totalRevenue === 0 && allPayments.length === 0) {
-        console.error('🚨 CRITICAL ISSUE: No payments found in database despite expecting €295 payment!');
-        console.log('🔍 Checking for potential query issues...');
-        
-        // Alternative query approach to find any payments
-        const alternativeQuery = await supabase
-          .from('purchases')
-          .select('*');
-          
-        console.log('🔍 Alternative query result:', alternativeQuery);
-      }
 
       // Use totalRevenue for display since that should include all historical payments
       const displayMonthlyRevenue = currentMonthRevenue;
@@ -383,7 +374,7 @@ export const useOptimizedAdminData = () => {
       
       try {
         // Use the profiles table directly instead of count queries that might be causing 404
-        const { data: allProfiles, error: profilesError } = await supabase
+        const { data: allProfiles, error: profilesError } = await adminSupabase
           .from('profiles')
           .select('id, created_at')
           .order('created_at', { ascending: false });
@@ -471,7 +462,7 @@ export const useOptimizedAdminData = () => {
       });
 
       // Property distribution with null safety
-      const { data: propertyTypes } = await supabase
+      const { data: propertyTypes } = await adminSupabase
         .from('properties')
         .select('property_type')
         .order('property_type');
@@ -536,7 +527,7 @@ export const useOptimizedAdminData = () => {
 
       setAnalytics(optimizedAnalytics);
       
-      console.log('✅ REVENUE DEBUG COMPLETE - Final Analytics:', {
+      console.log('✅ REVENUE DEBUG COMPLETE (ADMIN CLIENT) - Final Analytics:', {
         totalRevenue: optimizedAnalytics.totalRevenue,
         monthlyRevenue: optimizedAnalytics.monthlyRevenue,
         revenueMetrics: optimizedAnalytics.revenueMetrics,
