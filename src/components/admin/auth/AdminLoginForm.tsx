@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { useAdminAuth } from '@/contexts/admin/AdminAuthContext';
@@ -35,19 +35,24 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ initialEmail = '
     setIsSubmitting(true);
     
     try {
+      console.log('[AdminLoginForm] Attempting login for:', email);
+      
       // Sign in admin
       const success = await adminLogin(email, password);
       
       if (success) {
-        toast.success('Signed in as administrator');
+        toast.success('Successfully signed in as administrator', {
+          description: `Welcome back, ${email}`
+        });
         navigate('/admin');
       } else {
-        setAuthError('Invalid credentials or account not found');
-        setShowHelp(true); // Show help on failed login
+        setAuthError('Invalid email or password. Please check your credentials and try again.');
+        setShowHelp(true);
       }
     } catch (error: any) {
+      console.error('[AdminLoginForm] Login error:', error);
       setAuthError(error.message || 'An error occurred during sign in');
-      setShowHelp(true); // Show help on error
+      setShowHelp(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -60,6 +65,17 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ initialEmail = '
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Authentication Error</AlertTitle>
           <AlertDescription>{authError}</AlertDescription>
+        </Alert>
+      )}
+      
+      {/* Show helpful info about the default admin account */}
+      {!authError && (
+        <Alert className="mb-6 bg-blue-50 border-blue-200">
+          <CheckCircle className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="text-blue-800">Admin Login</AlertTitle>
+          <AlertDescription className="text-blue-700">
+            Use your administrator credentials to access the admin panel.
+          </AlertDescription>
         </Alert>
       )}
       

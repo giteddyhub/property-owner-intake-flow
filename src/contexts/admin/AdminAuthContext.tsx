@@ -155,13 +155,23 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     resetVerification();
     
     try {
+      console.log('[AdminAuth] Attempting admin login for:', email);
+      
       const { data, error } = await supabase.functions.invoke('admin-login', {
         body: { email, password }
       });
       
-      if (error || !data) {
-        console.error('Admin login error:', error);
-        setAdminLoginError(error?.message || 'Invalid credentials');
+      if (error) {
+        console.error('[AdminAuth] Admin login error:', error);
+        const errorMessage = error.message || 'Invalid credentials or server error';
+        setAdminLoginError(errorMessage);
+        setIsAdminLoading(false);
+        return false;
+      }
+      
+      if (!data) {
+        console.error('[AdminAuth] No data returned from admin login');
+        setAdminLoginError('No response from server');
         setIsAdminLoading(false);
         return false;
       }
@@ -169,10 +179,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const { admin: newAdmin, session: newSession } = data;
       
       if (!newAdmin || !newSession) {
-        setAdminLoginError('Failed to get admin credentials');
+        console.error('[AdminAuth] Invalid response structure:', data);
+        setAdminLoginError('Invalid server response');
         setIsAdminLoading(false);
         return false;
       }
+      
+      console.log('[AdminAuth] Admin login successful for:', newAdmin.email);
       
       // Store admin and session
       setAdmin(newAdmin);
@@ -184,8 +197,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsAdminLoading(false);
       return true;
     } catch (error: any) {
-      console.error('Admin login error:', error);
-      setAdminLoginError(error.message || 'Failed to login');
+      console.error('[AdminAuth] Admin login exception:', error);
+      setAdminLoginError(error.message || 'Failed to login - connection error');
       setIsAdminLoading(false);
       return false;
     }
