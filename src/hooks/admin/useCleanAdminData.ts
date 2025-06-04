@@ -58,9 +58,11 @@ export const useCleanAdminData = () => {
         timestamp: new Date().toISOString()
       });
 
-      // Use the new secure function to get admin user summary data
+      // Use the new token-based function to get admin user summary data
       const { data: userSummaries, error: functionError } = await supabase
-        .rpc('get_admin_user_summary');
+        .rpc('get_admin_user_summary_with_token', {
+          admin_token: adminSession.token
+        });
 
       if (functionError) {
         throw new Error(`Failed to fetch user summary data: ${functionError.message}`);
@@ -92,7 +94,7 @@ export const useCleanAdminData = () => {
       await logAdminAction('user_data_retrieved', 'system', undefined, {
         user_count: transformedUsers.length,
         timestamp: new Date().toISOString(),
-        data_source: 'get_admin_user_summary_function'
+        data_source: 'get_admin_user_summary_with_token_function'
       });
 
     } catch (error: any) {
