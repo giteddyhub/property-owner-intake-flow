@@ -55,7 +55,7 @@ export const AppRoutes = () => {
         <Route path="/settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
         <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
         <Route path="/payment-cancelled" element={<ProtectedRoute><PaymentCancelled /></ProtectedRoute>} />
-        <Route path="/tax-filing" element={<ProtectedRoute><TaxFilingServicePage /></ProtectedRoute>} />
+        <Route path="/tax-filing-service/:sessionId" element={<ProtectedRoute><TaxFilingServicePage /></ProtectedRoute>} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
