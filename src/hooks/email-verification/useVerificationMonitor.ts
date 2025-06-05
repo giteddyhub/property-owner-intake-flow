@@ -13,60 +13,36 @@ export const useVerificationMonitor = (
 ) => {
   const navigate = useNavigate();
 
-  // Monitor authentication state
+  // Monitor authentication state and handle verification
   useEffect(() => {
-    // Skip the rest of this effect if we're already redirecting
     if (redirecting) return;
     
-    console.log("[useVerificationMonitor] Component mounted, current user:", user?.id);
+    console.log("[useVerificationMonitor] Setting up auth listener, current user:", user?.id);
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[useVerificationMonitor] Auth state change:", event);
+      console.log("[useVerificationMonitor] Auth state change:", event, "Email confirmed:", !!(session?.user?.email_confirmed_at || session?.user?.confirmed_at));
       
-      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        if (session?.user?.email_confirmed_at || session?.user?.confirmed_at) {
-          console.log("[useVerificationMonitor] Email confirmed, user is verified");
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+        const isVerified = session?.user?.email_confirmed_at || session?.user?.confirmed_at;
+        
+        if (isVerified && verificationStatus !== 'verified') {
+          console.log("[useVerificationMonitor] Email verification detected!");
           setVerificationStatus('verified');
           
-          // Update user profile with contact info from form data
-          if (session.user) {
-            await updateUserProfileFromFormData(session.user.id);
+          if (session?.user) {
+            // Update user profile with contact info immediately
+            await updateUserProfile(session.user.id);
+            
+            // Process form data after profile update
+            await processFormDataAfterVerification(session.user.id);
           }
           
           toast.success("Email verified successfully!");
           
-          // Check if we should submit form data
-          const shouldSubmitForm = sessionStorage.getItem('submitAfterVerification') === 'true';
-          if (shouldSubmitForm) {
-            console.log("[useVerificationMonitor] Email verified, will trigger form submission");
-            sessionStorage.setItem('emailJustVerified', 'true');
-          }
-          
-          // Redirect to dashboard
+          // Redirect to dashboard after processing
           setTimeout(() => {
-            navigate('/dashboard');
-          }, 2000);
-        }
-      } else if (event === 'TOKEN_REFRESHED') {
-        console.log("[useVerificationMonitor] Token refreshed, checking email verification status");
-        if (session?.user?.email_confirmed_at || session?.user?.confirmed_at) {
-          setVerificationStatus('verified');
-          
-          // Update user profile
-          if (session.user) {
-            await updateUserProfileFromFormData(session.user.id);
-          }
-          
-          toast.success("Email verified successfully!");
-          
-          // Check if we should submit form data
-          const shouldSubmitForm = sessionStorage.getItem('submitAfterVerification') === 'true';
-          if (shouldSubmitForm) {
-            sessionStorage.setItem('emailJustVerified', 'true');
-          }
-          
-          // Redirect to dashboard
-          setTimeout(() => {
+            console.log("[useVerificationMonitor] Redirecting to dashboard after verification");
+            sessionStorage.setItem('showSuccessMessage', 'true');
             navigate('/dashboard');
           }, 2000);
         }
@@ -78,83 +54,87 @@ export const useVerificationMonitor = (
       console.log("[useVerificationMonitor] User already verified on mount");
       setVerificationStatus('verified');
       
-      // Update profile and redirect
-      updateUserProfileFromFormData(user.id);
+      updateUserProfile(user.id);
+      processFormDataAfterVerification(user.id);
+      
       setTimeout(() => {
         navigate('/dashboard');
-      }, 2000);
+      }, 1500);
     }
-    
-    // Check session every 5 seconds to detect email verification
-    const checkInterval = setInterval(async () => {
-      if (verificationStatus === 'verified') return;
-      
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session?.user?.email_confirmed_at || data.session?.user?.confirmed_at) {
-          console.log("[useVerificationMonitor] Email verified detected in interval check");
-          setVerificationStatus('verified');
-          
-          // Update user profile
-          if (data.session.user) {
-            await updateUserProfileFromFormData(data.session.user.id);
-          }
-          
-          toast.success("Email verified successfully!");
-          
-          // Set flag for form submission
-          const shouldSubmitForm = sessionStorage.getItem('submitAfterVerification') === 'true';
-          if (shouldSubmitForm) {
-            sessionStorage.setItem('emailJustVerified', 'true');
-          }
-          
-          // Redirect to dashboard
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 2000);
-          
-          clearInterval(checkInterval);
-        }
-      } catch (error) {
-        console.error("[useVerificationMonitor] Error checking session:", error);
-      }
-    }, 5000);
     
     return () => {
       subscription.unsubscribe();
-      clearInterval(checkInterval);
-    }
-  }, [navigate, user, verificationStatus, formSubmittedDuringSignup, redirecting, setVerificationStatus]);
+    };
+  }, [navigate, user, verificationStatus, redirecting, setVerificationStatus]);
 };
 
-// Helper function to update user profile from form data
-const updateUserProfileFromFormData = async (userId: string) => {
+// Update user profile with contact info from session storage or form data
+const updateUserProfile = async (userId: string) => {
   try {
+    // Get contact info from session storage
+    const pendingEmail = sessionStorage.getItem('pendingUserEmail');
+    const pendingFullName = sessionStorage.getItem('pendingUserFullName');
     const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+    
+    let contactInfo = {
+      email: pendingEmail || '',
+      fullName: pendingFullName || ''
+    };
+    
+    // If we have form data, use contact info from there
     if (pendingFormDataStr) {
-      const formData = JSON.parse(pendingFormDataStr);
-      const contactInfo = formData.contactInfo;
-      
-      if (contactInfo?.fullName || contactInfo?.email) {
-        console.log("[useVerificationMonitor] Updating user profile with form contact info");
-        
-        const { error } = await supabase
-          .from('profiles')
-          .upsert({
-            id: userId,
-            full_name: contactInfo.fullName,
-            email: contactInfo.email,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'id' });
-          
-        if (error) {
-          console.error("[useVerificationMonitor] Error updating profile:", error);
-        } else {
-          console.log("[useVerificationMonitor] Profile updated successfully");
+      try {
+        const formData = JSON.parse(pendingFormDataStr);
+        if (formData.contactInfo) {
+          contactInfo = {
+            email: formData.contactInfo.email || contactInfo.email,
+            fullName: formData.contactInfo.fullName || contactInfo.fullName
+          };
         }
+      } catch (e) {
+        console.warn("[updateUserProfile] Error parsing form data:", e);
+      }
+    }
+    
+    if (contactInfo.email || contactInfo.fullName) {
+      console.log("[updateUserProfile] Updating profile with:", contactInfo);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: contactInfo.email,
+          full_name: contactInfo.fullName,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+        
+      if (error) {
+        console.error("[updateUserProfile] Error updating profile:", error);
+      } else {
+        console.log("[updateUserProfile] Profile updated successfully");
       }
     }
   } catch (error) {
-    console.error("[useVerificationMonitor] Error updating profile from form data:", error);
+    console.error("[updateUserProfile] Error:", error);
+  }
+};
+
+// Process form data submission after email verification
+const processFormDataAfterVerification = async (userId: string) => {
+  try {
+    const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+    const shouldSubmit = sessionStorage.getItem('submitAfterVerification') === 'true';
+    
+    if (pendingFormDataStr && shouldSubmit) {
+      console.log("[processFormDataAfterVerification] Processing form data for user:", userId);
+      
+      // Set flag to trigger form submission in AuthContext
+      sessionStorage.setItem('emailJustVerified', 'true');
+      sessionStorage.setItem('processFormDataNow', 'true');
+      
+      console.log("[processFormDataAfterVerification] Flags set for form submission");
+    }
+  } catch (error) {
+    console.error("[processFormDataAfterVerification] Error:", error);
   }
 };

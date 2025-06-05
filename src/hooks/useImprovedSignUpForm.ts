@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { usePendingFormData } from './usePendingFormData';
 
 interface SignUpFormState {
   fullName: string;
@@ -22,7 +21,6 @@ interface UseImprovedSignUpFormProps {
 export const useImprovedSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseImprovedSignUpFormProps) => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
-  const { savePendingFormData } = usePendingFormData();
   
   const [formState, setFormState] = useState<SignUpFormState>({
     fullName: '',
@@ -90,57 +88,50 @@ export const useImprovedSignUpForm = ({ onSuccess, redirectAfterAuth = false }: 
       const userId = data.user.id;
       console.log("[ImprovedSignUpForm] User created successfully:", userId);
 
-      // Check for pending form data and save it with user info
+      // Always save contact info and prepare form data for verification
       const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+      
       if (pendingFormDataStr) {
         try {
           const pendingFormData = JSON.parse(pendingFormDataStr);
-          const { owners, properties, assignments, contactInfo } = pendingFormData;
           
-          console.log("[ImprovedSignUpForm] Found pending form data, saving with contact info");
-          
-          // Update contact info with signup details
-          const updatedContactInfo = {
-            ...contactInfo,
-            fullName,
-            email
-          };
-
-          // Save to sessionStorage with updated contact info for later submission
+          // Update form data with user contact info
           const updatedFormData = {
-            owners,
-            properties,
-            assignments,
-            contactInfo: updatedContactInfo
+            ...pendingFormData,
+            contactInfo: {
+              ...pendingFormData.contactInfo,
+              fullName,
+              email
+            },
+            userId: userId // Store user ID with form data
           };
           
           sessionStorage.setItem('pendingFormData', JSON.stringify(updatedFormData));
-          
-          // Set flag to submit after email verification
           sessionStorage.setItem('submitAfterVerification', 'true');
           
-          console.log("[ImprovedSignUpForm] Updated pending form data with contact info");
+          console.log("[ImprovedSignUpForm] Updated pending form data with contact info and user ID");
           
         } catch (error) {
           console.error("[ImprovedSignUpForm] Error processing pending form data:", error);
         }
       }
 
-      // Set success state
-      setFormState(prev => ({ ...prev, isSignedUp: true }));
-      
-      // Save email and user ID for verification page
+      // Store user info for verification page
       sessionStorage.setItem('pendingUserEmail', email);
       sessionStorage.setItem('pendingUserId', userId);
+      sessionStorage.setItem('pendingUserFullName', fullName);
       
+      // Set success state briefly
+      setFormState(prev => ({ ...prev, isSignedUp: true }));
+      
+      // Always redirect to verify email page after a short delay
+      setTimeout(() => {
+        console.log("[ImprovedSignUpForm] Redirecting to verify email page");
+        navigate('/verify-email');
+      }, 1500);
+
       if (onSuccess && !redirectAfterAuth) {
-        setTimeout(onSuccess, 2000);
-      }
-      
-      if (redirectAfterAuth) {
-        setTimeout(() => {
-          navigate('/verify-email');
-        }, 1500);
+        setTimeout(onSuccess, 1000);
       }
 
     } catch (error: any) {

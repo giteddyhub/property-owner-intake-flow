@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { submitFormData } from '@/components/form/review/utils/submissionService';
@@ -9,31 +10,34 @@ export const useFormSubmissionHandler = () => {
   const [submissionAttempts, setSubmissionAttempts] = useState<number>(0);
 
   const processPendingFormData = useCallback(async (userId: string) => {
-    // Skip processing if we've already attempted too many times
+    // Prevent multiple simultaneous submissions
+    if (processingSubmission) {
+      console.log("[FormSubmissionHandler] Submission already in progress, skipping");
+      return;
+    }
+    
+    // Check submission attempts limit
     if (submissionAttempts > 3) {
       console.log("[FormSubmissionHandler] Too many submission attempts, skipping");
       return;
     }
     
     const pendingFormData = sessionStorage.getItem('pendingFormData');
-    const submitAfterVerification = sessionStorage.getItem('submitAfterVerification');
+    const submitAfterVerification = sessionStorage.getItem('submitAfterVerification') === 'true';
     const emailJustVerified = sessionStorage.getItem('emailJustVerified') === 'true';
-    const forceRetry = sessionStorage.getItem('forceRetrySubmission') === 'true';
+    const processNow = sessionStorage.getItem('processFormDataNow') === 'true';
     
-    console.log("[FormSubmissionHandler] Processing pending data. Has data:", !!pendingFormData, 
-      "Submit after verification:", submitAfterVerification, 
-      "Email just verified:", emailJustVerified,
-      "Force retry:", forceRetry);
+    console.log("[FormSubmissionHandler] Checking conditions:", {
+      hasPendingData: !!pendingFormData,
+      submitAfterVerification,
+      emailJustVerified,
+      processNow,
+      userId
+    });
       
     // Only process if we have data and the right conditions
-    if (pendingFormData && (submitAfterVerification === 'true' || emailJustVerified || forceRetry)) {
-      console.log("[FormSubmissionHandler] Found pending form data with submit conditions met");
-      
-      // Prevent processing if already handling a submission
-      if (processingSubmission) {
-        console.log("[FormSubmissionHandler] Submission already in progress, skipping");
-        return;
-      }
+    if (pendingFormData && (submitAfterVerification || emailJustVerified || processNow)) {
+      console.log("[FormSubmissionHandler] Processing pending form data");
       
       try {
         setProcessingSubmission(true);
@@ -42,77 +46,77 @@ export const useFormSubmissionHandler = () => {
         const formData = JSON.parse(pendingFormData);
         const { owners, properties, assignments, contactInfo } = formData;
         
-        // Make sure we have actual data to submit
+        // Validate form data structure
         if (!Array.isArray(owners) || !Array.isArray(properties) || !Array.isArray(assignments)) {
-          console.error("[FormSubmissionHandler] Invalid form data:", formData);
+          console.error("[FormSubmissionHandler] Invalid form data structure");
           return;
         }
         
-        console.log(`[FormSubmissionHandler] Submitting pending form data for user ${userId} with:`, {
+        console.log(`[FormSubmissionHandler] Submitting form data:`, {
           ownersCount: owners.length,
           propertiesCount: properties.length,
-          assignmentsCount: assignments.length
+          assignmentsCount: assignments.length,
+          userId
         });
         
-        // Get fresh user data to ensure contact info is current
+        // Get current user data for contact info
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // Use form contact info but fallback to user metadata
-          const finalContactInfo = {
-            fullName: contactInfo?.fullName || user.user_metadata?.full_name || '',
-            email: contactInfo?.email || user.email || ''
-          };
+        
+        const finalContactInfo = {
+          fullName: contactInfo?.fullName || user?.user_metadata?.full_name || '',
+          email: contactInfo?.email || user?.email || ''
+        };
+        
+        console.log("[FormSubmissionHandler] Using contact info:", finalContactInfo);
+        
+        // Submit the form data
+        const result = await submitFormData(
+          owners,
+          properties,
+          assignments,
+          finalContactInfo,
+          userId,
+          true // isImmediateSubmission = true
+        );
+        
+        if (result.success) {
+          setSubmissionCompleted(true);
           
-          // Submit the data
-          const result = await submitFormData(
-            owners,
-            properties,
-            assignments,
-            finalContactInfo,
-            userId,
-            true // isImmediateSubmission = true
-          );
+          // Clear all session storage flags
+          sessionStorage.removeItem('pendingFormData');
+          sessionStorage.removeItem('submitAfterVerification');
+          sessionStorage.removeItem('emailJustVerified');
+          sessionStorage.removeItem('processFormDataNow');
+          sessionStorage.removeItem('forceRetrySubmission');
+          sessionStorage.removeItem('submissionError');
           
-          if (result.success) {
-            setSubmissionCompleted(true);
-            
-            // Clear flags after successful submission
-            sessionStorage.removeItem('pendingFormData');
-            sessionStorage.removeItem('submitAfterVerification');
-            sessionStorage.removeItem('emailJustVerified');
-            sessionStorage.removeItem('forceRetrySubmission');
-            sessionStorage.removeItem('submissionError');
-            
-            // Mark as completed
-            sessionStorage.setItem('formSubmittedDuringSignup', 'true');
-            
-            console.log("[FormSubmissionHandler] Form submission completed successfully");
-            
-            toast.success("Your information has been submitted successfully!");
-          } else {
-            console.error(`[FormSubmissionHandler] Submission failed:`, result.error);
-            
-            // Store error for display
-            sessionStorage.setItem('submissionError', result.error || "Unknown error");
-            
-            // Keep retry flag if there was an RLS issue
-            if (result.error?.includes('security policy') || result.error?.includes('Authorization error')) {
-              console.log("[FormSubmissionHandler] Setting retry flag for future attempts");
-              sessionStorage.setItem('forceRetrySubmission', 'true');
-            }
-          }
+          // Mark as completed
+          sessionStorage.setItem('formSubmittedDuringSignup', 'true');
+          sessionStorage.setItem('redirectToDashboard', 'true');
+          
+          console.log("[FormSubmissionHandler] Form submission completed successfully");
+          
+          toast.success("Your property information has been submitted successfully!");
+        } else {
+          console.error(`[FormSubmissionHandler] Submission failed:`, result.error);
+          
+          // Store error and set retry flag
+          sessionStorage.setItem('submissionError', result.error || "Submission failed");
+          sessionStorage.setItem('forceRetrySubmission', 'true');
         }
       } catch (error: any) {
-        console.error("[FormSubmissionHandler] Error submitting pending form data:", error);
+        console.error("[FormSubmissionHandler] Error submitting form data:", error);
         
         // Set retry flag for future attempts
         sessionStorage.setItem('forceRetrySubmission', 'true');
         sessionStorage.setItem('submissionError', error.message || 'Unknown error occurred');
+        
+        toast.error("Error submitting your information. We'll retry shortly.");
       } finally {
         setProcessingSubmission(false);
       }
     } else {
-      console.log("[FormSubmissionHandler] No pending form data found or conditions not met");
+      console.log("[FormSubmissionHandler] Conditions not met for form submission");
     }
   }, [processingSubmission, submissionAttempts]);
 

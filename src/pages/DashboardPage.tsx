@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -31,92 +32,37 @@ const DashboardPage = () => {
   useEffect(() => {
     if (error && !loading) {
       console.error('Dashboard data error:', error);
-      // Only show error if it's not a JWT/auth error (those are handled elsewhere)
       if (!error.includes('JWT') && !error.includes('auth')) {
         toast.error(`Failed to load dashboard data: ${error}`);
       }
     }
   }, [error, loading]);
 
-  // Check for redirect from form submission - revised to use localStorage
+  // Check for success message from form submission
   useEffect(() => {
-    const handleRedirectMessage = () => {
-      // Get the redirect flag from sessionStorage
-      const shouldShowMessage = sessionStorage.getItem('redirectToDashboard') === 'true';
-      
-      // Check localStorage to see if we've already shown this message in this session
-      const hasShownMessage = localStorage.getItem('dashboardMessageShown') === 'true';
-      
-      if (shouldShowMessage && !hasShownMessage) {
-        // Clear the redirect flag
-        sessionStorage.removeItem('redirectToDashboard');
-        
-        // Set the flag in localStorage so we don't show it again on refresh
-        localStorage.setItem('dashboardMessageShown', 'true');
-        
-        // Show the success message
-        toast.success("Your property data has been successfully saved!");
-        console.log("Dashboard: Showing one-time success message after redirect");
-      }
-    };
+    const showSuccess = sessionStorage.getItem('showSuccessMessage') === 'true';
+    const redirectToDashboard = sessionStorage.getItem('redirectToDashboard') === 'true';
     
-    handleRedirectMessage();
-    
-    // Clean up localStorage when navigating away 
-    return () => {
-      // This will ensure that if the user navigates away and back, 
-      // they could potentially see the message again if redirected
-      localStorage.removeItem('dashboardMessageShown');
-    };
-  }, []);
-
-  // Add a global cleanup handler
-  useEffect(() => {
-    // Initial cleanup on mount
-    const cleanupOverlays = () => {
-      const selectors = [
-        '[data-state="closed"][data-radix-portal]',
-        '.vaul-overlay[data-state="closed"]',
-        '[role="dialog"][aria-hidden="true"]',
-        '.fixed.inset-0.z-50:not([data-state="open"])'
-      ];
+    if (showSuccess || redirectToDashboard) {
+      // Clear the flags
+      sessionStorage.removeItem('showSuccessMessage');
+      sessionStorage.removeItem('redirectToDashboard');
       
-      selectors.forEach(selector => {
-        document.querySelectorAll(selector).forEach(element => {
-          if (element.parentNode) {
-            console.log('Global cleanup removing element:', element);
-            element.parentNode.removeChild(element);
-          }
-        });
+      // Show success message
+      toast.success("Your property information has been successfully saved!", {
+        description: "All your data is now available in your dashboard."
       });
       
-      // Reset body styles
-      document.body.style.pointerEvents = '';
-      document.body.style.overflow = '';
-    };
+      // Refresh data to ensure latest information is displayed
+      setTimeout(() => {
+        refreshData();
+      }, 500);
+      
+      console.log("Dashboard: Showing success message and refreshing data");
+    }
+  }, [refreshData]);
 
-    // Cleanup on mount
-    cleanupOverlays();
-    
-    // Add global click handler to force cleanup overlays if any are stuck
-    const handleGlobalClick = () => {
-      // Check if there are any closed dialogs still in the DOM
-      const closedDialogs = document.querySelectorAll('[data-state="closed"][data-radix-portal]');
-      if (closedDialogs.length > 0) {
-        console.log('Found stray dialogs on click, cleaning up:', closedDialogs.length);
-        cleanupOverlays();
-      }
-    };
-    
-    document.addEventListener('click', handleGlobalClick);
-    
-    // Cleanup on unmount
-    return () => {
-      document.removeEventListener('click', handleGlobalClick);
-      cleanupOverlays();
-    };
-  }, []);
-
+  // Redirect if not authenticated
   React.useEffect(() => {
     if (!user) {
       navigate('/');
@@ -125,14 +71,12 @@ const DashboardPage = () => {
 
   const handleSignOut = async () => {
     try {
-      // First clear any session storage
       sessionStorage.clear();
       localStorage.removeItem('supabase.auth.token');
       
       await signOut();
       toast.success('Signed out successfully');
       
-      // Use window.location for a full page reload and reset
       window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);

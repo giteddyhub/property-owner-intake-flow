@@ -21,12 +21,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
-  // Check if the current user is an admin
   const checkAdminStatus = async (): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      // Use the function we created in the database
       const { data, error } = await supabase.rpc('is_authenticated_user_admin');
       
       if (error) {
@@ -46,10 +44,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   React.useEffect(() => {
     console.log("[AuthContext] Auth state changed, user:", user?.id);
     
-    // Set up auth state listener to process pending form data
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        const previousUser = user;
         const newUser = session?.user || null;
         
         // Check admin status when user logs in
@@ -59,36 +55,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }, 500);
         }
         
-        // Process pending form submission if this is a new sign-in or confirmed email
-        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-          console.log(`[AuthContext] ${event} event, checking for pending form data`);
-          
-          // Check if this is a newly verified user (email confirmation)
+        // Handle form submission after email verification
+        if (event === 'USER_UPDATED' && session?.user) {
           const isVerified = session.user.email_confirmed_at || session.user.confirmed_at;
-          const wasJustVerified = 
-            isVerified && 
-            (!previousUser || 
-              (!previousUser.email_confirmed_at && !previousUser.confirmed_at));
-              
-          // Handle email verification - set flag for redirect to dashboard if on verification page
-          if (wasJustVerified) {
-            // Set redirect flag to use in VerifyEmailPage
-            sessionStorage.setItem('emailJustVerified', 'true');
-            
-            // Mark dashboard redirect for any page that checks
-            sessionStorage.setItem('redirectToDashboard', 'true');
-          }
+          const shouldProcessForm = sessionStorage.getItem('processFormDataNow') === 'true' ||
+                                   sessionStorage.getItem('emailJustVerified') === 'true';
           
-          // Attempt to process any pending form data - our new RLS policies should handle unverified users
-          const shouldProcessFormData = event === 'SIGNED_IN' || wasJustVerified || 
-            sessionStorage.getItem('forceRetrySubmission') === 'true';
-          
-          if (shouldProcessFormData) {
-            console.log("[AuthContext] Processing form data after auth event:", event);
-            // Use setTimeout to avoid auth state conflicts
+          if (isVerified && shouldProcessForm) {
+            console.log("[AuthContext] Processing form data after email verification");
             setTimeout(() => {
               processPendingFormData(session.user.id);
-            }, 500);
+            }, 1000);
+          }
+        }
+        
+        // Handle retry submissions
+        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
+          const forceRetry = sessionStorage.getItem('forceRetrySubmission') === 'true';
+          if (forceRetry) {
+            console.log("[AuthContext] Force retry submission detected");
+            setTimeout(() => {
+              processPendingFormData(session.user.id);
+            }, 1500);
           }
         }
 
@@ -99,16 +87,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    // Check for pending form data and admin status on initial load
+    // Check for pending submissions on initial load
     if (user && isInitialized) {
-      // Check admin status
       checkAdminStatus();
       
-      // Use setTimeout to avoid potential conflicts
       setTimeout(() => {
-        const forceRetry = sessionStorage.getItem('forceRetrySubmission') === 'true';
-        if (forceRetry) {
-          console.log("[AuthContext] Force retry flag found on initial load");
+        const shouldProcess = sessionStorage.getItem('processFormDataNow') === 'true' ||
+                             sessionStorage.getItem('forceRetrySubmission') === 'true';
+        if (shouldProcess) {
+          console.log("[AuthContext] Processing pending data on initial load");
           processPendingFormData(user.id);
         }
       }, 500);
@@ -151,5 +138,5 @@ export const useAuth = () => {
 // Export useUser helper hook
 export const useUser = () => {
   const { user } = useAuth();
-  return { user, setUser: () => {} }; // setUser is handled internally by auth actions
+  return { user, setUser: () => {} };
 };
