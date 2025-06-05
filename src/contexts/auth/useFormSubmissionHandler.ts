@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { submitFormData } from '@/components/form/review/utils/submissionService';
@@ -18,23 +17,17 @@ export const useFormSubmissionHandler = () => {
     
     const pendingFormData = sessionStorage.getItem('pendingFormData');
     const submitAfterVerification = sessionStorage.getItem('submitAfterVerification');
+    const emailJustVerified = sessionStorage.getItem('emailJustVerified') === 'true';
     const forceRetry = sessionStorage.getItem('forceRetrySubmission') === 'true';
-    const formAlreadySubmitted = sessionStorage.getItem('formSubmittedDuringSignup') === 'true' && 
-                                !sessionStorage.getItem('pendingFormData');
     
     console.log("[FormSubmissionHandler] Processing pending data. Has data:", !!pendingFormData, 
       "Submit after verification:", submitAfterVerification, 
-      "Force retry:", forceRetry,
-      "Already submitted:", formAlreadySubmitted);
+      "Email just verified:", emailJustVerified,
+      "Force retry:", forceRetry);
       
-    // Don't process if already submitted successfully and no pending data
-    if (formAlreadySubmitted && !pendingFormData && !forceRetry) {
-      console.log("[FormSubmissionHandler] No pending form data but marked as submitted, skipping");
-      return;
-    }
-    
-    if (pendingFormData && (submitAfterVerification === 'true' || forceRetry)) {
-      console.log("[FormSubmissionHandler] Found pending form data with submit flag or force retry");
+    // Only process if we have data and the right conditions
+    if (pendingFormData && (submitAfterVerification === 'true' || emailJustVerified || forceRetry)) {
+      console.log("[FormSubmissionHandler] Found pending form data with submit conditions met");
       
       // Prevent processing if already handling a submission
       if (processingSubmission) {
@@ -50,7 +43,7 @@ export const useFormSubmissionHandler = () => {
         const { owners, properties, assignments, contactInfo } = formData;
         
         // Make sure we have actual data to submit
-        if (!Array.isArray(owners) || !Array.isArray(properties)) {
+        if (!Array.isArray(owners) || !Array.isArray(properties) || !Array.isArray(assignments)) {
           console.error("[FormSubmissionHandler] Invalid form data:", formData);
           return;
         }
@@ -61,56 +54,52 @@ export const useFormSubmissionHandler = () => {
           assignmentsCount: assignments.length
         });
         
-        // Ensure contact info has user's email and name if available
-        const { data } = await supabase.auth.getUser();
-        if (data?.user) {
-          if (!contactInfo.fullName && data.user.user_metadata?.full_name) {
-            contactInfo.fullName = data.user.user_metadata.full_name;
-          }
+        // Get fresh user data to ensure contact info is current
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Use form contact info but fallback to user metadata
+          const finalContactInfo = {
+            fullName: contactInfo?.fullName || user.user_metadata?.full_name || '',
+            email: contactInfo?.email || user.email || ''
+          };
           
-          if (!contactInfo.email && data.user.email) {
-            contactInfo.email = data.user.email;
-          }
-        }
-        
-        // Submit the data with explicit userId
-        const result = await submitFormData(
-          owners,
-          properties,
-          assignments,
-          contactInfo,
-          userId,
-          true // Set isImmediateSubmission to true to bypass verification checks
-        );
-        
-        if (result.success) {
-          setSubmissionCompleted(true);
-          // Mark form as submitted to prevent duplicate submissions
-          sessionStorage.setItem('formSubmittedDuringSignup', 'true');
-          // Clear flags after successful submission
-          sessionStorage.removeItem('pendingFormData');
-          sessionStorage.removeItem('submitAfterVerification');
-          sessionStorage.removeItem('forceRetrySubmission');
-          sessionStorage.removeItem('submissionError');
-          console.log("[FormSubmissionHandler] Form submission completed successfully");
+          // Submit the data
+          const result = await submitFormData(
+            owners,
+            properties,
+            assignments,
+            finalContactInfo,
+            userId,
+            true // isImmediateSubmission = true
+          );
           
-          // Don't show another success notification since the user is already receiving multiple messages
-          // Only show this if we're retrying a previously failed submission
-          if (forceRetry) {
-            toast.success("Your information has been submitted successfully!");
-          }
-        } else {
-          console.error(`[FormSubmissionHandler] Submission failed:`, result.error);
-          
-          // Store error for display on verification page
-          sessionStorage.setItem('submissionError', result.error || "Unknown error");
-          
-          // Keep retry flag if there was an RLS issue
-          if (result.error?.includes('security policy') || result.error?.includes('Authorization error')) {
-            console.log("[FormSubmissionHandler] Setting retry flag for future attempts");
-            sessionStorage.setItem('forceRetrySubmission', 'true');
+          if (result.success) {
+            setSubmissionCompleted(true);
             
-            // Don't show error toast since the verify page will handle this
+            // Clear flags after successful submission
+            sessionStorage.removeItem('pendingFormData');
+            sessionStorage.removeItem('submitAfterVerification');
+            sessionStorage.removeItem('emailJustVerified');
+            sessionStorage.removeItem('forceRetrySubmission');
+            sessionStorage.removeItem('submissionError');
+            
+            // Mark as completed
+            sessionStorage.setItem('formSubmittedDuringSignup', 'true');
+            
+            console.log("[FormSubmissionHandler] Form submission completed successfully");
+            
+            toast.success("Your information has been submitted successfully!");
+          } else {
+            console.error(`[FormSubmissionHandler] Submission failed:`, result.error);
+            
+            // Store error for display
+            sessionStorage.setItem('submissionError', result.error || "Unknown error");
+            
+            // Keep retry flag if there was an RLS issue
+            if (result.error?.includes('security policy') || result.error?.includes('Authorization error')) {
+              console.log("[FormSubmissionHandler] Setting retry flag for future attempts");
+              sessionStorage.setItem('forceRetrySubmission', 'true');
+            }
           }
         }
       } catch (error: any) {
@@ -118,11 +107,12 @@ export const useFormSubmissionHandler = () => {
         
         // Set retry flag for future attempts
         sessionStorage.setItem('forceRetrySubmission', 'true');
+        sessionStorage.setItem('submissionError', error.message || 'Unknown error occurred');
       } finally {
         setProcessingSubmission(false);
       }
     } else {
-      console.log("[FormSubmissionHandler] No pending form data found or no submission flag");
+      console.log("[FormSubmissionHandler] No pending form data found or conditions not met");
     }
   }, [processingSubmission, submissionAttempts]);
 

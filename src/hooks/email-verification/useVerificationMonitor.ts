@@ -20,7 +20,7 @@ export const useVerificationMonitor = (
     
     console.log("[useVerificationMonitor] Component mounted, current user:", user?.id);
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("[useVerificationMonitor] Auth state change:", event);
       
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
@@ -28,12 +28,21 @@ export const useVerificationMonitor = (
           console.log("[useVerificationMonitor] Email confirmed, user is verified");
           setVerificationStatus('verified');
           
-          // Don't show redundant toast messages if we already displayed them elsewhere
-          if (!formSubmittedDuringSignup) {
-            toast.success("Email verified successfully!");
+          // Update user profile with contact info from form data
+          if (session.user) {
+            await updateUserProfileFromFormData(session.user.id);
           }
           
-          // Redirect to dashboard shortly after verification
+          toast.success("Email verified successfully!");
+          
+          // Check if we should submit form data
+          const shouldSubmitForm = sessionStorage.getItem('submitAfterVerification') === 'true';
+          if (shouldSubmitForm) {
+            console.log("[useVerificationMonitor] Email verified, will trigger form submission");
+            sessionStorage.setItem('emailJustVerified', 'true');
+          }
+          
+          // Redirect to dashboard
           setTimeout(() => {
             navigate('/dashboard');
           }, 2000);
@@ -43,12 +52,20 @@ export const useVerificationMonitor = (
         if (session?.user?.email_confirmed_at || session?.user?.confirmed_at) {
           setVerificationStatus('verified');
           
-          // Don't show redundant toast messages
-          if (!formSubmittedDuringSignup) {
-            toast.success("Email verified successfully!");
+          // Update user profile
+          if (session.user) {
+            await updateUserProfileFromFormData(session.user.id);
           }
           
-          // Redirect to dashboard after verification
+          toast.success("Email verified successfully!");
+          
+          // Check if we should submit form data
+          const shouldSubmitForm = sessionStorage.getItem('submitAfterVerification') === 'true';
+          if (shouldSubmitForm) {
+            sessionStorage.setItem('emailJustVerified', 'true');
+          }
+          
+          // Redirect to dashboard
           setTimeout(() => {
             navigate('/dashboard');
           }, 2000);
@@ -61,7 +78,8 @@ export const useVerificationMonitor = (
       console.log("[useVerificationMonitor] User already verified on mount");
       setVerificationStatus('verified');
       
-      // Redirect to dashboard
+      // Update profile and redirect
+      updateUserProfileFromFormData(user.id);
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
@@ -77,12 +95,20 @@ export const useVerificationMonitor = (
           console.log("[useVerificationMonitor] Email verified detected in interval check");
           setVerificationStatus('verified');
           
-          // Don't show redundant toast messages
-          if (!formSubmittedDuringSignup) {
-            toast.success("Email verified successfully!");
+          // Update user profile
+          if (data.session.user) {
+            await updateUserProfileFromFormData(data.session.user.id);
           }
           
-          // Redirect to dashboard after verification
+          toast.success("Email verified successfully!");
+          
+          // Set flag for form submission
+          const shouldSubmitForm = sessionStorage.getItem('submitAfterVerification') === 'true';
+          if (shouldSubmitForm) {
+            sessionStorage.setItem('emailJustVerified', 'true');
+          }
+          
+          // Redirect to dashboard
           setTimeout(() => {
             navigate('/dashboard');
           }, 2000);
@@ -99,4 +125,36 @@ export const useVerificationMonitor = (
       clearInterval(checkInterval);
     }
   }, [navigate, user, verificationStatus, formSubmittedDuringSignup, redirecting, setVerificationStatus]);
+};
+
+// Helper function to update user profile from form data
+const updateUserProfileFromFormData = async (userId: string) => {
+  try {
+    const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
+    if (pendingFormDataStr) {
+      const formData = JSON.parse(pendingFormDataStr);
+      const contactInfo = formData.contactInfo;
+      
+      if (contactInfo?.fullName || contactInfo?.email) {
+        console.log("[useVerificationMonitor] Updating user profile with form contact info");
+        
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            full_name: contactInfo.fullName,
+            email: contactInfo.email,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' });
+          
+        if (error) {
+          console.error("[useVerificationMonitor] Error updating profile:", error);
+        } else {
+          console.log("[useVerificationMonitor] Profile updated successfully");
+        }
+      }
+    }
+  } catch (error) {
+    console.error("[useVerificationMonitor] Error updating profile from form data:", error);
+  }
 };

@@ -10,7 +10,7 @@ export const useAuthActions = () => {
     try {
       setLoading(true);
       
-      // Determine the redirect URL based on environment
+      // Use verify-email as the redirect URL for email verification
       const redirectUrl = `${window.location.origin}/verify-email`;
       
       const { data, error } = await supabase.auth.signUp({
@@ -46,7 +46,7 @@ export const useAuthActions = () => {
         
         // Check if email confirmation is required
         if (!data.user.email_confirmed_at) {
-          toast.success('Account created! Please check your email to verify your account before signing in.');
+          toast.success('Account created! Please check your email to verify your account.');
         } else {
           toast.success('Account created successfully! You can now sign in.');
         }
@@ -175,11 +175,12 @@ export const useAuthActions = () => {
         // Update profile in profiles table
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({
+          .upsert({
+            id: user.id,
             full_name: updates.full_name,
+            email: updates.email || user.email,
             updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id);
+          }, { onConflict: 'id' });
 
         if (profileError) throw profileError;
 

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePendingFormData } from './usePendingFormData';
-import { submitFormDataImproved } from '@/components/form/review/utils/improvedSubmissionService';
 
 interface SignUpFormState {
   fullName: string;
@@ -23,7 +22,7 @@ interface UseImprovedSignUpFormProps {
 export const useImprovedSignUpForm = ({ onSuccess, redirectAfterAuth = false }: UseImprovedSignUpFormProps) => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
-  const { loadPendingFormData, completePendingFormData, savePendingFormData } = usePendingFormData();
+  const { savePendingFormData } = usePendingFormData();
   
   const [formState, setFormState] = useState<SignUpFormState>({
     fullName: '',
@@ -74,7 +73,7 @@ export const useImprovedSignUpForm = ({ onSuccess, redirectAfterAuth = false }: 
     try {
       console.log("[ImprovedSignUpForm] Starting signup process for:", email);
       
-      // First create the user account
+      // Create the user account
       const { error, data } = await signUp(email, password, fullName);
       
       if (error) {
@@ -91,14 +90,14 @@ export const useImprovedSignUpForm = ({ onSuccess, redirectAfterAuth = false }: 
       const userId = data.user.id;
       console.log("[ImprovedSignUpForm] User created successfully:", userId);
 
-      // Check for pending form data and submit immediately if available
+      // Check for pending form data and save it with user info
       const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
       if (pendingFormDataStr) {
         try {
           const pendingFormData = JSON.parse(pendingFormDataStr);
           const { owners, properties, assignments, contactInfo } = pendingFormData;
           
-          console.log("[ImprovedSignUpForm] Found pending form data, submitting immediately");
+          console.log("[ImprovedSignUpForm] Found pending form data, saving with contact info");
           
           // Update contact info with signup details
           const updatedContactInfo = {
@@ -107,72 +106,30 @@ export const useImprovedSignUpForm = ({ onSuccess, redirectAfterAuth = false }: 
             email
           };
 
-          // Validate that we have actual form data
-          if (Array.isArray(owners) && Array.isArray(properties) && Array.isArray(assignments) &&
-              owners.length > 0 && properties.length > 0 && assignments.length > 0) {
-            
-            // Save to database first
-            const pendingId = await savePendingFormData(
-              owners, 
-              properties, 
-              assignments, 
-              updatedContactInfo, 
-              userId
-            );
-
-            // Submit the form data immediately (skip email verification requirement)
-            const result = await submitFormDataImproved(
-              owners,
-              properties,
-              assignments,
-              updatedContactInfo,
-              userId,
-              {
-                validateData: true,
-                preventDuplicates: true,
-                skipEmailVerification: true
-              }
-            );
-
-            if (result.success) {
-              // Mark pending data as completed
-              if (pendingId) {
-                await completePendingFormData(userId, pendingId);
-              }
-
-              toast.success("Account created and form submitted successfully!", {
-                description: "Please check your email to verify your account."
-              });
-
-              // Store submission details
-              if (result.submissionId) {
-                sessionStorage.setItem('submissionId', result.submissionId);
-              }
-              if (result.purchaseId) {
-                sessionStorage.setItem('purchaseId', result.purchaseId);
-              }
-
-              // Set flags for successful completion
-              sessionStorage.setItem('formSubmittedDuringSignup', 'true');
-              sessionStorage.setItem('directDashboardRedirect', 'true');
-            } else {
-              console.warn("[ImprovedSignUpForm] Form submission failed:", result.error);
-              toast.warning("Account created successfully, but form submission encountered an issue. Please try submitting again after email verification.");
-            }
-          } else {
-            console.warn("[ImprovedSignUpForm] Invalid pending form data structure");
-            toast.warning("Account created successfully. Please complete the form again.");
-          }
+          // Save to sessionStorage with updated contact info for later submission
+          const updatedFormData = {
+            owners,
+            properties,
+            assignments,
+            contactInfo: updatedContactInfo
+          };
+          
+          sessionStorage.setItem('pendingFormData', JSON.stringify(updatedFormData));
+          
+          // Set flag to submit after email verification
+          sessionStorage.setItem('submitAfterVerification', 'true');
+          
+          console.log("[ImprovedSignUpForm] Updated pending form data with contact info");
+          
         } catch (error) {
           console.error("[ImprovedSignUpForm] Error processing pending form data:", error);
-          toast.warning("Account created successfully. Please complete the form again.");
         }
       }
 
       // Set success state
       setFormState(prev => ({ ...prev, isSignedUp: true }));
       
-      // Save email for verification page
+      // Save email and user ID for verification page
       sessionStorage.setItem('pendingUserEmail', email);
       sessionStorage.setItem('pendingUserId', userId);
       

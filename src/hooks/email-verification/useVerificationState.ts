@@ -16,31 +16,12 @@ export const useVerificationState = () => {
   const hasPendingFormData = sessionStorage.getItem('pendingFormData') !== null;
   const formSubmittedDuringSignup = sessionStorage.getItem('formSubmittedDuringSignup') === 'true';
   const forceRetry = sessionStorage.getItem('forceRetrySubmission') === 'true';
-  const emailJustVerified = sessionStorage.getItem('emailJustVerified') === 'true';
 
   // Check for submission errors
   useState(() => {
     const errorMsg = sessionStorage.getItem('submissionError');
     if (errorMsg) {
       setSubmissionError(errorMsg);
-    }
-  });
-
-  // Handle automatic redirect if coming from email verification link
-  useState(() => {
-    if (emailJustVerified) {
-      console.log("[useVerificationState] Email was just verified via link, preparing quick redirect");
-      setVerificationStatus('verified');
-      setRedirecting(true);
-      
-      // Clear the flag
-      sessionStorage.removeItem('emailJustVerified');
-      
-      // Show a notification
-      toast.success("Email verified successfully! Redirecting to dashboard...");
-      
-      // Redirect to dashboard immediately
-      navigate('/dashboard', { replace: true });
     }
   });
 
