@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCleanAdminData } from './useCleanAdminData';
@@ -27,6 +28,24 @@ export interface UserDataSummary {
   account_age_days: number;
   last_login?: string;
   total_revenue?: number;
+}
+
+// Type definition for the admin_delete_user RPC response
+interface AdminDeleteUserResponse {
+  success: boolean;
+  deleted_user?: {
+    id: string;
+    email: string;
+    full_name: string;
+  };
+  deleted_records?: {
+    properties: number;
+    owners: number;
+    form_submissions: number;
+    assignments: number;
+    user_activities: number;
+  };
+  error?: string;
 }
 
 export const useAdvancedUserManagement = () => {
@@ -122,7 +141,7 @@ export const useAdvancedUserManagement = () => {
     userId: string,
     userEmail: string,
     reason: string
-  ): Promise<{ success: boolean; summary?: any; error?: string }> => {
+  ): Promise<{ success: boolean; summary?: AdminDeleteUserResponse; error?: string }> => {
     setLoading(true);
     
     try {
@@ -165,18 +184,21 @@ export const useAdvancedUserManagement = () => {
         throw error;
       }
 
+      // Type assertion for the response data
+      const deletionResponse = data as AdminDeleteUserResponse;
+
       // Enhanced audit logging for successful deletion
       await logAdminAction('user_account_permanently_deleted', 'user', userId, {
         target_email: userEmail,
         reason: reason,
-        deletion_summary: data,
+        deletion_summary: deletionResponse,
         data_destroyed: {
           profiles: 1,
-          properties: data?.deleted_records?.properties || 0,
-          owners: data?.deleted_records?.owners || 0,
-          submissions: data?.deleted_records?.form_submissions || 0,
-          assignments: data?.deleted_records?.assignments || 0,
-          activities: data?.deleted_records?.user_activities || 0
+          properties: deletionResponse?.deleted_records?.properties || 0,
+          owners: deletionResponse?.deleted_records?.owners || 0,
+          submissions: deletionResponse?.deleted_records?.form_submissions || 0,
+          assignments: deletionResponse?.deleted_records?.assignments || 0,
+          activities: deletionResponse?.deleted_records?.user_activities || 0
         },
         compliance_status: 'completed',
         irreversible: true,
@@ -187,7 +209,7 @@ export const useAdvancedUserManagement = () => {
         description: `${userEmail} and all associated data have been permanently removed from the system`
       });
 
-      return { success: true, summary: data };
+      return { success: true, summary: deletionResponse };
     } catch (error: any) {
       console.error('Failed to delete user account:', error);
       
