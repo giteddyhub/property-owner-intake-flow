@@ -2,18 +2,13 @@
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import Index from '@/pages/Index';
-import { SignupPage } from '@/pages/SignupPage';
-import { ImprovedSignupPage } from '@/pages/ImprovedSignupPage';
+import { ModernSignupPage } from '@/pages/ModernSignupPage';
 import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
-import { Dashboard } from '@/pages/Dashboard';
 import AccountSettingsPage from '@/pages/AccountSettingsPage';
 import VerifyEmailPage from '@/pages/VerifyEmailPage';
-import SuccessPage from '@/pages/SuccessPage';
-import PaymentCancelled from '@/pages/PaymentCancelled';
 import ResidencyAssessmentPage from '@/pages/ResidencyAssessmentPage';
 import ResidentSuccessPage from '@/pages/ResidentSuccessPage';
-import TaxFilingServicePage from '@/pages/TaxFilingServicePage';
 import NotFound from '@/pages/NotFound';
 
 // Admin Pages
@@ -45,17 +40,12 @@ export const AppRoutes = () => {
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         
         {/* Anonymous Only Routes */}
-        <Route path="/signup" element={<AnonymousRoute><SignupPage /></AnonymousRoute>} />
-        <Route path="/improved-signup" element={<AnonymousRoute><ImprovedSignupPage /></AnonymousRoute>} />
+        <Route path="/signup" element={<AnonymousRoute><ModernSignupPage /></AnonymousRoute>} />
         <Route path="/login" element={<AnonymousRoute><LoginPage /></AnonymousRoute>} />
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-        <Route path="/form" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
-        <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
-        <Route path="/payment-cancelled" element={<ProtectedRoute><PaymentCancelled /></ProtectedRoute>} />
-        <Route path="/tax-filing-service/:sessionId" element={<ProtectedRoute><TaxFilingServicePage /></ProtectedRoute>} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLoginPage />} />

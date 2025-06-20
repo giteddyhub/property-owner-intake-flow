@@ -10,7 +10,6 @@ interface SignUpFormState {
   password: string;
   isSubmitting: boolean;
   isSignedUp: boolean;
-  hasPendingFormData: boolean;
 }
 
 interface UseImprovedSignUpFormProps {
@@ -27,18 +26,8 @@ export const useImprovedSignUpForm = ({ onSuccess, redirectAfterAuth = false }: 
     email: '',
     password: '',
     isSubmitting: false,
-    isSignedUp: false,
-    hasPendingFormData: false
+    isSignedUp: false
   });
-
-  // Check for pending form data on component mount
-  useEffect(() => {
-    const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
-    setFormState(prev => ({
-      ...prev,
-      hasPendingFormData: !!pendingFormDataStr
-    }));
-  }, []);
 
   const updateField = (field: keyof Pick<SignUpFormState, 'fullName' | 'email' | 'password'>, value: string) => {
     setFormState(prev => ({
@@ -87,34 +76,6 @@ export const useImprovedSignUpForm = ({ onSuccess, redirectAfterAuth = false }: 
 
       const userId = data.user.id;
       console.log("[ImprovedSignUpForm] User created successfully:", userId);
-
-      // Always save contact info and prepare form data for verification
-      const pendingFormDataStr = sessionStorage.getItem('pendingFormData');
-      
-      if (pendingFormDataStr) {
-        try {
-          const pendingFormData = JSON.parse(pendingFormDataStr);
-          
-          // Update form data with user contact info
-          const updatedFormData = {
-            ...pendingFormData,
-            contactInfo: {
-              ...pendingFormData.contactInfo,
-              fullName,
-              email
-            },
-            userId: userId // Store user ID with form data
-          };
-          
-          sessionStorage.setItem('pendingFormData', JSON.stringify(updatedFormData));
-          sessionStorage.setItem('submitAfterVerification', 'true');
-          
-          console.log("[ImprovedSignUpForm] Updated pending form data with contact info and user ID");
-          
-        } catch (error) {
-          console.error("[ImprovedSignUpForm] Error processing pending form data:", error);
-        }
-      }
 
       // Store user info for verification page
       sessionStorage.setItem('pendingUserEmail', email);

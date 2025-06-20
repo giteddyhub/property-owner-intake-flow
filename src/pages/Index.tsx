@@ -1,32 +1,37 @@
-import React from 'react';
-import { FormProvider } from '@/contexts/FormContext';
-import FormLayout from '@/components/form/FormLayout';
-import Footer from '@/components/layout/Footer';
-import { useIsMobile } from '@/hooks/use-mobile';
-import MobileWarning from '@/components/mobile/MobileWarning';
-import { AuthProvider } from '@/contexts/auth/AuthContext';
+
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 const Index = () => {
-  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      {isMobile ? (
-        <MobileWarning />
-      ) : (
-        <>
-          <main className="flex-grow">
-            <AuthProvider>
-              <FormProvider>
-                <FormLayout />
-              </FormProvider>
-            </AuthProvider>
-          </main>
-          <Footer />
-        </>
-      )}
-    </div>
-  );
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        // If user is authenticated, redirect to dashboard
+        navigate('/dashboard');
+      } else {
+        // If user is not authenticated, redirect to signup
+        navigate('/signup');
+      }
+    }
+  }, [user, loading, navigate]);
+
+  // Show loading while determining redirect
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 };
 
 export default Index;
