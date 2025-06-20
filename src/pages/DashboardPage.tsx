@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { LoadingScreen } from '@/components/dashboard/LoadingScreen';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { useRealTimeData } from '@/hooks/useRealTimeData';
 import { toast } from 'sonner';
 
 const DashboardPage = () => {
@@ -20,6 +21,13 @@ const DashboardPage = () => {
   }, []);
   
   const { loading, owners, properties, assignments, totalRevenue, error, refetch } = useDashboardData();
+
+  // Set up real-time data updates
+  const { isAutoRefreshing, toggleAutoRefresh } = useRealTimeData({
+    refetchFn: refetch,
+    intervalMs: 30000, // 30 seconds
+    enabled: true
+  });
 
   // Trigger refetch when refreshFlag changes
   useEffect(() => {
@@ -100,6 +108,9 @@ const DashboardPage = () => {
         setActiveFilter={setActiveFilter}
         onRefresh={refreshData}
         userId={user?.id || ''}
+        isAutoRefreshing={isAutoRefreshing}
+        onToggleAutoRefresh={toggleAutoRefresh}
+        isRefreshing={loading}
       />
     </div>
   );

@@ -12,8 +12,10 @@ import { DataFilterTabs } from '@/components/dashboard/DataFilterTabs';
 import { DataTables } from '@/components/dashboard/DataTables';
 import { ActionsToolbar } from '@/components/dashboard/ActionsToolbar';
 import { WelcomeSection } from '@/components/dashboard/WelcomeSection';
+import { DataTableToolbar } from '@/components/dashboard/DataTableToolbar';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useDashboardActions } from '@/components/dashboard/hooks/useDashboardActions';
+import { useTableSearch } from '@/hooks/useTableSearch';
 import OwnerDrawer from '@/components/dashboard/drawers/OwnerDrawer';
 import PropertyDrawer from '@/components/dashboard/drawers/PropertyDrawer';
 import AssignmentDrawer from '@/components/dashboard/drawers/AssignmentDrawer';
@@ -28,6 +30,9 @@ interface DashboardLayoutProps {
   setActiveFilter: (filter: string) => void;
   onRefresh: () => void;
   userId: string;
+  isAutoRefreshing: boolean;
+  onToggleAutoRefresh: () => void;
+  isRefreshing: boolean;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -39,7 +44,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   activeFilter,
   setActiveFilter,
   onRefresh,
-  userId
+  userId,
+  isAutoRefreshing,
+  onToggleAutoRefresh,
+  isRefreshing
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -51,6 +59,50 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     openAssignmentDrawer,
     closeDrawer
   } = useDashboardActions();
+  
+  // Set up search functionality based on active filter
+  const getSearchConfig = () => {
+    switch (activeFilter) {
+      case 'owners':
+        return {
+          data: owners,
+          searchFields: ['first_name', 'last_name', 'italian_tax_code', 'address_city'] as (keyof Owner)[],
+          placeholder: 'Search owners...',
+          filename: 'owners'
+        };
+      case 'properties':
+        return {
+          data: properties,
+          searchFields: ['label', 'address_street', 'address_comune', 'property_type'] as (keyof Property)[],
+          placeholder: 'Search properties...',
+          filename: 'properties'
+        };
+      case 'assignments':
+        return {
+          data: assignments,
+          searchFields: [] as (keyof OwnerPropertyAssignment)[],
+          placeholder: 'Search assignments...',
+          filename: 'assignments'
+        };
+      default:
+        return {
+          data: properties,
+          searchFields: ['label', 'address_street', 'address_comune'] as (keyof Property)[],
+          placeholder: 'Search...',
+          filename: 'data'
+        };
+    }
+  };
+
+  const searchConfig = getSearchConfig();
+  const { 
+    searchTerm, 
+    setSearchTerm, 
+    filteredAndSortedData,
+    sortField,
+    sortDirection,
+    handleSort
+  } = useTableSearch(searchConfig);
   
   // Get user's name from user metadata
   const getUserName = () => {
@@ -99,16 +151,32 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
             <DataFilterTabs activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
+            
+            <DataTableToolbar
+              searchValue={searchTerm}
+              onSearchChange={setSearchTerm}
+              searchPlaceholder={searchConfig.placeholder}
+              onRefresh={onRefresh}
+              isAutoRefreshing={isAutoRefreshing}
+              onToggleAutoRefresh={onToggleAutoRefresh}
+              exportData={filteredAndSortedData}
+              exportFilename={searchConfig.filename}
+              isRefreshing={isRefreshing}
+            />
+            
             <DataTables 
-              properties={properties} 
-              owners={owners} 
-              assignments={assignments} 
+              properties={activeFilter === 'properties' ? filteredAndSortedData as Property[] : properties}
+              owners={activeFilter === 'owners' ? filteredAndSortedData as Owner[] : owners}
+              assignments={activeFilter === 'assignments' ? filteredAndSortedData as OwnerPropertyAssignment[] : assignments}
               activeFilter={activeFilter}
               onRefresh={onRefresh}
               userId={userId}
               onOpenOwnerDrawer={openOwnerDrawer}
               onOpenPropertyDrawer={openPropertyDrawer}
               onOpenAssignmentDrawer={openAssignmentDrawer}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
             />
           </div>
         </div>
