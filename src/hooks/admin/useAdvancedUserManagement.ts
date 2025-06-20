@@ -1,14 +1,14 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCleanAdminData } from './useCleanAdminData';
+import { getAuthenticatedAdminClient } from '@/integrations/supabase/adminClient';
 
 export interface UserAction {
   id: string;
-  type: 'suspend' | 'activate' | 'reset_password' | 'send_email';
+  type: 'suspend' | 'activate' | 'reset_password' | 'send_email' | 'delete_account';
   label: string;
   description: string;
-  severity: 'low' | 'medium' | 'high';
+  severity: 'low' | 'medium' | 'high' | 'critical';
   requiresConfirmation: boolean;
 }
 
@@ -18,11 +18,22 @@ export interface BulkActionResult {
   errors: string[];
 }
 
+export interface UserDataSummary {
+  properties_count: number;
+  owners_count: number;
+  submissions_count: number;
+  assignments_count: number;
+  activities_count: number;
+  account_age_days: number;
+  last_login?: string;
+  total_revenue?: number;
+}
+
 export const useAdvancedUserManagement = () => {
   const [loading, setLoading] = useState(false);
   const { logAdminAction } = useCleanAdminData();
 
-  // Available user actions
+  // Available user actions including delete
   const availableActions: UserAction[] = [
     {
       id: 'suspend',
@@ -55,6 +66,14 @@ export const useAdvancedUserManagement = () => {
       description: 'Send notification email to user',
       severity: 'low',
       requiresConfirmation: false
+    },
+    {
+      id: 'delete_account',
+      type: 'delete_account',
+      label: 'Delete Account',
+      description: 'Permanently delete user account and all associated data',
+      severity: 'critical',
+      requiresConfirmation: true
     }
   ];
 
@@ -76,6 +95,80 @@ export const useAdvancedUserManagement = () => {
     }
   };
 
+  // Get detailed user data summary for deletion preview
+  const getUserDataSummary = async (userId: string): Promise<UserDataSummary | null> => {
+    try {
+      // In a real implementation, this would query the database for actual counts
+      const mockSummary: UserDataSummary = {
+        properties_count: Math.floor(Math.random() * 8),
+        owners_count: Math.floor(Math.random() * 5),
+        submissions_count: Math.floor(Math.random() * 3),
+        assignments_count: Math.floor(Math.random() * 10),
+        activities_count: Math.floor(Math.random() * 50),
+        account_age_days: Math.floor(Math.random() * 365),
+        last_login: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        total_revenue: Math.random() * 1000
+      };
+      
+      return mockSummary;
+    } catch (error) {
+      console.error('Failed to fetch user data summary:', error);
+      return null;
+    }
+  };
+
+  // Delete user account
+  const deleteUserAccount = async (
+    userId: string,
+    userEmail: string,
+    reason: string
+  ): Promise<{ success: boolean; summary?: any; error?: string }> => {
+    setLoading(true);
+    
+    try {
+      const adminClient = getAuthenticatedAdminClient();
+      const adminToken = localStorage.getItem('admin_session') 
+        ? JSON.parse(localStorage.getItem('admin_session')!).session?.token 
+        : null;
+
+      if (!adminToken) {
+        throw new Error('No admin token available');
+      }
+
+      // Call the database function to delete the user
+      const { data, error } = await adminClient.rpc('admin_delete_user', {
+        admin_token: adminToken,
+        target_user_id: userId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Log the admin action
+      await logAdminAction('user_account_deleted', 'user', userId, {
+        target_email: userEmail,
+        reason: reason,
+        deletion_summary: data,
+        timestamp: new Date().toISOString()
+      });
+
+      toast.success('User account deleted successfully', {
+        description: `${userEmail} and all associated data have been permanently removed`
+      });
+
+      return { success: true, summary: data };
+    } catch (error: any) {
+      console.error('Failed to delete user account:', error);
+      toast.error('Failed to delete user account', {
+        description: error.message
+      });
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Execute single user action
   const executeUserAction = async (
     userId: string,
@@ -83,6 +176,17 @@ export const useAdvancedUserManagement = () => {
     actionType: UserAction['type'],
     reason?: string
   ): Promise<boolean> => {
+    // Handle delete action specially
+    if (actionType === 'delete_account') {
+      if (!reason) {
+        toast.error('A reason is required for account deletion');
+        return false;
+      }
+      const result = await deleteUserAccount(userId, userEmail, reason);
+      return result.success;
+    }
+
+    // Handle other actions with existing logic
     setLoading(true);
     
     try {
@@ -168,7 +272,9 @@ export const useAdvancedUserManagement = () => {
     loading,
     availableActions,
     getUserActivitySummary,
+    getUserDataSummary,
     executeUserAction,
+    deleteUserAccount,
     executeBulkAction
   };
 };

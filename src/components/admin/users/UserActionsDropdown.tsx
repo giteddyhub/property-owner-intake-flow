@@ -15,7 +15,8 @@ import {
   Key, 
   Mail,
   AlertTriangle,
-  Info
+  Info,
+  Trash2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAdvancedUserManagement, UserAction } from '@/hooks/admin/useAdvancedUserManagement';
@@ -26,15 +27,24 @@ interface UserActionsDropdownProps {
   userEmail: string;
   userName?: string;
   isDisabled?: boolean;
+  onUserDeleted?: () => void;
 }
 
 export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
   userId,
   userEmail,
   userName,
-  isDisabled = false
+  isDisabled = false,
+  onUserDeleted
 }) => {
-  const { loading, availableActions, executeUserAction, getUserActivitySummary } = useAdvancedUserManagement();
+  const { 
+    loading, 
+    availableActions, 
+    executeUserAction, 
+    getUserActivitySummary,
+    getUserDataSummary 
+  } = useAdvancedUserManagement();
+  
   const [selectedAction, setSelectedAction] = useState<UserAction | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [activitySummary, setActivitySummary] = useState<any>(null);
@@ -42,9 +52,14 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
   const handleActionSelect = async (action: UserAction) => {
     setSelectedAction(action);
     
-    // Fetch user activity summary for confirmation dialog
-    const summary = await getUserActivitySummary(userId);
-    setActivitySummary(summary);
+    // Fetch appropriate data based on action type
+    if (action.type === 'delete_account') {
+      const summary = await getUserDataSummary(userId);
+      setActivitySummary(summary);
+    } else {
+      const summary = await getUserActivitySummary(userId);
+      setActivitySummary(summary);
+    }
     
     setShowConfirmDialog(true);
   };
@@ -57,11 +72,18 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
     if (success) {
       setShowConfirmDialog(false);
       setSelectedAction(null);
+      
+      // If this was a delete action and it succeeded, notify parent
+      if (selectedAction.type === 'delete_account' && onUserDeleted) {
+        onUserDeleted();
+      }
     }
   };
 
   const getSeverityIcon = (severity: UserAction['severity']) => {
     switch (severity) {
+      case 'critical':
+        return <Trash2 className="h-3 w-3 text-red-600" />;
       case 'high':
         return <AlertTriangle className="h-3 w-3 text-red-500" />;
       case 'medium':
@@ -81,6 +103,23 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
         return <Key className="h-4 w-4" />;
       case 'send_email':
         return <Mail className="h-4 w-4" />;
+      case 'delete_account':
+        return <Trash2 className="h-4 w-4" />;
+    }
+  };
+
+  const getSeverityVariant = (severity: UserAction['severity']) => {
+    switch (severity) {
+      case 'critical':
+        return 'destructive';
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'secondary';
+      case 'low':
+        return 'outline';
+      default:
+        return 'outline';
     }
   };
 
@@ -97,7 +136,7 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-64">
           <div className="px-2 py-1.5 text-sm font-medium">
             User Actions
           </div>
@@ -107,7 +146,9 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
             <DropdownMenuItem
               key={action.id}
               onClick={() => handleActionSelect(action)}
-              className="flex items-center justify-between"
+              className={`flex items-center justify-between ${
+                action.type === 'delete_account' ? 'text-red-600 focus:text-red-600' : ''
+              }`}
             >
               <div className="flex items-center gap-2">
                 {getActionIcon(action.type)}
@@ -116,7 +157,7 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
               <div className="flex items-center gap-1">
                 {getSeverityIcon(action.severity)}
                 <Badge 
-                  variant={action.severity === 'high' ? 'destructive' : 'outline'} 
+                  variant={getSeverityVariant(action.severity)} 
                   className="text-xs"
                 >
                   {action.severity}

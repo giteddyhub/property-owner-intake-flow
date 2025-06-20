@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { AccountData } from '@/types/admin';
+import { UserActionsDropdown } from '@/components/admin/users/UserActionsDropdown';
 import { Mail, FileText, Home, Users as UsersIcon, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -61,6 +62,13 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Handle user deletion - refresh the data
+  const handleUserDeleted = () => {
+    if (onRefresh) {
+      onRefresh();
     }
   };
 
@@ -219,13 +227,21 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleViewAccount(account.id)}
-                  >
-                    View Details
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewAccount(account.id)}
+                    >
+                      View Details
+                    </Button>
+                    <UserActionsDropdown
+                      userId={account.id}
+                      userEmail={account.email}
+                      userName={account.full_name}
+                      onUserDeleted={handleUserDeleted}
+                    />
+                  </div>
                 </TableCell>
               </TableRow>
             ))

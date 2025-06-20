@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, User, Calendar, Activity } from 'lucide-react';
 import { UserAction } from '@/hooks/admin/useAdvancedUserManagement';
+import { DeleteUserConfirmDialog } from './DeleteUserConfirmDialog';
 
 interface UserActionConfirmDialogProps {
   open: boolean;
@@ -58,6 +59,22 @@ export const UserActionConfirmDialog: React.FC<UserActionConfirmDialogProps> = (
       default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
+
+  // For delete actions, use the specialized delete dialog
+  if (action.type === 'delete_account') {
+    return (
+      <DeleteUserConfirmDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        userId={userId}
+        userEmail={userEmail}
+        userName={userName}
+        dataSummary={activitySummary}
+        onConfirm={onConfirm}
+        loading={loading}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
