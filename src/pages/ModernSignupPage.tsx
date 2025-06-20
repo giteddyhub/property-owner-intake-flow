@@ -48,7 +48,16 @@ export const ModernSignupPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex">
       {/* Left side - Signup form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 relative">
+        {/* Logo */}
+        <div className="absolute top-8 left-8">
+          <img 
+            src="/lovable-uploads/786b8a8a-3ec3-4b1c-a119-a216abb8bd42.png" 
+            alt="Italian Taxes" 
+            className="h-12 w-auto"
+          />
+        </div>
+        
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader className="space-y-1 pb-8">
             <CardTitle className="text-3xl font-bold text-center text-gray-900">
