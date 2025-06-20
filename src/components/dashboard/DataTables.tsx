@@ -17,6 +17,9 @@ interface DataTablesProps {
   onRefresh: () => void;
   userId: string;
   onShowUserOverview?: (userId: string, context?: { type: 'property' | 'owner' | 'assignment'; id: string }) => void;
+  onOpenOwnerDrawer: (owner?: Owner) => void;
+  onOpenPropertyDrawer: (property?: Property) => void;
+  onOpenAssignmentDrawer: (assignment?: OwnerPropertyAssignment) => void;
 }
 
 export const DataTables: React.FC<DataTablesProps> = ({ 
@@ -26,7 +29,10 @@ export const DataTables: React.FC<DataTablesProps> = ({
   activeFilter,
   onRefresh,
   userId,
-  onShowUserOverview
+  onShowUserOverview,
+  onOpenOwnerDrawer,
+  onOpenPropertyDrawer,
+  onOpenAssignmentDrawer
 }) => {
   console.log("Assignments data in DataTables:", assignments);
   
@@ -38,6 +44,7 @@ export const DataTables: React.FC<DataTablesProps> = ({
           properties={properties} 
           onRefresh={onRefresh}
           onShowUserOverview={onShowUserOverview}
+          onOpenDrawer={onOpenPropertyDrawer}
         />
       )}
       {activeFilter === 'owners' && (
@@ -45,6 +52,7 @@ export const DataTables: React.FC<DataTablesProps> = ({
           owners={owners} 
           onRefresh={onRefresh}
           onShowUserOverview={onShowUserOverview}
+          onOpenDrawer={onOpenOwnerDrawer}
         />
       )}
       {activeFilter === 'assignments' && (
@@ -55,6 +63,7 @@ export const DataTables: React.FC<DataTablesProps> = ({
           onRefresh={onRefresh} 
           userId={userId}
           onShowUserOverview={onShowUserOverview}
+          onOpenDrawer={onOpenAssignmentDrawer}
         />
       )}
     </div>

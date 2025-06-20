@@ -11,7 +11,12 @@ import { StatsSummaryCards } from '@/components/dashboard/StatsSummaryCards';
 import { DataFilterTabs } from '@/components/dashboard/DataFilterTabs';
 import { DataTables } from '@/components/dashboard/DataTables';
 import { ActionsToolbar } from '@/components/dashboard/ActionsToolbar';
+import { WelcomeSection } from '@/components/dashboard/WelcomeSection';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useDashboardActions } from '@/components/dashboard/hooks/useDashboardActions';
+import OwnerDrawer from '@/components/dashboard/drawers/OwnerDrawer';
+import PropertyDrawer from '@/components/dashboard/drawers/PropertyDrawer';
+import AssignmentDrawer from '@/components/dashboard/drawers/AssignmentDrawer';
 
 interface DashboardLayoutProps {
   owners: Owner[];
@@ -38,6 +43,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const {
+    activeDrawer,
+    selectedItem,
+    openOwnerDrawer,
+    openPropertyDrawer,
+    openAssignmentDrawer,
+    closeDrawer
+  } = useDashboardActions();
   
   // Get user's name from user metadata
   const getUserName = () => {
@@ -45,6 +58,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       return user.user_metadata.full_name.split(' ')[0];
     }
     return 'there';
+  };
+
+  const handleDrawerSuccess = () => {
+    onRefresh();
+    closeDrawer();
   };
 
   return (
@@ -56,6 +74,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <h1 className="text-2xl font-semibold text-gray-900">Welcome back, {getUserName()}!</h1>
           <ActionsToolbar />
         </div>
+
+        <WelcomeSection
+          userName={getUserName()}
+          hasOwners={owners.length > 0}
+          hasProperties={properties.length > 0}
+          hasAssignments={assignments.length > 0}
+          onAddOwner={() => openOwnerDrawer()}
+          onAddProperty={() => openPropertyDrawer()}
+          onAddAssignment={() => openAssignmentDrawer()}
+        />
 
         <StatsSummaryCards 
           ownersCount={owners.length} 
@@ -78,9 +106,37 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               activeFilter={activeFilter}
               onRefresh={onRefresh}
               userId={userId}
+              onOpenOwnerDrawer={openOwnerDrawer}
+              onOpenPropertyDrawer={openPropertyDrawer}
+              onOpenAssignmentDrawer={openAssignmentDrawer}
             />
           </div>
         </div>
+
+        {/* Drawers */}
+        <OwnerDrawer
+          isOpen={activeDrawer === 'owner'}
+          onClose={closeDrawer}
+          owner={selectedItem}
+          onSuccess={handleDrawerSuccess}
+        />
+
+        <PropertyDrawer
+          isOpen={activeDrawer === 'property'}
+          onClose={closeDrawer}
+          property={selectedItem}
+          onSuccess={handleDrawerSuccess}
+        />
+
+        <AssignmentDrawer
+          isOpen={activeDrawer === 'assignment'}
+          onClose={closeDrawer}
+          assignment={selectedItem}
+          properties={properties}
+          owners={owners}
+          onSuccess={handleDrawerSuccess}
+          userId={userId}
+        />
       </main>
     </div>
   );

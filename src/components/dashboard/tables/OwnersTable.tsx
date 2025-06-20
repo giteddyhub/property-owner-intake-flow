@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Owner } from '@/components/dashboard/types';
 import { OwnersTableContent } from './owner/OwnersTableContent';
 import { OwnersTableHeader } from './owner/OwnersTableHeader';
-import OwnerDrawer from '@/components/dashboard/drawers/OwnerDrawer';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import {
   AlertDialog,
@@ -21,28 +20,26 @@ interface OwnersTableProps {
   owners: Owner[];
   onRefresh: () => void;
   onShowUserOverview?: (userId: string, context?: { type: 'property' | 'owner' | 'assignment'; id: string }) => void;
+  onOpenDrawer: (owner?: Owner) => void;
 }
 
 export const OwnersTable: React.FC<OwnersTableProps> = ({ 
   owners, 
   onRefresh,
-  onShowUserOverview 
+  onShowUserOverview,
+  onOpenDrawer
 }) => {
   const { deleteOwner } = useDashboardData();
-  const [selectedOwner, setSelectedOwner] = useState<Owner | undefined>();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [ownerToDelete, setOwnerToDelete] = useState<Owner | null>(null);
 
   const handleRowClick = (e: React.MouseEvent, owner: Owner) => {
     console.log('Owner row clicked:', owner);
-    setSelectedOwner(owner);
-    setIsDrawerOpen(true);
+    onOpenDrawer(owner);
   };
 
   const handleEdit = (owner: Owner) => {
     console.log('Edit owner:', owner);
-    setSelectedOwner(owner);
-    setIsDrawerOpen(true);
+    onOpenDrawer(owner);
   };
 
   const handleDelete = (owner: Owner) => {
@@ -52,8 +49,7 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
 
   const handleAddOwner = () => {
     console.log('Add new owner');
-    setSelectedOwner(undefined);
-    setIsDrawerOpen(true);
+    onOpenDrawer();
   };
 
   const confirmDelete = async () => {
@@ -70,16 +66,6 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
     console.log('Action button clicked');
   };
 
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false);
-    setSelectedOwner(undefined);
-  };
-
-  const handleSuccess = () => {
-    onRefresh();
-    handleDrawerClose();
-  };
-
   return (
     <div>
       <OwnersTableHeader 
@@ -94,13 +80,6 @@ export const OwnersTable: React.FC<OwnersTableProps> = ({
         onDelete={handleDelete}
         onActionClick={handleActionClick}
         onAddOwner={handleAddOwner}
-      />
-      
-      <OwnerDrawer
-        isOpen={isDrawerOpen}
-        onClose={handleDrawerClose}
-        owner={selectedOwner}
-        onSuccess={handleSuccess}
       />
 
       <AlertDialog open={!!ownerToDelete} onOpenChange={() => setOwnerToDelete(null)}>

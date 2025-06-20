@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { OwnerPropertyAssignment, Owner, Property } from '@/components/dashboard/types';
 import { AssignmentsTableContent } from './assignment/AssignmentsTableContent';
 import { AssignmentsTableHeader } from './assignment/AssignmentsTableHeader';
-import AssignmentDrawer from '@/components/dashboard/drawers/AssignmentDrawer';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { DeleteAssignmentDialog } from './assignment/DeleteAssignmentDialog';
 
@@ -14,6 +13,7 @@ interface AssignmentsTableProps {
   onRefresh: () => void;
   userId: string;
   onShowUserOverview?: (userId: string, context?: { type: 'property' | 'owner' | 'assignment'; id: string }) => void;
+  onOpenDrawer: (assignment?: OwnerPropertyAssignment) => void;
 }
 
 export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({ 
@@ -22,23 +22,20 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
   properties,
   onRefresh,
   userId,
-  onShowUserOverview 
+  onShowUserOverview,
+  onOpenDrawer
 }) => {
   const { deleteAssignment } = useDashboardData();
-  const [selectedAssignment, setSelectedAssignment] = useState<OwnerPropertyAssignment | undefined>();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [assignmentToDelete, setAssignmentToDelete] = useState<OwnerPropertyAssignment | null>(null);
 
   const handleRowClick = (e: React.MouseEvent, assignment: OwnerPropertyAssignment) => {
     console.log('Assignment row clicked:', assignment);
-    setSelectedAssignment(assignment);
-    setIsDrawerOpen(true);
+    onOpenDrawer(assignment);
   };
 
   const handleEdit = (assignment: OwnerPropertyAssignment) => {
     console.log('Edit assignment:', assignment);
-    setSelectedAssignment(assignment);
-    setIsDrawerOpen(true);
+    onOpenDrawer(assignment);
   };
 
   const handleDelete = (assignment: OwnerPropertyAssignment) => {
@@ -48,8 +45,7 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
 
   const handleAddAssignment = () => {
     console.log('Add new assignment');
-    setSelectedAssignment(undefined);
-    setIsDrawerOpen(true);
+    onOpenDrawer();
   };
 
   const confirmDelete = async () => {
@@ -73,17 +69,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
     console.log('Action button clicked');
   };
 
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false);
-    setSelectedAssignment(undefined);
-  };
-
-  const handleSuccess = () => {
-    console.log('Assignment operation successful, refreshing data');
-    onRefresh();
-    handleDrawerClose();
-  };
-
   return (
     <div>
       <AssignmentsTableHeader 
@@ -100,16 +85,6 @@ export const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         onDelete={handleDelete}
         onActionClick={handleActionClick}
         onAddAssignment={handleAddAssignment}
-      />
-      
-      <AssignmentDrawer
-        isOpen={isDrawerOpen}
-        onClose={handleDrawerClose}
-        assignment={selectedAssignment}
-        properties={properties}
-        owners={owners}
-        onSuccess={handleSuccess}
-        userId={userId}
       />
 
       <DeleteAssignmentDialog

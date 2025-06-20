@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Property } from '@/components/dashboard/types';
 import { PropertiesTableContent } from './property/PropertiesTableContent';
 import { PropertiesTableHeader } from './property/PropertiesTableHeader';
-import PropertyDrawer from '@/components/dashboard/drawers/PropertyDrawer';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import {
   AlertDialog,
@@ -21,28 +20,26 @@ interface PropertiesTableProps {
   properties: Property[];
   onRefresh: () => void;
   onShowUserOverview?: (userId: string, context?: { type: 'property' | 'owner' | 'assignment'; id: string }) => void;
+  onOpenDrawer: (property?: Property) => void;
 }
 
 export const PropertiesTable: React.FC<PropertiesTableProps> = ({ 
   properties, 
   onRefresh,
-  onShowUserOverview 
+  onShowUserOverview,
+  onOpenDrawer
 }) => {
   const { deleteProperty } = useDashboardData();
-  const [selectedProperty, setSelectedProperty] = useState<Property | undefined>();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
 
   const handleRowClick = (e: React.MouseEvent, property: Property) => {
     console.log('Property row clicked:', property);
-    setSelectedProperty(property);
-    setIsDrawerOpen(true);
+    onOpenDrawer(property);
   };
 
   const handleEdit = (property: Property) => {
     console.log('Edit property:', property);
-    setSelectedProperty(property);
-    setIsDrawerOpen(true);
+    onOpenDrawer(property);
   };
 
   const handleDelete = (property: Property) => {
@@ -52,8 +49,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
 
   const handleAddProperty = () => {
     console.log('Add new property');
-    setSelectedProperty(undefined);
-    setIsDrawerOpen(true);
+    onOpenDrawer();
   };
 
   const confirmDelete = async () => {
@@ -70,16 +66,6 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
     console.log('Action button clicked');
   };
 
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false);
-    setSelectedProperty(undefined);
-  };
-
-  const handleSuccess = () => {
-    onRefresh();
-    handleDrawerClose();
-  };
-
   return (
     <div>
       <PropertiesTableHeader 
@@ -94,13 +80,6 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
         onDelete={handleDelete}
         onActionClick={handleActionClick}
         onAddProperty={handleAddProperty}
-      />
-      
-      <PropertyDrawer
-        isOpen={isDrawerOpen}
-        onClose={handleDrawerClose}
-        property={selectedProperty}
-        onSuccess={handleSuccess}
       />
 
       <AlertDialog open={!!propertyToDelete} onOpenChange={() => setPropertyToDelete(null)}>
