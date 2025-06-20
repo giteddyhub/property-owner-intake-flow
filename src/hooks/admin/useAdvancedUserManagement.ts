@@ -184,8 +184,8 @@ export const useAdvancedUserManagement = () => {
         throw error;
       }
 
-      // Type assertion for the response data
-      const deletionResponse = data as AdminDeleteUserResponse;
+      // Type assertion with proper safety checks
+      const deletionResponse = data as unknown as AdminDeleteUserResponse;
 
       // Enhanced audit logging for successful deletion
       await logAdminAction('user_account_permanently_deleted', 'user', userId, {
