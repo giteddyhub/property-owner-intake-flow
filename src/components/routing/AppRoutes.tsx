@@ -7,6 +7,7 @@ import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
 import AccountSettingsPage from '@/pages/AccountSettingsPage';
 import VerifyEmailPage from '@/pages/VerifyEmailPage';
+import TaxFilingServicePage from '@/pages/TaxFilingServicePage';
 import NotFound from '@/pages/NotFound';
 
 // Admin Pages
@@ -44,6 +45,7 @@ export const AppRoutes = () => {
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
+        <Route path="/tax-filing-service/:sessionId" element={<ProtectedRoute><TaxFilingServicePage /></ProtectedRoute>} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
