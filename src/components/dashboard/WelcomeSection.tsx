@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Circle, Plus, Users, Building2, Link, Sparkles } from 'lucide-react';
+import { CheckCircle, Circle, Plus, Users, Building2, Link, Sparkles, X } from 'lucide-react';
 
 interface WelcomeSectionProps {
   userName: string;
@@ -28,12 +28,40 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
   const completionPercentage = Math.round((completedSteps / totalSteps) * 100);
   
   const isComplete = completedSteps === totalSteps;
+  const [isDismissed, setIsDismissed] = useState(false);
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
-  if (isComplete) {
+  // Check if congratulations message was previously dismissed
+  useEffect(() => {
+    const dismissed = localStorage.getItem('congratulations-dismissed');
+    setIsDismissed(dismissed === 'true');
+  }, []);
+
+  const handleDismiss = () => {
+    setIsAnimatingOut(true);
+    setTimeout(() => {
+      setIsDismissed(true);
+      localStorage.setItem('congratulations-dismissed', 'true');
+    }, 300); // Match animation duration
+  };
+
+  if (isComplete && !isDismissed) {
     return (
-      <Card className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+      <Card 
+        className={`mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 transition-all duration-300 ${
+          isAnimatingOut ? 'animate-fade-out scale-95 opacity-0' : 'animate-fade-in'
+        }`}
+      >
         <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative">
+            <button
+              onClick={handleDismiss}
+              className="absolute -top-2 -right-2 h-8 w-8 bg-white rounded-full shadow-sm border border-green-200 flex items-center justify-center hover:bg-green-50 transition-colors duration-200 group"
+              aria-label="Dismiss congratulations message"
+            >
+              <X className="h-4 w-4 text-green-600 group-hover:text-green-700" />
+            </button>
+            
             <div className="flex-shrink-0">
               <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-green-600" />
@@ -51,6 +79,11 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
         </CardContent>
       </Card>
     );
+  }
+
+  // Don't render anything if complete and dismissed
+  if (isComplete && isDismissed) {
+    return null;
   }
 
   return (
