@@ -149,11 +149,6 @@ export const ModernSignupPage: React.FC = () => {
       <div className="hidden lg:flex flex-1 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700"></div>
         <AnimatedBackground />
-        
-        {/* Decorative static elements for extra visual interest */}
-        <div className="absolute top-20 right-20 w-32 h-32 bg-white/5 rounded-full"></div>
-        <div className="absolute bottom-20 left-20 w-24 h-24 bg-white/5 rounded-full"></div>
-        <div className="absolute top-1/2 right-10 w-16 h-16 bg-white/5 rounded-full"></div>
       </div>
     </div>
   );
