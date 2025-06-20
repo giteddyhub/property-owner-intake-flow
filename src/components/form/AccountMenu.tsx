@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 
 export const AccountMenu = () => {
   const { user, signOut, isAdmin, checkAdminStatus } = useAuth();
+  const navigate = useNavigate();
   
   // Check admin status when component mounts
   useEffect(() => {
@@ -27,11 +28,23 @@ export const AccountMenu = () => {
   
   const handleSignOut = async () => {
     try {
+      console.log('AccountMenu: Starting sign out process');
       await signOut();
       toast.success('Signed out successfully');
+      
+      // Navigate using React Router instead of window.location
+      navigate('/', { replace: true });
+      
     } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Failed to sign out. Please try again.');
+      console.error('AccountMenu: Error signing out:', error);
+      // Don't show error for session-related issues as they're handled in signOut
+      if (!error?.message?.includes('Session not found') && 
+          !error?.message?.includes('session_not_found')) {
+        toast.error('Failed to sign out completely. Please try again.');
+      }
+      
+      // Still navigate to home even if there was an error
+      navigate('/', { replace: true });
     }
   };
 

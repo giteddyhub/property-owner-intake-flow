@@ -50,6 +50,8 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut, i
 
   const handleSignOut = async () => {
     try {
+      console.log('UserDropdownMenu: Starting sign out process');
+      
       // Use the provided onSignOut function or fall back to the context's signOut
       if (onSignOut) {
         await onSignOut();
@@ -59,11 +61,19 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut, i
       
       toast.success('Signed out successfully');
       
-      // Force redirect to home page with window.location for a complete reset
-      window.location.href = '/';
+      // Navigate using React Router instead of window.location
+      navigate('/', { replace: true });
+      
     } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Failed to sign out. Please try again.');
+      console.error('UserDropdownMenu: Error signing out:', error);
+      // Don't show error for session-related issues as they're handled in signOut
+      if (!error?.message?.includes('Session not found') && 
+          !error?.message?.includes('session_not_found')) {
+        toast.error('Failed to sign out completely. Please try again.');
+      }
+      
+      // Still navigate to home even if there was an error
+      navigate('/', { replace: true });
     }
   };
 

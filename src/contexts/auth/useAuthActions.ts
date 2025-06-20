@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -105,14 +106,82 @@ export const useAuthActions = () => {
   const signOut = async () => {
     try {
       setLoading(true);
+      console.log('Starting sign out process...');
+      
+      // Check if user is actually signed in before attempting sign out
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.log('No active session found, user already signed out');
+        // Clear any remaining application state
+        clearApplicationState();
+        return;
+      }
+
+      console.log('Found active session, proceeding with sign out');
+      
+      // Attempt to sign out
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      toast.success('Signed out successfully');
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        // Don't throw error for "Session not found" as user is effectively signed out
+        if (error.message?.includes('Session not found') || error.message?.includes('session_not_found')) {
+          console.log('Session already expired/invalid, clearing local state');
+          clearApplicationState();
+          return;
+        }
+        throw error;
+      }
+
+      console.log('Sign out successful');
+      clearApplicationState();
+      
     } catch (error: any) {
       console.error('Sign out error:', error);
-      toast.error(error.message || 'Failed to sign out');
+      
+      // For session-related errors, still clear local state and don't show error to user
+      if (error.message?.includes('Session not found') || 
+          error.message?.includes('session_not_found') ||
+          error.message?.includes('Invalid session')) {
+        console.log('Handling session error by clearing local state');
+        clearApplicationState();
+        return;
+      }
+      
+      toast.error('Failed to sign out properly. Clearing local session.');
+      clearApplicationState();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearApplicationState = () => {
+    try {
+      // Clear application-specific session storage (not Supabase tokens)
+      const keysToRemove = [
+        'submitAfterVerification',
+        'redirectToDashboard',
+        'formSubmittedDuringSignup',
+        'forceRetrySubmission',
+        'ownersCount',
+        'propertiesCount',
+        'hasDocumentRetrievalService',
+        'lastSubmissionTime',
+        'submitted_users'
+      ];
+      
+      keysToRemove.forEach(key => {
+        try {
+          sessionStorage.removeItem(key);
+        } catch (e) {
+          // Ignore individual key removal errors
+        }
+      });
+      
+      console.log('Application state cleared');
+    } catch (error) {
+      console.error('Error clearing application state:', error);
     }
   };
 
