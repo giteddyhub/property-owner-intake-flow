@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface AnonymousRouteProps {
@@ -9,14 +9,17 @@ interface AnonymousRouteProps {
 
 export const AnonymousRoute: React.FC<AnonymousRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
-  const location = useLocation();
   
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
   }
 
-  // Don't redirect on verify-email page even if authenticated
-  if (user && location.pathname !== '/verify-email') {
+  // If user is authenticated, redirect to dashboard
+  if (user) {
     return <Navigate to="/dashboard" replace />;
   }
 

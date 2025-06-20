@@ -10,11 +10,11 @@ const Index = () => {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        // If user is authenticated, redirect to dashboard
-        navigate('/dashboard');
+        // User is authenticated, redirect to dashboard
+        navigate('/dashboard', { replace: true });
       } else {
-        // If user is not authenticated, redirect to signup
-        navigate('/signup');
+        // User is not authenticated, redirect to signup
+        navigate('/signup', { replace: true });
       }
     }
   }, [user, loading, navigate]);

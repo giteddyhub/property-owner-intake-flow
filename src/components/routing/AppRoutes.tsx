@@ -7,8 +7,6 @@ import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
 import AccountSettingsPage from '@/pages/AccountSettingsPage';
 import VerifyEmailPage from '@/pages/VerifyEmailPage';
-import ResidencyAssessmentPage from '@/pages/ResidencyAssessmentPage';
-import ResidentSuccessPage from '@/pages/ResidentSuccessPage';
 import NotFound from '@/pages/NotFound';
 
 // Admin Pages
@@ -33,10 +31,10 @@ export const AppRoutes = () => {
   return (
     <>
       <Routes>
-        {/* Public Routes */}
+        {/* Root Route - handles auth redirection */}
         <Route path="/" element={<Index />} />
-        <Route path="/residency-assessment" element={<ResidencyAssessmentPage />} />
-        <Route path="/resident-success" element={<ResidentSuccessPage />} />
+        
+        {/* Public Routes */}
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         
         {/* Anonymous Only Routes */}

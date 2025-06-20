@@ -8,7 +8,7 @@ import { useDashboardData } from '@/hooks/useDashboardData';
 import { toast } from 'sonner';
 
 const DashboardPage = () => {
-  const { user, signOut, checkAdminStatus } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('properties');
   
@@ -62,13 +62,6 @@ const DashboardPage = () => {
     }
   }, [refreshData]);
 
-  // Redirect if not authenticated
-  React.useEffect(() => {
-    if (!user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
-
   const handleSignOut = async () => {
     try {
       sessionStorage.clear();
@@ -77,7 +70,8 @@ const DashboardPage = () => {
       await signOut();
       toast.success('Signed out successfully');
       
-      window.location.href = '/';
+      // Navigate to home instead of forcing window location
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out. Please try again.');
