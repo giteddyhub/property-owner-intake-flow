@@ -169,6 +169,99 @@ export const useAdvancedUserManagement = () => {
     }
   };
 
+  // Bulk delete user accounts with progress tracking
+  const bulkDeleteUserAccounts = async (
+    userIds: string[],
+    userEmails: string[],
+    reason: string,
+    onProgress?: (completed: number, total: number, currentUser?: string) => void
+  ): Promise<BulkActionResult> => {
+    setLoading(true);
+    
+    const results: BulkActionResult = {
+      success: 0,
+      failed: 0,
+      errors: []
+    };
+
+    try {
+      // Log the bulk deletion initiation
+      await logAdminAction('bulk_user_deletion_initiated', 'users', undefined, {
+        target_count: userIds.length,
+        target_user_ids: userIds,
+        target_emails: userEmails,
+        reason: reason,
+        timestamp: new Date().toISOString()
+      });
+
+      for (let i = 0; i < userIds.length; i++) {
+        const userId = userIds[i];
+        const userEmail = userEmails[i];
+        
+        // Update progress
+        if (onProgress) {
+          onProgress(i, userIds.length, userEmail);
+        }
+
+        try {
+          const deleteResult = await deleteUserAccount(userId, userEmail, reason);
+          
+          if (deleteResult.success) {
+            results.success++;
+          } else {
+            results.failed++;
+            results.errors.push(`${userEmail}: ${deleteResult.error || 'Unknown error'}`);
+          }
+        } catch (error: any) {
+          results.failed++;
+          results.errors.push(`${userEmail}: ${error.message}`);
+        }
+      }
+
+      // Final progress update
+      if (onProgress) {
+        onProgress(userIds.length, userIds.length);
+      }
+
+      // Log bulk deletion completion
+      await logAdminAction('bulk_user_deletion_completed', 'users', undefined, {
+        target_count: userIds.length,
+        successful_deletions: results.success,
+        failed_deletions: results.failed,
+        errors: results.errors,
+        timestamp: new Date().toISOString()
+      });
+
+      if (results.success > 0) {
+        toast.success(`Bulk deletion completed`, {
+          description: `Successfully deleted ${results.success} user accounts${results.failed > 0 ? ` (${results.failed} failed)` : ''}`
+        });
+      }
+
+      if (results.failed > 0 && results.success === 0) {
+        toast.error('Bulk deletion failed', {
+          description: `All ${results.failed} deletion attempts failed`
+        });
+      }
+
+      return results;
+    } catch (error: any) {
+      console.error('Failed to execute bulk deletion:', error);
+      
+      toast.error('Bulk deletion failed', {
+        description: error.message
+      });
+
+      return {
+        success: 0,
+        failed: userIds.length,
+        errors: [error.message]
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Execute single user action
   const executeUserAction = async (
     userId: string,
@@ -223,6 +316,27 @@ export const useAdvancedUserManagement = () => {
     actionType: UserAction['type'],
     reason?: string
   ): Promise<BulkActionResult> => {
+    // Handle bulk delete action specially
+    if (actionType === 'delete_account') {
+      if (!reason) {
+        toast.error('A reason is required for bulk account deletion');
+        return {
+          success: 0,
+          failed: userIds.length,
+          errors: ['Reason is required for account deletion']
+        };
+      }
+      
+      // We need user emails for deletion, but we don't have them here
+      // This will be handled by the BulkUserActions component
+      return {
+        success: 0,
+        failed: userIds.length,
+        errors: ['Bulk deletion must be handled through specialized dialog']
+      };
+    }
+
+    // Handle other bulk actions with existing logic
     setLoading(true);
     
     try {
@@ -275,6 +389,7 @@ export const useAdvancedUserManagement = () => {
     getUserDataSummary,
     executeUserAction,
     deleteUserAccount,
+    bulkDeleteUserAccounts,
     executeBulkAction
   };
 };

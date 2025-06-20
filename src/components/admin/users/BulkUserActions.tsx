@@ -16,27 +16,39 @@ import {
   UserCheck, 
   Key, 
   Mail,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from 'lucide-react';
 import { useAdvancedUserManagement, UserAction } from '@/hooks/admin/useAdvancedUserManagement';
 import { BulkActionConfirmDialog } from './BulkActionConfirmDialog';
+import { BulkDeleteConfirmDialog } from './BulkDeleteConfirmDialog';
 
 interface BulkUserActionsProps {
   selectedUserIds: string[];
+  selectedUsers?: Array<{ id: string; email: string; full_name?: string }>;
   onClearSelection: () => void;
+  onBulkActionComplete?: () => void;
 }
 
 export const BulkUserActions: React.FC<BulkUserActionsProps> = ({
   selectedUserIds,
-  onClearSelection
+  selectedUsers = [],
+  onClearSelection,
+  onBulkActionComplete
 }) => {
-  const { loading, availableActions, executeBulkAction } = useAdvancedUserManagement();
+  const { loading, availableActions, executeBulkAction, bulkDeleteUserAccounts } = useAdvancedUserManagement();
   const [selectedAction, setSelectedAction] = useState<UserAction | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleActionSelect = (action: UserAction) => {
     setSelectedAction(action);
-    setShowConfirmDialog(true);
+    
+    if (action.type === 'delete_account') {
+      setShowDeleteDialog(true);
+    } else {
+      setShowConfirmDialog(true);
+    }
   };
 
   const handleConfirmBulkAction = async (reason?: string) => {
@@ -48,6 +60,30 @@ export const BulkUserActions: React.FC<BulkUserActionsProps> = ({
       setShowConfirmDialog(false);
       setSelectedAction(null);
       onClearSelection();
+      
+      if (onBulkActionComplete) {
+        onBulkActionComplete();
+      }
+    }
+  };
+
+  const handleConfirmBulkDelete = async (reason: string) => {
+    const userEmails = selectedUsers.map(user => user.email);
+    
+    const result = await bulkDeleteUserAccounts(
+      selectedUserIds,
+      userEmails,
+      reason
+    );
+    
+    if (result.success > 0) {
+      setShowDeleteDialog(false);
+      setSelectedAction(null);
+      onClearSelection();
+      
+      if (onBulkActionComplete) {
+        onBulkActionComplete();
+      }
     }
   };
 
@@ -61,14 +97,23 @@ export const BulkUserActions: React.FC<BulkUserActionsProps> = ({
         return <Key className="h-4 w-4" />;
       case 'send_email':
         return <Mail className="h-4 w-4" />;
+      case 'delete_account':
+        return <Trash2 className="h-4 w-4" />;
     }
   };
 
   const getSeverityColor = (severity: UserAction['severity']) => {
     switch (severity) {
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      case 'low': return 'outline';
+      case 'critical':
+        return 'destructive';
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'secondary';
+      case 'low':
+        return 'outline';
+      default:
+        return 'outline';
     }
   };
 
@@ -111,7 +156,9 @@ export const BulkUserActions: React.FC<BulkUserActionsProps> = ({
                 <DropdownMenuItem
                   key={action.id}
                   onClick={() => handleActionSelect(action)}
-                  className="flex items-center justify-between"
+                  className={`flex items-center justify-between ${
+                    action.type === 'delete_account' ? 'text-red-600 focus:text-red-600' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-2">
                     {getActionIcon(action.type)}
@@ -123,7 +170,7 @@ export const BulkUserActions: React.FC<BulkUserActionsProps> = ({
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {action.severity === 'high' && (
+                    {action.severity === 'critical' && (
                       <AlertTriangle className="h-3 w-3 text-red-500" />
                     )}
                     <Badge variant={getSeverityColor(action.severity)} className="text-xs">
@@ -137,7 +184,7 @@ export const BulkUserActions: React.FC<BulkUserActionsProps> = ({
         </div>
       </div>
 
-      {selectedAction && (
+      {selectedAction && selectedAction.type !== 'delete_account' && (
         <BulkActionConfirmDialog
           open={showConfirmDialog}
           onOpenChange={setShowConfirmDialog}
@@ -147,6 +194,14 @@ export const BulkUserActions: React.FC<BulkUserActionsProps> = ({
           loading={loading}
         />
       )}
+
+      <BulkDeleteConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        selectedUsers={selectedUsers}
+        onConfirm={handleConfirmBulkDelete}
+        loading={loading}
+      />
     </>
   );
 };
