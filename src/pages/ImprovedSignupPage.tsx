@@ -26,10 +26,7 @@ export const ImprovedSignupPage: React.FC = () => {
               </div>
               <h2 className="text-xl font-semibold text-green-800">Account Created Successfully!</h2>
               <p className="text-gray-600">
-                {formState.hasPendingFormData 
-                  ? "Your account has been created and your form data has been submitted. Please check your email to verify your account."
-                  : "Please check your email to verify your account before proceeding."
-                }
+                Please check your email to verify your account before proceeding.
               </p>
               <p className="text-sm text-gray-500">
                 You'll be redirected to the verification page shortly.
@@ -46,11 +43,6 @@ export const ImprovedSignupPage: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Create Your Account</CardTitle>
-          {formState.hasPendingFormData && (
-            <p className="text-sm text-blue-600">
-              We've saved your form data. Complete your account to submit it securely.
-            </p>
-          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -99,10 +91,10 @@ export const ImprovedSignupPage: React.FC = () => {
               {formState.isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {formState.hasPendingFormData ? 'Creating Account & Submitting Form...' : 'Creating Account...'}
+                  Creating Account...
                 </>
               ) : (
-                formState.hasPendingFormData ? 'Create Account & Submit Form' : 'Create Account'
+                'Create Account'
               )}
             </Button>
             <div className="text-center">

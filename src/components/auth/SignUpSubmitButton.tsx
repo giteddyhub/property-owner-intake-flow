@@ -5,12 +5,10 @@ import { Loader2 } from 'lucide-react';
 
 interface SignUpSubmitButtonProps {
   isSubmitting: boolean;
-  hasPendingFormData: boolean;
 }
 
 export const SignUpSubmitButton: React.FC<SignUpSubmitButtonProps> = ({
-  isSubmitting,
-  hasPendingFormData
+  isSubmitting
 }) => {
   return (
     <Button
@@ -21,7 +19,7 @@ export const SignUpSubmitButton: React.FC<SignUpSubmitButtonProps> = ({
       {isSubmitting ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {hasPendingFormData ? 'Creating account & submitting data...' : 'Creating account...'}
+          Creating account...
         </>
       ) : (
         'Create account'

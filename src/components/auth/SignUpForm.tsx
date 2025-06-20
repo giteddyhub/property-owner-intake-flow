@@ -16,7 +16,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
   });
 
   if (formState.isSignedUp) {
-    return <SignUpSuccess hasPendingFormData={formState.hasPendingFormData} />;
+    return <SignUpSuccess />;
   }
 
   return (
@@ -27,7 +27,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
       />
       <SignUpSubmitButton
         isSubmitting={formState.isSubmitting}
-        hasPendingFormData={formState.hasPendingFormData}
       />
     </form>
   );
