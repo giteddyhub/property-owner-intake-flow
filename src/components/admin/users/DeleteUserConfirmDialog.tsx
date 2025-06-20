@@ -82,6 +82,15 @@ export const DeleteUserConfirmDialog: React.FC<DeleteUserConfirmDialogProps> = (
     }).format(amount);
   };
 
+  // Handler functions for checkbox changes
+  const handleConfirmDeletionChange = (checked: boolean | "indeterminate") => {
+    setConfirmDeletion(checked === true);
+  };
+
+  const handleConfirmUnderstandingChange = (checked: boolean | "indeterminate") => {
+    setConfirmUnderstanding(checked === true);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -249,7 +258,7 @@ export const DeleteUserConfirmDialog: React.FC<DeleteUserConfirmDialogProps> = (
               <Checkbox
                 id="confirm-deletion"
                 checked={confirmDeletion}
-                onCheckedChange={setConfirmDeletion}
+                onCheckedChange={handleConfirmDeletionChange}
               />
               <Label htmlFor="confirm-deletion" className="text-sm leading-5">
                 I understand that this will permanently delete the user account and all associated data,
@@ -261,7 +270,7 @@ export const DeleteUserConfirmDialog: React.FC<DeleteUserConfirmDialogProps> = (
               <Checkbox
                 id="confirm-understanding"
                 checked={confirmUnderstanding}
-                onCheckedChange={setConfirmUnderstanding}
+                onCheckedChange={handleConfirmUnderstandingChange}
               />
               <Label htmlFor="confirm-understanding" className="text-sm leading-5">
                 I have proper authorization to perform this deletion and understand the consequences
