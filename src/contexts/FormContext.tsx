@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { FormContextType, FormState, Owner, Property, OwnerPropertyAssignment } from '@/types/form';
@@ -12,9 +11,11 @@ const initialState: FormState = {
 
 const FormContext = createContext<FormContextType | undefined>(undefined);
 
+// Simplified FormProvider - mainly used for legacy form components
 export const FormProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, setState] = useState<FormState>(initialState);
 
+  // Keep existing methods for compatibility with legacy form components
   const addOwner = (owner: Owner) => {
     const newOwner = { ...owner, id: uuidv4() };
     setState(prev => ({
@@ -34,10 +35,10 @@ export const FormProvider = ({ children }: { children: React.ReactNode }) => {
   const removeOwner = (index: number) => {
     setState(prev => {
       const newOwners = [...prev.owners];
+      const ownerId = prev.owners[index].id;
       newOwners.splice(index, 1);
       
       // Remove assignments for this owner
-      const ownerId = prev.owners[index].id;
       const newAssignments = prev.assignments.filter(
         assignment => assignment.ownerId !== ownerId
       );

@@ -40,44 +40,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
   
-  // Handle auth state changes and form submission attempts
+  // Simplified auth state changes - just handle admin status
   React.useEffect(() => {
     console.log("[AuthContext] Auth state changed, user:", user?.id);
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        const newUser = session?.user || null;
-        
         // Check admin status when user logs in
         if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
           setTimeout(() => {
             checkAdminStatus();
           }, 500);
         }
-        
-        // Handle form submission after email verification
-        if (event === 'USER_UPDATED' && session?.user) {
-          const isVerified = session.user.email_confirmed_at || session.user.confirmed_at;
-          const shouldProcessForm = sessionStorage.getItem('processFormDataNow') === 'true' ||
-                                   sessionStorage.getItem('emailJustVerified') === 'true';
-          
-          if (isVerified && shouldProcessForm) {
-            console.log("[AuthContext] Processing form data after email verification");
-            setTimeout(() => {
-              processPendingFormData(session.user.id);
-            }, 1000);
-          }
-        }
-        
-        // Handle retry submissions
-        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-          const forceRetry = sessionStorage.getItem('forceRetrySubmission') === 'true';
-          if (forceRetry) {
-            console.log("[AuthContext] Force retry submission detected");
-            setTimeout(() => {
-              processPendingFormData(session.user.id);
-            }, 1500);
-          }
+
+        // Clean up legacy form data on any auth state change
+        if (session?.user) {
+          setTimeout(() => {
+            processPendingFormData(session.user.id);
+          }, 500);
         }
 
         // Reset admin status on sign-out
@@ -87,18 +67,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    // Check for pending submissions on initial load
+    // Check admin status on initial load
     if (user && isInitialized) {
       checkAdminStatus();
-      
-      setTimeout(() => {
-        const shouldProcess = sessionStorage.getItem('processFormDataNow') === 'true' ||
-                             sessionStorage.getItem('forceRetrySubmission') === 'true';
-        if (shouldProcess) {
-          console.log("[AuthContext] Processing pending data on initial load");
-          processPendingFormData(user.id);
-        }
-      }, 500);
     }
 
     return () => {
