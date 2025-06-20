@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Link } from 'react-router-dom';
 import { Loader2, CheckCircle } from 'lucide-react';
 import { useImprovedSignUpForm } from '@/hooks/useImprovedSignUpForm';
+import { AnimatedBackground } from '@/components/ui/animated-background';
 
 export const ModernSignupPage: React.FC = () => {
   const { formState, updateField, handleSubmit } = useImprovedSignUpForm({
@@ -35,15 +36,10 @@ export const ModernSignupPage: React.FC = () => {
           </Card>
         </div>
         
-        {/* Right side - Image (hidden on mobile) */}
+        {/* Right side - Animated background */}
         <div className="hidden lg:flex flex-1 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700"></div>
-          <div className="relative z-10 flex items-center justify-center p-12">
-            <div className="text-white text-center space-y-6">
-              <h3 className="text-3xl font-bold">Welcome to Your Property Management Journey</h3>
-              <p className="text-xl opacity-90">Manage your Italian properties with ease and confidence.</p>
-            </div>
-          </div>
+          <AnimatedBackground />
         </div>
       </div>
     );
@@ -149,45 +145,15 @@ export const ModernSignupPage: React.FC = () => {
         </Card>
       </div>
       
-      {/* Right side - Hero image/illustration */}
+      {/* Right side - Animated background */}
       <div className="hidden lg:flex flex-1 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700"></div>
-        <div className="relative z-10 flex items-center justify-center p-12">
-          <div className="text-white text-center space-y-8 max-w-lg">
-            <div className="space-y-4">
-              <h2 className="text-4xl font-bold leading-tight">
-                Simplify Your Italian Property Management
-              </h2>
-              <p className="text-xl opacity-90 leading-relaxed">
-                Track ownership, manage rentals, and stay compliant with Italian tax requirements - all in one intuitive platform.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-4 text-left">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-                <span className="text-lg">Property portfolio tracking</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-                <span className="text-lg">Ownership management</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-                <span className="text-lg">Tax compliance assistance</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-                <span className="text-lg">Professional support</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AnimatedBackground />
         
-        {/* Decorative elements */}
-        <div className="absolute top-20 right-20 w-32 h-32 bg-white/10 rounded-full"></div>
-        <div className="absolute bottom-20 left-20 w-24 h-24 bg-white/10 rounded-full"></div>
-        <div className="absolute top-1/2 right-10 w-16 h-16 bg-white/10 rounded-full"></div>
+        {/* Decorative static elements for extra visual interest */}
+        <div className="absolute top-20 right-20 w-32 h-32 bg-white/5 rounded-full"></div>
+        <div className="absolute bottom-20 left-20 w-24 h-24 bg-white/5 rounded-full"></div>
+        <div className="absolute top-1/2 right-10 w-16 h-16 bg-white/5 rounded-full"></div>
       </div>
     </div>
   );
