@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Settings, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { User, LogOut, Settings, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
@@ -30,20 +30,16 @@ export const AccountMenu = () => {
     try {
       console.log('AccountMenu: Starting sign out process');
       await signOut();
-      toast.success('Signed out successfully');
       
-      // Navigate using React Router instead of window.location
+      // Only show success message and navigate if we reach this point
+      toast.success('Signed out successfully');
       navigate('/', { replace: true });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('AccountMenu: Error signing out:', error);
-      // Don't show error for session-related issues as they're handled in signOut
-      if (!error?.message?.includes('Session not found') && 
-          !error?.message?.includes('session_not_found')) {
-        toast.error('Failed to sign out completely. Please try again.');
-      }
       
-      // Still navigate to home even if there was an error
+      // For any errors, still navigate but show a generic message
+      toast.info('You have been signed out');
       navigate('/', { replace: true });
     }
   };

@@ -6,6 +6,7 @@ import { ActivityLogger } from '@/services/activityLogger';
 
 export const useAuthActions = () => {
   const [loading, setLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
@@ -104,55 +105,66 @@ export const useAuthActions = () => {
   };
 
   const signOut = async () => {
+    // Prevent duplicate sign-out attempts
+    if (signingOut) {
+      console.log('Sign out already in progress, skipping...');
+      return;
+    }
+
     try {
+      setSigningOut(true);
       setLoading(true);
       console.log('Starting sign out process...');
       
-      // Check if user is actually signed in before attempting sign out
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check current session state first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
+      if (sessionError) {
+        console.log('Error checking session:', sessionError.message);
+        // If we can't check session, proceed with cleanup anyway
+        clearApplicationState();
+        return;
+      }
+
       if (!session) {
         console.log('No active session found, user already signed out');
-        // Clear any remaining application state
         clearApplicationState();
         return;
       }
 
       console.log('Found active session, proceeding with sign out');
       
-      // Attempt to sign out
+      // Attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('Sign out error:', error);
-        // Don't throw error for "Session not found" as user is effectively signed out
-        if (error.message?.includes('Session not found') || error.message?.includes('session_not_found')) {
-          console.log('Session already expired/invalid, clearing local state');
+        console.error('Supabase sign out error:', error);
+        
+        // Handle specific error cases without showing user errors
+        if (error.message?.includes('Session not found') || 
+            error.message?.includes('session_not_found') ||
+            error.message?.includes('Invalid session')) {
+          console.log('Session already invalid, proceeding with cleanup');
           clearApplicationState();
           return;
         }
-        throw error;
-      }
-
-      console.log('Sign out successful');
-      clearApplicationState();
-      
-    } catch (error: any) {
-      console.error('Sign out error:', error);
-      
-      // For session-related errors, still clear local state and don't show error to user
-      if (error.message?.includes('Session not found') || 
-          error.message?.includes('session_not_found') ||
-          error.message?.includes('Invalid session')) {
-        console.log('Handling session error by clearing local state');
+        
+        // For other errors, still clear local state but log the error
+        console.error('Unexpected sign out error:', error);
         clearApplicationState();
         return;
       }
+
+      console.log('Supabase sign out successful');
+      clearApplicationState();
       
-      toast.error('Failed to sign out properly. Clearing local session.');
+    } catch (error: any) {
+      console.error('Sign out exception:', error);
+      // Always clear local state regardless of errors
       clearApplicationState();
     } finally {
       setLoading(false);
+      setSigningOut(false);
     }
   };
 
@@ -175,7 +187,7 @@ export const useAuthActions = () => {
         try {
           sessionStorage.removeItem(key);
         } catch (e) {
-          // Ignore individual key removal errors
+          console.warn('Failed to remove session storage key:', key);
         }
       });
       

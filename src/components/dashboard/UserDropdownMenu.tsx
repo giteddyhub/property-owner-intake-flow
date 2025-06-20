@@ -59,20 +59,15 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut, i
         await signOut();
       }
       
+      // Only show success message and navigate if we reach this point
       toast.success('Signed out successfully');
-      
-      // Navigate using React Router instead of window.location
       navigate('/', { replace: true });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('UserDropdownMenu: Error signing out:', error);
-      // Don't show error for session-related issues as they're handled in signOut
-      if (!error?.message?.includes('Session not found') && 
-          !error?.message?.includes('session_not_found')) {
-        toast.error('Failed to sign out completely. Please try again.');
-      }
       
-      // Still navigate to home even if there was an error
+      // For any errors, still navigate but show a generic message
+      toast.info('You have been signed out');
       navigate('/', { replace: true });
     }
   };
