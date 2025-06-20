@@ -89,17 +89,19 @@ const DashboardPage = () => {
   }
 
   return (
-    <DashboardLayout
-      owners={owners}
-      properties={properties}
-      assignments={assignments}
-      totalRevenue={totalRevenue}
-      onSignOut={handleSignOut}
-      activeFilter={activeFilter}
-      setActiveFilter={setActiveFilter}
-      onRefresh={refreshData}
-      userId={user?.id || ''}
-    />
+    <div className="animate-in fade-in duration-300">
+      <DashboardLayout
+        owners={owners}
+        properties={properties}
+        assignments={assignments}
+        totalRevenue={totalRevenue}
+        onSignOut={handleSignOut}
+        activeFilter={activeFilter}
+        setActiveFilter={setActiveFilter}
+        onRefresh={refreshData}
+        userId={user?.id || ''}
+      />
+    </div>
   );
 };
 

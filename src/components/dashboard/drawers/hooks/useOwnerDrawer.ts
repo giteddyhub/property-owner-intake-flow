@@ -58,6 +58,8 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
         onSuccess,
         onClose: handleClose
       });
+    } catch (error) {
+      console.error('Error submitting owner:', error);
     } finally {
       setIsSubmitting(false);
     }
