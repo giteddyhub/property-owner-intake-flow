@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 
 interface Bubble {
@@ -27,17 +28,17 @@ export const AnimatedBackground: React.FC = () => {
     };
 
     const createBubbles = () => {
-      const bubbleCount = 15;
+      const bubbleCount = 50; // Increased from 15 to 50
       bubblesRef.current = [];
       
       for (let i = 0; i < bubbleCount; i++) {
         bubblesRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          radius: Math.random() * 3 + 2,
-          opacity: Math.random() * 0.6 + 0.2
+          vx: (Math.random() - 0.5) * 0.8, // Slightly faster movement
+          vy: (Math.random() - 0.5) * 0.8,
+          radius: Math.random() * 4 + 1, // Varied sizes from 1-5
+          opacity: Math.random() * 0.8 + 0.3 // Higher opacity range
         });
       }
     };
@@ -49,14 +50,14 @@ export const AnimatedBackground: React.FC = () => {
       ctx.fill();
       
       // Add glow effect
-      ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-      ctx.shadowBlur = 10;
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.7)';
+      ctx.shadowBlur = 15;
       ctx.fill();
       ctx.shadowBlur = 0;
     };
 
     const drawConnections = () => {
-      const maxDistance = 150;
+      const maxDistance = 120; // Reduced from 150 for more connections
       
       for (let i = 0; i < bubblesRef.current.length; i++) {
         for (let j = i + 1; j < bubblesRef.current.length; j++) {
@@ -68,13 +69,13 @@ export const AnimatedBackground: React.FC = () => {
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance < maxDistance) {
-            const opacity = (1 - distance / maxDistance) * 0.3;
+            const opacity = (1 - distance / maxDistance) * 0.4; // Increased opacity
             
             ctx.beginPath();
             ctx.moveTo(bubble1.x, bubble1.y);
             ctx.lineTo(bubble2.x, bubble2.y);
             ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 1.5; // Slightly thicker lines
             ctx.stroke();
           }
         }
