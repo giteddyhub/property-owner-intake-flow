@@ -28,7 +28,7 @@ export const AnimatedBackground: React.FC = () => {
     };
 
     const createBubbles = () => {
-      const bubbleCount = 50; // Increased from 15 to 50
+      const bubbleCount = 100; // Doubled from 50 to 100
       bubblesRef.current = [];
       
       for (let i = 0; i < bubbleCount; i++) {
