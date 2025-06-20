@@ -45,7 +45,7 @@ export const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut, i
   };
   
   const handleAccountSettings = () => {
-    navigate('/account-settings');
+    navigate('/settings');
   };
 
   const handleSignOut = async () => {
