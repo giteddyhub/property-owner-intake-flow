@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,9 +13,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, User, Calendar, Activity } from 'lucide-react';
+import { AlertTriangle, User, Calendar, Activity, Download, UserX, Shield } from 'lucide-react';
 import { UserAction } from '@/hooks/admin/useAdvancedUserManagement';
+import { useUserDeletionSafety, UserSafetyCheck } from '@/hooks/admin/useUserDeletionSafety';
 import { DeleteUserConfirmDialog } from './DeleteUserConfirmDialog';
+import { UserDeletionSafetyDialog } from './safety/UserDeletionSafetyDialog';
+import { UserDataExportDialog } from './safety/UserDataExportDialog';
+import { SoftDeleteDialog } from './safety/SoftDeleteDialog';
 
 interface UserActionConfirmDialogProps {
   open: boolean;
@@ -41,9 +45,34 @@ export const UserActionConfirmDialog: React.FC<UserActionConfirmDialogProps> = (
   loading
 }) => {
   const [reason, setReason] = useState('');
+  const [safetyCheck, setSafetyCheck] = useState<UserSafetyCheck | null>(null);
+  const [showSafetyDialog, setShowSafetyDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showSoftDeleteDialog, setShowSoftDeleteDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  const { checkUserSafety } = useUserDeletionSafety();
+
+  // Check user safety when dialog opens for delete actions
+  useEffect(() => {
+    if (open && action.type === 'delete_account') {
+      checkUserSafety(userId, userEmail).then(setSafetyCheck);
+    }
+  }, [open, action.type, userId, userEmail, checkUserSafety]);
 
   const handleConfirm = () => {
     onConfirm(reason.trim() || undefined);
+  };
+
+  const handleDeleteAction = () => {
+    if (!safetyCheck) return;
+    
+    if (!safetyCheck.canDelete) {
+      setShowSafetyDialog(true);
+      return;
+    }
+    
+    setShowDeleteDialog(true);
   };
 
   const getRiskLevel = (summary: any) => {
@@ -60,22 +89,173 @@ export const UserActionConfirmDialog: React.FC<UserActionConfirmDialogProps> = (
     }
   };
 
-  // For delete actions, use the specialized delete dialog
+  // For delete actions, show enhanced delete interface
   if (action.type === 'delete_account') {
     return (
-      <DeleteUserConfirmDialog
-        open={open}
-        onOpenChange={onOpenChange}
-        userId={userId}
-        userEmail={userEmail}
-        userName={userName}
-        dataSummary={activitySummary}
-        onConfirm={onConfirm}
-        loading={loading}
-      />
+      <>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                Account Deletion Options
+              </DialogTitle>
+              <DialogDescription>
+                Choose how to handle this user account. Review safety checks and consider alternatives to permanent deletion.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* User Information */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <User className="h-4 w-4" />
+                    User Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Name:</span>
+                      <p>{userName || 'No Name'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Email:</span>
+                      <p>{userEmail}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">User ID:</span>
+                      <p className="font-mono text-xs">{userId}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Risk Level:</span>
+                      <Badge className={getRiskColor(getRiskLevel(activitySummary))}>
+                        {getRiskLevel(activitySummary)}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Safety Check Results */}
+              {safetyCheck && (
+                <Card className={safetyCheck.canDelete ? 'border-green-200' : 'border-red-200'}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Shield className="h-4 w-4" />
+                      Safety Check
+                      <Badge variant={safetyCheck.canDelete ? 'default' : 'destructive'}>
+                        {safetyCheck.canDelete ? 'Safe' : 'Blocked'}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {safetyCheck.blockingReasons.length > 0 && (
+                      <div className="text-sm text-red-600 mb-2">
+                        <p className="font-medium">Deletion blocked:</p>
+                        <ul className="list-disc list-inside">
+                          {safetyCheck.blockingReasons.map((reason, index) => (
+                            <li key={index}>{reason}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {safetyCheck.warnings.length > 0 && (
+                      <div className="text-sm text-amber-600">
+                        <p className="font-medium">Warnings:</p>
+                        <ul className="list-disc list-inside">
+                          {safetyCheck.warnings.map((warning, index) => (
+                            <li key={index}>{warning}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowExportDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Export Data
+                </Button>
+                
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowSoftDeleteDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <UserX className="h-4 w-4" />
+                  Deactivate
+                </Button>
+                
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAction}
+                  disabled={!safetyCheck}
+                  className="flex items-center gap-2"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  Permanent Delete
+                </Button>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Safety Dialog */}
+        <UserDeletionSafetyDialog
+          open={showSafetyDialog}
+          onOpenChange={setShowSafetyDialog}
+          safetyCheck={safetyCheck!}
+          userEmail={userEmail}
+        />
+
+        {/* Export Dialog */}
+        <UserDataExportDialog
+          open={showExportDialog}
+          onOpenChange={setShowExportDialog}
+          userId={userId}
+          userEmail={userEmail}
+        />
+
+        {/* Soft Delete Dialog */}
+        <SoftDeleteDialog
+          open={showSoftDeleteDialog}
+          onOpenChange={setShowSoftDeleteDialog}
+          userId={userId}
+          userEmail={userEmail}
+          onSuccess={() => onOpenChange(false)}
+        />
+
+        {/* Permanent Delete Dialog */}
+        <DeleteUserConfirmDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          userId={userId}
+          userEmail={userEmail}
+          userName={userName}
+          dataSummary={activitySummary}
+          onConfirm={onConfirm}
+          loading={loading}
+        />
+      </>
     );
   }
 
+  // For non-delete actions, show standard confirmation
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">

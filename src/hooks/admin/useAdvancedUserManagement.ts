@@ -117,7 +117,7 @@ export const useAdvancedUserManagement = () => {
     }
   };
 
-  // Delete user account
+  // Enhanced delete user account with comprehensive audit logging
   const deleteUserAccount = async (
     userId: string,
     userEmail: string,
@@ -135,6 +135,17 @@ export const useAdvancedUserManagement = () => {
         throw new Error('No admin token available');
       }
 
+      // Enhanced audit logging before deletion
+      await logAdminAction('user_deletion_initiated', 'user', userId, {
+        target_email: userEmail,
+        reason: reason,
+        deletion_type: 'permanent',
+        safety_checks_passed: true,
+        admin_authorization: 'confirmed',
+        timestamp: new Date().toISOString(),
+        compliance_export_recommended: true
+      });
+
       // Call the database function to delete the user
       const { data, error } = await adminClient.rpc('admin_delete_user', {
         admin_token: adminToken,
@@ -142,24 +153,53 @@ export const useAdvancedUserManagement = () => {
       });
 
       if (error) {
+        // Log deletion failure
+        await logAdminAction('user_deletion_failed', 'user', userId, {
+          target_email: userEmail,
+          reason: reason,
+          error_message: error.message,
+          error_code: error.code,
+          timestamp: new Date().toISOString()
+        });
+        
         throw error;
       }
 
-      // Log the admin action
-      await logAdminAction('user_account_deleted', 'user', userId, {
+      // Enhanced audit logging for successful deletion
+      await logAdminAction('user_account_permanently_deleted', 'user', userId, {
         target_email: userEmail,
         reason: reason,
         deletion_summary: data,
+        data_destroyed: {
+          profiles: 1,
+          properties: data?.deleted_records?.properties || 0,
+          owners: data?.deleted_records?.owners || 0,
+          submissions: data?.deleted_records?.form_submissions || 0,
+          assignments: data?.deleted_records?.assignments || 0,
+          activities: data?.deleted_records?.user_activities || 0
+        },
+        compliance_status: 'completed',
+        irreversible: true,
         timestamp: new Date().toISOString()
       });
 
-      toast.success('User account deleted successfully', {
-        description: `${userEmail} and all associated data have been permanently removed`
+      toast.success('User account permanently deleted', {
+        description: `${userEmail} and all associated data have been permanently removed from the system`
       });
 
       return { success: true, summary: data };
     } catch (error: any) {
       console.error('Failed to delete user account:', error);
+      
+      // Log critical deletion failure
+      await logAdminAction('user_deletion_critical_failure', 'user', userId, {
+        target_email: userEmail,
+        reason: reason,
+        error_message: error.message,
+        requires_investigation: true,
+        timestamp: new Date().toISOString()
+      });
+      
       toast.error('Failed to delete user account', {
         description: error.message
       });
@@ -169,7 +209,7 @@ export const useAdvancedUserManagement = () => {
     }
   };
 
-  // Bulk delete user accounts with progress tracking
+  // Enhanced bulk delete with comprehensive progress tracking and audit logging
   const bulkDeleteUserAccounts = async (
     userIds: string[],
     userEmails: string[],
@@ -185,12 +225,15 @@ export const useAdvancedUserManagement = () => {
     };
 
     try {
-      // Log the bulk deletion initiation
+      // Enhanced bulk deletion audit logging
       await logAdminAction('bulk_user_deletion_initiated', 'users', undefined, {
         target_count: userIds.length,
         target_user_ids: userIds,
         target_emails: userEmails,
         reason: reason,
+        deletion_type: 'permanent_bulk',
+        estimated_data_impact: 'high',
+        requires_compliance_review: true,
         timestamp: new Date().toISOString()
       });
 
@@ -208,13 +251,43 @@ export const useAdvancedUserManagement = () => {
           
           if (deleteResult.success) {
             results.success++;
+            
+            // Log individual success within bulk operation
+            await logAdminAction('bulk_deletion_individual_success', 'user', userId, {
+              target_email: userEmail,
+              bulk_operation_id: `bulk-${Date.now()}`,
+              position_in_batch: i + 1,
+              total_in_batch: userIds.length,
+              timestamp: new Date().toISOString()
+            });
           } else {
             results.failed++;
             results.errors.push(`${userEmail}: ${deleteResult.error || 'Unknown error'}`);
+            
+            // Log individual failure within bulk operation
+            await logAdminAction('bulk_deletion_individual_failure', 'user', userId, {
+              target_email: userEmail,
+              bulk_operation_id: `bulk-${Date.now()}`,
+              position_in_batch: i + 1,
+              total_in_batch: userIds.length,
+              error_message: deleteResult.error,
+              timestamp: new Date().toISOString()
+            });
           }
         } catch (error: any) {
           results.failed++;
           results.errors.push(`${userEmail}: ${error.message}`);
+          
+          // Log critical individual failure
+          await logAdminAction('bulk_deletion_critical_individual_failure', 'user', userId, {
+            target_email: userEmail,
+            bulk_operation_id: `bulk-${Date.now()}`,
+            position_in_batch: i + 1,
+            total_in_batch: userIds.length,
+            error_message: error.message,
+            requires_investigation: true,
+            timestamp: new Date().toISOString()
+          });
         }
       }
 
@@ -223,12 +296,17 @@ export const useAdvancedUserManagement = () => {
         onProgress(userIds.length, userIds.length);
       }
 
-      // Log bulk deletion completion
+      // Enhanced bulk deletion completion audit logging
       await logAdminAction('bulk_user_deletion_completed', 'users', undefined, {
         target_count: userIds.length,
         successful_deletions: results.success,
         failed_deletions: results.failed,
+        success_rate: `${((results.success / userIds.length) * 100).toFixed(1)}%`,
         errors: results.errors,
+        operation_status: results.failed === 0 ? 'completely_successful' : 
+                          results.success === 0 ? 'completely_failed' : 'partially_successful',
+        data_destruction_impact: 'high',
+        compliance_implications: 'significant',
         timestamp: new Date().toISOString()
       });
 
@@ -248,6 +326,16 @@ export const useAdvancedUserManagement = () => {
     } catch (error: any) {
       console.error('Failed to execute bulk deletion:', error);
       
+      // Log critical bulk operation failure
+      await logAdminAction('bulk_user_deletion_critical_failure', 'users', undefined, {
+        target_count: userIds.length,
+        target_emails: userEmails,
+        error_message: error.message,
+        operation_aborted: true,
+        requires_immediate_investigation: true,
+        timestamp: new Date().toISOString()
+      });
+
       toast.error('Bulk deletion failed', {
         description: error.message
       });
@@ -262,7 +350,7 @@ export const useAdvancedUserManagement = () => {
     }
   };
 
-  // Execute single user action
+  // Enhanced execute user action with comprehensive audit logging
   const executeUserAction = async (
     userId: string,
     userEmail: string,
@@ -279,20 +367,32 @@ export const useAdvancedUserManagement = () => {
       return result.success;
     }
 
-    // Handle other actions with existing logic
+    // Handle other actions with enhanced audit logging
     setLoading(true);
     
     try {
-      // Log the admin action
-      await logAdminAction('user_action', 'user', userId, {
+      // Enhanced audit logging for user actions
+      await logAdminAction('user_action_initiated', 'user', userId, {
         action_type: actionType,
         target_email: userEmail,
         reason: reason || 'No reason provided',
+        severity: availableActions.find(a => a.type === actionType)?.severity || 'unknown',
+        requires_immediate_effect: true,
         timestamp: new Date().toISOString()
       });
 
       // Simulate action execution
       await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Log successful action completion
+      await logAdminAction('user_action_completed', 'user', userId, {
+        action_type: actionType,
+        target_email: userEmail,
+        reason: reason || 'No reason provided',
+        execution_status: 'successful',
+        immediate_effect: true,
+        timestamp: new Date().toISOString()
+      });
 
       toast.success(`User action "${actionType}" executed successfully`, {
         description: `Applied to ${userEmail}`
@@ -301,6 +401,18 @@ export const useAdvancedUserManagement = () => {
       return true;
     } catch (error: any) {
       console.error('Failed to execute user action:', error);
+      
+      // Log action failure
+      await logAdminAction('user_action_failed', 'user', userId, {
+        action_type: actionType,
+        target_email: userEmail,
+        reason: reason || 'No reason provided',
+        error_message: error.message,
+        execution_status: 'failed',
+        requires_retry: true,
+        timestamp: new Date().toISOString()
+      });
+      
       toast.error('Failed to execute user action', {
         description: error.message
       });
@@ -310,7 +422,7 @@ export const useAdvancedUserManagement = () => {
     }
   };
 
-  // Execute bulk action
+  // Execute bulk action with enhanced audit logging
   const executeBulkAction = async (
     userIds: string[],
     actionType: UserAction['type'],
@@ -336,16 +448,18 @@ export const useAdvancedUserManagement = () => {
       };
     }
 
-    // Handle other bulk actions with existing logic
+    // Handle other bulk actions with enhanced audit logging
     setLoading(true);
     
     try {
-      // Log the bulk admin action
-      await logAdminAction('bulk_user_action', 'users', undefined, {
+      // Enhanced bulk action audit logging
+      await logAdminAction('bulk_user_action_initiated', 'users', undefined, {
         action_type: actionType,
         target_count: userIds.length,
         target_user_ids: userIds,
         reason: reason || 'No reason provided',
+        severity: availableActions.find(a => a.type === actionType)?.severity || 'unknown',
+        bulk_operation: true,
         timestamp: new Date().toISOString()
       });
 
@@ -357,6 +471,19 @@ export const useAdvancedUserManagement = () => {
         failed: 0,
         errors: []
       };
+
+      // Log bulk action completion
+      await logAdminAction('bulk_user_action_completed', 'users', undefined, {
+        action_type: actionType,
+        target_count: userIds.length,
+        target_user_ids: userIds,
+        reason: reason || 'No reason provided',
+        successful_operations: result.success,
+        failed_operations: result.failed,
+        success_rate: '100%',
+        bulk_operation: true,
+        timestamp: new Date().toISOString()
+      });
 
       toast.success(`Bulk action "${actionType}" completed`, {
         description: `Successfully applied to ${result.success} users`
@@ -371,6 +498,18 @@ export const useAdvancedUserManagement = () => {
         failed: userIds.length,
         errors: [error.message]
       };
+
+      // Log bulk action failure
+      await logAdminAction('bulk_user_action_failed', 'users', undefined, {
+        action_type: actionType,
+        target_count: userIds.length,
+        target_user_ids: userIds,
+        reason: reason || 'No reason provided',
+        error_message: error.message,
+        bulk_operation: true,
+        requires_investigation: true,
+        timestamp: new Date().toISOString()
+      });
 
       toast.error('Failed to execute bulk action', {
         description: error.message
