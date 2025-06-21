@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { Owner } from '@/components/dashboard/types';
 import { createEmptyOwner } from '@/components/form/owner/utils';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { useOwnerDrawerSubmit } from './useOwnerDrawerSubmit';
 import { useOwnerFieldHandlers } from './useOwnerFieldHandlers';
 import { useOwnerDrawerCleanup } from './useOwnerDrawerCleanup';
@@ -14,13 +13,11 @@ interface UseOwnerDrawerProps {
 }
 
 export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResidencyDialog, setShowResidencyDialog] = useState(false);
   const [currentOwner, setCurrentOwner] = useState<Owner>(owner || createEmptyOwner());
-  const { user } = useAuth();
   
-  // Import handler modules
-  const { handleSubmit: submitOwner } = useOwnerDrawerSubmit();
+  // Import handler modules - hooks called at top level
+  const { handleSubmit: submitOwner, isSubmitting } = useOwnerDrawerSubmit();
   const { handleClose: cleanupDrawer } = useOwnerDrawerCleanup();
   const { 
     handleOwnerChange,
@@ -48,20 +45,15 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
       return; // Don't proceed if residency dialog needs to be shown
     }
     
-    setIsSubmitting(true);
-    
     try {
       await submitOwner({
         owner,
         currentOwner,
-        userId: user?.id,
         onSuccess,
         onClose: handleClose
       });
     } catch (error) {
       console.error('Error submitting owner:', error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

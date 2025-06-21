@@ -14,8 +14,8 @@ export const usePropertyDrawer = ({
   onClose, 
   onSuccess 
 }: UsePropertyDrawerProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { handleSubmit: submitProperty } = usePropertyDrawerSubmit();
+  // Hooks called at top level
+  const { handleSubmit: submitProperty, isSubmitting } = usePropertyDrawerSubmit();
   
   // Ensure clean up on unmount or when drawer closes
   useEffect(() => {
@@ -26,18 +26,16 @@ export const usePropertyDrawer = ({
   }, []);
 
   const handleSubmit = async (newProperty: Property, occupancyMonths: Record<string, number>) => {
-    setIsSubmitting(true);
-    
     try {
-      await submitProperty(
-        { property, onSuccess, onClose: handleClose },
+      await submitProperty({
+        property,
         newProperty,
-        occupancyMonths
-      );
+        occupancyMonths,
+        onSuccess,
+        onClose: handleClose
+      });
     } catch (error) {
       console.error('Error submitting property:', error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
   

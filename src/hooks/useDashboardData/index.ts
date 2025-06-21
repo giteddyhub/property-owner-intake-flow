@@ -73,27 +73,39 @@ export const useDashboardData = () => {
   }, [user, fetchData]);
 
   const handleCreateOwner = async (ownerData: Omit<Owner, 'id'>) => {
+    console.log('[useDashboardData] handleCreateOwner called:', { userId: user?.id, ownerData });
+    
     if (!user) {
+      console.error('[useDashboardData] No user found when creating owner');
       toast.error('You must be logged in to add owners');
       return null;
     }
 
     const newOwner = await createOwner(ownerData, user.id);
     if (newOwner) {
+      console.log('[useDashboardData] Owner created successfully, updating state');
       setOwners(prev => [...prev, newOwner]);
+    } else {
+      console.error('[useDashboardData] Failed to create owner');
     }
     return newOwner;
   };
 
   const handleCreateProperty = async (propertyData: Omit<Property, 'id'>) => {
+    console.log('[useDashboardData] handleCreateProperty called:', { userId: user?.id, propertyData });
+    
     if (!user) {
+      console.error('[useDashboardData] No user found when creating property');
       toast.error('You must be logged in to add properties');
       return null;
     }
 
     const newProperty = await createProperty(propertyData, user.id);
     if (newProperty) {
+      console.log('[useDashboardData] Property created successfully, updating state');
       setProperties(prev => [...prev, newProperty]);
+    } else {
+      console.error('[useDashboardData] Failed to create property');
     }
     return newProperty;
   };
