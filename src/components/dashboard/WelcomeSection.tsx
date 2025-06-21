@@ -96,7 +96,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
             </div>
           </div>
           <div>
-            <span className="text-xl">Welcome, {userName}!</span>
+            <span className="text-xl">Welcome!</span>
             <div className="text-sm font-normal text-gray-600 mt-1">
               Complete your setup ({completedSteps}/{totalSteps} steps completed)
             </div>
