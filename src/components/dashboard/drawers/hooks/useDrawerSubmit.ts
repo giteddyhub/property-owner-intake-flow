@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { showSuccessToast, showErrorToast, showLoadingToast } from '../../SuccessToast';
+import { toast } from 'sonner';
 
 interface UseDrawerSubmitProps {
   onSuccess: () => void;
@@ -9,41 +9,58 @@ interface UseDrawerSubmitProps {
   loadingMessage: string;
 }
 
-export const useDrawerSubmit = ({ 
-  onSuccess, 
-  onClose, 
-  successMessage, 
-  loadingMessage 
+export const useDrawerSubmit = ({
+  onSuccess,
+  onClose,
+  successMessage,
+  loadingMessage
 }: UseDrawerSubmitProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (submitFn: () => Promise<void>) => {
-    if (isSubmitting) return;
-    
+  const handleSubmit = async (submitFunction: () => Promise<any>) => {
+    if (isSubmitting) {
+      console.log('[useDrawerSubmit] Already submitting, ignoring duplicate submission');
+      return;
+    }
+
     setIsSubmitting(true);
-    const toastId = showLoadingToast(loadingMessage);
-    
+    console.log('[useDrawerSubmit] Starting submission:', { loadingMessage });
+
     try {
-      await submitFn();
-      showSuccessToast({ title: successMessage });
-      onSuccess();
-      onClose();
-    } catch (error) {
-      console.error('Submit error:', error);
-      showErrorToast(error instanceof Error ? error.message : 'Something went wrong');
+      // Show loading toast
+      const loadingToast = toast.loading(loadingMessage);
+
+      const result = await submitFunction();
+      
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      if (result) {
+        console.log('[useDrawerSubmit] Submission successful');
+        toast.success(successMessage);
+        onSuccess();
+        onClose();
+      } else {
+        console.error('[useDrawerSubmit] Submission failed - no result returned');
+        toast.error('Operation failed. Please check the form and try again.');
+      }
+    } catch (error: any) {
+      console.error('[useDrawerSubmit] Submission error:', error);
+      
+      // Show user-friendly error message
+      const errorMessage = error?.message || 'An unexpected error occurred';
+      toast.error('Operation failed', {
+        description: errorMessage,
+        duration: 6000,
+      });
     } finally {
       setIsSubmitting(false);
-      // Dismiss loading toast
-      if (toastId) {
-        setTimeout(() => {
-          // Toast will auto-dismiss when success/error shows
-        }, 100);
-      }
+      console.log('[useDrawerSubmit] Submission completed');
     }
   };
 
   return {
-    isSubmitting,
-    handleSubmit
+    handleSubmit,
+    isSubmitting
   };
 };
