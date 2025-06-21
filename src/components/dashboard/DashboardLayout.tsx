@@ -60,6 +60,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     return 'there';
   };
 
+  // Check if initial setup is complete (same logic as WelcomeSection)
+  const hasOwners = owners.length > 0;
+  const hasProperties = properties.length > 0;
+  const hasAssignments = assignments.length > 0;
+  const isSetupComplete = hasOwners && hasProperties && hasAssignments;
+
   const handleDrawerSuccess = () => {
     onRefresh();
     closeDrawer();
@@ -77,20 +83,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
         <WelcomeSection
           userName={getUserName()}
-          hasOwners={owners.length > 0}
-          hasProperties={properties.length > 0}
-          hasAssignments={assignments.length > 0}
+          hasOwners={hasOwners}
+          hasProperties={hasProperties}
+          hasAssignments={hasAssignments}
           onAddOwner={() => openOwnerDrawer()}
           onAddProperty={() => openPropertyDrawer()}
           onAddAssignment={() => openAssignmentDrawer()}
         />
 
-        <StatsSummaryCards 
-          ownersCount={owners.length} 
-          propertiesCount={properties.length} 
-          totalRevenue={totalRevenue}
-          userId={userId}
-        />
+        {/* Only show stats cards after initial setup is complete */}
+        {isSetupComplete && (
+          <StatsSummaryCards 
+            ownersCount={owners.length} 
+            propertiesCount={properties.length} 
+            totalRevenue={totalRevenue}
+            userId={userId}
+          />
+        )}
 
         <div className="bg-white rounded-xl mb-8">
           <div className="flex items-center justify-between mb-4">
