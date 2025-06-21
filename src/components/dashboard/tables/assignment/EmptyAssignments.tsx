@@ -14,11 +14,11 @@ export const EmptyAssignments: React.FC<EmptyAssignmentsProps> = ({ onAddAssignm
       <TableCell colSpan={6} className="h-24 text-center">
         <div className="flex flex-col items-center justify-center text-muted-foreground">
           <FileX className="h-10 w-10 mb-2 opacity-40" />
-          <span className="text-sm mb-2">No assignments found.</span>
-          <span className="text-xs mb-4">Create your first assignment to get started.</span>
+          <span className="text-sm mb-2">No ownership links found.</span>
+          <span className="text-xs mb-4">Create your first ownership link to get started.</span>
           <Button onClick={onAddAssignment} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            Add Assignment
+            Add Ownership Link
           </Button>
         </div>
       </TableCell>

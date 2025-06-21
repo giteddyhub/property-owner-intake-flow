@@ -58,7 +58,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   
   const handleSubmit = async (values: AssignmentFormValues) => {
     setIsSubmitting(true);
-    console.log('Assignment form submission started with values:', values);
+    console.log('Ownership link form submission started with values:', values);
     console.log('User ID:', userId);
     
     try {
@@ -87,11 +87,11 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         updated_at: new Date().toISOString()
       };
       
-      console.log('Assignment data prepared for save:', assignmentData);
+      console.log('Ownership link data prepared for save:', assignmentData);
       
       if (assignment?.id) {
-        // Update existing assignment
-        console.log('Updating existing assignment with ID:', assignment.id);
+        // Update existing ownership link
+        console.log('Updating existing ownership link with ID:', assignment.id);
         const { data, error } = await supabase
           .from('owner_property_assignments')
           .update(assignmentData)
@@ -104,11 +104,11 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           throw error;
         }
         
-        console.log('Assignment updated successfully:', data);
-        toast.success('Assignment updated successfully');
+        console.log('Ownership link updated successfully:', data);
+        toast.success('Ownership link updated successfully');
       } else {
         // Check if this combination already exists
-        console.log('Checking for existing assignment combination');
+        console.log('Checking for existing ownership link combination');
         const { data: existingAssignment, error: checkError } = await supabase
           .from('owner_property_assignments')
           .select('id')
@@ -118,18 +118,18 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           .maybeSingle();
           
         if (checkError) {
-          console.error('Error checking existing assignment:', checkError);
+          console.error('Error checking existing ownership link:', checkError);
           throw checkError;
         }
           
         if (existingAssignment) {
-          toast.error('This owner is already assigned to this property');
+          toast.error('This owner is already linked to this property');
           setIsSubmitting(false);
           return;
         }
         
-        // Create new assignment
-        console.log('Creating new assignment');
+        // Create new ownership link
+        console.log('Creating new ownership link');
         const { data, error } = await supabase
           .from('owner_property_assignments')
           .insert({
@@ -144,17 +144,17 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           throw error;
         }
         
-        console.log('Assignment created successfully:', data);
-        toast.success('Assignment added successfully');
+        console.log('Ownership link created successfully:', data);
+        toast.success('Ownership link added successfully');
       }
 
       // Close drawer and trigger refresh
       onClose();
       onSuccess();
     } catch (error: any) {
-      console.error('Error saving assignment:', error);
+      console.error('Error saving ownership link:', error);
       const errorMessage = error?.message || 'Unknown error occurred';
-      toast.error(`Failed to save assignment: ${errorMessage}`);
+      toast.error(`Failed to save ownership link: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -188,7 +188,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
             type="submit" 
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Saving...' : assignment ? 'Update Assignment' : 'Add Assignment'}
+            {isSubmitting ? 'Saving...' : assignment ? 'Update Ownership Link' : 'Add Ownership Link'}
           </Button>
         </div>
       </form>

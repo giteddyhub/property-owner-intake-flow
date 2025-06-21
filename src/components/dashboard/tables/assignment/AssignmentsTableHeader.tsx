@@ -14,12 +14,12 @@ export const AssignmentsTableHeader: React.FC<AssignmentsTableHeaderProps> = ({
   return (
     <div className="flex items-center justify-between mb-4">
       <div>
-        <h3 className="text-lg font-medium">Assignments</h3>
+        <h3 className="text-lg font-medium">Ownership Links</h3>
         <p className="text-sm text-gray-500">
-          {assignmentsCount} assignment{assignmentsCount !== 1 ? 's' : ''}
+          {assignmentsCount} ownership link{assignmentsCount !== 1 ? 's' : ''}
         </p>
       </div>
-      <AddButton onClick={onAddAssignment} label="Add Assignment" />
+      <AddButton onClick={onAddAssignment} label="Add Ownership Link" />
     </div>
   );
 };

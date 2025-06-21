@@ -255,9 +255,9 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
     return (
       <Card>
         <CardHeader>
-          <CardTitle>No Assignments Found</CardTitle>
+          <CardTitle>No Ownership Links Found</CardTitle>
           <CardDescription>
-            This submission doesn't contain any owner-property assignments.
+            This submission doesn't contain any ownership links.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -282,7 +282,7 @@ export const AdminSubmissionAssignments: React.FC<AdminSubmissionAssignmentsProp
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Assignments ({assignments.length})</h3>
+        <h3 className="text-lg font-medium">Ownership Links ({assignments.length})</h3>
         <Button variant="outline" size="sm" onClick={fetchAssignments}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh

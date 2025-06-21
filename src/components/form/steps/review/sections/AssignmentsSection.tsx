@@ -19,7 +19,7 @@ const AssignmentsSection: React.FC<AssignmentsSectionProps> = ({
 }) => {
   return (
     <div className="mb-8">
-      <SectionHeader title="Owner-Property Assignments" onEditClick={onEditClick} />
+      <SectionHeader title="Ownership Links" onEditClick={onEditClick} />
       
       <div className="space-y-4">
         {properties.map((property) => {

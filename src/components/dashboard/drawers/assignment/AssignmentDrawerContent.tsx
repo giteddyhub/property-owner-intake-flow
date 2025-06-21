@@ -18,7 +18,7 @@ interface AssignmentDrawerContentProps {
   owners: Owner[];
   onClose: () => void;
   onSuccess: () => void;
-  userId: string; // Added userId prop
+  userId: string;
 }
 
 const AssignmentDrawerContent: React.FC<AssignmentDrawerContentProps> = ({
@@ -27,7 +27,7 @@ const AssignmentDrawerContent: React.FC<AssignmentDrawerContentProps> = ({
   owners,
   onClose,
   onSuccess,
-  userId // Accept userId prop
+  userId
 }) => {
   return (
     <ScrollArea className="h-full">
@@ -35,11 +35,11 @@ const AssignmentDrawerContent: React.FC<AssignmentDrawerContentProps> = ({
         <SheetHeader>
           <div className="flex justify-between items-center">
             <div>
-              <SheetTitle>{assignment ? 'Edit Assignment' : 'Add New Assignment'}</SheetTitle>
+              <SheetTitle>{assignment ? 'Edit Ownership Link' : 'Add New Ownership Link'}</SheetTitle>
               <SheetDescription>
                 {assignment 
-                  ? 'Update the property-owner assignment details'
-                  : 'Assign an owner to a property and set ownership details'
+                  ? 'Update the property-owner ownership link details'
+                  : 'Create an ownership link between an owner and a property'
                 }
               </SheetDescription>
             </div>
@@ -58,7 +58,7 @@ const AssignmentDrawerContent: React.FC<AssignmentDrawerContentProps> = ({
             owners={owners}
             onClose={onClose}
             onSuccess={onSuccess}
-            userId={userId} // Pass userId
+            userId={userId}
           />
         </div>
       </div>

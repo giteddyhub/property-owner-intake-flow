@@ -28,7 +28,7 @@ export const DataFilterTabs: React.FC<DataFilterTabsProps> = ({
         className={`px-4 py-2 text-sm ${activeFilter === 'assignments' ? 'bg-white shadow-sm rounded-md' : ''}`}
         onClick={() => setActiveFilter('assignments')}
       >
-        Assignments
+        Ownership Links
       </button>
     </div>
   );

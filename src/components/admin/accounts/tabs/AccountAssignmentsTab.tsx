@@ -36,18 +36,18 @@ export const AccountAssignmentsTab: React.FC<AccountAssignmentsTabProps> = ({ as
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Property-Owner Assignments
+          Ownership Links
         </CardTitle>
         <CardDescription>
           {assignments.length === 0 
-            ? 'This user has no property-owner assignments.' 
-            : `${assignments.length} assignments found for this user.`}
+            ? 'This user has no ownership links.' 
+            : `${assignments.length} ownership links found for this user.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {assignments.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            No property-owner assignments found for this user.
+            No ownership links found for this user.
           </div>
         ) : (
           <Table>

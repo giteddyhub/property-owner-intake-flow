@@ -10,7 +10,7 @@ interface AssignmentsSectionProps {
 export const AssignmentsSection: React.FC<AssignmentsSectionProps> = ({ assignments }) => {
   return (
     <div>
-      <h3 className="font-semibold text-lg mb-3">Property-Owner Assignments ({assignments.length})</h3>
+      <h3 className="font-semibold text-lg mb-3">Ownership Links ({assignments.length})</h3>
       {assignments.length > 0 ? (
         <div className="space-y-2 max-h-40 overflow-y-auto">
           {assignments.map((assignment) => (
@@ -35,7 +35,7 @@ export const AssignmentsSection: React.FC<AssignmentsSectionProps> = ({ assignme
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No assignments found.</p>
+        <p className="text-sm text-muted-foreground">No ownership links found.</p>
       )}
     </div>
   );
