@@ -18,7 +18,8 @@ export const useOwnerForm = () => {
   const {
     handleInputChange,
     handleOwnerChange,
-    handleSelectChange
+    handleSelectChange,
+    handleStateChange
   } = useOwnerFieldHandlers(setCurrentOwner);
 
   // Special fields handling hooks
@@ -44,6 +45,7 @@ export const useOwnerForm = () => {
     handleInputChange,
     handleOwnerChange,
     handleSelectChange,
+    handleStateChange,
     handleDateChange,
     handleResidencyStatusChange,
     handleResidencyDetailChange,

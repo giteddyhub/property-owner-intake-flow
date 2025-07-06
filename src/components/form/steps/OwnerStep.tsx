@@ -18,6 +18,7 @@ const OwnerStep: React.FC = () => {
     setEditingIndex,
     handleInputChange,
     handleOwnerChange,
+    handleStateChange,
     handleDateChange,
     handleResidencyStatusChange,
     handleResidencyDetailChange,
@@ -75,6 +76,7 @@ const OwnerStep: React.FC = () => {
           onInputChange={handleInputChange}
           onResidencyStatusChange={handleResidencyStatusChange}
           onResidencyDetailChange={handleResidencyDetailChange}
+          onStateChange={handleStateChange}
           showResidencyDialog={showResidencyDialog}
           setShowResidencyDialog={setShowResidencyDialog}
           hideCancel={owners.length === 0 && editingIndex === null}

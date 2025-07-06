@@ -28,6 +28,17 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
     handleResidencyDetailChange
   } = useOwnerFieldHandlers({ setCurrentOwner });
   
+  // Handle state changes for US addresses
+  const handleStateChange = (state: string) => {
+    setCurrentOwner(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        state
+      }
+    }));
+  };
+  
   // Reset currentOwner when owner prop changes
   useEffect(() => {
     setCurrentOwner(owner || createEmptyOwner());
@@ -75,6 +86,7 @@ export const useOwnerDrawer = ({ owner, onClose, onSuccess }: UseOwnerDrawerProp
     handleCountryChange,
     handleResidencyStatusChange,
     handleResidencyDetailChange,
+    handleStateChange,
     handleClose
   };
 };

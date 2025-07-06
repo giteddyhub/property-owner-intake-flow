@@ -48,6 +48,7 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
     handleCountryChange,
     handleResidencyStatusChange,
     handleResidencyDetailChange,
+    handleStateChange,
     handleClose: originalHandleClose
   } = useOwnerDrawer({
     owner,
@@ -105,6 +106,7 @@ const OwnerDrawer: React.FC<OwnerDrawerProps> = ({
           onInputChange={handleInputChange}
           onResidencyStatusChange={handleResidencyStatusChange}
           onResidencyDetailChange={handleResidencyDetailChange}
+          onStateChange={handleStateChange}
           showResidencyDialog={showResidencyDialog}
           setShowResidencyDialog={setShowResidencyDialog}
         />
