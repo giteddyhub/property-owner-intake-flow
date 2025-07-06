@@ -37,18 +37,17 @@ function initSupabase() {
 
 // Fetch purchase and related form submission data from Supabase
 async function fetchPurchaseData(supabase, purchaseId) {
+  console.log("Fetching purchase data for ID:", purchaseId);
+  
+  // First, fetch the purchase with form submission
   const { data: purchaseData, error: purchaseError } = await supabase
     .from("purchases")
     .select(`
       id, 
       has_document_retrieval,
       form_submission_id,
-      form_submissions!inner(
-        user_id,
-        profiles!inner(
-          full_name,
-          email
-        )
+      form_submissions(
+        user_id
       )
     `)
     .eq("id", purchaseId)
@@ -59,18 +58,41 @@ async function fetchPurchaseData(supabase, purchaseId) {
     throw new Error(`Error fetching purchase: ${purchaseError?.message || "Purchase not found"}`);
   }
 
-  // Extract user profile data from the nested structure
-  const userProfile = purchaseData.form_submissions?.profiles;
-  if (!userProfile || !userProfile.email) {
-    console.error("No user profile or email found for purchase:", purchaseId);
-    throw new Error("User profile or email not found for this purchase");
+  console.log("Purchase data:", purchaseData);
+
+  // Get user_id from form submission
+  const userId = purchaseData.form_submissions?.user_id;
+  if (!userId) {
+    console.error("No user_id found in form submission for purchase:", purchaseId);
+    throw new Error("User ID not found for this purchase");
+  }
+
+  console.log("Found user ID:", userId);
+
+  // Fetch user profile separately
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", userId)
+    .single();
+
+  if (profileError || !profileData) {
+    console.error("Error fetching profile:", profileError);
+    throw new Error(`User profile not found: ${profileError?.message || "Profile not found"}`);
+  }
+
+  console.log("Profile data:", profileData);
+
+  if (!profileData.email) {
+    console.error("No email found in profile for user:", userId);
+    throw new Error("User email not found in profile");
   }
 
   return {
     ...purchaseData,
     contactData: {
-      full_name: userProfile.full_name,
-      email: userProfile.email
+      full_name: profileData.full_name,
+      email: profileData.email
     }
   };
 }
