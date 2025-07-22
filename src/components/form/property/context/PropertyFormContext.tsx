@@ -7,6 +7,7 @@ import {
 } from '@/types/form';
 import { PropertyFormContextType } from './PropertyFormTypes';
 import { usePropertyFormHandlers } from './PropertyFormHandlers';
+import { getOccupancyData } from '../utils/occupancyUtils';
 
 const PropertyFormContext = createContext<PropertyFormContextType | undefined>(undefined);
 
@@ -15,17 +16,27 @@ export const PropertyFormProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ property, children }) => {
   const [currentProperty, setCurrentProperty] = useState<Property>(property);
-  const [activeStatuses, setActiveStatuses] = useState<Set<OccupancyStatus>>(new Set(['LONG_TERM_RENT']));
-  const [occupancyMonths, setOccupancyMonths] = useState<Record<OccupancyStatus, number>>({
-    PERSONAL_USE: 0,
-    LONG_TERM_RENT: 12,
-    SHORT_TERM_RENT: 0,
-  });
+  
+  // Initialize occupancy data from the actual property instead of hard-coded defaults
+  const { initialOccupancyMonths, newActiveStatuses } = getOccupancyData(property);
+  
+  const [activeStatuses, setActiveStatuses] = useState<Set<OccupancyStatus>>(newActiveStatuses);
+  const [occupancyMonths, setOccupancyMonths] = useState<Record<OccupancyStatus, number>>(initialOccupancyMonths);
   const [availableMonths, setAvailableMonths] = useState<Record<OccupancyStatus, number[]>>({
     PERSONAL_USE: [],
     LONG_TERM_RENT: [],
     SHORT_TERM_RENT: [],
   });
+
+  // Sync state when property prop changes (for when reopening forms)
+  useEffect(() => {
+    console.log('PropertyFormProvider: Property changed, reinitializing state', property);
+    setCurrentProperty(property);
+    
+    const { initialOccupancyMonths: newOccupancyMonths, newActiveStatuses: newStatuses } = getOccupancyData(property);
+    setOccupancyMonths(newOccupancyMonths);
+    setActiveStatuses(newStatuses);
+  }, [property.id, property.occupancyStatuses]); // React to changes in property ID or occupancy statuses
 
   // Calculate total months allocated
   const totalMonthsAllocated = Object.values(occupancyMonths).reduce((sum, months) => sum + months, 0);
@@ -78,6 +89,8 @@ export const PropertyFormProvider: React.FC<{
         newOccupancyStatuses.push({ status, months });
       }
     });
+    
+    console.log('PropertyFormProvider: Updating currentProperty with occupancy statuses:', newOccupancyStatuses);
     
     if (newOccupancyStatuses.length > 0) {
       setCurrentProperty(prev => ({
