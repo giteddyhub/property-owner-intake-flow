@@ -33,14 +33,20 @@ export const createOwner = async (ownerData: Omit<Owner, 'id'>, userId: string) 
       updated_at: new Date().toISOString()
     });
 
+    // Validate boolean fields before insertion
+    const insertData = {
+      ...dbOwnerData,
+      user_id: userId,
+      is_resident_in_italy: Boolean(dbOwnerData.is_resident_in_italy),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    console.log('[createOwner] Final insert data with validated booleans:', insertData);
+
     const { error } = await supabase
       .from('owners')
-      .insert({
-        ...dbOwnerData,
-        user_id: userId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+      .insert(insertData);
 
     if (error) {
       console.error('[createOwner] Supabase error:', error);
@@ -156,21 +162,34 @@ export const createAssignment = async (
 
     const assignmentId = crypto.randomUUID();
     
+    // Properly handle date conversion with validation
+    const residentFromDate = assignmentData.residentDateRange?.from ? 
+      (assignmentData.residentDateRange.from instanceof Date ? 
+        assignmentData.residentDateRange.from.toISOString().split('T')[0] : 
+        new Date(assignmentData.residentDateRange.from).toISOString().split('T')[0]
+      ) : null;
+      
+    const residentToDate = assignmentData.residentDateRange?.to ? 
+      (assignmentData.residentDateRange.to instanceof Date ? 
+        assignmentData.residentDateRange.to.toISOString().split('T')[0] : 
+        new Date(assignmentData.residentDateRange.to).toISOString().split('T')[0]
+      ) : null;
+    
     const insertData = {
       id: assignmentId,
       property_id: assignmentData.propertyId,
       owner_id: assignmentData.ownerId,
       ownership_percentage: assignmentData.ownershipPercentage,
-      resident_at_property: assignmentData.residentAtProperty,
-      resident_from_date: assignmentData.residentDateRange?.from ? assignmentData.residentDateRange.from.toISOString().split('T')[0] : null,
-      resident_to_date: assignmentData.residentDateRange?.to ? assignmentData.residentDateRange.to.toISOString().split('T')[0] : null,
+      resident_at_property: Boolean(assignmentData.residentAtProperty),
+      resident_from_date: residentFromDate,
+      resident_to_date: residentToDate,
       tax_credits: assignmentData.taxCredits || null,
       user_id: userId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
     
-    console.log('[createAssignment] Attempting to insert:', insertData);
+    console.log('[createAssignment] Attempting to insert with validated data:', insertData);
 
     const { data, error } = await supabase
       .from('owner_property_assignments')
@@ -226,14 +245,18 @@ export const updateOwner = async (id: string, updates: Partial<Owner>, userId: s
     const updatedOwner = { ...currentOwner, ...updates };
     const dbUpdates = transformOwnerToDb(updatedOwner);
 
-    console.log('[updateOwner] Attempting to update:', { id, dbUpdates });
+    // Validate boolean fields
+    const finalUpdates = {
+      ...dbUpdates,
+      is_resident_in_italy: Boolean(dbUpdates.is_resident_in_italy),
+      updated_at: new Date().toISOString()
+    };
+
+    console.log('[updateOwner] Attempting to update with validated data:', { id, finalUpdates });
 
     const { error } = await supabase
       .from('owners')
-      .update({
-        ...dbUpdates,
-        updated_at: new Date().toISOString()
-      })
+      .update(finalUpdates)
       .eq('id', id);
 
     if (error) {
@@ -317,12 +340,28 @@ export const updateAssignment = async (
     if (updates.propertyId) dbUpdates.property_id = updates.propertyId;
     if (updates.ownerId) dbUpdates.owner_id = updates.ownerId;
     if (updates.ownershipPercentage !== undefined) dbUpdates.ownership_percentage = updates.ownershipPercentage;
-    if (updates.residentAtProperty !== undefined) dbUpdates.resident_at_property = updates.residentAtProperty;
-    if (updates.residentDateRange?.from !== undefined) dbUpdates.resident_from_date = updates.residentDateRange?.from?.toISOString().split('T')[0] || null;
-    if (updates.residentDateRange?.to !== undefined) dbUpdates.resident_to_date = updates.residentDateRange?.to?.toISOString().split('T')[0] || null;
+    if (updates.residentAtProperty !== undefined) dbUpdates.resident_at_property = Boolean(updates.residentAtProperty);
+    
+    // Enhanced date handling with validation
+    if (updates.residentDateRange?.from !== undefined) {
+      dbUpdates.resident_from_date = updates.residentDateRange?.from ? 
+        (updates.residentDateRange.from instanceof Date ? 
+          updates.residentDateRange.from.toISOString().split('T')[0] : 
+          new Date(updates.residentDateRange.from).toISOString().split('T')[0]
+        ) : null;
+    }
+    
+    if (updates.residentDateRange?.to !== undefined) {
+      dbUpdates.resident_to_date = updates.residentDateRange?.to ? 
+        (updates.residentDateRange.to instanceof Date ? 
+          updates.residentDateRange.to.toISOString().split('T')[0] : 
+          new Date(updates.residentDateRange.to).toISOString().split('T')[0]
+        ) : null;
+    }
+    
     if (updates.taxCredits !== undefined) dbUpdates.tax_credits = updates.taxCredits;
 
-    console.log('[updateAssignment] Attempting to update:', { id, dbUpdates });
+    console.log('[updateAssignment] Attempting to update with validated data:', { id, dbUpdates });
 
     const { error } = await supabase
       .from('owner_property_assignments')

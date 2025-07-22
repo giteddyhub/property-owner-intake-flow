@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -43,23 +43,58 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
 }) => {
   const form = useForm<AssignmentFormValues>({
     defaultValues: {
-      propertyId: assignment?.propertyId || '',
-      ownerId: assignment?.ownerId || '',
-      ownershipPercentage: assignment?.ownershipPercentage || 100,
-      residentAtProperty: assignment?.residentAtProperty || false,
-      residentFromDate: assignment?.residentDateRange?.from || null,
-      residentToDate: assignment?.residentDateRange?.to || null,
-      taxCredits: assignment?.taxCredits || 0
+      propertyId: '',
+      ownerId: '',
+      ownershipPercentage: 100,
+      residentAtProperty: false,
+      residentFromDate: null,
+      residentToDate: null,
+      taxCredits: 0
     }
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const residentAtProperty = form.watch('residentAtProperty');
+
+  // Reset form values when assignment prop changes
+  useEffect(() => {
+    console.log('[AssignmentForm] Assignment prop changed, resetting form:', assignment);
+    
+    if (assignment) {
+      const formValues = {
+        propertyId: assignment.propertyId || '',
+        ownerId: assignment.ownerId || '',
+        ownershipPercentage: assignment.ownershipPercentage || 100,
+        residentAtProperty: assignment.residentAtProperty || false,
+        residentFromDate: assignment.residentDateRange?.from || null,
+        residentToDate: assignment.residentDateRange?.to || null,
+        taxCredits: assignment.taxCredits || 0
+      };
+      
+      console.log('[AssignmentForm] Setting form values:', formValues);
+      form.reset(formValues);
+    } else {
+      // Reset to default values for new assignment
+      const defaultValues = {
+        propertyId: '',
+        ownerId: '',
+        ownershipPercentage: 100,
+        residentAtProperty: false,
+        residentFromDate: null,
+        residentToDate: null,
+        taxCredits: 0
+      };
+      
+      console.log('[AssignmentForm] Resetting to default values:', defaultValues);
+      form.reset(defaultValues);
+    }
+  }, [assignment, form]);
   
   const handleSubmit = async (values: AssignmentFormValues) => {
     setIsSubmitting(true);
-    console.log('Ownership link form submission started with values:', values);
-    console.log('User ID:', userId);
+    console.log('[AssignmentForm] Form submission started with values:', values);
+    console.log('[AssignmentForm] User ID:', userId);
+    console.log('[AssignmentForm] Assignment being edited:', assignment);
     
     try {
       // Validate required fields
@@ -87,11 +122,11 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         updated_at: new Date().toISOString()
       };
       
-      console.log('Ownership link data prepared for save:', assignmentData);
+      console.log('[AssignmentForm] Assignment data prepared for save:', assignmentData);
       
       if (assignment?.id) {
         // Update existing ownership link
-        console.log('Updating existing ownership link with ID:', assignment.id);
+        console.log('[AssignmentForm] Updating existing assignment with ID:', assignment.id);
         const { data, error } = await supabase
           .from('owner_property_assignments')
           .update(assignmentData)
@@ -100,15 +135,15 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           .single();
           
         if (error) {
-          console.error('Update error:', error);
+          console.error('[AssignmentForm] Update error:', error);
           throw error;
         }
         
-        console.log('Ownership link updated successfully:', data);
+        console.log('[AssignmentForm] Assignment updated successfully:', data);
         toast.success('Ownership link updated successfully');
       } else {
         // Check if this combination already exists
-        console.log('Checking for existing ownership link combination');
+        console.log('[AssignmentForm] Checking for existing assignment combination');
         const { data: existingAssignment, error: checkError } = await supabase
           .from('owner_property_assignments')
           .select('id')
@@ -118,7 +153,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           .maybeSingle();
           
         if (checkError) {
-          console.error('Error checking existing ownership link:', checkError);
+          console.error('[AssignmentForm] Error checking existing assignment:', checkError);
           throw checkError;
         }
           
@@ -129,7 +164,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         }
         
         // Create new ownership link
-        console.log('Creating new ownership link');
+        console.log('[AssignmentForm] Creating new assignment');
         const { data, error } = await supabase
           .from('owner_property_assignments')
           .insert({
@@ -140,11 +175,11 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           .single();
           
         if (error) {
-          console.error('Insert error:', error);
+          console.error('[AssignmentForm] Insert error:', error);
           throw error;
         }
         
-        console.log('Ownership link created successfully:', data);
+        console.log('[AssignmentForm] Assignment created successfully:', data);
         toast.success('Ownership link added successfully');
       }
 
@@ -152,7 +187,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
       onClose();
       onSuccess();
     } catch (error: any) {
-      console.error('Error saving ownership link:', error);
+      console.error('[AssignmentForm] Error saving assignment:', error);
       const errorMessage = error?.message || 'Unknown error occurred';
       toast.error(`Failed to save ownership link: ${errorMessage}`);
     } finally {
