@@ -76,3 +76,40 @@ export const isOccupancyDataValid = (allocations: OccupancyAllocation[]): boolea
   const total = calculateTotalMonths(allocations);
   return total === 12;
 };
+
+// Format individual occupancy status
+export const formatOccupancyStatus = (status: OccupancyStatus): string => {
+  switch (status) {
+    case 'PERSONAL_USE':
+      return 'Personal Use';
+    case 'LONG_TERM_RENT':
+      return 'Long-term Rent';
+    case 'SHORT_TERM_RENT':
+      return 'Short-term Rent';
+    default:
+      // This should never happen with proper OccupancyStatus typing, but adding fallback
+      return String(status).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+};
+
+// Format occupancy statuses for display
+export const formatOccupancyStatuses = (allocations: OccupancyAllocation[]): string => {
+  if (!Array.isArray(allocations) || allocations.length === 0) {
+    return 'Not specified';
+  }
+
+  const validAllocations = validateOccupancyAllocations(allocations);
+  
+  if (validAllocations.length === 0) {
+    return 'Not specified';
+  }
+
+  const statusTexts = validAllocations
+    .filter(allocation => allocation.months > 0)
+    .map(allocation => {
+      const statusText = formatOccupancyStatus(allocation.status);
+      return `${statusText} (${allocation.months} month${allocation.months > 1 ? 's' : ''})`;
+    });
+
+  return statusTexts.length > 0 ? statusTexts.join(', ') : 'Not specified';
+};

@@ -102,7 +102,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         throw new Error('Property and Owner are required');
       }
       
-      const assignmentData: OwnerPropertyAssignment = {
+      const assignmentData = {
         propertyId: values.propertyId,
         ownerId: values.ownerId,
         ownershipPercentage: values.ownershipPercentage,
