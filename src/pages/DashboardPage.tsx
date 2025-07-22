@@ -38,27 +38,22 @@ const DashboardPage = () => {
     }
   }, [error, loading]);
 
-  // Check for success message from form submission
+  // Clean up any legacy session storage flags without showing duplicate toasts
   useEffect(() => {
     const showSuccess = sessionStorage.getItem('showSuccessMessage') === 'true';
     const redirectToDashboard = sessionStorage.getItem('redirectToDashboard') === 'true';
     
     if (showSuccess || redirectToDashboard) {
-      // Clear the flags
+      // Clear the flags to prevent future issues
       sessionStorage.removeItem('showSuccessMessage');
       sessionStorage.removeItem('redirectToDashboard');
       
-      // Show success message
-      toast.success("Your property information has been successfully saved!", {
-        description: "All your data is now available in your dashboard."
-      });
+      console.log("Dashboard: Clearing legacy session storage flags");
       
       // Refresh data to ensure latest information is displayed
       setTimeout(() => {
         refreshData();
       }, 500);
-      
-      console.log("Dashboard: Showing success message and refreshing data");
     }
   }, [refreshData]);
 

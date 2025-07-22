@@ -58,7 +58,7 @@ export const createOwner = async (ownerData: Omit<Owner, 'id'>, userId: string) 
     const ownerName = `${ownerData.firstName} ${ownerData.lastName}`;
     await ActivityLogger.logOwnerCreated(userId, newOwner.id, ownerName);
 
-    toast.success('Owner added successfully');
+    console.log('[createOwner] Owner created successfully:', ownerName);
     logOperation('CREATE_SUCCESS', 'owner', newOwner.id, { ownerName });
     return newOwner;
   } catch (error: any) {
@@ -123,7 +123,7 @@ export const createProperty = async (propertyData: Omit<Property, 'id'>, userId:
       propertyData.propertyType
     );
 
-    toast.success('Property added successfully');
+    console.log('[createProperty] Property created successfully:', propertyData.label);
     logOperation('CREATE_SUCCESS', 'property', newProperty.id, { label: propertyData.label });
     return newProperty;
   } catch (error: any) {
@@ -270,7 +270,7 @@ export const updateOwner = async (id: string, updates: Partial<Owner>, userId: s
     const updatedFields = Object.keys(updates);
     await ActivityLogger.logOwnerUpdated(userId, id, ownerName, updatedFields);
 
-    toast.success('Owner updated successfully');
+    console.log('[updateOwner] Owner updated successfully:', ownerName);
     logOperation('UPDATE_SUCCESS', 'owner', id, { ownerName });
     return { id, ...updates } as Owner;
   } catch (error: any) {
@@ -311,7 +311,7 @@ export const updateProperty = async (id: string, updates: Partial<Property>, use
     const updatedFields = Object.keys(updates);
     await ActivityLogger.logPropertyUpdated(userId, id, updatedProperty.label, updatedFields);
 
-    toast.success('Property updated successfully');
+    console.log('[updateProperty] Property updated successfully:', updatedProperty.label);
     logOperation('UPDATE_SUCCESS', 'property', id, { label: updatedProperty.label });
     return { id, ...updates } as Property;
   } catch (error: any) {
