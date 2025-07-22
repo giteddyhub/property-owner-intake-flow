@@ -45,8 +45,16 @@ const parseOccupancyStatuses = (dbOccupancyStatuses: any): any[] => {
       
       return flattened.map((allocation: any) => {
         if (typeof allocation === 'string') {
-          // Legacy format: just status strings
-          return { status: allocation, months: 12 };
+          try {
+            // Try to parse as JSON first (new format)
+            const parsed = JSON.parse(allocation);
+            if (parsed && typeof parsed === 'object' && 'status' in parsed) {
+              return parsed;
+            }
+          } catch {
+            // If parsing fails, treat as legacy format: just status strings
+            return { status: allocation, months: 12 };
+          }
         } else if (typeof allocation === 'object' && allocation !== null) {
           // Modern format: objects with status and months
           return allocation;
@@ -156,13 +164,14 @@ export const transformOwnerToDb = (owner: Owner) => ({
 export const transformPropertyToDb = (property: Property) => {
   console.log('transformPropertyToDb: Input property:', property);
   
-  // Ensure occupancy statuses are properly formatted as objects with status and months
-  const occupancyStatuses = property.occupancyStatuses?.map(allocation => {
+  // Convert occupancy statuses to JSON strings for database storage (string[] schema)
+  const occupancyStatuses = property.occupancyStatuses?.map((allocation: any) => {
     if (typeof allocation === 'object' && 'status' in allocation && 'months' in allocation) {
-      return allocation;
+      return JSON.stringify(allocation);
     }
     // Fallback for legacy data
-    return { status: allocation.status || 'PERSONAL_USE', months: allocation.months || 0 };
+    const formatted = { status: allocation?.status || 'PERSONAL_USE', months: allocation?.months || 0 };
+    return JSON.stringify(formatted);
   }) || [];
   
   console.log('transformPropertyToDb: Formatted occupancy statuses:', occupancyStatuses);
