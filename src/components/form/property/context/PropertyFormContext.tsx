@@ -7,7 +7,7 @@ import {
 } from '@/types/form';
 import { PropertyFormContextType } from './PropertyFormTypes';
 import { usePropertyFormHandlers } from './PropertyFormHandlers';
-import { getOccupancyData } from '../utils/occupancyUtils';
+import { getOccupancyData, validateOccupancyAllocations } from '../utils/occupancyUtils';
 
 const PropertyFormContext = createContext<PropertyFormContextType | undefined>(undefined);
 
@@ -17,8 +17,8 @@ export const PropertyFormProvider: React.FC<{
 }> = ({ property, children }) => {
   const [currentProperty, setCurrentProperty] = useState<Property>(property);
   
-  // Initialize occupancy data from the actual property instead of hard-coded defaults
-  const { initialOccupancyMonths, newActiveStatuses } = getOccupancyData(property);
+  // Initialize occupancy data using the enhanced validation utility
+  const { initialOccupancyMonths, newActiveStatuses, validatedAllocations } = getOccupancyData(property);
   
   const [activeStatuses, setActiveStatuses] = useState<Set<OccupancyStatus>>(newActiveStatuses);
   const [occupancyMonths, setOccupancyMonths] = useState<Record<OccupancyStatus, number>>(initialOccupancyMonths);
@@ -30,7 +30,7 @@ export const PropertyFormProvider: React.FC<{
 
   // Sync state when property prop changes (for when reopening forms)
   useEffect(() => {
-    console.log('PropertyFormProvider: Property changed, reinitializing state', property);
+    console.log('[PropertyFormProvider] Property changed, reinitializing state', property);
     setCurrentProperty(property);
     
     const { initialOccupancyMonths: newOccupancyMonths, newActiveStatuses: newStatuses } = getOccupancyData(property);
@@ -80,7 +80,7 @@ export const PropertyFormProvider: React.FC<{
     setAvailableMonths(newAvailableMonths);
   }, [occupancyMonths]);
 
-  // Update property occupancy statuses when months change
+  // Update property occupancy statuses when months change with validation
   useEffect(() => {
     const newOccupancyStatuses: OccupancyAllocation[] = [];
     
@@ -90,14 +90,15 @@ export const PropertyFormProvider: React.FC<{
       }
     });
     
-    console.log('PropertyFormProvider: Updating currentProperty with occupancy statuses:', newOccupancyStatuses);
+    // Validate the new occupancy statuses before setting them
+    const validatedStatuses = validateOccupancyAllocations(newOccupancyStatuses);
     
-    if (newOccupancyStatuses.length > 0) {
-      setCurrentProperty(prev => ({
-        ...prev,
-        occupancyStatuses: newOccupancyStatuses
-      }));
-    }
+    console.log('[PropertyFormProvider] Updating currentProperty with validated occupancy statuses:', validatedStatuses);
+    
+    setCurrentProperty(prev => ({
+      ...prev,
+      occupancyStatuses: validatedStatuses
+    }));
   }, [occupancyMonths]);
 
   // Determine if rental income section should be shown

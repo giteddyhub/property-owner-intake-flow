@@ -1,50 +1,42 @@
 
-import { OccupancyStatus, OccupancyAllocation, Property } from '@/types/form';
+import { Property, OccupancyStatus, OccupancyAllocation } from '@/types/form';
 
-// Function to format occupancy statuses for display
-export const formatOccupancyStatuses = (allocations: OccupancyAllocation[]): string => {
-  if (!allocations || allocations.length === 0) {
-    return 'Not specified';
+// Validate and normalize occupancy allocations
+export const validateOccupancyAllocations = (allocations: OccupancyAllocation[]): OccupancyAllocation[] => {
+  console.log('[validateOccupancyAllocations] Input allocations:', allocations);
+  
+  if (!Array.isArray(allocations)) {
+    console.warn('[validateOccupancyAllocations] Invalid input, returning default PERSONAL_USE');
+    return [{ status: 'PERSONAL_USE', months: 12 }];
   }
-  
-  // Filter out any invalid allocations that might be causing undefined issues
-  const validAllocations = allocations.filter(
-    allocation => allocation && typeof allocation === 'object' && 'status' in allocation && 'months' in allocation
-  );
-  
-  if (validAllocations.length === 0) {
-    return 'Not specified';
+
+  const validated = allocations.map((allocation, index) => {
+    const normalized: OccupancyAllocation = {
+      status: allocation?.status || 'PERSONAL_USE',
+      months: typeof allocation?.months === 'number' ? Math.max(0, Math.min(12, allocation.months)) : 0
+    };
+    
+    console.log(`[validateOccupancyAllocations] Allocation ${index}: ${JSON.stringify(allocation)} -> ${JSON.stringify(normalized)}`);
+    return normalized;
+  }).filter(allocation => allocation.months > 0); // Remove zero-month allocations
+
+  // If no valid allocations, default to PERSONAL_USE for 12 months
+  if (validated.length === 0) {
+    console.log('[validateOccupancyAllocations] No valid allocations found, using default');
+    return [{ status: 'PERSONAL_USE', months: 12 }];
   }
-  
-  if (validAllocations.length === 1) {
-    const allocation = validAllocations[0];
-    return `${formatOccupancyStatus(allocation.status)} (${allocation.months} months)`;
-  }
-  
-  return validAllocations
-    .map(allocation => `${formatOccupancyStatus(allocation.status)} (${allocation.months} months)`)
-    .join(', ');
+
+  console.log('[validateOccupancyAllocations] Final validated allocations:', validated);
+  return validated;
 };
 
-// Function to format an individual occupancy status for display
-export const formatOccupancyStatus = (status: OccupancyStatus | undefined | null): string => {
-  if (!status) return 'Unknown';
-  
-  switch (status) {
-    case 'PERSONAL_USE':
-      return 'Personal Use';
-    case 'LONG_TERM_RENT':
-      return 'Long-term Rental';
-    case 'SHORT_TERM_RENT':
-      return 'Short-term Rental';
-    default:
-      // Fix: Convert to string safely since TypeScript infers 'never' type for default case
-      return String(status);
-  }
-};
-
-// Renamed from getInitialOccupancyMonths to getOccupancyData to avoid conflicts
+// Get occupancy data with proper validation
 export const getOccupancyData = (property: Property) => {
+  console.log('[getOccupancyData] Processing property:', property);
+  
+  // Validate and normalize occupancy statuses
+  const validatedAllocations = validateOccupancyAllocations(property.occupancyStatuses || []);
+  
   const initialOccupancyMonths: Record<OccupancyStatus, number> = {
     PERSONAL_USE: 0,
     LONG_TERM_RENT: 0,
@@ -52,15 +44,35 @@ export const getOccupancyData = (property: Property) => {
   };
 
   const newActiveStatuses = new Set<OccupancyStatus>();
-  
-  if (Array.isArray(property.occupancyStatuses)) {
-    property.occupancyStatuses.forEach(allocation => {
-      if (typeof allocation === 'object' && 'status' in allocation && 'months' in allocation) {
-        initialOccupancyMonths[allocation.status] = allocation.months;
-        newActiveStatuses.add(allocation.status);
-      }
-    });
-  }
-  
-  return { initialOccupancyMonths, newActiveStatuses };
+
+  // Process validated allocations
+  validatedAllocations.forEach((allocation) => {
+    if (allocation.months > 0) {
+      initialOccupancyMonths[allocation.status] = allocation.months;
+      newActiveStatuses.add(allocation.status);
+    }
+  });
+
+  console.log('[getOccupancyData] Result:', {
+    initialOccupancyMonths,
+    activeStatuses: Array.from(newActiveStatuses),
+    validatedAllocations
+  });
+
+  return {
+    initialOccupancyMonths,
+    newActiveStatuses,
+    validatedAllocations
+  };
+};
+
+// Calculate total months from occupancy allocations
+export const calculateTotalMonths = (allocations: OccupancyAllocation[]): number => {
+  return allocations.reduce((total, allocation) => total + (allocation.months || 0), 0);
+};
+
+// Check if occupancy data is valid (total months = 12)
+export const isOccupancyDataValid = (allocations: OccupancyAllocation[]): boolean => {
+  const total = calculateTotalMonths(allocations);
+  return total === 12;
 };

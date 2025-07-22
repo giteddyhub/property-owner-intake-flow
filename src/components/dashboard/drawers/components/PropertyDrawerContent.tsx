@@ -23,7 +23,8 @@ const PropertyDrawerContent: React.FC<PropertyDrawerContentProps> = ({
   onSubmit,
   onClose
 }) => {
-  const defaultProperty: Property = {
+  // Create a proper default property only when needed, without hardcoded occupancy statuses
+  const createDefaultProperty = (): Property => ({
     id: '',
     label: '',
     address: {
@@ -35,14 +36,18 @@ const PropertyDrawerContent: React.FC<PropertyDrawerContentProps> = ({
     activity2024: 'owned_all_year',
     propertyType: 'RESIDENTIAL',
     remodeling: false,
-    occupancyStatuses: [{ status: 'PERSONAL_USE', months: 12 }]
-  };
+    occupancyStatuses: [] // Start with empty array to avoid hardcoded defaults
+  });
 
   const handleOccupancyClick = (e: React.MouseEvent) => {
     // This prevents clicks in the occupancy section from bubbling up
     // and potentially causing problems with the drawer
     e.stopPropagation();
   };
+
+  const propertyToUse = property || createDefaultProperty();
+
+  console.log('[PropertyDrawerContent] Using property data:', propertyToUse);
 
   return (
     <ScrollArea className="h-full">
@@ -64,7 +69,7 @@ const PropertyDrawerContent: React.FC<PropertyDrawerContentProps> = ({
           onClick={handleOccupancyClick}
         >
           <PropertyForm
-            property={property || defaultProperty}
+            property={propertyToUse}
             editingIndex={property ? 0 : null}
             onSubmit={onSubmit}
             onCancel={onClose}

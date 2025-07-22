@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { Owner, Property, OwnerPropertyAssignment } from '@/components/dashboard/types';
+import { useDashboardData } from '@/hooks/useDashboardData';
 import { 
   Form
 } from '@/components/ui/form';
@@ -41,6 +41,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   onClose,
   userId
 }) => {
+  const { createAssignment, updateAssignment } = useDashboardData();
   const form = useForm<AssignmentFormValues>({
     defaultValues: {
       propertyId: '',
@@ -93,7 +94,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   const handleSubmit = async (values: AssignmentFormValues) => {
     setIsSubmitting(true);
     console.log('[AssignmentForm] Form submission started with values:', values);
-    console.log('[AssignmentForm] User ID:', userId);
     console.log('[AssignmentForm] Assignment being edited:', assignment);
     
     try {
@@ -101,91 +101,44 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
       if (!values.propertyId || !values.ownerId) {
         throw new Error('Property and Owner are required');
       }
-
-      if (!userId) {
-        throw new Error('User ID is required');
-      }
       
-      const assignmentData = {
-        property_id: values.propertyId,
-        owner_id: values.ownerId,
-        ownership_percentage: values.ownershipPercentage,
-        resident_at_property: values.residentAtProperty,
-        resident_from_date: values.residentAtProperty && values.residentFromDate 
-          ? values.residentFromDate.toISOString().split('T')[0]
-          : null,
-        resident_to_date: values.residentAtProperty && values.residentToDate
-          ? values.residentToDate.toISOString().split('T')[0]
-          : null,
-        tax_credits: values.taxCredits || null,
-        user_id: userId,
-        updated_at: new Date().toISOString()
+      const assignmentData: OwnerPropertyAssignment = {
+        propertyId: values.propertyId,
+        ownerId: values.ownerId,
+        ownershipPercentage: values.ownershipPercentage,
+        residentAtProperty: values.residentAtProperty,
+        residentDateRange: {
+          from: values.residentAtProperty && values.residentFromDate 
+            ? values.residentFromDate
+            : null,
+          to: values.residentAtProperty && values.residentToDate
+            ? values.residentToDate
+            : null
+        },
+        taxCredits: values.taxCredits || 0
       };
       
       console.log('[AssignmentForm] Assignment data prepared for save:', assignmentData);
       
+      let result;
       if (assignment?.id) {
-        // Update existing ownership link
+        // Update existing assignment using centralized CRUD
         console.log('[AssignmentForm] Updating existing assignment with ID:', assignment.id);
-        const { data, error } = await supabase
-          .from('owner_property_assignments')
-          .update(assignmentData)
-          .eq('id', assignment.id)
-          .select()
-          .single();
-          
-        if (error) {
-          console.error('[AssignmentForm] Update error:', error);
-          throw error;
-        }
-        
-        console.log('[AssignmentForm] Assignment updated successfully:', data);
-        toast.success('Ownership link updated successfully');
+        result = await updateAssignment(assignment.id, assignmentData);
       } else {
-        // Check if this combination already exists
-        console.log('[AssignmentForm] Checking for existing assignment combination');
-        const { data: existingAssignment, error: checkError } = await supabase
-          .from('owner_property_assignments')
-          .select('id')
-          .eq('property_id', values.propertyId)
-          .eq('owner_id', values.ownerId)
-          .eq('user_id', userId)
-          .maybeSingle();
-          
-        if (checkError) {
-          console.error('[AssignmentForm] Error checking existing assignment:', checkError);
-          throw checkError;
-        }
-          
-        if (existingAssignment) {
-          toast.error('This owner is already linked to this property');
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Create new ownership link
+        // Create new assignment using centralized CRUD
         console.log('[AssignmentForm] Creating new assignment');
-        const { data, error } = await supabase
-          .from('owner_property_assignments')
-          .insert({
-            ...assignmentData,
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-          
-        if (error) {
-          console.error('[AssignmentForm] Insert error:', error);
-          throw error;
-        }
-        
-        console.log('[AssignmentForm] Assignment created successfully:', data);
-        toast.success('Ownership link added successfully');
+        result = await createAssignment(assignmentData);
       }
 
-      // Close drawer and trigger refresh
-      onClose();
-      onSuccess();
+      if (result) {
+        console.log('[AssignmentForm] Assignment saved successfully via centralized CRUD');
+        onSuccess();
+        onClose();
+      } else {
+        console.error('[AssignmentForm] Failed to save assignment via centralized CRUD');
+        toast.error('Failed to save ownership link. Please try again.');
+      }
     } catch (error: any) {
       console.error('[AssignmentForm] Error saving assignment:', error);
       const errorMessage = error?.message || 'Unknown error occurred';
