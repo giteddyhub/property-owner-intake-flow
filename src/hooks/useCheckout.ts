@@ -13,12 +13,16 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
   const [loading, setLoading] = useState(false);
   
   const handleCheckout = async () => {
+    console.log('[useCheckout] Starting checkout process');
+    
     try {
       setLoading(true);
+      
       // Get the purchase ID from sessionStorage
       const purchaseId = sessionStorage.getItem('purchaseId');
       
       if (!purchaseId) {
+        console.error('[useCheckout] No purchase ID found in session storage');
         toast.error('Purchase information not found. Please try again or contact support.');
         return;
       }
@@ -30,8 +34,7 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
       // Calculate the price based on the counts and document retrieval preference
       const priceBreakdown = calculatePricing(ownersCount, propertiesCount, hasDocumentRetrieval);
       
-      toast.info('Preparing your checkout...');
-      console.log('Initiating checkout with:', { 
+      console.log('[useCheckout] Checkout parameters:', { 
         purchaseId, 
         hasDocumentRetrieval,
         ownersCount,
@@ -39,9 +42,11 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
         totalAmount: priceBreakdown.totalPrice
       });
       
-      // Add a longer timeout to handle potential network issues
+      toast.info('Preparing your checkout...');
+      
+      // Create a timeout promise to prevent infinite loading
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timed out')), 30000)
+        setTimeout(() => reject(new Error('Checkout request timed out after 30 seconds')), 30000)
       );
       
       const fetchPromise = supabase.functions.invoke('create-checkout', {
@@ -54,11 +59,15 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
         },
       });
       
+      console.log('[useCheckout] Invoking create-checkout function');
+      
       // Race the fetch against a timeout
       const response = await Promise.race([fetchPromise, timeoutPromise]) as any;
       
+      console.log('[useCheckout] Received response:', response);
+      
       if (response.error) {
-        console.error('Checkout error:', response.error);
+        console.error('[useCheckout] Checkout error:', response.error);
         toast.error(`Checkout error: ${response.error.message || 'Unable to process checkout'}`);
         throw response.error;
       }
@@ -67,35 +76,69 @@ export const useCheckout = (hasDocumentRetrieval: boolean): UseCheckoutResult =>
       
       if (!data?.url) {
         const errorMsg = 'No checkout URL returned from server';
-        console.error(errorMsg);
+        console.error('[useCheckout] ' + errorMsg, data);
         toast.error(errorMsg);
         throw new Error(errorMsg);
       }
       
-      console.log('Redirecting to Stripe checkout:', data.url);
+      console.log('[useCheckout] Checkout URL received:', data.url);
+      
+      // Validate the URL format
+      try {
+        new URL(data.url);
+      } catch (urlError) {
+        console.error('[useCheckout] Invalid URL format:', data.url);
+        toast.error('Invalid checkout URL received');
+        throw new Error('Invalid checkout URL format');
+      }
+      
       toast.success('Redirecting to secure payment page...');
       
-      // Use a more direct approach to redirect
-      // First try the modern approach
-      try {
-        window.location.assign(data.url);
-      } catch (redirectError) {
-        console.warn('Modern redirect failed, trying alternative method:', redirectError);
-        // Fallback to the classic approach if the modern one fails
-        window.location.href = data.url;
+      // Set loading to false before redirect to prevent infinite loading
+      setLoading(false);
+      
+      // Use a more reliable redirect approach - open in new tab
+      console.log('[useCheckout] Opening Stripe checkout in new tab');
+      const newWindow = window.open(data.url, '_blank', 'noopener,noreferrer');
+      
+      if (!newWindow) {
+        console.warn('[useCheckout] Popup blocked, trying fallback redirect');
+        toast.warning('Popup blocked. Trying alternative redirect...');
+        
+        // Fallback: try direct navigation
+        setTimeout(() => {
+          try {
+            window.location.href = data.url;
+          } catch (redirectError) {
+            console.error('[useCheckout] Fallback redirect failed:', redirectError);
+            toast.error('Unable to redirect to payment page. Please try again or contact support.');
+            setLoading(false);
+          }
+        }, 1000);
+      } else {
+        console.log('[useCheckout] Successfully opened checkout in new tab');
+        toast.info('Payment page opened in new tab. Complete your payment there.');
       }
+      
     } catch (error) {
-      console.error('Error creating checkout session:', error);
+      console.error('[useCheckout] Error creating checkout session:', error);
       
       // Provide more helpful error message based on error type
-      if (error instanceof Error && error.message === 'Request timed out') {
-        toast.error('The checkout service is taking too long to respond. Please try again later.');
-      } else if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        toast.error('Unable to connect to the payment service. Please check your internet connection and try again.');
+      if (error instanceof Error) {
+        if (error.message.includes('timed out')) {
+          toast.error('The checkout service is taking too long to respond. Please try again later.');
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          toast.error('Unable to connect to the payment service. Please check your internet connection and try again.');
+        } else if (error.message.includes('Invalid checkout URL')) {
+          toast.error('There was an issue with the payment setup. Please contact support.');
+        } else {
+          toast.error('Unable to initiate checkout. Please try again later or contact support.');
+        }
       } else {
-        toast.error('Unable to initiate checkout. Please try again later or contact support.');
+        toast.error('An unexpected error occurred. Please try again.');
       }
     } finally {
+      // Ensure loading is always set to false, even if there was an error
       setLoading(false);
     }
   };

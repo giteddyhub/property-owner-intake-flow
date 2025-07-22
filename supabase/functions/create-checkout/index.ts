@@ -9,13 +9,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Enhanced logging function
+const logStep = (step: string, details?: any) => {
+  const timestamp = new Date().toISOString();
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[${timestamp}] [CREATE-CHECKOUT] ${step}${detailsStr}`);
+};
+
 // Initialize Stripe client with API key
 function initStripe() {
-  console.log("Initializing Stripe with secret key");
+  logStep("Initializing Stripe client");
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
   if (!stripeKey) {
-    throw new Error("STRIPE_SECRET_KEY is not set");
+    logStep("ERROR: STRIPE_SECRET_KEY is not set");
+    throw new Error("STRIPE_SECRET_KEY is not configured. Please add your Stripe secret key to the edge function secrets.");
   }
+  
+  if (!stripeKey.startsWith('sk_')) {
+    logStep("ERROR: Invalid Stripe key format", { keyPrefix: stripeKey.substring(0, 3) });
+    throw new Error("Invalid Stripe secret key format. Key should start with 'sk_'");
+  }
+  
+  logStep("Stripe key validated", { keyPrefix: stripeKey.substring(0, 7) + "..." });
   
   return new Stripe(stripeKey, {
     apiVersion: "2023-10-16",
@@ -28,16 +43,17 @@ function initSupabase() {
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   
   if (!supabaseServiceKey) {
-    console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
-    throw new Error("Server configuration error");
+    logStep("ERROR: Missing SUPABASE_SERVICE_ROLE_KEY");
+    throw new Error("Server configuration error: Missing service role key");
   }
   
+  logStep("Supabase client initialized");
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
 // Fetch purchase and related form submission data from Supabase
 async function fetchPurchaseData(supabase, purchaseId) {
-  console.log("Fetching purchase data for ID:", purchaseId);
+  logStep("Fetching purchase data", { purchaseId });
   
   // First, fetch the purchase with form submission
   const { data: purchaseData, error: purchaseError } = await supabase
@@ -54,20 +70,20 @@ async function fetchPurchaseData(supabase, purchaseId) {
     .single();
 
   if (purchaseError || !purchaseData) {
-    console.error("Error fetching purchase:", purchaseError);
+    logStep("ERROR: Failed to fetch purchase", { error: purchaseError, purchaseId });
     throw new Error(`Error fetching purchase: ${purchaseError?.message || "Purchase not found"}`);
   }
 
-  console.log("Purchase data:", purchaseData);
+  logStep("Purchase data retrieved", { purchaseId, hasFormSubmission: !!purchaseData.form_submissions });
 
   // Get user_id from form submission
   const userId = purchaseData.form_submissions?.user_id;
   if (!userId) {
-    console.error("No user_id found in form submission for purchase:", purchaseId);
+    logStep("ERROR: No user_id found in form submission", { purchaseId });
     throw new Error("User ID not found for this purchase");
   }
 
-  console.log("Found user ID:", userId);
+  logStep("User ID found", { userId });
 
   // Fetch user profile separately
   const { data: profileData, error: profileError } = await supabase
@@ -77,16 +93,16 @@ async function fetchPurchaseData(supabase, purchaseId) {
     .single();
 
   if (profileError || !profileData) {
-    console.error("Error fetching profile:", profileError);
+    logStep("ERROR: Failed to fetch profile", { error: profileError, userId });
     throw new Error(`User profile not found: ${profileError?.message || "Profile not found"}`);
   }
 
-  console.log("Profile data:", profileData);
-
   if (!profileData.email) {
-    console.error("No email found in profile for user:", userId);
+    logStep("ERROR: No email in profile", { userId });
     throw new Error("User email not found in profile");
   }
+
+  logStep("Profile data retrieved", { email: profileData.email, hasName: !!profileData.full_name });
 
   return {
     ...purchaseData,
@@ -99,19 +115,25 @@ async function fetchPurchaseData(supabase, purchaseId) {
 
 // Update document retrieval preference in purchase record
 async function updateDocumentRetrieval(supabase, purchaseId, hasDocumentRetrieval) {
+  logStep("Updating document retrieval preference", { purchaseId, hasDocumentRetrieval });
+  
   const { error: updateError } = await supabase
     .from("purchases")
     .update({ has_document_retrieval: hasDocumentRetrieval })
     .eq("id", purchaseId);
     
   if (updateError) {
-    console.error("Error updating purchase document retrieval preference:", updateError);
+    logStep("WARNING: Failed to update document retrieval preference", { error: updateError });
     // Non-critical error, continue execution
+  } else {
+    logStep("Document retrieval preference updated successfully");
   }
 }
 
 // Create line items for the Stripe checkout session
 function createLineItems(basePrice, hasDocumentRetrieval, ownersCount, propertiesCount) {
+  logStep("Creating line items", { basePrice, hasDocumentRetrieval, ownersCount, propertiesCount });
+  
   const basePriceCents = Math.round(basePrice * 100);
   const documentRetrievalFeeCents = hasDocumentRetrieval ? 2800 : 0; // €28.00 in cents
   
@@ -148,43 +170,53 @@ function createLineItems(basePrice, hasDocumentRetrieval, ownersCount, propertie
     });
   }
 
+  logStep("Line items created", { itemCount: lineItems.length, totalCents: basePriceCents + documentRetrievalFeeCents });
   return lineItems;
 }
 
 // Create and initialize Stripe checkout session
 async function createStripeCheckoutSession(stripe, lineItems, contactEmail, requestOrigin, purchaseId, hasDocumentRetrieval, ownersCount, propertiesCount) {
-  console.log("Creating Stripe checkout session");
-  console.log("Line items:", JSON.stringify(lineItems));
+  logStep("Creating Stripe checkout session", { contactEmail, requestOrigin, purchaseId });
+  
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      customer_email: contactEmail,
+      success_url: `${requestOrigin}/tax-filing-service/${purchaseId}?payment=success`,
+      cancel_url: `${requestOrigin}/payment-cancelled`,
+      metadata: {
+        purchase_id: purchaseId,
+        has_document_retrieval: hasDocumentRetrieval ? "true" : "false",
+        owners_count: ownersCount.toString(),
+        properties_count: propertiesCount.toString(),
+      },
+    });
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    line_items: lineItems,
-    mode: "payment",
-    customer_email: contactEmail,
-    success_url: `${requestOrigin}/tax-filing-service/${purchaseId}?payment=success`,
-    cancel_url: `${requestOrigin}/payment-cancelled`,
-    metadata: {
-      purchase_id: purchaseId,
-      has_document_retrieval: hasDocumentRetrieval ? "true" : "false",
-      owners_count: ownersCount.toString(),
-      properties_count: propertiesCount.toString(),
-    },
-  });
+    logStep("Stripe session created successfully", { 
+      sessionId: session.id, 
+      url: session.url,
+      amountTotal: session.amount_total 
+    });
 
-  console.log("Stripe session created:", session.id);
-  console.log("Stripe session URL:", session.url);
-  console.log("Stripe session amount total:", session.amount_total);
+    // Ensure URL is valid
+    if (!session.url || !session.url.startsWith("http")) {
+      logStep("ERROR: Invalid Stripe checkout URL", { url: session.url });
+      throw new Error(`Invalid Stripe checkout URL: ${session.url}`);
+    }
 
-  // Ensure URL is valid
-  if (!session.url || !session.url.startsWith("http")) {
-    throw new Error(`Invalid Stripe checkout URL: ${session.url}`);
+    return session;
+  } catch (stripeError) {
+    logStep("ERROR: Stripe session creation failed", { error: stripeError.message });
+    throw new Error(`Stripe error: ${stripeError.message}`);
   }
-
-  return session;
 }
 
 // Update purchase record with Stripe session information
 async function updatePurchaseWithSessionId(supabase, purchaseId, sessionId, totalAmount, hasDocumentRetrieval) {
+  logStep("Updating purchase with session ID", { purchaseId, sessionId, totalAmount });
+  
   const { error: updateSessionError } = await supabase
     .from("purchases")
     .update({ 
@@ -196,13 +228,16 @@ async function updatePurchaseWithSessionId(supabase, purchaseId, sessionId, tota
     .eq("id", purchaseId);
 
   if (updateSessionError) {
-    console.error("Error updating purchase with session ID:", updateSessionError);
+    logStep("WARNING: Failed to update purchase with session ID", { error: updateSessionError });
     // Non-critical error, continue execution
+  } else {
+    logStep("Purchase updated with session ID successfully");
   }
 }
 
 // Create error response with CORS headers
 function createErrorResponse(message, status = 400) {
+  logStep("Creating error response", { message, status });
   return new Response(
     JSON.stringify({ error: message }),
     { 
@@ -217,6 +252,7 @@ function createErrorResponse(message, status = 400) {
 
 // Create success response with CORS headers
 function createSuccessResponse(data) {
+  logStep("Creating success response", { hasUrl: !!data.url });
   return new Response(
     JSON.stringify(data),
     { 
@@ -235,6 +271,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  logStep("Function invoked", { method: req.method });
+
   try {
     // Parse request data
     const requestData = await req.json();
@@ -246,12 +284,18 @@ serve(async (req) => {
       totalAmount = 0 
     } = requestData;
 
-    if (!purchaseId) {
-      throw new Error("Purchase ID is required");
-    }
+    logStep("Request data parsed", { 
+      purchaseId, 
+      hasDocumentRetrievalService, 
+      ownersCount, 
+      propertiesCount, 
+      totalAmount 
+    });
 
-    console.log("Processing checkout for purchase:", purchaseId, "with document retrieval:", hasDocumentRetrievalService);
-    console.log("Owners count:", ownersCount, "Properties count:", propertiesCount, "Total amount:", totalAmount);
+    if (!purchaseId) {
+      logStep("ERROR: Missing purchase ID");
+      return createErrorResponse("Purchase ID is required");
+    }
 
     // Initialize clients
     const stripe = initStripe();
@@ -274,40 +318,36 @@ serve(async (req) => {
       propertiesCount
     );
 
-    try {
-      // Create Stripe checkout session
-      const session = await createStripeCheckoutSession(
-        stripe, 
-        lineItems, 
-        purchaseDataWithContact.contactData.email, 
-        req.headers.get("origin"), 
-        purchaseId, 
-        hasDocumentRetrievalService, 
-        ownersCount, 
-        propertiesCount
-      );
+    // Create Stripe checkout session
+    const session = await createStripeCheckoutSession(
+      stripe, 
+      lineItems, 
+      purchaseDataWithContact.contactData.email, 
+      req.headers.get("origin"), 
+      purchaseId, 
+      hasDocumentRetrievalService, 
+      ownersCount, 
+      propertiesCount
+    );
 
-      // Update purchase record with session information
-      await updatePurchaseWithSessionId(
-        supabase, 
-        purchaseId, 
-        session.id, 
-        totalAmount, 
-        hasDocumentRetrievalService
-      );
+    // Update purchase record with session information
+    await updatePurchaseWithSessionId(
+      supabase, 
+      purchaseId, 
+      session.id, 
+      totalAmount, 
+      hasDocumentRetrievalService
+    );
 
-      // Return the session URL to redirect the user to the Stripe checkout
-      return createSuccessResponse({ 
-        url: session.url,
-        session_id: session.id,
-        amount_total: session.amount_total,
-      });
-    } catch (stripeError) {
-      console.error("Stripe error:", stripeError);
-      return createErrorResponse(`Stripe error: ${stripeError.message}`);
-    }
+    // Return the session URL to redirect the user to the Stripe checkout
+    return createSuccessResponse({ 
+      url: session.url,
+      session_id: session.id,
+      amount_total: session.amount_total,
+    });
+
   } catch (error) {
-    console.error("Error:", error);
+    logStep("ERROR: Function execution failed", { message: error.message, stack: error.stack });
     return createErrorResponse(error.message);
   }
 });
