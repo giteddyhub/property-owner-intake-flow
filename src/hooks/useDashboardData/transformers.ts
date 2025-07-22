@@ -45,7 +45,13 @@ export const transformPropertyData = (dbProperty: any): Property => ({
   salePrice: dbProperty.sale_price,
   propertyType: dbProperty.property_type,
   remodeling: dbProperty.remodeling,
-  occupancyStatuses: dbProperty.occupancy_statuses?.map((status: string) => ({ status })) || [],
+  occupancyStatuses: Array.isArray(dbProperty.occupancy_statuses) 
+    ? dbProperty.occupancy_statuses.map((allocation: any) => 
+        typeof allocation === 'string' 
+          ? { status: allocation, months: 12 } // Default to 12 months for legacy data
+          : allocation
+      )
+    : [],
   rentalIncome: dbProperty.rental_income,
   documents: dbProperty.documents?.map((name: string) => ({ name })) || [],
   useDocumentRetrievalService: dbProperty.use_document_retrieval_service
@@ -119,7 +125,7 @@ export const transformPropertyToDb = (property: Property) => ({
   sale_price: property.salePrice || null,
   property_type: property.propertyType,
   remodeling: property.remodeling,
-  occupancy_statuses: property.occupancyStatuses?.map(status => status.status) || [],
+  occupancy_statuses: property.occupancyStatuses || [] as any, // Cast to any to handle JSON column type mismatch
   rental_income: property.rentalIncome || null,
   documents: property.documents?.map(doc => doc.name) || [],
   use_document_retrieval_service: property.useDocumentRetrievalService || false
