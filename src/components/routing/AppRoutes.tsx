@@ -8,6 +8,7 @@ import DashboardPage from '@/pages/DashboardPage';
 import AccountSettingsPage from '@/pages/AccountSettingsPage';
 import VerifyEmailPage from '@/pages/VerifyEmailPage';
 import TaxFilingServicePage from '@/pages/TaxFilingServicePage';
+import ResidencyAssessmentPage from '@/pages/ResidencyAssessmentPage';
 import NotFound from '@/pages/NotFound';
 
 // Admin Pages
@@ -37,6 +38,7 @@ export const AppRoutes = () => {
         
         {/* Public Routes */}
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/residency-assessment" element={<ResidencyAssessmentPage />} />
         
         {/* Anonymous Only Routes */}
         <Route path="/signup" element={<AnonymousRoute><ModernSignupPage /></AnonymousRoute>} />
