@@ -23,7 +23,8 @@ interface OwnerDrawerContentProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onResidencyStatusChange: (value: string) => void;
   onResidencyDetailChange: (field: string, value: string) => void;
-  onStateChange: (field: string, value: string) => void;
+  onAddressStateChange: (state: string) => void;
+  onSpecialStateChange: (field: string, value: string) => void;
   showResidencyDialog: boolean;
   setShowResidencyDialog: (show: boolean) => void;
 }
@@ -39,7 +40,8 @@ const OwnerDrawerContent: React.FC<OwnerDrawerContentProps> = ({
   onInputChange,
   onResidencyStatusChange,
   onResidencyDetailChange,
-  onStateChange,
+  onAddressStateChange,
+  onSpecialStateChange,
   showResidencyDialog,
   setShowResidencyDialog
 }) => {
@@ -70,7 +72,8 @@ const OwnerDrawerContent: React.FC<OwnerDrawerContentProps> = ({
             onInputChange={onInputChange}
             onResidencyStatusChange={onResidencyStatusChange}
             onResidencyDetailChange={onResidencyDetailChange}
-            onStateChange={onStateChange}
+            onAddressStateChange={onAddressStateChange}
+            onSpecialStateChange={onSpecialStateChange}
             showResidencyDialog={showResidencyDialog}
             setShowResidencyDialog={setShowResidencyDialog}
             hideCancel={true}

@@ -51,6 +51,15 @@ const OwnerStep: React.FC = () => {
     scrollToTop
   );
 
+  // Create handlers for different state types
+  const handleAddressStateChange = (state: string) => {
+    handleStateChange(state);
+  };
+
+  const handleSpecialStateChange = (field: string, value: string) => {
+    handleOwnerChange(field, value);
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6 text-form-400">Owner Information</h2>
@@ -76,7 +85,8 @@ const OwnerStep: React.FC = () => {
           onInputChange={handleInputChange}
           onResidencyStatusChange={handleResidencyStatusChange}
           onResidencyDetailChange={handleResidencyDetailChange}
-          onStateChange={handleStateChange}
+          onAddressStateChange={handleAddressStateChange}
+          onSpecialStateChange={handleSpecialStateChange}
           showResidencyDialog={showResidencyDialog}
           setShowResidencyDialog={setShowResidencyDialog}
           hideCancel={owners.length === 0 && editingIndex === null}
