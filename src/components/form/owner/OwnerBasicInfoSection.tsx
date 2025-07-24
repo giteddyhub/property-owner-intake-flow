@@ -12,13 +12,15 @@ interface OwnerBasicInfoSectionProps {
   onOwnerChange: (field: string, value: any) => void;
   onCountryChange: (field: string, value: string) => void;
   onDateChange: (date: Date | undefined) => void;
+  onStateChange?: (field: string, value: string) => void;
 }
 
 const OwnerBasicInfoSection: React.FC<OwnerBasicInfoSectionProps> = ({ 
   owner, 
   onOwnerChange, 
   onCountryChange, 
-  onDateChange 
+  onDateChange,
+  onStateChange 
 }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onOwnerChange(e.target.name, e.target.value);
@@ -40,7 +42,10 @@ const OwnerBasicInfoSection: React.FC<OwnerBasicInfoSectionProps> = ({
       <OwnerCountryFields
         countryOfBirth={owner.countryOfBirth}
         citizenship={owner.citizenship}
+        stateOfBirth={owner.stateOfBirth}
+        stateOfCitizenship={owner.stateOfCitizenship}
         onCountryChange={onCountryChange}
+        onStateChange={onStateChange}
       />
       
       <OwnerMaritalStatusField

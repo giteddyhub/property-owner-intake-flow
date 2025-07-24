@@ -23,7 +23,7 @@ interface OwnerDrawerContentProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onResidencyStatusChange: (value: string) => void;
   onResidencyDetailChange: (field: string, value: string) => void;
-  onStateChange: (state: string) => void;
+  onStateChange: (field: string, value: string) => void;
   showResidencyDialog: boolean;
   setShowResidencyDialog: (show: boolean) => void;
 }

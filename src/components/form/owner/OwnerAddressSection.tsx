@@ -29,7 +29,7 @@ interface OwnerAddressSectionProps {
   owner: Owner;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCountryChange: (field: string, value: string) => void;
-  onStateChange?: (state: string) => void;
+  onStateChange?: (field: string, value: string) => void;
 }
 
 const OwnerAddressSection: React.FC<OwnerAddressSectionProps> = ({ 
@@ -47,7 +47,7 @@ const OwnerAddressSection: React.FC<OwnerAddressSectionProps> = ({
 
   const handleStateChange = (state: string) => {
     if (onStateChange) {
-      onStateChange(state);
+      onStateChange('address.state', state);
     }
   };
   

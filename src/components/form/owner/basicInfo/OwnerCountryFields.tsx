@@ -26,13 +26,17 @@ const US_STATES = [
 interface OwnerCountryFieldsProps {
   countryOfBirth: string;
   citizenship: string;
+  stateOfBirth?: string;
+  stateOfCitizenship?: string;
   onCountryChange: (field: string, value: string) => void;
   onStateChange?: (field: string, value: string) => void;
 }
 
 const OwnerCountryFields: React.FC<OwnerCountryFieldsProps> = ({ 
   countryOfBirth, 
-  citizenship, 
+  citizenship,
+  stateOfBirth,
+  stateOfCitizenship, 
   onCountryChange,
   onStateChange
 }) => {
@@ -64,7 +68,7 @@ const OwnerCountryFields: React.FC<OwnerCountryFieldsProps> = ({
             <Label htmlFor="stateOfBirth">State of Birth*</Label>
             <Select 
               onValueChange={(value) => onStateChange && onStateChange('stateOfBirth', value)} 
-              defaultValue=""
+              value={stateOfBirth || ""}
             >
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select state of birth" />
@@ -93,7 +97,7 @@ const OwnerCountryFields: React.FC<OwnerCountryFieldsProps> = ({
             <Label htmlFor="stateOfCitizenship">State of Residence in US*</Label>
             <Select 
               onValueChange={(value) => onStateChange && onStateChange('stateOfCitizenship', value)} 
-              defaultValue=""
+              value={stateOfCitizenship || ""}
             >
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select state of residence" />
