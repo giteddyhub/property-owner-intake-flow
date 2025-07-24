@@ -78,12 +78,33 @@ export const useOwnerFieldHandlers = ({ setCurrentOwner }: UseOwnerFieldHandlers
     }));
   };
   
+  // Handler for US state field in address
+  const handleStateChange = (state: string) => {
+    setCurrentOwner(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        state
+      }
+    }));
+  };
+
+  // Handler for special US state fields (birth/citizenship)
+  const handleSpecialStateChange = (field: string, value: string) => {
+    setCurrentOwner(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
   return {
     handleOwnerChange,
     handleInputChange,
     handleDateChange,
     handleCountryChange,
     handleResidencyStatusChange,
-    handleResidencyDetailChange
+    handleResidencyDetailChange,
+    handleStateChange,
+    handleSpecialStateChange
   };
 };
