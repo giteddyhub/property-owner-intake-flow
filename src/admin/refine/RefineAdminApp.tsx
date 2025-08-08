@@ -8,7 +8,7 @@ import "antd/dist/reset.css";
 
 import { adminAuthProvider } from "./providers/authProvider";
 import { dummyDataProvider } from "./providers/dummyDataProvider";
-import { UsersList } from "./resources/users/UsersList";
+
 import { RefineAccountsPage } from "./resources/accounts/RefineAccountsPage";
 import { RefineAccountDetailPage } from "./resources/accounts/RefineAccountDetailPage";
 
@@ -29,7 +29,6 @@ export const RefineAdminApp: React.FC = () => {
         routerProvider={routerBindings}
         notificationProvider={notificationProvider}
         resources={[
-          { name: "users", list: "/users", meta: { label: "Users" } },
           { name: "accounts", list: "/accounts", meta: { label: "Accounts" } },
         ]}
         options={{
@@ -40,8 +39,7 @@ export const RefineAdminApp: React.FC = () => {
       >
         <ThemedLayoutV2>
           <Routes>
-            <Route index element={<Navigate to="/admin/users" replace />} />
-            <Route path="users" element={<UsersList />} />
+            <Route index element={<Navigate to="/admin/accounts" replace />} />
             <Route path="accounts" element={<RefineAccountsPage />} />
             <Route path="accounts/:id" element={<RefineAccountDetailPage />} />
           </Routes>

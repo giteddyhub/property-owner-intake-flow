@@ -13,7 +13,7 @@ export const AccountsList: React.FC = () => {
         <Typography.Paragraph>
           Accounts management in Refine is being migrated. For now, continue using the existing experience.
         </Typography.Paragraph>
-        <Link to="/admin/users">
+        <Link to="/admin/accounts">
           <Button type="primary">Go to Users</Button>
         </Link>
       </Card>

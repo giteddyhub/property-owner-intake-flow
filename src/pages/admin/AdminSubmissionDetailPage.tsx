@@ -416,9 +416,9 @@ const AdminSubmissionDetailPage = () => {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" size="sm" onClick={() => navigate(`/admin/users/${userProfile.id}`)}>
+              <Button variant="outline" size="sm" onClick={() => navigate(`/admin/accounts/${userProfile.id}`)}>
                 <User className="h-4 w-4 mr-2" />
-                View User Profile
+                View Account
               </Button>
             </CardFooter>
           </Card>

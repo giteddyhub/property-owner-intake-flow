@@ -36,14 +36,7 @@ export const AdminBreadcrumb: React.FC = () => {
       href: '/admin', 
       icon: <Home className="h-4 w-4" /> 
     });
-    
-    if (path.startsWith('/admin/users')) {
-      breadcrumbs.push({ 
-        label: 'Users', 
-        icon: <Users className="h-4 w-4" />,
-        ...(path === '/admin/users' ? {} : { href: '/admin/users' })
-      });
-    } else if (path.startsWith('/admin/accounts')) {
+    if (path.startsWith('/admin/accounts')) {
       breadcrumbs.push({ 
         label: 'Accounts', 
         icon: <Clipboard className="h-4 w-4" />,

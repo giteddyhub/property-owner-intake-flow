@@ -23,12 +23,6 @@ export const useKeyboardShortcuts = (isAdminPage: boolean = false) => {
       action: () => navigate('/admin')
     },
     {
-      key: 'u',
-      altKey: true,
-      description: 'Go to Users',
-      action: () => navigate('/admin/users')
-    },
-    {
       key: 'a',
       altKey: true,
       description: 'Go to Accounts',
@@ -52,7 +46,7 @@ export const useKeyboardShortcuts = (isAdminPage: boolean = false) => {
       description: 'Show Keyboard Shortcuts',
       action: () => {
         toast.info('Keyboard Shortcuts', {
-          description: 'Alt+D: Dashboard, Alt+U: Users, Alt+A: Accounts, Alt+S: Settings, Ctrl+R: Refresh',
+          description: 'Alt+D: Dashboard, Alt+A: Accounts, Alt+S: Settings, Ctrl+R: Refresh',
           duration: 5000,
         });
       }

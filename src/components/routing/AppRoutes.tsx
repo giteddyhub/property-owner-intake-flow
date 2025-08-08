@@ -61,6 +61,8 @@ export const AppRoutes = () => {
         {/* Legacy redirects */}
         <Route path="/accounts" element={<Navigate to="/admin/accounts" replace />} />
         <Route path="/accounts/:id" element={<Navigate to="/admin/accounts/:id" replace />} />
+        <Route path="/admin/users" element={<Navigate to="/admin/accounts" replace />} />
+        <Route path="/users" element={<Navigate to="/admin/accounts" replace />} />
         
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
