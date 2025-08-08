@@ -10,7 +10,6 @@ import { AccountPropertiesTab } from './tabs/AccountPropertiesTab';
 import { AccountOwnersTab } from './tabs/AccountOwnersTab';
 import { AccountAssignmentsTab } from './tabs/AccountAssignmentsTab';
 import { AccountPaymentsTab } from './tabs/AccountPaymentsTab';
-import { AccountActivitiesTab } from './tabs/AccountActivitiesTab';
 import { OwnerData, PropertyData, AssignmentData, PaymentData, UserActivityData } from '@/types/admin';
 
 interface FormSubmission {
@@ -41,7 +40,6 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
   owners,
   assignments,
   payments,
-  activities
 }) => {
   console.log(`[AccountDetailTabs] 📋 Rendering tabs with comprehensive data:`, {
     submissionsCount: submissions.length,
@@ -49,7 +47,6 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
     propertiesCount: properties.length,
     ownersCount: owners.length,
     assignmentsCount: assignments.length,
-    activitiesCount: activities.length
   });
   
   console.log(`[AccountDetailTabs] 📝 Submissions breakdown:`, 
@@ -67,7 +64,7 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
   
   return (
     <Tabs defaultValue="properties" className="w-full">
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="properties">
           Properties ({properties.length})
         </TabsTrigger>
@@ -79,9 +76,6 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
         </TabsTrigger>
         <TabsTrigger value="payments">
           Payments ({payments.length})
-        </TabsTrigger>
-        <TabsTrigger value="activities">
-          Activities ({activities.length})
         </TabsTrigger>
       </TabsList>
       
@@ -101,9 +95,6 @@ export const AccountDetailTabs: React.FC<AccountDetailTabsProps> = ({
         <AccountPaymentsTab payments={payments} />
       </TabsContent>
 
-      <TabsContent value="activities">
-        <AccountActivitiesTab activities={activities} />
-      </TabsContent>
     </Tabs>
   );
 };
