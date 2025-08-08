@@ -43,7 +43,47 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { action } = await req.json();
+    const body = await req.json();
+    const action = body?.action as string;
+    const limit = Math.min(Number(body?.limit) || 100, 500);
+
+    if (action === 'fetch_audit_logs') {
+      // Fetch latest admin audit logs and enrich with admin email/name
+      const { data: logs, error: logsError } = await adminClient
+        .from('admin_audit_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (logsError) {
+        throw new Error(`Failed to fetch audit logs: ${logsError.message}`);
+      }
+
+      const adminIds = Array.from(new Set((logs || []).map((l: any) => l.admin_id).filter(Boolean)));
+      let adminMap: Record<string, { email?: string; full_name?: string }> = {};
+
+      if (adminIds.length > 0) {
+        const { data: admins, error: adminsError } = await adminClient
+          .from('admin_credentials')
+          .select('id, email, full_name')
+          .in('id', adminIds);
+
+        if (!adminsError && admins) {
+          adminMap = Object.fromEntries(admins.map((a: any) => [a.id, { email: a.email, full_name: a.full_name }]));
+        }
+      }
+
+      const enriched = (logs || []).map((l: any) => ({
+        ...l,
+        admin_email: adminMap[l.admin_id]?.email ?? null,
+        admin_name: adminMap[l.admin_id]?.full_name ?? null,
+      }));
+
+      return new Response(
+        JSON.stringify({ logs: enriched }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (action === 'fetch_user_profiles_with_stats') {
       // Use the new token-based function to get admin user summary data
