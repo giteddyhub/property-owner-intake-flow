@@ -1,7 +1,7 @@
 import React from "react";
 import { Refine } from "@refinedev/core";
 import { ThemedLayoutV2, notificationProvider } from "@refinedev/antd";
-import { routerBindings } from "@refinedev/react-router-v6";
+import routerBindings from "@refinedev/react-router-v6";
 import { ConfigProvider, theme as antdTheme } from "antd";
 import { Routes, Route, Navigate } from "react-router-dom";
 import "antd/dist/reset.css";

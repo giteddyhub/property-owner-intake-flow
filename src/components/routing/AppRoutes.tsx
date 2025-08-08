@@ -23,6 +23,7 @@ import AdminAdvancedUsersPage from '@/pages/admin/AdminAdvancedUsersPage';
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage';
 import AdminSecurityPage from '@/pages/admin/AdminSecurityPage';
 
+import { RefineAdminApp } from '@/admin/refine/RefineAdminApp';
 // Route Components
 import { ProtectedRoute } from './ProtectedRoute';
 import { AnonymousRoute } from './AnonymousRoute';
@@ -53,17 +54,7 @@ export const AppRoutes = () => {
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin/*" element={
           <AdminRoutes>
-            <Routes>
-              <Route path="/" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
-              <Route path="/accounts" element={<AdminRoute><AdminAccountsPage /></AdminRoute>} />
-              <Route path="/accounts/:id" element={<AdminRoute><AdminAccountDetailPage /></AdminRoute>} />
-              <Route path="/submissions" element={<AdminRoute><AdminSubmissionsPage /></AdminRoute>} />
-              <Route path="/submissions/:id" element={<AdminRoute><AdminSubmissionDetailPage /></AdminRoute>} />
-              <Route path="/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
-              <Route path="/advanced-users" element={<AdminRoute><AdminAdvancedUsersPage /></AdminRoute>} />
-              <Route path="/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
-              <Route path="/security" element={<AdminRoute><AdminSecurityPage /></AdminRoute>} />
-            </Routes>
+            <RefineAdminApp />
           </AdminRoutes>
         } />
         
