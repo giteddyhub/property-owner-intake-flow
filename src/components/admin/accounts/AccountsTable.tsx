@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { AccountData } from '@/types/admin';
 import { UserActionsDropdown } from '@/components/admin/users/UserActionsDropdown';
 import { BulkUserActions } from '@/components/admin/users/BulkUserActions';
-import { Mail, FileText, Home, Users as UsersIcon, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Mail, Home, Users as UsersIcon, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface AccountsTableProps {
@@ -273,10 +273,6 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <div className="flex space-x-4">
-                      <div className="flex items-center">
-                        <FileText className="h-4 w-4 mr-1 text-muted-foreground" />
-                        <span>{account.submissions_count}</span>
-                      </div>
                       <div className="flex items-center">
                         <Home className="h-4 w-4 mr-1 text-muted-foreground" />
                         <span>{account.properties_count}</span>
