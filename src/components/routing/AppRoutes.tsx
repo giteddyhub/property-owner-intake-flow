@@ -1,5 +1,5 @@
 
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import Index from '@/pages/Index';
 import { ModernSignupPage } from '@/pages/ModernSignupPage';
@@ -57,6 +57,10 @@ export const AppRoutes = () => {
             <RefineAdminApp />
           </AdminRoutes>
         } />
+        
+        {/* Legacy redirects */}
+        <Route path="/accounts" element={<Navigate to="/admin/accounts" replace />} />
+        <Route path="/accounts/:id" element={<Navigate to="/admin/accounts/:id" replace />} />
         
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
