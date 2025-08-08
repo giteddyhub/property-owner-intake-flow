@@ -6,6 +6,18 @@ import { ConfigProvider, theme as antdTheme } from "antd";
 import { Routes, Route, Navigate } from "react-router-dom";
 import "antd/dist/reset.css";
 
+// Custom title for Refine layout
+const AdminTitle: React.FC = () => (
+  <a
+    href="https://italiantaxes.com"
+    className="flex items-center gap-2 no-underline"
+    aria-label="Go to ItalianTaxes.com"
+  >
+    <span style={{ fontWeight: 600 }}>Admin</span>
+  </a>
+);
+
+
 import { adminAuthProvider } from "./providers/authProvider";
 import { dummyDataProvider } from "./providers/dummyDataProvider";
 
@@ -37,7 +49,7 @@ export const RefineAdminApp: React.FC = () => {
           projectId: "admin-refine",
         }}
       >
-        <ThemedLayoutV2>
+        <ThemedLayoutV2 Title={AdminTitle}>
           <Routes>
             <Route index element={<Navigate to="/admin/accounts" replace />} />
             <Route path="accounts" element={<RefineAccountsPage />} />

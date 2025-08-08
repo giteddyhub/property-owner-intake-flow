@@ -45,14 +45,14 @@ export const AdminSidebar: React.FC = () => {
   return (
     <Sidebar collapsible="icon" className="w-64">
       <SidebarHeader className="p-4">
-        <Link to="/admin" className="flex items-center space-x-2">
+        <a href="https://italiantaxes.com" className="flex items-center space-x-2">
           <img 
             src="/lovable-uploads/786b8a8a-3ec3-4b1c-a119-a216abb8bd42.png" 
             alt="ItalianTaxes.com" 
             className="h-6 w-6"
           />
-          <span className="font-semibold text-lg">Admin Panel</span>
-        </Link>
+          <span className="font-semibold text-lg">Admin</span>
+        </a>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
