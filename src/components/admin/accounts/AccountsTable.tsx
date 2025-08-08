@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+
 import { Checkbox } from '@/components/ui/checkbox';
 import { AccountData } from '@/types/admin';
 import { UserActionsDropdown } from '@/components/admin/users/UserActionsDropdown';
@@ -184,7 +184,7 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
               <TableHead>User</TableHead>
               <TableHead>Email</TableHead>
               <TableHead className="hidden md:table-cell">Account Created</TableHead>
-              <TableHead className="hidden md:table-cell">Status</TableHead>
+              
               <TableHead className="hidden md:table-cell">Activity</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -197,14 +197,14 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
                   <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
-                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-20" /></TableCell>
+                  
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-9 w-20" /></TableCell>
                 </TableRow>
               ))
             ) : currentItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24">
+                <TableCell colSpan={6} className="h-24">
                   <div className="text-center">
                     <p className="text-muted-foreground mb-4">No account records found.</p>
                     
@@ -265,13 +265,6 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
                     {account.created_at ? format(new Date(account.created_at), 'MMM dd, yyyy') : 'Unknown'}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {account.is_admin ? (
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Admin</Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">User</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
                     <div className="flex space-x-4">
                       <div className="flex items-center">
                         <Home className="h-4 w-4 mr-1 text-muted-foreground" />
@@ -306,7 +299,7 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
           </TableBody>
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={7}>
+              <TableCell colSpan={6}>
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
                     Showing {filteredAccounts.length > 0 ? indexOfFirstItem : 0} to {indexOfLastItem} of {filteredAccounts.length} results
