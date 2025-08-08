@@ -13,15 +13,21 @@ export const showAdminCredentialsToast = ({ email, password }: AdminCredentialsT
   toast.success('Admin account created successfully!', {
     duration: 10000,
   });
+
+  // Proactively copy the password to clipboard without rendering it
+  try {
+    void navigator.clipboard.writeText(password);
+  } catch (e) {
+    console.warn('Clipboard copy failed; password will remain hidden.');
+  }
   
-  // Then show the credentials toast with longer duration
+  // Then show a credentials toast WITHOUT revealing the password
   toast(
     <div className="space-y-2">
-      <div className="font-bold">Admin Credentials (Copy these now!)</div>
+      <div className="font-bold">Admin Credentials</div>
       <div><strong>Email:</strong> {email}</div>
-      <div><strong>Password:</strong> {password}</div>
       <div className="text-xs text-red-500 mt-2">
-        This information will not be shown again!
+        For security, the password is hidden. It has been copied to your clipboard.
       </div>
     </div>,
     {
