@@ -5,9 +5,14 @@
 
 set -euo pipefail
 
-LEAKED_VALUE="REDACTED"
+# Read leaked value from env or prompt (do not hardcode secrets here)
+LEAKED_VALUE="${LEAKED_VALUE:-}"
+if [ -z "${LEAKED_VALUE}" ]; then
+  read -s -p "Enter the exact leaked value to scrub: " LEAKED_VALUE
+  echo
+fi
 LEAKED_FILE="supabase/migrations/20250808171016_847cc5ce-25ad-4b73-b94b-e6ac3fb12210.sql"
-REPLACEMENT="REDACTED"
+REPLACEMENT="${REPLACEMENT:-REDACTED}"
 
 command -v git >/dev/null 2>&1 || { echo "git is required"; exit 1; }
 
