@@ -9,7 +9,8 @@ import "antd/dist/reset.css";
 import { adminAuthProvider } from "./providers/authProvider";
 import { dummyDataProvider } from "./providers/dummyDataProvider";
 import { UsersList } from "./resources/users/UsersList";
-import { AccountsList } from "./resources/accounts/AccountsList";
+import AdminAccountsPage from "@/pages/admin/AdminAccountsPage";
+import AdminAccountDetailPage from "@/pages/admin/AdminAccountDetailPage";
 
 export const RefineAdminApp: React.FC = () => {
   return (
@@ -41,7 +42,8 @@ export const RefineAdminApp: React.FC = () => {
           <Routes>
             <Route index element={<Navigate to="/admin/users" replace />} />
             <Route path="users" element={<UsersList />} />
-            <Route path="accounts" element={<AccountsList />} />
+            <Route path="accounts" element={<AdminAccountsPage />} />
+            <Route path="accounts/:id" element={<AdminAccountDetailPage />} />
           </Routes>
         </ThemedLayoutV2>
       </Refine>

@@ -1,7 +1,7 @@
 import { AuthBindings } from "@refinedev/core";
 
 // Minimal auth provider that integrates with existing AdminAuth localStorage session
-// Expects localStorage key "admin_session" with shape { token: string, expiresAt?: string }
+// Expects localStorage key "admin_session" with shape { admin: { id, email, full_name }, session: { token, expires_at } }
 // Redirects to /admin/login when not authenticated.
 export const adminAuthProvider: AuthBindings = {
   async check() {
@@ -10,10 +10,15 @@ export const adminAuthProvider: AuthBindings = {
       if (!raw) {
         return { authenticated: false, redirectTo: "/admin/login" };
       }
-      const session = JSON.parse(raw);
-      // Optional expiry check
-      if (session?.expiresAt) {
-        const expires = new Date(session.expiresAt).getTime();
+      const stored = JSON.parse(raw);
+      const session = stored?.session;
+      if (!session?.token) {
+        localStorage.removeItem("admin_session");
+        return { authenticated: false, redirectTo: "/admin/login" };
+      }
+      // Expiry check
+      if (session?.expires_at) {
+        const expires = new Date(session.expires_at).getTime();
         if (Date.now() > expires) {
           localStorage.removeItem("admin_session");
           return { authenticated: false, redirectTo: "/admin/login" };
@@ -27,11 +32,13 @@ export const adminAuthProvider: AuthBindings = {
   async getIdentity() {
     try {
       const raw = localStorage.getItem("admin_session");
-      const session = raw ? JSON.parse(raw) : null;
-      if (!session) return { id: "anonymous" } as any;
+      const stored = raw ? JSON.parse(raw) : null;
+      const admin = stored?.admin;
+      if (!admin) return { id: "anonymous" } as any;
       return {
-        id: session?.admin?.id ?? "admin",
-        name: session?.admin?.full_name ?? session?.admin?.email ?? "Administrator",
+        id: admin.id,
+        name: admin.full_name || admin.email || "Administrator",
+        email: admin.email,
       } as any;
     } catch {
       return { id: "anonymous" } as any;
